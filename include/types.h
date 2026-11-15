@@ -600,6 +600,14 @@ struct Struct03000E20
     u8 unk12;
 };
 
+struct Struct0202A7E0
+{
+    u8 filler0[2];
+    u8 unk2;
+    u8 filler3[0xD];
+    u32 unk10;
+};  // size = 0x14; 8 of them (sub_0804CCBC clears 0xA0 bytes)
+
 struct Struct03000450
 {
     u8 filler0[0x18];
