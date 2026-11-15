@@ -10,7 +10,14 @@ typedef struct Entity {
     /* 0x9 */ u8 subtype;
     /* 0xA */ u8 form;
     /* 0xB */ u8 parameter;
-    /* 0xC */ u8 fillerC[8];
+    /* 0xC */ u8 unkC;
+    /* 0xD */ u8 unkD;
+    /* 0xE */ u8 unkE;
+    /* 0xF */ u8 unkF;
+    /* 0x10 */ u8 unk10;
+    /* 0x11 */ u8 unk11;
+    /* 0x12 */ u8 unk12;
+    /* 0x13 */ u8 unk13;
     /* 0x14 */ u8 unk14;
     /* 0x15 */ u8 unk15;
     /* 0x16 */ u8 filler16[6];
