@@ -517,7 +517,7 @@ extern u16 gUnknown_0200B198[];
 //extern gUnknown_0200B1A2;
 //extern gUnknown_0200B1C4;
 //extern gUnknown_0200B1CA;
-//extern gUnknown_0200B1D0;
+extern u16 gUnknown_0200B1D0[4][16];  // each player's keys from the link, ring buffer of 16 frames
 //extern gUnknown_0200B1D2;
 //extern gUnknown_0200B1D8;
 //extern gUnknown_0200B1DE;
@@ -950,7 +950,7 @@ extern u8 gLCDRegisterBuffer;
 extern struct Struct03000450 gUnknown_03000450;
 extern struct Struct03000488 gUnknown_03000488;
 extern u32 gUnknown_03000490;
-//extern gUnknown_03000494;
+extern s32 gUnknown_03000494;  // ring buffer position
 extern struct GPURegConfig gUnknown_030004A0;
 //extern gUnknown_030004C0;
 extern volatile u8 gUnknown_0300050C;
@@ -962,7 +962,7 @@ extern u8 gUnknown_03000530[0x300];
 extern u32 gUnknown_03000834;
 //extern gUnknown_03000838;
 //extern gUnknown_03000840;
-extern u16 gUnknown_03000940[];
+extern u16 gUnknown_03000940[];  // each player's held keys (from the link)
 extern struct UnknownStruct2 gUnknown_03000948;
 //extern gUnknown_03000950;
 extern u8 gUnknown_03000954[];
@@ -1144,7 +1144,7 @@ extern u8 gUnknown_03005AE0[0x100];
 extern u16 gUnknown_03005BE0;
 extern void *gUnknown_03005E04;
 extern void *gUnknown_03005E08;
-extern u16 gUnknown_03005E10[];
+extern u16 gUnknown_03005E10[];  // each player's newly pressed keys
 extern u8 gOAMBuffer[];
 extern u16 gUnknown_03005E26[];  // OAM affine parameters (pa) in the OAM buffer
 extern u8 gUnknown_03005E60[];
