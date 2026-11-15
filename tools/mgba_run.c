@@ -5,7 +5,14 @@
 // --coverage: write a bitmap of executed ROM halfwords (bit n = address 0x08000000 + 2n, all GBAs combined)
 // for tools/reach.py. Same run as without it (same RAM), a little slower.
 // P is a player number 0-3: --inputs1 a.inputs is GBA 1's script; --inputs is the default for all.
-// Without --saveP a GBA starts with an empty EEPROM that is never written to disk.
+// --saveP FILE: GBA P's EEPROM is loaded from FILE into memory and never written back, so a run can be
+// repeated exactly. Without it a GBA starts with an empty EEPROM.
+// --play DIR (built with SDL2, tools/mgba_run.sh): a window to play GBAs 0 and 1 in real time, recording
+// each GBA's buttons to DIR/inputsP and its EEPROM at the start and end to DIR/start_saveP.sav and
+// DIR/end_saveP.sav. FRAMES is ignored; Esc or closing the window stops. Replay a recording with
+//   mgba_run ROM N --players 2 --inputs0 DIR/inputs0 --inputs1 DIR/inputs1 [--save0 DIR/start_save0.sav ...]
+// Keys: GBA 0: WASD, F=A G=B R=L T=R 1=Start 2=Select. GBA 1: arrows, /=A .=B ;=L '=R Enter=Start
+// RShift=Select.
 // Inputs file: lines "FRAME KEYS", KEYS = '-' or letters A B s(elect) S(tart) R L U D r(ight) l(eft);
 // held from FRAME until the next line. Output files: DIR/pP_fNNNNN.png. Output lines start with "pP ".
 //
@@ -27,6 +34,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef MGBA_RUN_SDL
+#include <SDL.h>
+#endif
 
 #define MAX_LINES 4096
 
@@ -62,6 +72,10 @@ static const char *dumps[64];
 static int ndumps;
 static unsigned frames, watch;
 static const char *coverage;
+static const char *play;            // --play DIR
+static int liveKeys[MAX_GBAS];      // --play: keys from the keyboard
+static FILE *rec[MAX_GBAS];         // --play: recorded inputs
+static int frameReady;              // --play: GBA 0 finished a frame
 static uint8_t covered[0x800000 / 16];
 
 static void quietLog(struct mLogger *l, int category, enum mLogLevel level, const char *fmt, va_list args) {
@@ -101,6 +115,38 @@ static struct Script *loadScript(const char *path) {
 	}
 	fclose(f);
 	return s;
+}
+
+static const char *keyString(int k) {
+	static char buf[16];
+	static const struct { int bit; char c; } map[] = {
+		{ GBA_KEY_A, 'A' }, { GBA_KEY_B, 'B' }, { GBA_KEY_SELECT, 's' }, { GBA_KEY_START, 'S' },
+		{ GBA_KEY_RIGHT, 'r' }, { GBA_KEY_LEFT, 'l' }, { GBA_KEY_UP, 'U' }, { GBA_KEY_DOWN, 'D' },
+		{ GBA_KEY_R, 'R' }, { GBA_KEY_L, 'L' },
+	};
+	char *o = buf;
+	for (unsigned i = 0; i < sizeof map / sizeof map[0]; i++)
+		if (k & (1 << map[i].bit)) *o++ = map[i].c;
+	if (o == buf) *o++ = '-';
+	*o = 0;
+	return buf;
+}
+
+static void *readFile(const char *path, size_t *size) {
+	FILE *f = fopen(path, "rb");
+	if (!f) { perror(path); exit(1); }
+	fseek(f, 0, SEEK_END);
+	*size = ftell(f);
+	fseek(f, 0, SEEK_SET);
+	void *data = malloc(*size ? *size : 1);
+	if (*size && fread(data, *size, 1, f) != 1) { perror(path); exit(1); }
+	fclose(f);
+	return data;
+}
+
+static void writeFile(const char *path, const void *data, size_t size) {
+	FILE *f = fopen(path, "wb");
+	if (!f || (size && fwrite(data, size, 1, f) != 1) || fclose(f)) { perror(path); exit(1); }
 }
 
 static int inList(const char *list, unsigned n) {
@@ -224,10 +270,55 @@ static void onFrame(void *context) {
 		printf("\n");
 	}
 	// Keys for the next frame
-	struct Script *s = p->script;
-	while (s && p->line < s->n && s->frame[p->line] <= frame + 1) p->keys = s->keys[p->line++];
+	if (play) {
+		if (id == 0) frameReady = 1;
+		if (id < 2 && (liveKeys[id] != p->keys || frame == 0)) {
+			p->keys = liveKeys[id];
+			fprintf(rec[id], "%u %s\n", frame + 1, keyString(p->keys));
+		}
+	} else {
+		struct Script *s = p->script;
+		while (s && p->line < s->n && s->frame[p->line] <= frame + 1) p->keys = s->keys[p->line++];
+	}
 	core->setKeys(core, p->keys);
 }
+
+#ifdef MGBA_RUN_SDL
+// --play: show both GBAs, read the keyboard, keep real-time speed (59.7275 fps). Returns 0 to stop.
+static int present(SDL_Renderer *ren, SDL_Texture **tex) {
+	static Uint64 next;
+	SDL_Event e;
+	while (SDL_PollEvent(&e))
+		if (e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)) return 0;
+	const Uint8 *k = SDL_GetKeyboardState(NULL);
+	static const SDL_Scancode map[2][10] = {
+		// A, B, Select, Start, Right, Left, Up, Down, R, L (GBA_KEY_* order)
+		{ SDL_SCANCODE_F, SDL_SCANCODE_G, SDL_SCANCODE_2, SDL_SCANCODE_1, SDL_SCANCODE_D, SDL_SCANCODE_A,
+		  SDL_SCANCODE_W, SDL_SCANCODE_S, SDL_SCANCODE_T, SDL_SCANCODE_R },
+		{ SDL_SCANCODE_SLASH, SDL_SCANCODE_PERIOD, SDL_SCANCODE_RSHIFT, SDL_SCANCODE_RETURN, SDL_SCANCODE_RIGHT,
+		  SDL_SCANCODE_LEFT, SDL_SCANCODE_UP, SDL_SCANCODE_DOWN, SDL_SCANCODE_APOSTROPHE, SDL_SCANCODE_SEMICOLON },
+	};
+	for (int i = 0; i < 2; i++) {
+		int bits = 0;
+		for (int b = 0; b < 10; b++)
+			if (k[map[i][b]]) bits |= 1 << b;
+		liveKeys[i] = bits;
+		SDL_UpdateTexture(tex[i], NULL, players[i].pixels, players[i].w * sizeof(color_t));
+	}
+	SDL_RenderClear(ren);
+	for (int i = 0; i < 2; i++) {
+		SDL_Rect r = { i * 240, 0, 240, 160 };
+		SDL_RenderCopy(ren, tex[i], NULL, &r);
+	}
+	SDL_RenderPresent(ren);
+	Uint64 freq = SDL_GetPerformanceFrequency(), now = SDL_GetPerformanceCounter();
+	if (!next) next = now;
+	next += freq * 10000 / 597275;
+	if (next > now) SDL_Delay((Uint32) ((next - now) * 1000 / freq));
+	else next = now;  // behind: don't try to catch up
+	return 1;
+}
+#endif
 
 int main(int argc, char **argv) {
 	if (argc < 3) { fprintf(stderr, "usage: see tools/mgba_run.c\n"); return 1; }
@@ -245,9 +336,36 @@ int main(int argc, char **argv) {
 		else if (!strcmp(o, "--dump") && ndumps < 64) dumps[ndumps++] = v;
 		else if (!strcmp(o, "--watch")) watch = strtoul(v, NULL, 0);
 		else if (!strcmp(o, "--coverage")) coverage = v;
+		else if (!strcmp(o, "--play")) play = v;
 		else { fprintf(stderr, "unknown option %s\n", o); return 1; }
 	}
 	if (nplayers < 1 || nplayers > MAX_GBAS) { fprintf(stderr, "--players 1-4\n"); return 1; }
+#ifdef MGBA_RUN_SDL
+	SDL_Window *win = NULL;
+	SDL_Renderer *ren = NULL;
+	SDL_Texture *tex[2] = { 0 };
+	if (play) {
+		if (nplayers < 2) nplayers = 2;
+		frames = ~0u;
+		char path[512];
+		for (int i = 0; i < 2; i++) {
+			snprintf(path, sizeof path, "%s/inputs%d", play, i);
+			if (!(rec[i] = fopen(path, "w"))) { perror(path); return 1; }
+			setvbuf(rec[i], NULL, _IOLBF, 0);
+		}
+		if (SDL_Init(SDL_INIT_VIDEO)) { fprintf(stderr, "SDL: %s\n", SDL_GetError()); return 1; }
+		win = SDL_CreateWindow("mgba_run: GBA 1 (WASD) | GBA 2 (arrows)", SDL_WINDOWPOS_CENTERED,
+		                       SDL_WINDOWPOS_CENTERED, 240 * 2 * 2, 160 * 2, SDL_WINDOW_RESIZABLE);
+		ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
+		if (!ren) ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_SOFTWARE);
+		if (!win || !ren) { fprintf(stderr, "SDL: %s\n", SDL_GetError()); return 1; }
+		SDL_RenderSetLogicalSize(ren, 480, 160);
+		for (int i = 0; i < 2; i++)
+			tex[i] = SDL_CreateTexture(ren, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, 240, 160);
+	}
+#else
+	if (play) { fprintf(stderr, "--play needs a build with SDL2 (tools/mgba_run.sh)\n"); return 1; }
+#endif
 	setvbuf(stdout, NULL, _IOLBF, 0);
 	static struct mLogFilter quietFilter;
 	mLogFilterInit(&quietFilter);
@@ -272,7 +390,15 @@ int main(int argc, char **argv) {
 		p->pixels = calloc(p->w * p->h, sizeof(color_t));
 		core->setVideoBuffer(core, p->pixels, p->w);
 		if (!mCoreLoadFile(core, rom)) { fprintf(stderr, "cannot load %s\n", rom); return 1; }
-		struct VFile *sv = saves[i] ? VFileOpen(saves[i], O_CREAT | O_RDWR) : VFileMemChunk(NULL, 0);
+		size_t saveSize = 0;
+		void *saveData = saves[i] ? readFile(saves[i], &saveSize) : NULL;
+		if (play && saves[i]) {
+			char path[512];
+			snprintf(path, sizeof path, "%s/start_save%d.sav", play, i);
+			writeFile(path, saveData, saveSize);
+		}
+		struct VFile *sv = VFileMemChunk(saveData, saveSize);
+		free(saveData);
 		if (!sv || !core->loadSave(core, sv)) { fprintf(stderr, "cannot open save %d\n", i); return 1; }
 		p->script = scripts[i] ? scripts[i] : defaultScript;
 		p->last = -1;
@@ -314,6 +440,24 @@ int main(int argc, char **argv) {
 		}
 		if (all) break;
 		if (!ran) { fprintf(stderr, "link deadlock: every GBA is waiting\n"); return 1; }
+#ifdef MGBA_RUN_SDL
+		if (play && frameReady) {
+			frameReady = 0;
+			if (!present(ren, tex)) break;
+		}
+#endif
+	}
+	if (play) {
+		for (int i = 0; i < 2; i++) {
+			void *data = NULL;
+			size_t size = players[i].core->savedataClone(players[i].core, &data);
+			char path[512];
+			snprintf(path, sizeof path, "%s/end_save%d.sav", play, i);
+			writeFile(path, data, size);
+			free(data);
+			fclose(rec[i]);
+		}
+		printf("recorded %u frames to %s\n", players[0].frame, play);
 	}
 	for (int i = 0; i < nplayers; i++) players[i].core->deinit(players[i].core);
 	if (coverage) {

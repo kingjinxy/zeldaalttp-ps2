@@ -9,5 +9,7 @@ set -e
 cd "$(dirname "$0")/.."
 M=reference/mgba
 # The library's feature defines (mgba/flags.h) and NDEBUG change struct layouts, so they must match it.
+# --play needs SDL2 (sudo apt install libsdl2-dev); without it the runner builds without a window.
+SDL=$(pkg-config --cflags --libs sdl2 2>/dev/null && echo -DMGBA_RUN_SDL || true)
 gcc -O2 -o tools/mgba_run tools/mgba_run.c -I$M/include -I$M/build/include -include mgba/flags.h -DNDEBUG \
-    -D_GNU_SOURCE $M/build/libmgba.a -lpng -lz -lm -lpthread
+    -D_GNU_SOURCE $M/build/libmgba.a -lpng -lz -lm -lpthread $SDL
