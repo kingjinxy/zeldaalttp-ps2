@@ -1,7 +1,0 @@
-	THUMB_FUNC_START sub_08075B9C
-sub_08075B9C: @ 0x08075B9C
-	bx lr
-	THUMB_FUNC_END sub_08075B9C
-
-	.byte 0x00
-	.byte 0x00

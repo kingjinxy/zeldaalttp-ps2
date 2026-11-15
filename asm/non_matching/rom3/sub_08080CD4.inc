@@ -1,7 +1,0 @@
-	THUMB_FUNC_START sub_08080CD4
-sub_08080CD4: @ 0x08080CD4
-	bx lr
-	THUMB_FUNC_END sub_08080CD4
-
-	.byte 0x00
-	.byte 0x00

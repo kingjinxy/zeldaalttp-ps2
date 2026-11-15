@@ -947,7 +947,11 @@ asm(".include \"asm/non_matching/interface/sub_0812A484.inc\"");
 asm(".include \"asm/non_matching/interface/sub_0812A4B8.inc\"");
 asm(".include \"asm/non_matching/interface/sub_0812A4F8.inc\"");
 asm(".include \"asm/non_matching/interface/sub_0812A5D0.inc\"");
-asm(".include \"asm/non_matching/interface/sub_0812A5F4.inc\"");
+
+void sub_0812A5F4(void)
+{
+}
+
 asm(".include \"asm/non_matching/interface/sub_0812A5F8.inc\"");
 asm(".include \"asm/non_matching/interface/sub_0812A668.inc\"");
 asm(".include \"asm/non_matching/interface/sub_0812A6B8.inc\"");

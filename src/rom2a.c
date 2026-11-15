@@ -34,7 +34,11 @@ asm(".include \"asm/non_matching/rom2a/sub_0802FA94.inc\"");
 asm(".include \"asm/non_matching/rom2a/sub_0802FAEC.inc\"");
 asm(".include \"asm/non_matching/rom2a/sub_0802FB28.inc\"");
 asm(".include \"asm/non_matching/rom2a/sub_0802FC84.inc\"");
-asm(".include \"asm/non_matching/rom2a/sub_0802FCC8.inc\"");
+
+void sub_0802FCC8(void)
+{
+}
+
 asm(".include \"asm/non_matching/rom2a/sub_0802FCCC.inc\"");
 asm(".include \"asm/non_matching/rom2a/sub_0802FD88.inc\"");
 asm(".include \"asm/non_matching/rom2a/sub_0802FE04.inc\"");
@@ -52,6 +56,14 @@ asm(".include \"asm/non_matching/rom2a/sub_08030418.inc\"");
 asm(".include \"asm/non_matching/rom2a/sub_080304FC.inc\"");
 asm(".include \"asm/non_matching/rom2a/sub_080305BC.inc\"");
 asm(".include \"asm/non_matching/rom2a/sub_08030654.inc\"");
-asm(".include \"asm/non_matching/rom2a/sub_08030724.inc\"");
-asm(".include \"asm/non_matching/rom2a/sub_08030728.inc\"");
+
+void sub_08030724(void)
+{
+}
+
+
+void sub_08030728(void)
+{
+}
+
 asm(".include \"asm/non_matching/rom2a/sub_0803072C.inc\"");

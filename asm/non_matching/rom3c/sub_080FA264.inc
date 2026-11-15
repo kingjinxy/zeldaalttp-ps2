@@ -1,7 +1,0 @@
-	THUMB_FUNC_START sub_080FA264
-sub_080FA264: @ 0x080FA264
-	bx lr
-	THUMB_FUNC_END sub_080FA264
-
-	.byte 0x00
-	.byte 0x00

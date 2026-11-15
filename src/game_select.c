@@ -391,7 +391,11 @@ asm(".include \"asm/non_matching/game_select/sub_08033398.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_080333D0.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_08033464.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_080335F8.inc\"");
-asm(".include \"asm/non_matching/game_select/sub_08033618.inc\"");
+
+void sub_08033618(void)
+{
+}
+
 asm(".include \"asm/non_matching/game_select/sub_0803361C.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_0803364C.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_0803367C.inc\"");
@@ -400,7 +404,11 @@ asm(".include \"asm/non_matching/game_select/sub_080336E4.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_080336F0.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_08033728.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_08033760.inc\"");
-asm(".include \"asm/non_matching/game_select/sub_0803377C.inc\"");
+
+void sub_0803377C(void)
+{
+}
+
 asm(".include \"asm/non_matching/game_select/sub_08033780.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_08033798.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_080337B0.inc\"");
@@ -412,7 +420,11 @@ asm(".include \"asm/non_matching/game_select/sub_08033984.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_080339CC.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_080339E4.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_08033A5C.inc\"");
-asm(".include \"asm/non_matching/game_select/sub_08033AA8.inc\"");
+
+void sub_08033AA8(void)
+{
+}
+
 asm(".include \"asm/non_matching/game_select/sub_08033AAC.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_08033AC4.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_08033AEC.inc\"");
@@ -463,7 +475,11 @@ asm(".include \"asm/non_matching/game_select/sub_080344E8.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_0803454C.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_080345CC.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_080345E4.inc\"");
-asm(".include \"asm/non_matching/game_select/sub_08034674.inc\"");
+
+void sub_08034674(void)
+{
+}
+
 asm(".include \"asm/non_matching/game_select/sub_08034678.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_08034690.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_080346F8.inc\"");
@@ -481,8 +497,16 @@ asm(".include \"asm/non_matching/game_select/sub_08034984.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_080349D8.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_080349F0.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_08034A18.inc\"");
-asm(".include \"asm/non_matching/game_select/sub_08034A40.inc\"");
-asm(".include \"asm/non_matching/game_select/sub_08034A44.inc\"");
+
+void sub_08034A40(void)
+{
+}
+
+
+void sub_08034A44(void)
+{
+}
+
 asm(".include \"asm/non_matching/game_select/sub_08034A48.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_08034A60.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_08034ACC.inc\"");
@@ -511,7 +535,11 @@ asm(".include \"asm/non_matching/game_select/sub_08034FE0.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_080350B8.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_080351E0.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_0803522C.inc\"");
-asm(".include \"asm/non_matching/game_select/sub_08035304.inc\"");
+
+void sub_08035304(void)
+{
+}
+
 asm(".include \"asm/non_matching/game_select/sub_08035308.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_08035320.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_08035338.inc\"");

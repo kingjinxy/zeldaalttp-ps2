@@ -805,8 +805,16 @@ asm(".include \"asm/non_matching/rom2/sub_0800C940.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800C984.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800C9AC.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800C9F8.inc\"");
-asm(".include \"asm/non_matching/rom2/sub_0800CA34.inc\"");
-asm(".include \"asm/non_matching/rom2/sub_0800CA38.inc\"");
+
+void sub_0800CA34(void)
+{
+}
+
+
+void sub_0800CA38(void)
+{
+}
+
 asm(".include \"asm/non_matching/rom2/sub_0800CA3C.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800CA84.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800CAD4.inc\"");

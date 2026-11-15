@@ -284,7 +284,11 @@ void sub_0800FCA0(void)
 asm(".INCLUDE \"macro.inc\"");
 
 asm(".include \"asm/non_matching/file_select/sub_0800FD28.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_0800FDB0.inc\"");
+
+void sub_0800FDB0(void)
+{
+}
+
 asm(".include \"asm/non_matching/file_select/sub_0800FDB4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0800FDD4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0800FEAC.inc\"");
@@ -438,7 +442,11 @@ asm(".include \"asm/non_matching/file_select/sub_08013EC0.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801400C.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08014020.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08014048.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_080140A8.inc\"");
+
+void sub_080140A8(void)
+{
+}
+
 asm(".include \"asm/non_matching/file_select/sub_080140AC.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080140D4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08014134.inc\"");
@@ -473,7 +481,11 @@ asm(".include \"asm/non_matching/file_select/sub_08015D04.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08015D50.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08015D8C.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08015D9C.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_08015DBC.inc\"");
+
+void sub_08015DBC(void)
+{
+}
+
 asm(".include \"asm/non_matching/file_select/sub_08015DC0.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08015DD8.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08015F74.inc\"");
@@ -607,13 +619,21 @@ asm(".include \"asm/non_matching/file_select/sub_08018D64.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08018E20.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08018E38.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08018E50.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_08018F18.inc\"");
+
+void sub_08018F18(void)
+{
+}
+
 asm(".include \"asm/non_matching/file_select/sub_08018F1C.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08018F5C.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08018FF4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08018FFC.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08019014.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_08019050.inc\"");
+
+void sub_08019050(void)
+{
+}
+
 asm(".include \"asm/non_matching/file_select/sub_08019054.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08019078.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08019114.inc\"");
@@ -659,7 +679,11 @@ asm(".include \"asm/non_matching/file_select/sub_0801A408.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801A418.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801A430.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801A49C.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_0801A4E0.inc\"");
+
+void sub_0801A4E0(void)
+{
+}
+
 asm(".include \"asm/non_matching/file_select/sub_0801A4E4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801A590.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801A5E8.inc\"");
@@ -763,7 +787,11 @@ asm(".include \"asm/non_matching/file_select/sub_0801C62C.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801C678.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801C754.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801C780.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_0801C7A8.inc\"");
+
+void sub_0801C7A8(void)
+{
+}
+
 asm(".include \"asm/non_matching/file_select/sub_0801C7AC.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801C814.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801C844.inc\"");
@@ -803,9 +831,17 @@ asm(".include \"asm/non_matching/file_select/sub_0801D240.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801D298.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801D2C0.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801D2D8.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_0801D308.inc\"");
+
+void sub_0801D308(void)
+{
+}
+
 asm(".include \"asm/non_matching/file_select/sub_0801D30C.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_0801D32C.inc\"");
+
+void sub_0801D32C(void)
+{
+}
+
 asm(".include \"asm/non_matching/file_select/sub_0801D330.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801D380.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801D3C0.inc\"");
@@ -1321,7 +1357,11 @@ asm(".include \"asm/non_matching/file_select/sub_0802B3AC.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802B474.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802B578.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802B590.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_0802B5B4.inc\"");
+
+void sub_0802B5B4(void)
+{
+}
+
 asm(".include \"asm/non_matching/file_select/sub_0802B5B8.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802B5D8.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802B608.inc\"");

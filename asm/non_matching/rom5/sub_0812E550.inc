@@ -1,7 +1,0 @@
-	THUMB_FUNC_START sub_0812E550
-sub_0812E550: @ 0x0812E550
-	bx lr
-	THUMB_FUNC_END sub_0812E550
-
-	.byte 0x00
-	.byte 0x00

@@ -1,7 +1,0 @@
-	THUMB_FUNC_START sub_08080BBC
-sub_08080BBC: @ 0x08080BBC
-	bx lr
-	THUMB_FUNC_END sub_08080BBC
-
-	.byte 0x00
-	.byte 0x00

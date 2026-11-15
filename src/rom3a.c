@@ -1100,8 +1100,16 @@ asm(".include \"asm/non_matching/rom3a/sub_080AB2E0.inc\"");
 asm(".include \"asm/non_matching/rom3a/sub_080AB5D4.inc\"");
 asm(".include \"asm/non_matching/rom3a/sub_080AB674.inc\"");
 asm(".include \"asm/non_matching/rom3a/sub_080AB70C.inc\"");
-asm(".include \"asm/non_matching/rom3a/sub_080AB734.inc\"");
-asm(".include \"asm/non_matching/rom3a/sub_080AB738.inc\"");
+
+void sub_080AB734(void)
+{
+}
+
+
+void sub_080AB738(void)
+{
+}
+
 asm(".include \"asm/non_matching/rom3a/sub_080AB73C.inc\"");
 asm(".include \"asm/non_matching/rom3a/sub_080AB89C.inc\"");
 asm(".include \"asm/non_matching/rom3a/sub_080AB94C.inc\"");
@@ -1265,7 +1273,11 @@ asm(".include \"asm/non_matching/rom3a/sub_080B6408.inc\"");
 asm(".include \"asm/non_matching/rom3a/sub_080B6430.inc\"");
 asm(".include \"asm/non_matching/rom3a/sub_080B649C.inc\"");
 asm(".include \"asm/non_matching/rom3a/sub_080B64C4.inc\"");
-asm(".include \"asm/non_matching/rom3a/sub_080B64F4.inc\"");
+
+void sub_080B64F4(void)
+{
+}
+
 asm(".include \"asm/non_matching/rom3a/sub_080B64F8.inc\"");
 asm(".include \"asm/non_matching/rom3a/sub_080B6518.inc\"");
 asm(".include \"asm/non_matching/rom3a/sub_080B6564.inc\"");
@@ -1470,14 +1482,42 @@ asm(".include \"asm/non_matching/rom3a/sub_080C1984.inc\"");
 asm(".include \"asm/non_matching/rom3a/sub_080C19B4.inc\"");
 asm(".include \"asm/non_matching/rom3a/sub_080C19F8.inc\"");
 asm(".include \"asm/non_matching/rom3a/sub_080C1A8C.inc\"");
-asm(".include \"asm/non_matching/rom3a/sub_080C1ADC.inc\"");
+
+void sub_080C1ADC(void)
+{
+}
+
 asm(".include \"asm/non_matching/rom3a/sub_080C1AE0.inc\"");
-asm(".include \"asm/non_matching/rom3a/sub_080C1AF0.inc\"");
-asm(".include \"asm/non_matching/rom3a/sub_080C1AF4.inc\"");
-asm(".include \"asm/non_matching/rom3a/sub_080C1AF8.inc\"");
-asm(".include \"asm/non_matching/rom3a/sub_080C1AFC.inc\"");
-asm(".include \"asm/non_matching/rom3a/sub_080C1B00.inc\"");
-asm(".include \"asm/non_matching/rom3a/sub_080C1B04.inc\"");
+
+void sub_080C1AF0(void)
+{
+}
+
+
+void sub_080C1AF4(void)
+{
+}
+
+
+void sub_080C1AF8(void)
+{
+}
+
+
+void sub_080C1AFC(void)
+{
+}
+
+
+void sub_080C1B00(void)
+{
+}
+
+
+void sub_080C1B04(void)
+{
+}
+
 asm(".include \"asm/non_matching/rom3a/sub_080C1B08.inc\"");
 asm(".include \"asm/non_matching/rom3a/sub_080C1B40.inc\"");
 asm(".include \"asm/non_matching/rom3a/sub_080C1D70.inc\"");
