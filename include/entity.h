@@ -19,19 +19,23 @@ typedef struct Entity {
     /* 0x16 */ u8 unk16 : 8;
     /* 0x17 */ u8 unk17 : 8;
     /* 0x18 */ u8 unk18 : 8;
-    /* 0x19 */ u8 filler19[3];
-    /* 0x1C */ u32 unk1C_0 : 2;  // u32: read with lsl #30 / lsr #30
+    /* 0x19 */ u8 filler19[2];
+    /* 0x1B */ u8 unk1B : 8;
+    // 0x1C-0x1F: one u32 of bitfields (u32 fields are read with lsl/lsr pairs, e.g. lsl #26; lsr #27)
+    /* 0x1C */ u32 unk1C_0 : 2;
     /*      */ u32 unk1C_2 : 6;
-    /* 0x1D */ u8 unk1D_0 : 6;
-    /*      */ u8 unk1D_6 : 2;
-    /* 0x1E */ u8 unk1E_0 : 4;
-    /*      */ u8 unk1E_4 : 4;
-    /* 0x1F */ u8 unk1F_0 : 6;
-    /*      */ u8 unk1F_6 : 2;
+    /* 0x1D */ u32 unk1D_0 : 2;
+    /*      */ u32 unk1D_2 : 4;
+    /*      */ u32 unk1D_6 : 2;
+    /* 0x1E */ u32 unk1E_0 : 4;
+    /*      */ u32 unk1E_4 : 4;
+    /* 0x1F */ u32 unk1F_0 : 1;
+    /*      */ u32 unk1F_1 : 5;  // affine parameter index
+    /*      */ u32 unk1F_6 : 2;
     /* 0x20 */ u8 unk20;
     /* 0x21 */ u8 frameIdx;
     /* 0x22 */ u8 lastFrameIdx;
-    /* 0x23 */ u8 unk23;
+    /* 0x23 */ u8 unk23 : 8;
     /* 0x24 */ void* frame;
     /* 0x28 */ u8 frameTimer : 8;
     /* 0x29 */ u8 unk29;
@@ -47,7 +51,8 @@ typedef struct Entity {
     /* 0x3D */ u8 unk3D : 8;
     /* 0x3E */ u8 filler3E[3];
     /* 0x41 */ u8 unk41 : 8;
-    /* 0x42 */ u8 filler42[0xA];
+    /* 0x42 */ u8 filler42[6];
+    /* 0x48 */ const void *unk48;
     /* 0x4C */ u32 unk4C;
     /* 0x50 */ u16 unk50 : 16;
     /* 0x52 */ u8 unk52 : 8;
@@ -61,6 +66,7 @@ typedef struct Entity {
     /* 0x60 */ u32 unk60;
     /* 0x64 */ u8 filler64[0x14];
     /* 0x78 */ union {
+        u32 w;
         u16 h : 16;  // map tile index for some kinds: (x - scroll x) >> 4 | ((y - scroll y) >> 4) << 6
         u16 *p;
         struct {
@@ -70,6 +76,7 @@ typedef struct Entity {
         } s;
     } unk78;  // halfword + byte for some entity kinds, a pointer for others
     /* 0x7C */ union {
+        u32 w;
         u16 h;
         u16 *p;
     } unk7C;  // a halfword for some entity kinds, a pointer for others

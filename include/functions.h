@@ -19,6 +19,7 @@ void DoPlayerItemEntity(struct Entity *);
 void sub_08003DFC(u8);
 void sub_08008F48(u16, u16, u16);
 void sub_08008F3C(u8, u16, u16);
+void sub_08003B94(struct Entity *);
 u8 sub_08003F4C(struct Entity *, struct Entity *);
 
 // rom1.s
@@ -1248,7 +1249,7 @@ void sub_0802B5D8(void);
 //sub_0802BF30();
 //sub_0802BF60();
 //sub_0802BFC4();
-//sub_0802C070();
+void sub_0802C070(struct Entity *, u16);
 //sub_0802C0EC();
 //sub_0802C12C();
 //sub_0802C148();
@@ -2357,7 +2358,7 @@ void sub_08053564(struct Entity *, u8);
 //sub_0805CF6C();
 //sub_0805D0C8();
 //sub_0805D340();
-//sub_0805D3DC();
+void sub_0805D3DC(struct Entity *);
 //sub_0805D4B0();
 //sub_0805D4F8();
 //sub_0805D520();
