@@ -7,6 +7,16 @@ union SplitWord {
     } HALF;
 };
 
+// Four Swords view of the area at gUnknown_0201ED90 (ldscript alias gUnknown_0201ED90_fs)
+struct Struct0201ED90_fs
+{
+    u8 filler0[8];
+    u32 unk8;
+    u32 unkC;
+    u32 unk10;
+    u32 unk14;
+};
+
 // Four Swords view of the overlay area at gUnknown_02016D60 (ldscript alias gUnknown_02016D60_fs)
 struct Struct02016D60_fs
 {
@@ -507,7 +517,9 @@ struct Struct03000FC0
 struct Struct03006C80
 {
     u8 unk0;
-    u8 filler1[0x27];
+    u8 filler1[0x1B];
+    u32 unk1C;  // frames
+    u8 filler20[8];
     struct {
         u32 unk0;
         u32 unk4;

@@ -11,7 +11,7 @@ typedef struct Entity {
     /* 0x08 */ u8 type;
     /* 0x09 */ u8 subtype;
     /* 0x0A */ u8 form;
-    /* 0x0B */ u8 parameter;
+    /* 0x0B */ u8 parameter : 8;
     /* 0x0C */ s32 unkC;
     /* 0x10 */ u8 filler10[4];
     /* 0x14 */ u8 unk14 : 8;
@@ -34,7 +34,7 @@ typedef struct Entity {
     /* 0x23 */ u8 unk23;
     /* 0x24 */ void* frame;
     /* 0x28 */ u8 frameTimer;
-    /* 0x29 */ u8 filler29;
+    /* 0x29 */ u8 unk29;
     /* 0x2A */ u8 unk2A;
     /* 0x2B */ u8 filler2B[5];
     /* 0x30 */ union SplitWord x;  // tmc names; HALF.HI is the pixel position
@@ -49,11 +49,16 @@ typedef struct Entity {
     /* 0x58 */ u8 filler58[6];
     /* 0x5E */ u8 unk5E_0 : 2;
     /*      */ u8 unk5E_2 : 6;
-    /* 0x5F */ u8 filler5F[0x19];
+    /* 0x5F */ u8 filler5F;
+    /* 0x60 */ u32 unk60;
+    /* 0x64 */ u8 filler64[0x14];
     /* 0x78 */ u16 unk78;
     /* 0x7A */ u8 unk7A;
     /* 0x7B */ u8 filler7B;
-    /* 0x7C */ u16 unk7C;
+    /* 0x7C */ union {
+        u16 h;
+        u16 *p;
+    } unk7C;  // a halfword for some entity kinds, a pointer for others
 } Entity;
 
 // Managers (DoManagerEntity): same list header as Entity, bigger body
