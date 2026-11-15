@@ -54,8 +54,9 @@ typedef struct Entity {
     /* 0x41 */ u8 unk41 : 8;
     /* 0x42 */ s8 unk42 : 8;
     /* 0x43 */ u8 filler43[2];
-    /* 0x45 */ u8 unk45;
-    /* 0x46 */ u8 filler46[2];
+    /* 0x45 */ u8 unk45 : 8;
+    /* 0x46 */ u8 unk46;
+    /* 0x47 */ u8 filler47;
     /* 0x48 */ const void *unk48;
     /* 0x4C */ struct Entity *unk4C;
     /* 0x50 */ u16 unk50 : 16;
@@ -68,7 +69,9 @@ typedef struct Entity {
     /*      */ u8 unk5E_2 : 6;
     /* 0x5F */ u8 filler5F;
     /* 0x60 */ u32 unk60;
-    /* 0x64 */ u8 filler64[0x14];
+    /* 0x64 */ u8 filler64[0x12];
+    /* 0x76 */ u8 unk76 : 8;
+    /* 0x77 */ u8 unk77 : 8;
     /* 0x78 */ union {
         u32 w;
         u16 h : 16;  // map tile index for some kinds: (x - scroll x) >> 4 | ((y - scroll y) >> 4) << 6
@@ -78,6 +81,10 @@ typedef struct Entity {
             u8 unk7A;
             u8 filler7B;
         } s;
+        struct {
+            u16 h;
+            u16 unk7A : 16;
+        } s2;
     } unk78;  // halfword + byte for some entity kinds, a pointer for others
     /* 0x7C */ union {
         u32 w;

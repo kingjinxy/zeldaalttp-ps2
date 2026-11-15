@@ -185,3 +185,11 @@
   explicit; unoptimized agbcc allocates unused locals, so a too-small frame means a missing local;
   `x &= 0` and an 8-bit bitfield store of 0 compile the same. Overlay areas used differently by Four
   Swords get ldscript aliases (`gUnknown_0201ED90_fs`). Executed fs_game left: 151; fs_game: 678; all: 6567.
+- More batches. The player input swap (`sub_0803DBD4`: each Link runs with that player's buttons from
+  per-player arrays, which the port will fill from each pad). `CreateObject` is an ldscript alias of
+  `sub_0804C8A8` without a prototype: the original callers were in other source files and pass
+  unconverted arguments, which a prototyped call can't reproduce. tmc-style `SplitWord.HALF_U` (unsigned
+  view; some code reads positions with ldrh). An explicit `return;` at the end of a function shows as an
+  extra branch to the epilogue. Deferred (in asm, tried and noted): `sub_0804E394` (argument narrowing),
+  `sub_0803D770` (add operand order), `sub_0803CD8C`, `sub_08056D40`/`sub_08055FA0` (bitfield writes
+  to the shared BGConfig struct). Executed fs_game left: 115; fs_game: 642; all: 6531.

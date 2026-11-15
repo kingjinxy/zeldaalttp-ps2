@@ -428,7 +428,17 @@ bool32 sub_0803A858(struct Entity *a, struct Entity *b, u8 c)
     return TRUE;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0803A880.inc\"");
+
+bool32 sub_0803A880(struct Entity *a, struct Entity *b, u8 c)
+{
+    a->unk45 = sub_0803A5DC(a, b);
+    a->unk42 = b->unk46;
+    a->unk3D = (u8)(b->unk46 & 0x80) ? -b->unk46 - 16 : b->unk46 + 16;
+    if (b->unk3D == 0)
+        b->unk3D = 0xFF;
+    return TRUE;
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0803A940.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803AA04.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803AB30.inc\"");
@@ -547,7 +557,20 @@ asm(".include \"asm/non_matching/fs_game/sub_0803D65C.inc\"");
 
 asm(".include \"asm/non_matching/fs_game/sub_0803D770.inc\"");
 
-asm(".include \"asm/non_matching/fs_game/sub_0803D7E8.inc\"");
+
+void sub_0803D7E8(struct Entity *this, const u16 *p, u8 n)
+{
+    if (n == 0)
+        n = 1;
+    this->unk76 = 0;
+    this->unk77 = n;
+    this->unk78.h = this->x.HALF_U.HI;
+    this->unk78.s2.unk7A = this->y.HALF_U.HI;
+    this->unk7C.h = p[0];
+    this->unk7C.s.unk7E = p[1];
+    return;
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0803D8AC.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803D9F4.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803DB4C.inc\"");
@@ -2535,7 +2558,7 @@ void sub_0805DD04(struct Entity *this)
     if (this->unk16 != gUnknown_02016D60_fs.unk8)
     {
         this->unk16 = gUnknown_02016D60_fs.unk8;
-        sub_0803D7E8(this, &gUnknown_08429278[gUnknown_02016D60_fs.unk8], 15);
+        sub_0803D7E8(this, gUnknown_08429278[gUnknown_02016D60_fs.unk8], 15);
         this->unk58->unk1C_0 = 0;
     }
     if (sub_0803D8AC(this) && gUnknown_02016D60_fs.unk8 != 0 && gUnknown_02016D60_fs.unk8 != 4)
@@ -2910,7 +2933,27 @@ void sub_08064064(struct Entity *this)
     gUnknown_03006A30[this->form].unk8 = 4;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_080640B4.inc\"");
+
+void sub_080640B4(struct Entity *this)
+{
+    if (this->unk17 != 0xFF)
+    {
+        if (this->unk18 != 0)
+        {
+            this->unk18--;
+        }
+        else
+        {
+            this->direction = this->unk2A << 2;
+            this->speed = 0x100;
+            sub_0803CC20(this);
+            if (--this->unk17 == 0)
+                gUnknown_03006A30[this->form].unkC = 2;
+        }
+    }
+    sub_080037EC(this, this->unk1B);
+}
+
 
 void sub_08064178(struct Entity *this)
 {
