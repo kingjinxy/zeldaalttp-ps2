@@ -22,6 +22,7 @@ void sub_08008F3C(u8, u16, u16);
 void sub_08003B94(struct Entity *);
 u16 sub_0800935C(struct Entity *);
 void sub_08001B70(struct Entity *, u16, u16, u16);
+void sub_080074C0(struct Entity *);
 u8 sub_08003F4C(struct Entity *, struct Entity *);
 
 // rom1.s
@@ -1703,7 +1704,7 @@ void sub_0803A6DC(struct Entity *, struct Entity *);
 //sub_0803A838();
 //sub_0803A858();
 bool32 sub_0803A880(struct Entity *, struct Entity *, u8);
-//sub_0803A940();
+bool32 sub_0803A940(struct Entity *, struct Entity *, u8);
 //sub_0803AA04();
 //sub_0803AB30();
 //sub_0803AC00();
@@ -1720,7 +1721,7 @@ u32 sub_0803AE00(struct Entity *, struct Entity *, u8);
 //sub_0803B644();
 //sub_0803B73C();
 //sub_0803B834();
-//sub_0803B8D8();
+bool32 sub_0803B8D8(struct Entity *, struct Entity *, u8);
 //sub_0803B99C();
 //sub_0803BAAC();
 //sub_0803BB18();

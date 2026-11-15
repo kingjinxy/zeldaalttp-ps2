@@ -599,10 +599,12 @@ struct Struct03006A30
     u8 filler24[4];
     struct Entity *unk28;
     u8 filler2C[0xA];
-    u16 unk36;
+    u16 unk36 : 16;
     u8 unk38;
     u8 unk39;
-    u8 filler3A[0x56];
+    u8 filler3A[5];
+    s8 unk3F : 8;
+    u8 filler40[0x50];
 };  // size = 0x90
 
 struct Struct03006CA8

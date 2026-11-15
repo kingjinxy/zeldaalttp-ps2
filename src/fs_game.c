@@ -439,7 +439,17 @@ bool32 sub_0803A880(struct Entity *a, struct Entity *b, u8 c)
     return TRUE;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0803A940.inc\"");
+
+bool32 sub_0803A940(struct Entity *a, struct Entity *b, u8 c)
+{
+    b->unk45 = sub_0803A5DC(b, a);
+    b->unk42 = a->unk46;
+    b->unk3D = (u8)(b->unk46 & 0x80) ? -b->unk46 - 16 : b->unk46 + 16;
+    if (a->unk3D == 0)
+        a->unk3D = 0xFF;
+    return TRUE;
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0803AA04.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803AB30.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803AC00.inc\"");
@@ -471,7 +481,18 @@ asm(".include \"asm/non_matching/fs_game/sub_0803B550.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803B644.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803B73C.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803B834.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_0803B8D8.inc\"");
+
+bool32 sub_0803B8D8(struct Entity *a, struct Entity *b, u8 c)
+{
+    b->unk45 = sub_0803A5DC(b, a);
+    b->unk3D = (u8)(a->unk46 & 0x80) ? -a->unk46 - 16 : a->unk46 + 16;
+    if (b->type == 3)
+        b->unk42 = 1;
+    if (a->unk3D == 0)
+        a->unk3D = 0xFF;
+    return TRUE;
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0803B99C.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803BAAC.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803BB18.inc\"");
@@ -635,7 +656,16 @@ void sub_0803DFC8(void)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0803E048.inc\"");
+
+void sub_0803E048(struct Entity *this)
+{
+    gUnknown_03006A30[this->form].unk36 = gUnknown_03006A30[this->form].unk36 & 0xFDFF;
+    this->y.HALF.HI = this->y.HALF_U.HI - gUnknown_03006A30[this->form].unk3F;
+    gUnknown_03006A30[this->form].unk3F = 0;
+    if ((u16)(gUnknown_03006A30[this->form].unk36 & 0x400))
+        sub_080074C0(this);
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0803E114.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803E518.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803F0E4.inc\"");
