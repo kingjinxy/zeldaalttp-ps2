@@ -795,7 +795,7 @@ extern u16 gUnknown_0202A8D0[];
 //#define gUnknown_0202A8D0 ((u16 *)0x0202A8D0)
 //extern gUnknown_0202A8D2;
 //extern gUnknown_0202D0CE;
-//extern gUnknown_0202D0D0;
+extern u32 gUnknown_0202D0D0;
 //extern gUnknown_0202D0E0;
 extern u8 gBG0Buffer[];
 //extern gUnknown_0202D112;
@@ -5448,7 +5448,7 @@ extern void (*const gUnknown_08428D2C[])(struct Entity *);
 //extern gUnknown_08428D70;
 extern void (*const gUnknown_08428D84[])(struct Entity *);
 //extern gUnknown_08428D8C;
-//extern gUnknown_08428D94;
+extern const u16 gUnknown_08428D94[];
 extern void (*const gUnknown_08428DB8[])(struct Entity *);
 //extern gUnknown_08428DC0;
 //extern gUnknown_08428DC8;

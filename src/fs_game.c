@@ -371,7 +371,17 @@ void sub_0803D3D0(struct Entity *a, struct Entity *b)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_0803D440.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_0803D4A4.inc\"");
+
+void sub_0803D4A4(struct Entity *a, struct Entity *b, s32 dx, s32 dy)
+{
+    b->x.WORD = a->x.WORD + dx;
+    b->y.WORD = a->y.WORD + dy;
+    b->z.WORD = a->z.WORD;
+    b->unk50 = a->unk50;
+    b->unk52 = a->unk52;
+    sub_08008DD8(b);
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0803D520.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803D65C.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803D770.inc\"");
@@ -486,7 +496,22 @@ u8 sub_08043EE0(u8 a)
 
 asm(".include \"asm/non_matching/fs_game/sub_08043F20.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08044018.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_0804411C.inc\"");
+
+struct Entity *sub_0804411C(struct Entity *this, u8 subtype, u8 form)
+{
+    struct Entity *e = sub_080123E8();
+
+    if (e != NULL)
+    {
+        e->type = 4;
+        e->subtype = subtype;
+        e->form = form;
+        sub_0803D3D0(this, e);
+        sub_08012728(5, e);
+    }
+    return e;
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_08044198.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08044240.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08044594.inc\"");
@@ -1205,7 +1230,18 @@ void sub_08055438(struct Entity *this)
 
 asm(".include \"asm/non_matching/fs_game/sub_08055460.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08055688.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_08055A08.inc\"");
+
+void sub_08055A08(struct Entity *this)
+{
+    struct Struct03006A30 *p = &gUnknown_03006A30[this->form];
+
+    if (gLCDRegisterBuffer == this->form && (gUnknown_0202D0D0 & (1 << p->unk1C)) == 0)
+    {
+        gUnknown_0202D0D0 |= 1 << p->unk1C;
+        sub_0800D67C(gUnknown_08428D94[p->unk1C]);
+    }
+}
+
 
 void sub_08055A84(struct Entity *this)
 {
@@ -1313,7 +1349,21 @@ void sub_080563D8(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0805643C.inc\"");
+
+void sub_0805643C(struct Entity *this)
+{
+    if (--this->unk17 == 0)
+    {
+        sub_0800C0B0(2, 8);
+        sub_0804C8A8(40, 0, 0);
+        sub_0804C8A8(40, 3, 0);
+        DeleteThisEntity(this);
+        gSubState++;
+        play_sound(0x20A);
+        play_sound(0x1B2);
+    }
+}
+
 
 void sub_080564C0(struct Entity *this)
 {
@@ -1783,7 +1833,24 @@ void sub_0805D9C4(struct Entity *this)
 asm(".include \"asm/non_matching/fs_game/sub_0805D9EC.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0805DAA0.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0805DAEC.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_0805DBBC.inc\"");
+
+void sub_0805DBBC(struct Entity *this)
+{
+    if (this->unk14 == 0)
+    {
+        this->unk14++;
+        this->unk1C_0 = 2;
+        this->unk1D_6 = 0;
+        this->unk1F_6 = 0;
+        sub_0805D7D0(this);
+        sub_08003870(this, this->form);
+    }
+    else
+    {
+        GetNextFrame(this);
+    }
+}
+
 
 void sub_0805DC34(struct Entity *this)
 {

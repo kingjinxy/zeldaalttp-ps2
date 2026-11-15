@@ -8,9 +8,9 @@
 typedef struct Entity {
     /* 0x00 */ struct Entity* prev;
     /* 0x04 */ struct Entity* next;
-    /* 0x08 */ u8 type;
-    /* 0x09 */ u8 subtype;
-    /* 0x0A */ u8 form;
+    /* 0x08 */ u8 type : 8;
+    /* 0x09 */ u8 subtype : 8;
+    /* 0x0A */ u8 form : 8;
     /* 0x0B */ u8 parameter : 8;
     /* 0x0C */ s32 unkC;
     /* 0x10 */ u8 filler10[4];

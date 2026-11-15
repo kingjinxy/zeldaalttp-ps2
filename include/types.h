@@ -548,7 +548,9 @@ struct Struct03006A30
 {
     u8 filler0[8];
     u16 unk8 : 16;
-    u8 fillerA[0x86];
+    u8 fillerA[0x12];
+    u8 unk1C;
+    u8 filler1D[0x73];
 };  // size = 0x90
 
 struct Struct03006CA8
