@@ -26,7 +26,9 @@ typedef struct Entity {
     /*      */ u32 unk1C_2 : 4;
     /*      */ u32 unk1C_6 : 2;
     /* 0x1D */ u32 unk1D_0 : 2;
-    /*      */ u32 unk1D_2 : 4;
+    /*      */ u32 unk1D_2 : 2;
+    /*      */ u32 unk1D_4 : 1;
+    /*      */ u32 unk1D_5 : 1;
     /*      */ u32 unk1D_6 : 2;
     /* 0x1E */ u32 unk1E_0 : 4;
     /*      */ u32 unk1E_4 : 4;
