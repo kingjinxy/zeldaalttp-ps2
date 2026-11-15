@@ -20,7 +20,9 @@ struct Struct0201ED90_fs
 // Four Swords view of the overlay area at gUnknown_02016D60 (ldscript alias gUnknown_02016D60_fs)
 struct Struct02016D60_fs
 {
-    u8 filler0[8];
+    u8 filler0[3];
+    u8 unk3 : 8;
+    u8 filler4[4];
     u8 unk8;
     u8 filler9[0x17];
     struct Entity *unk20;
@@ -512,7 +514,13 @@ struct Struct03000FC0
     u16 unkC : 16;
     u8 unkE : 8;
     u8 fillerF;
-};  // size = 16 (0x10), up to gUnknown_03000FD0
+    u8 unk10 : 8;  // gUnknown_03000FD0 starts here
+    u8 filler11[3];
+    u32 unk14;
+    u8 filler18[0x24];
+    u32 unk3C;
+    u8 filler40[0x48];
+};  // size = 0x88 (sub_0803668C clears it)
 
 struct Struct03006C80
 {
@@ -523,7 +531,10 @@ struct Struct03006C80
     struct {
         u32 unk0;
         u32 unk4;
-    } unk28[9];  // indexed by Entity.form
+    } unk28[4];  // indexed by Entity.form (player)
+    u8 filler48[0x26];
+    u8 unk6E : 8;
+    u8 filler6F;
     struct Entity *unk70[1];  // length unknown; indexed by Entity.unk18
 };
 

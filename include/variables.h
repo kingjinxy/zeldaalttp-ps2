@@ -824,7 +824,7 @@ extern u8 gUnknown_0202E154;
 extern u8 gUnknown_0202E155;
 //extern gUnknown_0202E158;
 //extern gUnknown_0202E160;
-//extern gUnknown_0202E1E0;
+extern u8 gUnknown_0202E1E0;
 extern u32 gUnknown_0202E1E4;
 //extern gUnknown_02030000;
 //extern gUnknown_02030160;
