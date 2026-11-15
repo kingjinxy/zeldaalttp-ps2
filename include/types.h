@@ -572,6 +572,14 @@ struct Struct03005060
     u8 fillerC[0x8F4];
 };  // size = 0x900
 
+// What sub_08015DC0 returns (a map's data); the earlier callers index it as a u16 array
+struct MapData
+{
+    u16 unk0[2];
+    u16 unk4[0x2800];
+    u16 unk5004[0x2800];
+};
+
 struct Struct03000450
 {
     u8 filler0[0x18];

@@ -1629,7 +1629,7 @@ void sub_080536F8(struct Entity *this)
     u16 *map;
 
     map = sub_08015DC0(this->unk50);
-    if (((u16 *)((u8 *)map + 0x5004))[*this->unk7C.p] == 270)
+    if (((struct MapData *)map)->unk5004[*this->unk7C.p] == 270)
     {
         gUnknown_0201F000[this->unk52] |= gUnknown_08137B10[this->form];
         if (this->unk17 != 0)
