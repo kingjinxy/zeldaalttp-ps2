@@ -30,5 +30,5 @@ _08003A34: .4byte 0x08009280
 _08003A38: .4byte 0x00004000
 _08003A3C: .4byte 0x08003518
 
-    .INCBIN "baserom.gba", 0x3A40, 0x3C84-0x3A40
+	.syntax unified
 

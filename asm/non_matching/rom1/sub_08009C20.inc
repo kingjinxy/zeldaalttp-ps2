@@ -1,0 +1,267 @@
+	.syntax unified
+	THUMB_FUNC_START sub_08009C20
+sub_08009C20: @ 0X08009C20
+	lsrs r6, r4, #4
+	lsrs r7, r5, #4
+	lsls r7, r7, #6
+	adds r6, r6, r7
+	adds r1, r1, r6
+	ldrh r6, [r2, #50]
+	cmp r6, r3
+	bcc.n _08009C50
+	subs r6, r6, r3
+	adds r6, #8
+	lsrs r6, r6, #4
+	beq.n _08009C4C
+	adds r6, #1
+_08009C3A:
+	ldrb r4, [r1, #0]
+	cmp r4, #255
+	beq.n _08009C50
+	subs r4, #15
+	cmp r4, #17
+	bcc.n _08009C50
+	adds r1, #1
+	subs r6, #1
+	bne.n _08009C3A
+_08009C4C:
+	movs r0, #136
+	pop {r4, r5, r6, r7, pc}
+_08009C50:
+	movs r0, #0
+	pop {r4, r5, r6, r7, pc}
+_08009C54:
+	ldrh r4, [r0, #50]
+	ldrh r5, [r2, #50]
+	adds r4, r4, r5
+	lsrs r4, r4, #1
+	ldrh r5, [r0, #54]
+	adds r5, #6
+	adds r3, r5, #0
+	ldr r7, [pc, #212]
+	ldrh r6, [r7, #24]
+	subs r4, r4, r6
+	ldrh r6, [r7, #26]
+	subs r5, r5, r6
+	lsrs r6, r4, #4
+	lsrs r7, r5, #4
+	lsls r7, r7, #6
+	adds r6, r6, r7
+	adds r1, r1, r6
+	ldrh r6, [r2, #54]
+	cmp r6, r3
+	bcc.n _08009C9C
+	subs r6, r6, r3
+	adds r6, #8
+	lsrs r6, r6, #4
+	beq.n _08009C98
+	adds r6, #1
+_08009C86:
+	ldrb r4, [r1, #0]
+	cmp r4, #255
+	beq.n _08009C9C
+	subs r4, #15
+	cmp r4, #17
+	bcc.n _08009C9C
+	adds r1, #64
+	subs r6, #1
+	bne.n _08009C86
+_08009C98:
+	movs r0, #144
+	pop {r4, r5, r6, r7, pc}
+_08009C9C:
+	movs r0, #0
+	pop {r4, r5, r6, r7, pc}
+	.byte 0x44
+	.byte 0x8e
+	.byte 0x06
+	.byte 0x3c
+	.byte 0x00
+	.byte 0xd5
+	.byte 0x00
+	.byte 0x24
+	.byte 0x23
+	.byte 0x1c
+	.byte 0xc5
+	.byte 0x8e
+	.byte 0xd6
+	.byte 0x8e
+	.byte 0xad
+	.byte 0x19
+	.byte 0x6d
+	.byte 0x08
+	.byte 0x22
+	.byte 0x4f
+	.byte 0x3e
+	.byte 0x8b
+	.byte 0xa4
+	.byte 0x1b
+	.byte 0x7e
+	.byte 0x8b
+	.byte 0xad
+	.byte 0x1b
+	.byte 0x26
+	.byte 0x09
+	.byte 0x2f
+	.byte 0x09
+	.byte 0xbf
+	.byte 0x01
+	.byte 0xf6
+	.byte 0x19
+	.byte 0x89
+	.byte 0x19
+	.byte 0x56
+	.byte 0x8e
+	.byte 0xb3
+	.byte 0x42
+	.byte 0x0f
+	.byte 0xd3
+	.byte 0x9b
+	.byte 0x1b
+	.byte 0x08
+	.byte 0x33
+	.byte 0x1b
+	.byte 0x09
+	.byte 0x09
+	.byte 0xd0
+	.byte 0x01
+	.byte 0x33
+	.byte 0x0c
+	.byte 0x78
+	.byte 0xff
+	.byte 0x2c
+	.byte 0x07
+	.byte 0xd0
+	.byte 0x0f
+	.byte 0x3c
+	.byte 0x11
+	.byte 0x2c
+	.byte 0x04
+	.byte 0xd3
+	.byte 0x01
+	.byte 0x39
+	.byte 0x01
+	.byte 0x3b
+	.byte 0xf6
+	.byte 0xd1
+	.byte 0x98
+	.byte 0x20
+	.byte 0xf0
+	.byte 0xbd
+	.byte 0x00
+	.byte 0x20
+	.byte 0xf0
+	.byte 0xbd
+	.4byte 0x0800995c
+	.4byte 0x0800995c
+	.4byte 0x08009a18
+	.4byte 0x03000e20
+	.4byte 0x03000940
+	.4byte 0x08003b54
+	.4byte 0x08009a08
+	.4byte 0x080092a0
+	.4byte 0x03000450
+	.4byte 0x08009a8c
+	.4byte 0x03000450
+	.4byte 0x08009af0
+	.4byte 0x03000450
+	.4byte 0x08009a8c
+	.4byte 0x03000450
+	.4byte 0x08009af0
+	.4byte 0x03000450
+	.4byte 0x03000450
+	.4byte 0x03000450
+	.byte 0x50
+	.byte 0x04
+	.byte 0x00
+	.byte 0x03
+	.byte 0xf0
+	.byte 0xb5
+	.byte 0x0d
+	.byte 0x1c
+	.byte 0x00
+	.byte 0x21
+	.byte 0x8c
+	.byte 0x46
+	.byte 0x01
+	.byte 0x1c
+	.byte 0x48
+	.byte 0x31
+	.byte 0x0f
+	.byte 0x89
+	.byte 0xbf
+	.byte 0x0b
+	.byte 0xbf
+	.byte 0x00
+	.byte 0x66
+	.byte 0x4e
+	.byte 0xf7
+	.byte 0x59
+	.byte 0x09
+	.byte 0x68
+	.byte 0x65
+	.byte 0x4e
+	.byte 0x42
+	.byte 0x8e
+	.byte 0x33
+	.byte 0x8b
+	.byte 0xd2
+	.byte 0x1a
+	.byte 0x00
+	.byte 0x24
+	.byte 0x0c
+	.byte 0x57
+	.byte 0x12
+	.byte 0x19
+	.byte 0xc3
+	.byte 0x8e
+	.byte 0x76
+	.byte 0x8b
+	.byte 0x9b
+	.byte 0x1b
+	.byte 0x01
+	.byte 0x24
+	.byte 0x0c
+	.byte 0x57
+	.byte 0x1b
+	.byte 0x19
+	.byte 0x0f
+	.byte 0x24
+	.byte 0x2c
+	.byte 0x40
+	.byte 0x08
+	.byte 0x2c
+	.byte 0x15
+	.byte 0xd0
+	.byte 0x2c
+	.byte 0xb4
+	.byte 0x8c
+	.byte 0x78
+	.byte 0x10
+	.byte 0x2d
+	.byte 0x00
+	.byte 0xd2
+	.byte 0x64
+	.byte 0x42
+	.byte 0x12
+	.byte 0x19
+	.byte 0x92
+	.byte 0x05
+	.byte 0x92
+	.byte 0x0d
+	.byte 0xcc
+	.byte 0x78
+	.byte 0x1b
+	.byte 0x19
+	.byte 0x9b
+	.byte 0x05
+	.byte 0x9b
+	.byte 0x0d
+	.byte 0x00
+	.byte 0xf0
+	.byte 0x23
+	.byte 0xf8
+	.byte 0xcc
+	.byte 0x78
+	.syntax unified
+	.thumb

@@ -25,5 +25,5 @@ _08000AEC: .4byte 0x00FF00FF
 _08000AF0: .4byte 0x0000FFFF
 
 @ What is this?
-	.INCBIN "baserom.gba", 0xAF4, 0xBAC-0xAF4
+	.syntax unified
 

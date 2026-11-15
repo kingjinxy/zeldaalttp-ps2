@@ -1,0 +1,282 @@
+	.syntax unified
+	THUMB_FUNC_START_NOALIGN sub_08009106
+sub_08009106: @ 0X08009106
+	b.n 0x8008c2c
+	.byte 0x03
+	.byte 0x40
+	.byte 0x86
+	.byte 0xe7
+	.byte 0x04
+	.byte 0x30
+	.byte 0x83
+	.byte 0xe2
+	.byte 0x3c
+	.byte 0x30
+	.byte 0x03
+	.byte 0xe2
+	.byte 0x36
+	.byte 0x40
+	.byte 0x91
+	.byte 0xe5
+	.byte 0x03
+	.byte 0x40
+	.byte 0x86
+	.byte 0xe7
+	.byte 0x04
+	.byte 0x30
+	.byte 0x83
+	.byte 0xe2
+	.byte 0x3c
+	.byte 0x30
+	.byte 0x03
+	.byte 0xe2
+	.byte 0x3a
+	.byte 0x40
+	.byte 0x91
+	.byte 0xe5
+	.byte 0x03
+	.byte 0x40
+	.byte 0x86
+	.byte 0xe7
+	.byte 0x04
+	.byte 0x30
+	.byte 0x83
+	.byte 0xe2
+	.byte 0x3c
+	.byte 0x30
+	.byte 0x03
+	.byte 0xe2
+	.byte 0xbe
+	.byte 0x43
+	.byte 0xd1
+	.byte 0xe1
+	.byte 0xb3
+	.byte 0x40
+	.byte 0x86
+	.byte 0xe1
+	.byte 0x02
+	.byte 0x70
+	.byte 0x87
+	.byte 0xe2
+	.byte 0x3e
+	.byte 0x70
+	.byte 0x07
+	.byte 0xe2
+	.byte 0x01
+	.byte 0x1c
+	.byte 0x81
+	.byte 0xe2
+	.byte 0x01
+	.byte 0x20
+	.byte 0x52
+	.byte 0xe2
+	.byte 0xb6
+	.byte 0xff
+	.byte 0xff
+	.byte 0x1a
+	.byte 0xf0
+	.byte 0x00
+	.byte 0xbd
+	.byte 0xe8
+	.byte 0x1e
+	.byte 0xff
+	.byte 0x2f
+	.byte 0xe1
+_08009158:
+	.arm
+	mov r3, r5
+	add r6, r0, r7, lsl #5
+	ldr r4, [r1]
+	str r4, [r6, r3]
+	add r3, r3, #4
+	and r3, r3, #60
+	ldr r4, [r1, #4]
+	str r4, [r6, r3]
+	add r3, r3, #4
+	and r3, r3, #60
+	ldr r4, [r1, #8]
+	str r4, [r6, r3]
+	add r3, r3, #4
+	and r3, r3, #60
+	ldr r4, [r1, #12]
+	str r4, [r6, r3]
+	add r3, r3, #4
+	and r3, r3, #60
+	ldr r4, [r1, #16]
+	str r4, [r6, r3]
+	add r3, r3, #4
+	and r3, r3, #60
+	ldr r4, [r1, #20]
+	str r4, [r6, r3]
+	add r3, r3, #4
+	and r3, r3, #60
+	ldr r4, [r1, #24]
+	str r4, [r6, r3]
+	add r3, r3, #4
+	and r3, r3, #60
+	ldr r4, [r1, #28]
+	str r4, [r6, r3]
+	add r3, r3, #4
+	and r3, r3, #60
+	ldr r4, [r1, #32]
+	str r4, [r6, r3]
+	add r3, r3, #4
+	and r3, r3, #60
+	ldr r4, [r1, #36]
+	str r4, [r6, r3]
+	add r3, r3, #4
+	and r3, r3, #60
+	ldr r4, [r1, #40]
+	str r4, [r6, r3]
+	add r3, r3, #4
+	and r3, r3, #60
+	ldr r4, [r1, #44]
+	str r4, [r6, r3]
+	add r3, r3, #4
+	and r3, r3, #60
+	ldr r4, [r1, #48]
+	str r4, [r6, r3]
+	add r3, r3, #4
+	and r3, r3, #60
+	ldr r4, [r1, #52]
+	str r4, [r6, r3]
+	add r3, r3, #4
+	and r3, r3, #60
+	ldr r4, [r1, #56]
+	str r4, [r6, r3]
+	add r3, r3, #4
+	and r3, r3, #60
+	ldr r4, [r1, #60]
+	str r4, [r6, r3]
+	add r3, r3, #4
+	and r3, r3, #60
+	add r7, r7, #2
+	and r7, r7, #62
+	add r1, r1, #256
+	subs r2, r2, #1
+	bne _08009158
+	pop {r4, r5, r6, r7}
+	bx lr
+	.4byte 0x03000450
+	.byte 0x24
+	.byte 0xf0
+	.byte 0x01
+	.byte 0x02
+	.byte 0x24
+	.byte 0x40
+	.byte 0x02
+	.byte 0x02
+	.byte 0x24
+	.byte 0xf0
+	.byte 0x01
+	.byte 0x02
+	.byte 0x24
+	.byte 0x40
+	.byte 0x02
+	.byte 0x02
+	.byte 0x24
+	.byte 0xb3
+	.byte 0x00
+	.byte 0x02
+	.byte 0x24
+	.byte 0x03
+	.byte 0x01
+	.byte 0x02
+	.byte 0x24
+	.byte 0xf0
+	.byte 0x01
+	.byte 0x02
+	.byte 0x24
+	.byte 0x40
+	.byte 0x02
+	.byte 0x02
+	.byte 0x24
+	.byte 0x10
+	.byte 0x02
+	.byte 0x02
+	.byte 0x24
+	.byte 0x10
+	.byte 0x02
+	.byte 0x02
+	.byte 0x24
+	.byte 0xd3
+	.byte 0x00
+	.byte 0x02
+	.byte 0x24
+	.byte 0x10
+	.byte 0x02
+	.byte 0x02
+	.byte 0x24
+	.byte 0x20
+	.byte 0x02
+	.byte 0x02
+	.byte 0x24
+	.byte 0x40
+	.byte 0x02
+	.byte 0x02
+	.byte 0x24
+	.byte 0x20
+	.byte 0x02
+	.byte 0x02
+	.byte 0x24
+	.byte 0x40
+	.byte 0x02
+	.byte 0x02
+	.byte 0x24
+	.byte 0xe3
+	.byte 0x00
+	.byte 0x02
+	.byte 0x24
+	.byte 0x03
+	.byte 0x01
+	.byte 0x02
+	.byte 0x24
+	.byte 0x20
+	.byte 0x02
+	.byte 0x02
+	.byte 0x24
+	.byte 0x40
+	.byte 0x02
+	.byte 0x02
+	.byte 0x50
+	.byte 0x22
+	.byte 0x82
+	.byte 0x5a
+	.byte 0xc1
+	.byte 0x8e
+	.byte 0x40
+	.byte 0x8e
+	.byte 0x82
+	.byte 0x4b
+	.byte 0x1b
+	.byte 0x88
+	.byte 0xc0
+	.byte 0x1a
+	.byte 0x82
+	.byte 0x4b
+	.byte 0x1b
+	.byte 0x88
+	.byte 0xc9
+	.byte 0x1a
+	.byte 0x80
+	.byte 0x05
+	.byte 0x89
+	.byte 0x05
+	.byte 0x80
+	.byte 0x0e
+	.byte 0x89
+	.byte 0x0e
+	.byte 0x89
+	.byte 0x01
+	.byte 0x40
+	.byte 0x18
+	.byte 0x11
+	.byte 0x1c
+	.byte 0x00
+	.byte 0x00
+	.byte 0x7d
+	.byte 0x4a
+	.byte 0x1a
+	.byte 0xe0
+	.syntax unified
+	.thumb

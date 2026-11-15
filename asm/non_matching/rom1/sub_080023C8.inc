@@ -36,5 +36,27 @@ _0800241C: .4byte 0x3FFF3FFF
 _08002420: .4byte 0x000001A0
 _08002424:
 
-	.INCBIN "baserom.gba", 0x2424, 0x2E70-0x2424
-
+	.syntax unified
+	.thumb
+	ldrb r3, [r1, #15]
+	movs r4, #128
+	tst r3, r4
+	beq.n _0800244A
+	movs r2, #65
+	ldrsb r3, [r0, r2]
+	lsls r3, r3, #1
+	bcc.n _08002440
+	cmp r3, #40
+	beq.n _0800244A
+	cmp r3, #42
+	beq.n _0800244A
+	cmp r3, #70
+	beq.n _0800244A
+_08002440:
+	eors r3, r3
+	str r3, [r0, #12]
+	movs r3, #255
+	strb r3, [r1, #18]
+	pop {pc}
+_0800244A:
+	mov pc, lr

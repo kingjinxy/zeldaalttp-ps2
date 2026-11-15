@@ -31,5 +31,5 @@ _0800321C: .4byte 0x03000E20
 _08003220: .4byte 0x03006C80
 _08003224: .4byte 0x08002DFC
 
-    .INCBIN "baserom.gba", 0x3228, 0x3594-0x3228
+	.syntax unified
 

@@ -48,7 +48,7 @@ player, linked in memory instead of by cable, each drawn into its own part of th
       `src/fs_game.c`, built without `-O2`. Four `-O2` functions inside it need their own file when decompiled.
 - [ ] Executed functions first (`reach.py --coverage ... --list-executed`): 144 of 657 done (fs_game: 41 of 156)
 - [ ] fs_game: 152 of 915 done; all code: 1,349 of 7,780 functions in C (6,431 left in asm/non_matching)
-- [ ] Disassemble the code still `.INCBIN`: 15 blobs, 34 KB in the code range (rom1 mostly, rom5 m4a ARM
+- [x] Disassemble the code still `.INCBIN`: 15 blobs, 34 KB in the code range (rom1 mostly, rom5 m4a ARM
       part); includes ARM code copied to RAM and Thumb code such as `0x08009924` (tmc `ShowNPCDialogue`)
 - [ ] m4a: our version sits between pokeruby's (2002, most sizes equal) and tmc's; for the port, pret's m4a C
       can stand in. Matching it is optional.

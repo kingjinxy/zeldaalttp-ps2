@@ -187,5 +187,5 @@ _081339C0:
 	.4byte 0x00000DB8
 	THUMB_FUNC_END sub_0813386C
 
-	.INCBIN "baserom.gba", 0x1339C4, 0x134028-0x1339C4
+	.syntax unified
 

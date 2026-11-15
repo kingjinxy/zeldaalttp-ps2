@@ -1037,3 +1037,5 @@ asm(".include \"asm/non_matching/interface/sub_0812CA30.inc\"");
 asm(".include \"asm/non_matching/interface/sub_0812CB4C.inc\"");
 asm(".include \"asm/non_matching/interface/sub_0812CBBC.inc\"");
 asm(".include \"asm/non_matching/interface/sub_0812CC24.inc\"");
+asm(".include \"asm/non_matching/interface/sub_0812CC58.inc\"");
+asm(".include \"asm/non_matching/interface/sub_0812CFCC.inc\"");

@@ -163,5 +163,5 @@ _08001CCC: .4byte 0x03000450
 _08001CD0: .4byte 0x00004000
 _08001CD4: .4byte 0x0000FFFF
 
-	.INCBIN "baserom.gba", 0x1CD8, 0x1D5C-0x1CD8
+	.syntax unified
 

@@ -1,0 +1,48 @@
+	.syntax unified
+	THUMB_FUNC_START sub_08003554
+sub_08003554: @ 0X08003554
+	.byte 0x33
+	.byte 0x33
+	.byte 0xcc
+	.byte 0xcc
+	.byte 0x00
+	.byte 0x00
+	.byte 0x00
+	.byte 0x00
+	.byte 0x00
+	.byte 0x00
+	.byte 0x00
+	.byte 0x00
+	.byte 0x00
+	.byte 0x00
+	.byte 0x00
+	.byte 0x00
+_08003564:
+	.4byte 0xfec8ffff
+	.4byte 0x8ceff731
+	asrs r7, r7, #13
+	.4byte 0xffffffff
+	.4byte 0xffff
+	.4byte 0xffff
+	movs r0, r0
+	movs r0, r0
+	movs r0, r0
+	.4byte 0x3333ffff
+	ldmia r4!, {r2, r3, r6, r7}
+	.byte 0x00
+	.byte 0x00
+	.byte 0x00
+	.byte 0x00
+	.byte 0x00
+	.byte 0x00
+	.byte 0x00
+	.byte 0x00
+	.byte 0x00
+	.byte 0x00
+	.byte 0x00
+	.byte 0x00
+	.byte 0xff
+	.byte 0xff
+	.syntax unified
+	.thumb
+

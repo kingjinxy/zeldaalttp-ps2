@@ -19,6 +19,14 @@
 .ENDM
 
 
+@ For hand-written code whose functions start on 2-byte boundaries (tools/disasm_blob.py)
+.MACRO THUMB_FUNC_START_NOALIGN name
+	.GLOBAL \name
+	.THUMB
+	.THUMB_FUNC
+	.TYPE \name, function
+.ENDM
+
 .MACRO THUMB_FUNC_END name
 	.SIZE \name, .-\name
 .ENDM

@@ -38,9 +38,5 @@ _08007A2C: .4byte 0x00001291
 _08007A30: .4byte 0x0800749C
 _08007A34: .4byte 0x00001201
 
-	.INCBIN "baserom.gba", 0x7A38, 0x8DD8-0x7A38
-
-	.GLOBAL sub_08008DD8
-sub_08008DD8:
-	.INCBIN "baserom.gba", 0x8DD8, 0x8ED8-0x8DD8
+	.syntax unified
 

@@ -105,8 +105,5 @@ _08001740: .4byte 0x0000FFF0
 _08001744: .4byte 0x00012800
 _08001748: .4byte sub_08001290
 
-	.INCBIN "baserom.gba", 0x174C, 0x17FA-0x174C
-
-_080017FA:
-	pop {pc}
+	.syntax unified
 

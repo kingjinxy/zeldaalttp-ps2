@@ -58,5 +58,5 @@ _08004238: .4byte 0x00000280
 _0800423C: .4byte 0x08003B54
 _08004240: .4byte 0x08000FF4
 
-	.INCBIN "baserom.gba", 0x4244, 0x45FC-0x4244
+	.syntax unified
 

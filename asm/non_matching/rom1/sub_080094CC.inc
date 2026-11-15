@@ -41,6 +41,5 @@ _08009548: .4byte 0x080092A0
 _0800954C: .4byte 0x0814791C
 _08009550: .4byte 0x08009280
 
-    .INCBIN "baserom.gba", 0x9554, 0xB084-0x9554
+	.syntax unified
 
-@ to B084

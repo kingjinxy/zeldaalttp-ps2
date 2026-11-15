@@ -28,4 +28,5 @@ _0812CC54:
 	.4byte gUnknown_08198EC8
 	THUMB_FUNC_END sub_0812CC24
 
-	.INCBIN "baserom.gba", 0x12CC58, 0x12D32C-0x12CC58
+	.syntax unified
+

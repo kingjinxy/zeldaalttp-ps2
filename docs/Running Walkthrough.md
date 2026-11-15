@@ -129,3 +129,19 @@
 - Found 34 KB of code still raw `.INCBIN` (15 blobs, mostly rom1), including tmc's `ShowNPCDialogue` at
   `0x08009924`; 28 template-ready callers wait for it to be disassembled.
 - Totals: 1,349 of 7,780 functions in C; 513 of the 657 executed functions left (115 in fs_game).
+
+## Step 9: disassembling the code that was still .INCBIN (2026-11-15)
+
+- `tools/disasm_blob.py INC [--arm]`: entry points from the blob start, BLs anywhere in the ROM, and odd
+  (Thumb) pointers anywhere in the ROM, including data tables; recursive descent marks code, literals and
+  switch tables; objdump's instructions in unified syntax; the result is linked at its ROM address and
+  compared byte for byte, and any instruction that doesn't reproduce becomes a raw .2byte/.4byte. One .inc
+  per entry point.
+- Problems on the way: `THUMB_FUNC_START` aligns to 4, but this hand-written code has functions on 2-byte
+  boundaries (new `THUMB_FUNC_START_NOALIGN` macro); a switch table of odd pointers needed `label+1`;
+  the blob start sometimes already had a label; a blob in the middle of a file needs the text after it
+  moved behind the new chunks; and the original rom1 asm switches to `.syntax unified` at
+  `0x080007C4` for good, so the closing `.syntax` must restore the mode in effect, not assume divided.
+- Result: all 15 blobs (34 KB) disassembled, 264 new functions, `make compare` matches. The ARM IWRAM
+  code at `0x08008FA4` and the m4a block at `0x081339C4` included. `ShowNPCDialogue` is now
+  `sub_08009924`.

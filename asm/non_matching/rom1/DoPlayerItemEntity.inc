@@ -67,5 +67,5 @@ _080046A0: .4byte 0x08004244
 _080046A4: .4byte 0x08004633
 _080046A8: .4byte 0x00001000
 
-	.INCBIN "baserom.gba", 0x46AC, 0x74C0-0x46AC
+	.syntax unified
 
