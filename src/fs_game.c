@@ -288,7 +288,22 @@ void sub_08038D50(void)
     gUnknown_0201ED90_fs.unk14 = gUnknown_03006C80.unk0;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08038DB8.inc\"");
+
+u16 sub_08038DB8(void)
+{
+    u32 seconds = gUnknown_03006C80.unk1C / 60;
+    u8 i;
+    u32 unused;  // the frame is 12 bytes
+
+    i = 0;
+    for (i = 0; i <= 6; i++)
+    {
+        if (seconds < gUnknown_0842ACD8[i])
+            break;
+    }
+    return gUnknown_0842ACC4[gUnknown_03006C80.unk0][i];
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_08038E44.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08039288.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08039650.inc\"");
@@ -470,7 +485,24 @@ void DoPlayerEntity(struct Entity *this)
     gUnknown_08427C28[this->subtype](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0803DBD4.inc\"");
+
+// Player update: runs this player's entity with its own buttons (from the link) in gHeldKeys/gNewKeys.
+void sub_0803DBD4(struct Entity *this)
+{
+    u16 held = gHeldKeys;
+    u16 new = gNewKeys;
+
+    gUnknown_03006620 = this;
+    if (gMainState == 2 || gMainState == 12)
+    {
+        gHeldKeys = gUnknown_03000940[this->form];
+        gNewKeys = gUnknown_03005E10[this->form];
+    }
+    DoPlayerItemEntity(this);
+    gHeldKeys = held;
+    gNewKeys = new;
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0803DC68.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803DD0C.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803DD94.inc\"");
@@ -832,7 +864,7 @@ struct Entity *sub_0804C938(u8 subtype, u8 form, u8 parameter)
 
 void sub_0804C9C8(struct Entity *this)
 {
-    struct Entity *e = sub_0804C8A8(15, 2, 0);
+    struct Entity *e = CreateObject(15, 2, 0);
 
     if (e != NULL)
         sub_0803D3D0(this, e);
@@ -846,7 +878,7 @@ asm(".include \"asm/non_matching/fs_game/sub_0804CABC.inc\"");
 
 struct Entity *sub_0804CB38(struct Entity *this, u8 b, u8 c)
 {
-    struct Entity *e = sub_0804C8A8(15, b, c);
+    struct Entity *e = CreateObject(15, b, c);
 
     if (e != NULL)
     {
@@ -923,7 +955,9 @@ void sub_0804E364(struct Entity *a, struct Entity *b)
     b->z.HALF.HI = 0;
 }
 
+
 asm(".include \"asm/non_matching/fs_game/sub_0804E394.inc\"");
+
 asm(".include \"asm/non_matching/fs_game/sub_0804E434.inc\"");
 
 void sub_0804E4E4(struct Entity *this)
@@ -1465,9 +1499,9 @@ void sub_08056048(struct Entity *this)
     if (gSubState == 3)
     {
         if ((sub_0800099C() & 0x7F) == 0)
-            sub_0804C8A8(40, 9, (u8)(sub_0800099C() & 3));
+            CreateObject(40, 9, (u8)(sub_0800099C() & 3));
         if ((sub_0800099C() & 0xFF) == 0)
-            sub_0804C8A8(40, 10, 0);
+            CreateObject(40, 10, 0);
     }
 }
 
@@ -1534,8 +1568,8 @@ void sub_0805643C(struct Entity *this)
     if (--this->unk17 == 0)
     {
         sub_0800C0B0(2, 8);
-        sub_0804C8A8(40, 0, 0);
-        sub_0804C8A8(40, 3, 0);
+        CreateObject(40, 0, 0);
+        CreateObject(40, 3, 0);
         DeleteThisEntity(this);
         gSubState++;
         play_sound(0x20A);
@@ -1682,7 +1716,21 @@ void sub_080572AC(struct Entity *this)
     gUnknown_08140C44[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_080572D4.inc\"");
+
+void sub_080572D4(struct Entity *this)
+{
+    this->unk14++;
+    this->unk1C_0 = 1;
+    this->unk2E = 0;
+    if (this->form == 1)
+    {
+        this->y.HALF.HI -= 8;
+        this->unk17 = 40;
+    }
+    sub_08003870(this, 0);
+    sub_08003DFC(42);
+}
+
 
 void sub_08057368(struct Entity *this)
 {
@@ -1852,7 +1900,7 @@ void sub_080599A8(struct Entity *this, u32 n)
     struct Entity *e;
     const u16 *t = (const u16 *)&gUnknown_08429004[n];
 
-    e = sub_0804C8A8(58, (u8)n, 0);
+    e = CreateObject(58, (u8)n, 0);
     if (e != NULL)
     {
         e->unk54 = this;
@@ -2138,11 +2186,24 @@ void sub_0805DC6C(struct Entity *this)
     this->unk16 = 0xFF;
     sub_0805D7D0(this);
     sub_08003870(this, this->form);
-    this->unk58 = sub_0804C8A8(70, 20, 0);
+    this->unk58 = CreateObject(70, 20, 0);
     this->unk58->unk54 = this;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0805DD04.inc\"");
+
+void sub_0805DD04(struct Entity *this)
+{
+    GetNextFrame(this);
+    if (this->unk16 != gUnknown_02016D60_fs.unk8)
+    {
+        this->unk16 = gUnknown_02016D60_fs.unk8;
+        sub_0803D7E8(this, &gUnknown_08429278[gUnknown_02016D60_fs.unk8], 15);
+        this->unk58->unk1C_0 = 0;
+    }
+    if (sub_0803D8AC(this) && gUnknown_02016D60_fs.unk8 != 0 && gUnknown_02016D60_fs.unk8 != 4)
+        this->unk58->unk1C_0 = 1;
+}
+
 
 void sub_0805DD98(struct Entity *this)
 {
@@ -2270,7 +2331,7 @@ void sub_0805E86C(struct Entity *this)
 
     for (i = 0; i < gUnknown_03006C80.unk0; i++)
     {
-        e = sub_0804C8A8(70, 21, i);
+        e = CreateObject(70, 21, i);
         if (e != NULL)
             e->unk54 = this;
     }

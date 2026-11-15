@@ -37,7 +37,9 @@ typedef struct Entity {
     /* 0x29 */ u8 unk29;
     /* 0x2A */ u8 unk2A;
     /* 0x2B */ u8 direction : 8;  // 0-0x3F, bit 7 = not moving; index into gSineTable/8
-    /* 0x2C */ u8 filler2C[4];
+    /* 0x2C */ u8 filler2C[2];
+    /* 0x2E */ u8 unk2E : 8;
+    /* 0x2F */ u8 filler2F;
     /* 0x30 */ union SplitWord x;  // tmc names; HALF.HI is the pixel position
     /* 0x34 */ union SplitWord y;
     /* 0x38 */ union SplitWord z;
