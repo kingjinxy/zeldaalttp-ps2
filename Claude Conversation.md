@@ -1216,3 +1216,254 @@ All seven match. Committing, with updated counts:
 
 - tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; left=$(awk '{print $2}' $S/todo.txt | while read i; do [
 
+- tool `Bash`: python3 - <<'E' p="docs/Planning Doc.md"; s=open(p).read() a="- [ ] Executed functions first (`reach.py --coverage ... --list-executed`): 3 of 657 done\n" asser
+
+## Claude
+
+Committed as `4d5eefd`. Next batch:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep fs_game $S/todo.txt | awk '{print $2}' | while read
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/include/types.h
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/include/entity.h
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/include/entity.h
+
+- tool `Write`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/b4.c
+
+- tool `Bash`: for n in gUnknown_03000834 gUnknown_03000BF0 gUnknown_08427B84 gUnknown_084286E0 sub_08036770 DoManagerEntity; do printf "%s: " $n; grep -hn "\b$n\b" include/va
+
+- tool `Bash`: touch src/fs_game.c && make compare 2>&1 | grep -iE "warning" | sort | uniq -c | sort -rn | head -5
+
+## Claude
+
+Confirmed. Forward declarations at the top of `types.h` fix that:
+
+- tool `Bash`: sed -n 1,6p include/types.h
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/include/types.h
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 tools/declare.py 'extern void (*const gUnknown_0
+
+## Claude
+
+All five match, and the pointer warnings are gone. Committing:
+
+- tool `Bash`: sed -i 's/125 of 657 done (fs_game: 36 of 156)/130 of 657 done (fs_game: 41 of 156)/; s/- \[ \] fs_game: 122 of 915 done/- [ ] fs_game: 127 of 915 done/' "docs/
+
+## Claude
+
+I've decompiled 128 functions so far, and the rebuilt ROM still matches the original exactly. The work is in three commits on `ps2-port`: `f308bac`, `4d5eefd` and `3d19a3c`.
+
+**Progress:**
+- 127 of the 915 Four Swords game functions are done, plus one in file select.
+- Of the 657 functions that ran during the lobby test, 130 are done. That leaves 532, including 115 in the Four Swords code.
+- 7,266 functions are still in assembly overall.
+
+**How it went:**
+- 99 of the 127 were the same pattern: a function that looks up a handler in a table by one byte of an entity and calls it. I generated those from one template and checked every one by rebuilding.
+- The other 28 I wrote by hand. Almost all matched on the first try.
+- Matching the unoptimized Four Swords code depends on a few compiler habits. I noted them in the walkthrough, Step 7.
+
+**Tools:**
+- [tools/declare.py](tools/declare.py) turns the commented-out placeholders in the headers into real declarations.
+- [tools/first_diff.py](tools/first_diff.py) names the function at the first byte that differs when `make compare` fails.
+- Finding a function that came out the wrong size is quick, because each function's name is its original address.
+
+**Fixed along the way:** the headers used `struct Entity *` before that struct was declared. The compiler then treated each use as a separate type and only gave warnings. The structs are now declared up front, and the warnings are gone.
+
+**Skipped for now:**
+- `sub_08059A44` writes fields of a struct that the optimized code also uses. I'd need to check that changing that struct doesn't break those functions first.
+- `sub_0803F550` calls a raw address that has no function name yet.
+
+The remaining executed functions are larger, so progress per batch will slow down from here. Do you want me to keep going in batches and commit after each one, or switch to the recording mode first?
+
+## User
+
+Keep going in batches and commit after each one. Remember to look at the Minish Cap decomp to see if there are any exact matches for functions that we can just use.
+
+## Claude
+
+I'll save that as a standing instruction, then set up the tmc comparison.
+
+- tool `Write`: /home/alex/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/memory/decomp-check-tmc.md
+
+- tool `Bash`: cd /home/alex/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/memory && echo "- [Check tmc for matches](decomp-check-tmc.md) — reuse Minish Cap functions; 
+
+- tool `Bash`: sed -n 95,140p GBA.mk; grep -n "CINCLUDE\|GAME_VERSION\s*[:?]=\|REVISION\s*[:?]=\|GAME_LANGUAGE\s*[:?]=" GBA.mk Makefile | head
+
+- tool `Bash`: O=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/tmcobj; mkdir -p $O; A=/home/alex/Documents/zeldaalttp-ps
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/tools/tmc_match.py
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2 && S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; time python3 t
+
+## Claude
+
+A leftover line decodes the binary output as text, and there's a redundant first relocation loop. Removing both:
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/tools/tmc_match.py
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; time python3 tools/tmc_match.py $S/tmcobj > $S/tmc_match
+
+## Claude
+
+678 fingerprint matches, but many are tiny (a 2-byte empty function matches anything empty). The large ones are what count. Grouping by size and by tmc source file:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -v "^    " $S/tmc_matches.txt | sed -E 's/.*\((.*)\
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -v "^    " $S/tmc_matches.txt | grep "SteamOverlayM
+
+## Claude
+
+543 empty functions, none in the `-O0` code. Placing them all:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/place.py $S/b5.c && make -j8 compare 2>&1 | g
+
+## Claude
+
+All 543 match. Committing this batch:
+
+- tool `Bash`: git add -A asm/non_matching src tools/tmc_match.py && git commit -q -F - <<'E' && git log --oneline -1 Decompile 543 empty functions; add tools/tmc_match.py  to
+
+## Claude
+
+Committed as `85c11a1`. Now the real tmc matches and the 16-byte `npc_carpenter` pattern:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 tools/tmc_match.py $S/tmcobj > $S/tmc_matches.tx
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; arm-none-eabi-readelf -sW $S/tmcobj/src_gba_m4a.c.o | aw
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/reference && git clone -q --depth 1 --filter=blob:none --sparse https://github.com/pret/pokeruby && cd pokeruby && git sp
+
+- tool `Bash`: git sparse-checkout add '/include/*.h' '/include/gba' '/include/constants' 2>/dev/null; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2 && arm-none-eabi-readelf -sW zeldaalttp.elf | awk '$4=="FUNC"{print $2, $3, $8}' | sort | awk '$1>="08133900" && $1<"0813
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -A4 "^sub_080266B4 \|^sub_08035948 " $S/tmc_matches
+
+- tool `Bash`: cat asm/non_matching/*/sub_08035948.inc; grep -lE "bl _call_via_r1" asm/non_matching/*/*.inc | while read f; do [ $(grep -c . $f) -le 14 ] && echo $f; done | wc
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/include/entity.h
+
+- tool `Write`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/gen_dispatch2.py
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/gen_dispatch2.py $S/b6.c $S/b6.decl; grep -c 
+
+## Claude
+
+99 more, all in `file_select.c` and `game_select.c`. Both include `global.h`, but these need the full `Entity` definition. Adding `entity.h` where missing, then placing:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for f in src/file_select.c src/game_select.c; do grep -q
+
+## Claude
+
+All 99 match. With the new `Entity` field names I'll rerun the `-O0` generator in case more offsets now apply, then commit:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's/^FIELDS = {9: "subtype", 10: "form", 20: "unk1
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/tools/clusters.py
+
+- tool `Bash`: python3 tools/clusters.py --show 4 | head -120
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/tools/cluster_fill.py
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; printf 'DECL: void {B0}(u8);\nvoid {F}(u8 a)\n{{\n    {B
+
+## Claude
+
+The header line "Value" passes `isalnum`. Checking for an 8-digit hex address instead:
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/tools/cluster_fill.py
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 tools/cluster_fill.py sub_080E6F24 $S/t1.c $S/c1
+
+## Claude
+
+Three callees have no placeholder; checking how they're declared now. Also, the converted files (`rom3c.c`, `rom4.c` and others) don't include any headers yet, so they need `global.h`:
+
+- tool `Bash`: grep -n "GetNextFrame\|sub_080AA874\|sub_080C35E0" include/*.h src/*.c | grep -v "asm(" | head; for f in src/rom1.c src/rom2a.c src/rom3.c src/rom3b.c src/rom3c
+
+- tool `Bash`: sed -i '0,/^asm(".include \\"macro.inc\\"");/s//#include "global.h"\n#include "entity.h"\n\n&/' src/rom3.c && grep -c '#include "global.h"' src/rom3.c && grep -
+
+## Claude
+
+`first_diff` says "no difference", but the build printed neither OK nor FAILED, so it probably stopped early and `first_diff` compared a stale ROM. Looking at the build output:
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -v "^\s*$" | grep -iv "warning" | tail -8
+
+- tool `Bash`: sed -n 5689p include/functions.h; sed -n 985,996p src/rom3c.c; make -k -j8 compare 2>&1 | grep -B1 "previous declaration" | grep "conflicting" | head -20
+
+## Claude
+
+A group-1 template declared `sub_080E7A4C(u8)`, but I'd decompiled it earlier as an empty `(void)` function. Giving the empty function the `u8` parameter produces the same code:
+
+- tool `Bash`: sed -i 's/^void sub_080E7A4C(void)$/void sub_080E7A4C(u8 a)/' src/rom3c.c && make -k -j8 compare 2>&1 | grep -E "conflicting|error|OK|FAIL" | head; python3 tool
+
+## Claude
+
+It builds now, but something shrank by 0xE8 bytes, which shifts every pointer to data after it. Finding the first function that moved:
+
+- tool `Bash`: arm-none-eabi-nm -n zeldaalttp.elf | awk '$3 ~ /^sub_[0-9A-F]{8}$/ { a=toupper($1); n=substr($3,5); if (a != n) { print "first moved:", $3, "now at", $1; print 
+
+- tool `Bash`: sed -n '/^sub_080D36DC:/,/^.Lfe/p' src/rom3c.s | grep -v "^\s*\.\(size\|type\|globl\|thumb\)"; cat /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6
+
+- tool `Bash`: grep -n "struct UnknownStruct7" -A30 include/types.h | head -40
+
+- tool `Bash`: awk 'NR>=110 && NR<=400' include/types.h | grep -n "^};" | head -1; sed -n '/^struct UnknownStruct7$/,/^};/p' include/types.h | tail -15; grep -n "static_assert
+
+- tool `Bash`: sed -n '/^struct UnknownStruct7$/,/^};/p' include/types.h | grep -n "filler\w*\[" | awk -F'[][]' '{print}' | sed -n '1,60p' | grep -i "filler9\|fillerA\|fillerB
+
+- tool `Bash`: sed -n '/^struct UnknownStruct7$/,/^};/p' include/types.h | sed -n 96,132p
+
+## Claude
+
+`0x1052` falls inside `unk1042[0x20]`. Its neighbours are mostly 0x10-byte arrays, so it's probably two arrays. Checking how `unk1042` is used before splitting it:
+
+- tool `Bash`: grep -rn "unk1042" src include | grep -v "^include/types.h" | head
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -o "a + 0x[0-9A-F]*\]\|&\w*)" $S/c3.c | sort | uniq
+
+- tool `Bash`: grep -rn "unkF62" src include | grep -v "^include/types.h" | head -5; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e
+
+## Claude
+
+Undone; the header includes and declarations stay. Splitting the two arrays:
+
+- tool `Bash`: sed -i 's/^    u8 unkF62\[0x30\];$/    u8 unkF62[0x10];\n    u8 unkF72[0x10];\n    u8 unkF82[0x10];/; s/^    u8 unk1042\[0x20\];$/    u8 unk1042[0x10];\n    u8 
+
+## Claude
+
+All 144 match. Committing this batch with the two cluster tools:
+
+- tool `Bash`: git add -A asm/non_matching src include tools/clusters.py tools/cluster_fill.py && git commit -q -F - <<'E' && git log --oneline -1 Decompile 144 functions from
+
+## Claude
+
+Committed as `edead7f`. The next group (28 functions in `file_select`) calls `0x08009924`, tmc's `ShowNPCDialogue`, which has no symbol here. Looking at that address in the asm:
+
+- tool `Bash`: grep -rn "08009924" asm/non_matching/rom1/ | head -5; f=$(grep -rln "0x08009924\b\|_08009924:" asm/non_matching/rom1/ | head -1); grep -n -B3 -A12 "08009924" $f
+
+- tool `Bash`: arm-none-eabi-nm -n zeldaalttp.elf | awk '$1>="080098f0" && $1<="08009940"'; grep -rln "sub_080098\|sub_080099" asm/non_matching/rom1/ | head; ls asm/non_matchi
+
+## Claude
+
+`0x08009924` only exists as an absolute address; no symbol covers it. Checking which object file contains it:
+
+- tool `Bash`: grep -E "^ \.text\s+0x0800[89ab]" zeldaalttp.map | head; arm-none-eabi-nm -n zeldaalttp.elf | awk '$1>="08009400" && $1<="0800b100" && $2 ~ /[Tt]/' | head -20
+
+- tool `Bash`: arm-none-eabi-nm -n zeldaalttp.elf | awk '$1>="080094cc" && $1<="0800b090" && $2 ~ /[TtD]/' | awk '{print $1, $3}' | awk 'NR==1 || /T|sub_|[A-Z][a-z]/' | grep -
+
+- tool `Bash`: grep -rhi "incbin \"baserom.gba\"" asm/non_matching src asm/*.s asm/lttp/*.s 2>/dev/null | python3 -c " import sys,re tot=0 for l in sys.stdin:     m=re.search(
+
+- tool `Bash`: python3 - <<'E' p="docs/Planning Doc.md"; s=open(p).read() a="- [ ] Library code first" assert a in s s=s.replace(a,"- [ ] Disassemble the code still `.INCBIN`:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; printf 'void {F}(struct Entity *this)\n{{\n}}\n' > $S/t4
+
+## Claude
+
+All 49 match on the first try. Committing:
+
+- tool `Bash`: git add -A asm/non_matching src include docs && git commit -q -F - <<'E' && git log --oneline -1 Decompile 49 functions from three more code-shape groups  Empty
+

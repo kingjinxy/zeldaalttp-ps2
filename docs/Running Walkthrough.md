@@ -110,3 +110,22 @@
   `types.h`: without it, each `struct Entity *` in `variables.h` was a new type scoped to that parameter
   list (agbcc warned "incompatible pointer type"). `struct Manager` (entity.h) for `DoManagerEntity`.
   Skipped: `sub_0803F550` calls a bare address (`bl 0x0800238C`) with no symbol.
+
+## Step 8: tmc matching and code-shape groups (2026-11-15)
+
+- `tools/tmc_match.py`: compiles all 619 tmc C files with our agbcc (all compile) and compares function
+  code with BL targets and pc-relative literal words masked. 678 matches, but only 20 of 32+ bytes: the
+  engine code diverged. Real matches are library code (m4a sound driver, EEPROM, one save checksum) and a
+  few tiny helpers. The call/literal pairs name some of our functions: `0x08003594` GravityUpdate,
+  `0x0803CC20` ProcessMovement2, `0x08009924` ShowNPCDialogue.
+- m4a: our function sizes line up with pokeruby's m4a.c (2002) better than tmc's (2004), but neither
+  fully; Four Swords has an in-between version. Left in asm; the port can use pret's m4a C.
+- 543 empty functions (`bx lr`) and 99 -O2 entity dispatchers decompiled from templates.
+- `tools/clusters.py` groups remaining functions by masked code; `tools/cluster_fill.py` fills one C
+  template per group with each member's callees and literals. 193 functions from 6 groups. Lessons:
+  agbcc folds `&gRam + const` into one literal unless it's a struct field access (`gRam.unk1052[a]`), so
+  `gRam` arrays got split to the offsets the code uses; a `u8` field read must stay `ldrb` (cast `(u8)`
+  for the `s8` field `unk1062`).
+- Found 34 KB of code still raw `.INCBIN` (15 blobs, mostly rom1), including tmc's `ShowNPCDialogue` at
+  `0x08009924`; 28 template-ready callers wait for it to be disassembled.
+- Totals: 1,349 of 7,780 functions in C; 513 of the 657 executed functions left (115 in fs_game).
