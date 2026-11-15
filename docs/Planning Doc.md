@@ -46,7 +46,8 @@ player, linked in memory instead of by cable, each drawn into its own part of th
       Decompiling = replacing that line with C. All game asm converted except crt0, syscall, veneers, LttP bee.
 - [x] Four Swords game code `0x0803668C`–`0x080668E4` (915 functions) is `-O0` (frame pointer in r7); it is
       `src/fs_game.c`, built without `-O2`. Four `-O2` functions inside it need their own file when decompiled.
-- [ ] Executed functions first (`reach.py --coverage ... --list-executed`): 3 of 657 done
+- [ ] Executed functions first (`reach.py --coverage ... --list-executed`): 125 of 657 done (fs_game: 36 of 156)
+- [ ] fs_game: 122 of 915 done
 - [ ] Library code first, where C already exists elsewhere: BIOS calls (`syscall.s`), m4a sound
       driver, EEPROM, link/SIO (tmc and pret decomps).
 - [ ] Shared engine code (tmc as reference)

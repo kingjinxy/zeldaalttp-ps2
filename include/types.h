@@ -467,12 +467,22 @@ struct Struct03000BE0
 
 struct Struct03000FC0
 {
-    u8 filler0[3];
-    u8 unk3;
+    u8 unk0;
+    u8 unk1;
+    u8 unk2;
+    u8 unk3 : 8;  // bitfield: -O0 code clears it with and #0
     u8 filler4[4];
     u32 unk8;
-    u8 fillerC[4];
+    u8 fillerC[2];
+    u8 unkE : 8;
+    u8 fillerF;
 };  // size = 16 (0x10), up to gUnknown_03000FD0
+
+struct Struct03006CA8
+{
+    u32 unk0;
+    u32 unk4;
+};
 
 struct Struct0200B250
 {

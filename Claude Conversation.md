@@ -1102,3 +1102,117 @@ Shall I commit this and then keep working through the executed functions? I'd go
 
 Yes, commit and keep working
 
+- tool `Bash`: D=~/.claude/projects/-home-alex-Documents-zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad
+
+- tool `Bash`: git commit -q -F - <<'E' && git log --oneline -1 Split game asm into one .inc per function; -O0 Four Swords code in fs_game.c  - tools/asm_split.py: asm/X.s -> 
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/tools/first_diff.py
+
+- tool `Bash`: python3 tools/first_diff.py; touch src/fs_game.c; time make -j8 compare 2>&1 | tail -1; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep fs_game $S/todo.txt | head -14 | awk '{print $2}' |
+
+## Claude
+
+These need the types of the globals they touch. Checking what `global.h` provides and how these globals are declared:
+
+- tool `Bash`: cat include/global.h | grep -n "include"; for v in gUnknown_03000FC0 gUnknown_03005050 gSubState gUnknown_03000FD0 gUnknown_0202E1E4 gUnknown_08427BCC gUnknown_
+
+- tool `Bash`: grep -rn "struct Entity\b\|} Entity;" include | head -3; grep -rn "DoPlayerEntity\|DoPlayerItemEntity\|UpdateAllEntities" include src/*.c | grep -v "asm(" | hea
+
+- tool `Bash`: sed -n 1,60p include/entity.h; grep -n "entity.h" include/*.h src/*.c | head
+
+- tool `Bash`: grep -n "sub_08036704\|sub_0800C4E8\|sub_0800C658\b\|gUnknown_03000FC0\|gUnknown_03000FD0\|gUnknown_0202E1E4" src/*.c src/lttp/*.c | grep -v "asm(" | head; grep
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/tools/declare.py
+
+## Claude
+
+The name extraction is more complicated than it needs to be. Simpler: try each identifier in the declaration until one has a placeholder.
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/tools/declare.py
+
+- tool `Bash`: python3 tools/declare.py \  'extern struct Struct03000FC0 gUnknown_03000FC0;' \  'extern u8 gUnknown_03000FD0[20];' \  'extern u32 gUnknown_0202E1E4;' \  'exter
+
+## Claude
+
+All 14 declared. `Struct03000FC0` still needs a definition. Checking where the existing `Struct0300xxxx` types live:
+
+- tool `Bash`: grep -rn "^struct Struct03000520\|^struct Struct03000BE0" include | head; grep -n "gUnknown_03000FC0" include/variables.h
+
+- tool `Bash`: sed -n 440,475p include/types.h; tail -5 include/types.h
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/include/types.h
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/include/entity.h
+
+- tool `Write`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/place.py
+
+- tool `Write`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/b1.c
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's|^asm(".INCLUDE \\"macro.inc\\"");|#include "gl
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's/^import glob, json, os, re, sys$/import glob, 
+
+## Claude
+
+All 14 match on the first try, so 17 of the executed functions are done. Next batch of `fs_game` functions:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep fs_game $S/todo.txt | awk '{print $2}' | while read
+
+- tool `Write`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/gen_dispatch.py
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/gen_dispatch.py $S/b2.c $S/b2.decl && tr '\n'
+
+## Claude
+
+89 match, plus 10 more that use byte `+21` (`0x15`). Adding `unk15` to `Entity` and regenerating, declaring only the tables that are new:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's|    /\* 0x15 \*/ u8 filler15\[0xB\];|    /* 0x
+
+## Claude
+
+All 99 match. That's 116 functions decompiled so far, nearly all in the Four Swords code. Committing this batch:
+
+- tool `Bash`: git add -A asm/non_matching src include tools/first_diff.py tools/declare.py && git status --short | grep -v "^D  asm/non_matching" ; git status --short | grep 
+
+## Claude
+
+Committed as `f308bac`. Continuing with the remaining executed `fs_game` functions, smallest first:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep fs_game $S/todo.txt | awk '{print $2}' | while read
+
+- tool `Bash`: grep -n "CpuSet\b" include/*.h | head -3; for n in gUnknown_0202A7E0 gUnknown_08427BA0 gUnknown_0201F020 gUnknown_0200B320 gUnknown_03006CA8 sub_08037D64 sub_08
+
+- tool `Bash`: grep -rn "CpuSet\|CpuFastSet" include/gba/*.h | head -5; grep -n "gUnknown_0201F020" src/*.c | grep -v asm | head -3; grep -n "struct UnknownStruct3" -A6 includ
+
+- tool `Bash`: sed -n 1,32p include/gba/macro.h
+
+## Claude
+
+Writing the batch (seven functions; `sub_08059A44` waits):
+
+- tool `Bash`: python3 tools/declare.py 'extern u8 gUnknown_0202A7E0[];' 'extern void (*const gUnknown_08427BA0[])(void);' 'extern u8 gUnknown_0200B320[];' 'extern struct Stru
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/include/types.h
+
+- tool `Write`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/b3.c
+
+- tool `Bash`: grep -n "bool32" include/*.h include/gba/*.h | head -2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; 
+
+- tool `Bash`: arm-none-eabi-nm -n zeldaalttp.elf | awk '$3 ~ /^sub_[0-9A-F]{8}$/ { a=toupper($1); n=substr($3,5); if (a != n) { print "first moved:", $3, "now at", $1; print 
+
+## Claude
+
+`sub_08036DEC` is 4 bytes short. Comparing with what agbcc produced (`src/fs_game.s`):
+
+- tool `Bash`: sed -n '/^sub_08036DEC:/,/^.Lfe/p' src/fs_game.s | grep -v "^\s*\.\|^\.L"
+
+- tool `Bash`: python3 - <<'E' p="src/fs_game.c"; s=open(p).read() a="""    struct Struct03006CA8 *p = &gUnknown_03006CA8[index];      p->unk0 = a;     p->unk4 = b;""" assert 
+
+## Claude
+
+All seven match. Committing, with updated counts:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; left=$(awk '{print $2}' $S/todo.txt | while read i; do [
+

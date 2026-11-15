@@ -91,3 +91,18 @@
   Four functions inside it are `-O2` (`sub_08039288`, `sub_0803E518`, `sub_0804721C`, `sub_0804BD9C`).
 - First decompiled functions, all matching: `sub_08036760`, `sub_080368C0` (fs_game, -O0),
   `sub_08011408` (file_select, -O2).
+
+## Step 7: first decomp batches (2026-11-15)
+
+- 122 fs_game functions matching, plus `sub_08011408` (file_select). 99 of them are entity dispatchers
+  (`table[this->field](this)`) generated from one exact template; the rest by hand.
+- Helpers: `tools/declare.py` turns the `//extern gUnknown_X;` / `//sub_X();` placeholders in
+  `variables.h`/`functions.h` into declarations; `tools/first_diff.py` names the symbol at the first
+  differing byte. When code size changes, the first `sub_XXXXXXXX` no longer at its own address (names
+  encode the original address) points at the function that grew or shrank.
+- -O0 idioms seen so far: a byte cleared with `ldrb; and #0; strb` is an 8-bit bitfield write
+  (`u8 x : 8`); `add r0, r1, #4` before a store is `p[1]` on a `u32 *`, not a struct field;
+  `CpuSet` with control `0x01000000`/`0x05000000` bits is `CpuFill16`/`CpuFill32`.
+- Left for later: `sub_08059A44` writes `gUnknown_03000520` fields as bitfields, but that struct is shared
+  with -O2 C code; needs checking that a bitfield doesn't change those matches.
+- Remaining: 532 of the executed functions (120 in fs_game), 7,271 asm functions overall.
