@@ -529,7 +529,7 @@ extern struct Struct0200B250 gUnknown_0200B250[];
 //extern gUnknown_0200B274;
 extern u32 gUnknown_0200B310;
 //extern gUnknown_0200B314;
-extern u8 gUnknown_0200B320[];
+extern struct Struct0200B320 gUnknown_0200B320;
 //extern gUnknown_0200B324;
 //extern gUnknown_0200BB00;
 //extern gUnknown_0200BB50;
@@ -1282,7 +1282,7 @@ extern void *gUnknown_03007FFC;  // interrupt callback?
 //extern gUnknown_08135B75;
 //extern gUnknown_08135C15;
 //extern gUnknown_08137B10;
-//extern gUnknown_08137B90;
+extern const u16 gUnknown_08137B90[];
 extern const u16 gUnknown_08137B98[];
 extern const u16 gUnknown_08137C58[];
 //extern gUnknown_08137D18;

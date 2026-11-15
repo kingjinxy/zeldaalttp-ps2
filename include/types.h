@@ -527,6 +527,12 @@ struct Struct03006C80
     struct Entity *unk70[1];  // length unknown; indexed by Entity.unk18
 };
 
+struct Struct0200B320
+{
+    u8 filler0[0x2004];
+    u8 unk2004[0x9000];
+};  // size = 0xB004 (sub_0803A2E8 clears it)
+
 struct Struct03006A30
 {
     u8 filler0[8];

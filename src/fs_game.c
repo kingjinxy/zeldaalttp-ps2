@@ -223,7 +223,7 @@ asm(".include \"asm/non_matching/fs_game/sub_0803A20C.inc\"");
 void sub_0803A2E8(void)
 {
     CpuFill32(0, &gUnknown_0201F020, 0xB004);
-    CpuFill32(0, gUnknown_0200B320, 0xB004);
+    CpuFill32(0, &gUnknown_0200B320, 0xB004);
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_0803A320.inc\"");
@@ -788,7 +788,21 @@ void sub_0805002C(struct Entity *this)
 
 asm(".include \"asm/non_matching/fs_game/sub_08050054.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_080500E0.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_08050160.inc\"");
+
+void sub_08050160(struct Entity *this)
+{
+    this->unk17--;
+    if (this->unk17 == 0)
+    {
+        this->unk14 = 3;
+    }
+    else if (this->unk17 == 12)
+    {
+        sub_08050444(this);
+        sub_08003E10(this, 17);
+    }
+}
+
 
 void sub_080501C0(struct Entity *this)
 {
@@ -797,7 +811,16 @@ void sub_080501C0(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_080501DC.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_08050338.inc\"");
+
+bool32 sub_08050338(struct Entity *this)
+{
+    u16 pos = this->unk78.h + gUnknown_08137B90[(u8)(this->parameter & 3)];
+
+    if (gUnknown_0200B320.unk2004[pos] != 24)
+        return TRUE;
+    return FALSE;
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0805039C.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08050444.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08050B50.inc\"");
@@ -996,7 +1019,7 @@ asm(".include \"asm/non_matching/fs_game/sub_08053900.inc\"");
 
 void sub_08053988(struct Entity *this)
 {
-    if (this->unk78 != *this->unk7C.p)
+    if (this->unk78.h != *this->unk7C.p)
     {
         this->unk14++;
         this->unk17 = 15;
@@ -1192,7 +1215,20 @@ void sub_080560A0(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_080560C8.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_08056178.inc\"");
+
+void sub_08056178(struct Entity *this)
+{
+    sub_0803CC20(this);
+    if (this->y.HALF.HI <= 80)
+    {
+        this->y.HALF.HI = 80;
+        this->unk17 = 30;
+        this->unk14++;
+        sub_0800C0B0(2, 16);
+        play_sound(0x208);
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_080561EC.inc\"");
 
 void sub_08056260(struct Entity *this)
@@ -1303,7 +1339,19 @@ void sub_08057048(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_08057070.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_080571BC.inc\"");
+
+void sub_080571BC(struct Entity *this)
+{
+    GetNextFrame(this);
+    if ((u8)(this->unk29 & 0x80))
+    {
+        sub_08003870(this, 0);
+        this->frameTimer = (sub_0800099C() & 0xF0) + 1;
+    }
+    if (*this->unk78.p != this->unk7C.h)
+        DeleteThisEntity(this);
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0805722C.inc\"");
 
 void sub_080572AC(struct Entity *this)
@@ -1457,7 +1505,16 @@ void sub_080598D0(struct Entity *this)
     gUnknown_08428FFC[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_080598F8.inc\"");
+
+void sub_080598F8(struct Entity *this)
+{
+    this->unk1C_0 = 1;
+    this->unk1D_6 = 3;
+    this->unk14++;
+    this->unk17 = 7;
+    sub_08003870(this, 0);
+}
+
 
 void sub_08059960(struct Entity *this)
 {
@@ -1577,8 +1634,8 @@ asm(".include \"asm/non_matching/fs_game/sub_0805D3DC.inc\"");
 
 void sub_0805D4B0(struct Entity *this)
 {
-    sub_08008F48(this->unk78, this->unk7C.h, this->unk50);
-    sub_08008F3C(this->unk7A, this->unk7C.h, this->unk50);
+    sub_08008F48(this->unk78.h, this->unk7C.h, this->unk50);
+    sub_08008F3C(this->unk78.s.unk7A, this->unk7C.h, this->unk50);
 }
 
 
@@ -1739,7 +1796,23 @@ void sub_0805E608(struct Entity *this)
     gUnknown_0842930C[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0805E630.inc\"");
+
+void sub_0805E630(struct Entity *this)
+{
+    if (this->unk18 == 0)
+    {
+        this->unk1C_0 = 1;
+    }
+    else
+    {
+        this->unk18--;
+        return;
+    }
+    GetNextFrame(this);
+    if (gUnknown_02016D60_fs.unk8 != this->parameter)
+        DeleteThisEntity(this);
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0805E698.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0805E780.inc\"");
 

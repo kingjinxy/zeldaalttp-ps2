@@ -33,7 +33,7 @@ typedef struct Entity {
     /* 0x22 */ u8 lastFrameIdx;
     /* 0x23 */ u8 unk23;
     /* 0x24 */ void* frame;
-    /* 0x28 */ u8 frameTimer;
+    /* 0x28 */ u8 frameTimer : 8;
     /* 0x29 */ u8 unk29;
     /* 0x2A */ u8 unk2A;
     /* 0x2B */ u8 filler2B[5];
@@ -52,9 +52,15 @@ typedef struct Entity {
     /* 0x5F */ u8 filler5F;
     /* 0x60 */ u32 unk60;
     /* 0x64 */ u8 filler64[0x14];
-    /* 0x78 */ u16 unk78;
-    /* 0x7A */ u8 unk7A;
-    /* 0x7B */ u8 filler7B;
+    /* 0x78 */ union {
+        u16 h;
+        u16 *p;
+        struct {
+            u16 h;
+            u8 unk7A;
+            u8 filler7B;
+        } s;
+    } unk78;  // halfword + byte for some entity kinds, a pointer for others
     /* 0x7C */ union {
         u16 h;
         u16 *p;
