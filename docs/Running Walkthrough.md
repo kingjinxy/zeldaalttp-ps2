@@ -178,3 +178,10 @@
   entries at +0x28 indexed by Entity.form). A callee's return type shows in the caller: `lsl r2, r0, #24;
   lsr r1, r2, #24` right after the call means the callee returns u8. Executed fs_game functions still asm
   (lobby + session 1): 205; fs_game: 732; all asm: 6621.
+- More batches (all matching): CreateObject (`sub_0804C8A8`, tmc name) and a sibling, ProcessMovement2
+  (names Entity `speed` 0x0C and `direction` 0x2B), DoObjectEntity, the 8.8 fixed-point helpers, list
+  setup at `gUnknown_03005060`. Lessons: a `u16 *` indexed `t[1]` shows as an add before the load (struct
+  fields don't); a callee without a prototype gets no argument conversion, so the original's casts are
+  explicit; unoptimized agbcc allocates unused locals, so a too-small frame means a missing local;
+  `x &= 0` and an 8-bit bitfield store of 0 compile the same. Overlay areas used differently by Four
+  Swords get ldscript aliases (`gUnknown_0201ED90_fs`). Executed fs_game left: 151; fs_game: 678; all: 6567.

@@ -544,6 +544,14 @@ struct Struct0200B320
     u8 unk2004[0x9000];
 };  // size = 0xB004 (sub_0803A2E8 clears it)
 
+struct Struct03005060
+{
+    struct Struct03005060 *unk0;  // list head: prev/next point to itself when empty
+    struct Struct03005060 *unk4;
+    struct Entity *unk8;
+    u8 fillerC[0x8F4];
+};  // size = 0x900
+
 struct Struct03000450
 {
     u8 filler0[0x18];
