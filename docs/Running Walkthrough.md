@@ -145,3 +145,16 @@
 - Result: all 15 blobs (34 KB) disassembled, 249 new functions, `make compare` matches. The ARM IWRAM
   code at `0x08008FA4` and the m4a block at `0x081339C4` included. `ShowNPCDialogue` is now
   `sub_08009924`.
+
+## Step 10: hand-decompiling executed Four Swords functions (2026-11-15)
+
+- 17 more fs_game functions by hand, all matching on the first or second try. fs_game executed left: 98;
+  fs_game left: 746; all asm left: 6635.
+- Entity reshaped from what the -O0 code accesses: `x`/`y`/`z` at 0x30/0x34/0x38 as tmc's
+  `union SplitWord` (the earlier `unk32` was `x.HALF.HI`), `unkC` (s32), `unk18`, `unk1E` nibbles,
+  `unk50`, `unk52`, `unk54` (Entity *), `unk5E`. The 2-bit field at 0x1C needs a `u32` container:
+  agbcc reads u32 bitfields with `lsl #30; lsr #30`, u8 ones with `and #3` plus a u8 truncation.
+- `gUnknown_02016D60` is an overlay area: the menu code reads s16 values at +0x20, Four Swords a pointer.
+  Four Swords uses an ldscript alias, `gUnknown_02016D60_fs`, with its own struct.
+- Found: the Makefile didn't rebuild C files when a header changed (no SCANINC), so a header edit could
+  leave a stale object and hide a mismatch. Every C object now depends on all headers.

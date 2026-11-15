@@ -18,13 +18,14 @@ typedef struct Entity {
     /* 0x15 */ u8 unk15 : 8;
     /* 0x16 */ u8 filler16;
     /* 0x17 */ u8 unk17 : 8;
-    /* 0x18 */ u8 unk18;
+    /* 0x18 */ u8 unk18 : 8;
     /* 0x19 */ u8 filler19[3];
     /* 0x1C */ u32 unk1C_0 : 2;  // u32: read with lsl #30 / lsr #30
     /*      */ u32 unk1C_2 : 6;
     /* 0x1D */ u8 unk1D_0 : 6;
     /*      */ u8 unk1D_6 : 2;
-    /* 0x1E */ u8 filler1E;
+    /* 0x1E */ u8 unk1E_0 : 4;
+    /*      */ u8 unk1E_4 : 4;
     /* 0x1F */ u8 unk1F_0 : 6;
     /*      */ u8 unk1F_6 : 2;
     /* 0x20 */ u8 unk20;
@@ -35,16 +36,14 @@ typedef struct Entity {
     /* 0x28 */ u8 frameTimer;
     /* 0x29 */ u8 filler29;
     /* 0x2A */ u8 unk2A;
-    /* 0x2B */ u8 filler2B[7];
-    /* 0x32 */ s16 unk32 : 16;
-    /* 0x34 */ union {
-        s32 w;
-        struct {
-            s16 unk34 : 16;
-            s16 unk36 : 16;
-        } h;
-    } unk34;  // used as one word by some entity kinds, as two halfwords by others
-    /* 0x38 */ u8 filler38[0x1C];
+    /* 0x2B */ u8 filler2B[5];
+    /* 0x30 */ union SplitWord x;  // tmc names; HALF.HI is the pixel position
+    /* 0x34 */ union SplitWord y;
+    /* 0x38 */ union SplitWord z;
+    /* 0x3C */ u8 filler3C[0x14];
+    /* 0x50 */ u16 unk50 : 16;
+    /* 0x52 */ u8 unk52 : 8;
+    /* 0x53 */ u8 filler53;
     /* 0x54 */ struct Entity* unk54;
     /* 0x58 */ u8 filler58[6];
     /* 0x5E */ u8 unk5E_0 : 2;

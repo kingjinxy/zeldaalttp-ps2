@@ -1,3 +1,21 @@
+// 32-bit value whose halves are also used alone (tmc). The halves are written as 16-bit bitfields by -O0 code.
+union SplitWord {
+    s32 WORD;
+    struct {
+        s16 LO : 16;
+        s16 HI : 16;
+    } HALF;
+};
+
+// Four Swords view of the overlay area at gUnknown_02016D60 (ldscript alias gUnknown_02016D60_fs)
+struct Struct02016D60_fs
+{
+    u8 filler0[8];
+    u8 unk8;
+    u8 filler9[0x17];
+    struct Entity *unk20;
+};
+
 // Defined in entity.h; declared here so variables.h and functions.h can use pointers to them
 struct Entity;
 struct Manager;
@@ -477,7 +495,7 @@ struct Struct03000FC0
     // ": 8" / ": 16" bitfields: -O0 code clears them with ldrb/and #0/strb
     u8 unk0 : 8;
     u8 unk1 : 8;
-    u8 unk2;
+    u8 unk2 : 8;
     u8 unk3 : 8;
     u32 unk4;
     u32 unk8;

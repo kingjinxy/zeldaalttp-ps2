@@ -697,6 +697,7 @@ extern u16 gPaletteBuf2[];
 //extern gUnknown_02016C50;
 //extern gUnknown_02016D50;
 extern struct Struct0201ED90 gUnknown_02016D60;
+extern struct Struct02016D60_fs gUnknown_02016D60_fs;
 //extern gUnknown_02016D78;
 //extern gUnknown_02016D90;
 //extern gUnknown_02018000;

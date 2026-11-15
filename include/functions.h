@@ -6,6 +6,7 @@ void sub_08009924(struct Entity *, const void *);  // tmc: ShowNPCDialogue
 void sub_080098A0(struct Entity *, const void *);
 u32 sub_0800099C(void);
 void sub_0800238C(struct Entity *, struct Entity *);
+void sub_08008DD8(struct Entity *);
 
 // rom1.s
 //sub_08000358();
