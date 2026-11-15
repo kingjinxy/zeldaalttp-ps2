@@ -54,7 +54,7 @@ typedef struct Entity {
     /* 0x60 */ u32 unk60;
     /* 0x64 */ u8 filler64[0x14];
     /* 0x78 */ union {
-        u16 h;
+        u16 h : 16;  // map tile index for some kinds: (x - scroll x) >> 4 | ((y - scroll y) >> 4) << 6
         u16 *p;
         struct {
             u16 h;

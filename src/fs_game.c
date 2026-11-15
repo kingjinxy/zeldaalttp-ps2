@@ -431,7 +431,18 @@ asm(".include \"asm/non_matching/fs_game/sub_0803DD0C.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803DD94.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803DE94.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803DF84.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_0803DFC8.inc\"");
+
+void sub_0803DFC8(void)
+{
+    u8 i;
+
+    for (i = 0; i < gUnknown_03006C80.unk0; i++)
+    {
+        gUnknown_03006A30[i].unk28->unk14 = 20;
+        gUnknown_03006A30[i].unk28->unk15 = 0;
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0803E048.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803E114.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803E518.inc\"");
@@ -889,7 +900,17 @@ void sub_0805002C(struct Entity *this)
     gUnknown_0813FEBC[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08050054.inc\"");
+
+void sub_08050054(struct Entity *this)
+{
+    this->unk14 = 1;
+    this->unk17 = 24;
+    this->unk60 = sub_08013D20(this->form);
+    this->unk78.h = ((this->x.HALF.HI - gUnknown_03000450.unk18) >> 4)
+                  | (((this->y.HALF.HI - gUnknown_03000450.unk1A) >> 4) << 6);
+    sub_0805039C(this);
+}
+
 
 void sub_080500E0(struct Entity *this)
 {
@@ -1142,7 +1163,18 @@ void sub_080538D8(struct Entity *this)
     gUnknown_08140984[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08053900.inc\"");
+
+void sub_08053900(struct Entity *this)
+{
+    u16 *map;
+
+    this->unk14++;
+    map = sub_08015DC0(this->unk50);
+    this->unk7C.p = &map[(((this->x.HALF.HI - gUnknown_03000450.unk18) >> 4)
+                          | (((this->y.HALF.HI - gUnknown_03000450.unk1A) >> 4) << 6)) + 2];
+    this->unk78.h = *this->unk7C.p;
+}
+
 
 void sub_08053988(struct Entity *this)
 {
@@ -1715,7 +1747,26 @@ void sub_08059960(struct Entity *this)
         DeleteThisEntity(this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_080599A8.inc\"");
+
+void sub_080599A8(struct Entity *this, u32 n)
+{
+    struct Entity *e;
+    const u16 *t = (const u16 *)&gUnknown_08429004[n];
+
+    e = sub_0804C8A8(58, (u8)n, 0);
+    if (e != NULL)
+    {
+        e->unk54 = this;
+        gUnknown_0202E1E4 = 0;
+    }
+    else
+    {
+        gUnknown_0202E1E4 = 1;
+    }
+    gUnknown_03000520.unk4 = 0;
+    sub_0800C0B0((u8)t[0], (u8)t[1]);
+}
+
 
 u32 sub_08059A2C(void)
 {

@@ -482,7 +482,7 @@ struct Struct03000520
     u8 unk1;
     u8 unk2;
     u8 unk3;
-    u8 unk4;
+    u8 unk4 : 8;  // written as a bitfield by -O0 code
 	u8 filler5[2];
 	u8 unk7;
     s16 unk8;
@@ -544,13 +544,29 @@ struct Struct0200B320
     u8 unk2004[0x9000];
 };  // size = 0xB004 (sub_0803A2E8 clears it)
 
+struct Struct03000450
+{
+    u8 filler0[0x18];
+    u16 unk18;  // scroll x? subtracted from entity x before >> 4 (tile)
+    u16 unk1A;  // scroll y?
+};
+
+struct Struct08429004
+{
+    u16 unk0;
+    u16 unk2;
+    u8 filler4[0x10];
+};  // size = 0x14
+
 struct Struct03006A30
 {
     u8 filler0[8];
     u16 unk8 : 16;
     u8 fillerA[0x12];
     u8 unk1C;
-    u8 filler1D[0x73];
+    u8 filler1D[0xB];
+    struct Entity *unk28;
+    u8 filler2C[0x64];
 };  // size = 0x90
 
 struct Struct03006CA8
