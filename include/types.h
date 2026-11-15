@@ -465,6 +465,15 @@ struct Struct03000BE0
     u16 unkE;
 };
 
+struct Struct03000FC0
+{
+    u8 filler0[3];
+    u8 unk3;
+    u8 filler4[4];
+    u32 unk8;
+    u8 fillerC[4];
+};  // size = 16 (0x10), up to gUnknown_03000FD0
+
 struct Struct0200B250
 {
 	u32 unk0;
