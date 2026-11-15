@@ -833,3 +833,114 @@ The planning doc and walkthrough (Step 4) are updated, including what failed alo
 
 Commit and then proceed
 
+- tool `Bash`: D=~/.claude/projects/-home-alex-Documents-zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad
+
+- tool `Bash`: make -j8 compare 2>&1 | tail -1; arm-none-eabi-nm -n zeldaalttp.elf | awk '{print $2}' | sort | uniq -c; arm-none-eabi-nm -n zeldaalttp.elf | grep -c " [tT] sub
+
+## Claude
+
+The ELF has 7,775 function symbols, and data starts at `0x08137B10`. Writing the analysis script:
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/tools/reach.py
+
+- tool `Bash`: time python3 tools/reach.py; echo ---; python3 tools/reach.py --cut | head -2
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 tools/reach.py --list $S/reach.txt >/dev/null; f
+
+## Claude
+
+`AgbMain` itself isn't reached. Looking at the edges out of `_start`:
+
+- tool `Bash`: arm-none-eabi-readelf -sW zeldaalttp.elf | awk '$4=="FUNC"' | sort -k2 | head -5; python3 -c " import struct;r=open('zeldaalttp.gba','rb').read() for a in range
+
+- tool `Bash`: python3 - <<'E' p="tools/reach.py"; s=open(p).read() a='''    if f[3] == "FUNC" and ROM_BASE <= addr < DATA_START:''' assert a in s s=s.replace(a,'''    # Funct
+
+- tool `Bash`: python3 - <<'E' p="tools/reach.py"; s=open(p).read() s=s.replace('''ap.add_argument("--list",''','''ap.add_argument("--why", help="print the chain of edges from
+
+- tool `Bash`: python3 tools/reach.py --why 0x080D166C
+
+## Claude
+
+The leak goes through a data object at `0x0854F7E8` that `AgbMain` points to. Looking at what that object is:
+
+- tool `Bash`: arm-none-eabi-nm -n zeldaalttp.elf | grep -A1 -i "0854f7e8" | head; grep -rn "0854F7E8" data/*.s asm/*.s src/*.c include | head -5; arm-none-eabi-nm -n zeldaalt
+
+- tool `Bash`: arm-none-eabi-nm -n zeldaalttp.elf | python3 -c " import sys rows=[(int(l.split()[0],16),l.split()[-1]) for l in sys.stdin if len(l.split())==3 and l.split()[1]
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/reference/mgba && sed -n '/struct mDebuggerPlatform {/,/^};/p;/struct mDebugger {/,/^};/p;/struct mBreakpoint {/,/^};/p' 
+
+- tool `Bash`: grep -n "static void ARMDebuggerCheckBreakpoints\|_checkBreakpoints\|static struct ARMDebugBreakpoint\* _lookupBreakpoint" -A18 src/arm/debugger/debugger.c | he
+
+- tool `Bash`: sed -n '/^void mDebuggerRun(/,/^}/p;/^void mDebuggerAttach(/,/^}/p' src/debugger/debugger.c; grep -n "mDebuggerType\b\|DEBUGGER_NONE\|DEBUGGER_CUSTOM" include/m
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2 && python3 - <<'E' p="tools/mgba_run.c"; s=open(p).read() rep=[ ("""//            [--shot N,N,...] [--out DIR] [--dump N:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; timeout 600 tools/mgba_run $S/fs_only.gba 6000 --players
+
+## Claude
+
+It stays stuck. Comparing the GBA core's `step` and `runLoop`:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/reference/mgba && grep -n "static void _GBACoreRunLoop\|static void _GBACoreStep" -A10 src/gba/core.c; grep -n "^void ARM
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2 && python3 - <<'E' p="tools/mgba_run.c"; s=open(p).read() a="""				// The next instruction, as mGBA's ARMDebuggerCheckBre
+
+## Claude
+
+The `continue` skips the line that marks progress, so the deadlock check fires falsely. Marking progress first:
+
+- tool `Bash`: python3 - <<'E' p="tools/mgba_run.c"; s=open(p).read() a="""			if (p->waiting) continue;  // a GBA past FRAMES keeps running: the others may wait on it """ asse
+
+## Claude
+
+Coverage mode now reaches the game on the same frames as a normal run, and 3,000 frames take only 3.5 s. Checking that it's really the same run, by comparing RAM at the end in both modes:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for c in "" "--coverage $S/cov_tmp.bin"; do tools/mgba_r
+
+- tool `Bash`: python3 - <<'E' p="tools/mgba_run.c"; s=open(p).read() i=s.index("				// ARMRunLoop one instruction at a time"); j=s.index("				p->core->step(p->core);",i)+len(
+
+## Claude
+
+Identical now. Next, `reach.py --coverage FILE` (repeatable, results merged), reporting how many functions were executed, and any executed function the static map missed:
+
+- tool `Bash`: python3 - <<'E' p="tools/reach.py"; s=open(p).read() s=s.replace('''ap.add_argument("--list",''','''ap.add_argument("--coverage", action="append", default=[], h
+
+- tool `Bash`: python3 - <<'E' p="tools/reach.py"; s=open(p).read() a='''    for p in range((a + 3) & ~3, e - 3, 4):         c = classify(word(p))''' assert a in s s=s.replace
+
+- tool `Bash`: grep -n "080074D4" asm/*.s | head -5; grep -n -B3 "^sub_080074D4:" asm/rom1.s; grep -n -B2 -A12 "^sub_08008EFC:" asm/rom1.s | head -20
+
+## Claude
+
+The callers aren't reached either. I'll trace further up for the caller at line 6030:
+
+- tool `Bash`: awk 'NR<=6030 && /^sub_[0-9A-F]+:/{f=$1} NR==6030{print f}' asm/rom1.s; f=$(awk 'NR<=6030 && /^sub_[0-9A-F]+:/{f=$1} NR==6030{print f}' asm/rom1.s | tr -d :); g
+
+## Claude
+
+Called through a pointer table at `sl` (r10), which lives in RAM. Searching the ROM for the address itself:
+
+- tool `Bash`: python3 -c " import struct;r=open('zeldaalttp.gba','rb').read() for t in (0x08007639,0x080074D5,0x08008EFD,0x080075C9):   b=struct.pack('<I',t); i=r.find(b); pr
+
+- tool `Bash`: python3 - <<'E' p="docs/Planning Doc.md"; s=open(p).read() a="""- [ ] Reachability map: every function reachable from `AgbMain` with modes 13 (LttP) cut off, in
+
+## Claude
+
+The reachability map works, and coverage runs now measure what actually executes. Neither is committed yet.
+
+**Static map ([tools/reach.py](tools/reach.py)):** from boot, with the Link to the Past handler cut off, 5,411 of 7,780 functions are reachable, 65% of the code. Without the cut it's 99%, so the cut matters. It's an upper bound: eight large unlabelled data blobs, the biggest about 1 MB, pass on every word that looks like a pointer. One of those blobs still pulls in Link to the Past sprites like the witch. `--why ADDR` prints the chain from boot to any function, which is how I found that. The number will drop once the data is labelled in Phase 2.
+
+**Coverage (`mgba_run --coverage`):** this records every function actually executed during a run. It gives exactly the same run as without coverage (I checked that RAM matches) and is almost as fast. It needed three attempts, which are documented in the walkthrough. The run so far (two GBAs, file select through the lobby into the game) executed 657 functions. It also found 10 functions the static map can't see. They're called through a function table built in RAM at run time, so coverage is required, not just a cross-check.
+
+The work queue is everything in the static map plus everything executed, with executed functions decompiled first.
+
+**Where I need you:** the coverage runs only reach as far as my blind scripts can go, which is the lobby and the pause menu. Real coverage needs someone to actually play: stages, items, enemies, bosses, with two or more players. Some options:
+1. **Recording mode in the runner, with a window (my recommendation):** you play 2–4 linked GBAs in one window (keyboard or controllers), it saves the inputs, and replaying them gives exact coverage and test scripts. That's maybe an hour of work, and the recordings also become the regression tests for the PC/PS2 port later.
+2. **Save files:** you play in mgba-qt and give me save files from various points, and I script short runs from there. Less work for me, but coverage stays thin.
+3. **Skip it for now:** start decompiling what's already executed (657 functions, the boot, menu and lobby path), and grow coverage later.
+
+Which do you prefer? And should I commit this step first?
+
+## User
+
+Commit, and then let's go with 3 for now. We'll get to 1 after
+

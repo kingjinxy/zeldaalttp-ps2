@@ -55,3 +55,22 @@
   on the same frames; 4 Links on screen; "P1 PAUSE!" on the other GBAs when GBA 1 pauses. FourSwordsRecomp
   needed a link timing override (its DESIGN.md §9); mGBA 0.10.5 did not.
 - 2 GBAs × 6,000 frames: 5.4 s. 4 GBAs × 3,000 frames: 6.5 s.
+
+## Step 5: reachability map and coverage (2026-11-15)
+
+- `tools/reach.py`: call graph from the linked ELF. Edges: Thumb/ARM `BL`, and every aligned word in a
+  function (literal pools, jump tables) that points at a function or ROM data; a data object (one data
+  symbol to the next) passes on every pointer it holds. LttP cut: the mode-13 handler `sub_0800B69C`.
+  - First result had `AgbMain` unreachable: `_start` and other ARM routines are untyped global labels, not
+    `FUNC` symbols. Counted as functions now.
+  - Result: 5,411 of 7,780 functions (65% of code bytes) with LttP cut, 99% without. Still includes LttP
+    sprites: `--why` showed the path runs through `gUnknown_0854F7E8`, a 990 KB `.INCBIN` blob. Eight
+    blobs over 64 KB; until they're split into labelled data, the static map is an upper bound.
+- `mgba_run --coverage FILE`: bitmap of executed ROM halfwords. Getting the same run as without it took
+  three tries: `core->step` per instruction stalled the link at the lobby (step runs one more instruction
+  after an event put the GBA to wait); processing events separately linked but gave different RAM (GBAs
+  interleaved per instruction instead of per event slice). Final: `ARMRunLoop` re-implemented with
+  `core->step` inside the slice; same RAM as a normal run, 3,000 frames × 2 GBAs in 3.5 s.
+- Lobby run (2 GBAs, mashing to the pause menu): 657 functions executed. 10 of them (`rom1.s`,
+  `0x080074D4`–`0x08008EFC`) aren't in the static map: called via `ldr r1, [sl, #0x2c]`, a function table
+  in RAM whose entries don't appear as words in the ROM.

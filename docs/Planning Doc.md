@@ -29,9 +29,14 @@ player, linked in memory instead of by cable, each drawn into its own part of th
       button script, screenshots, RAM dumps, byte watch. One instance.
 - [x] Linked instances in `tools/mgba_run` (`--players 2-4`, mGBA lockstep SIO on one thread, repeatable):
       2 and 4 GBAs reach the Four Swords game together (mode 2 at frame 1438).
-- [ ] Reachability map: every function reachable from `AgbMain` with modes 13 (LttP) cut off, including
-      calls through pointer tables in data (FourSwordsRecomp's `scan_code_pointers` approach). This list
-      is the decomp work queue; the rest stays asm and is left out of the port.
+- [x] Reachability map (`tools/reach.py`): static call graph from `_start` with the LttP mode handler
+      `sub_0800B69C` cut off: 5,411 of 7,780 functions, 828 KB of 1.28 MB code (65%; 99% without the cut).
+      Upper bound: eight unlabelled data blobs over 64 KB pass on every pointer-shaped word.
+- [x] Coverage (`mgba_run --coverage`, `reach.py --coverage`): executed functions; lower bound. Lobby run:
+      657 functions. Finds calls the static map can't see (10 in `rom1.s`, via a function table in RAM).
+- [ ] Recording mode in `mgba_run` (window, 2-4 pads), so the user's play becomes coverage and replay tests
+- [ ] Coverage runs that play Four Swords (stages, items, enemies, bosses), to grow the lower bound
+- [ ] Work queue = static ∪ executed; order by coverage first
 - [ ] Split `asm/` by that map into Four Swords, shared engine and LttP files; name shared engine
       functions from `reference/tmc`.
 

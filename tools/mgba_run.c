@@ -1,7 +1,9 @@
 // Headless mGBA runner: 1-4 GBAs on one link cable, a button script per GBA, screenshots and RAM dumps
 // at chosen frames. Build: tools/mgba_run.sh. Usage:
 //   mgba_run ROM FRAMES [--players N] [--inputs FILE] [--inputsP FILE] [--saveP FILE]
-//            [--shot N,N,...] [--out DIR] [--dump N:ADDR:LEN] [--watch ADDR]
+//            [--shot N,N,...] [--out DIR] [--dump N:ADDR:LEN] [--watch ADDR] [--coverage FILE]
+// --coverage: write a bitmap of executed ROM halfwords (bit n = address 0x08000000 + 2n, all GBAs combined)
+// for tools/reach.py. Same run as without it (same RAM), a little slower.
 // P is a player number 0-3: --inputs1 a.inputs is GBA 1's script; --inputs is the default for all.
 // Without --saveP a GBA starts with an empty EEPROM that is never written to disk.
 // Inputs file: lines "FRAME KEYS", KEYS = '-' or letters A B s(elect) S(tart) R L U D r(ight) l(eft);
@@ -16,6 +18,7 @@
 #include <mgba/core/config.h>
 #include <mgba/core/log.h>
 #include <mgba/gba/core.h>
+#include <mgba/internal/arm/arm.h>
 #include <mgba/internal/gba/gba.h>
 #include <mgba/internal/gba/input.h>
 #include <mgba/internal/gba/sio/lockstep.h>
@@ -58,6 +61,8 @@ static const char *shots, *outDir = ".";
 static const char *dumps[64];
 static int ndumps;
 static unsigned frames, watch;
+static const char *coverage;
+static uint8_t covered[0x800000 / 16];
 
 static void quietLog(struct mLogger *l, int category, enum mLogLevel level, const char *fmt, va_list args) {
 	(void) l; (void) category; (void) level; (void) fmt; (void) args;
@@ -239,6 +244,7 @@ int main(int argc, char **argv) {
 		else if (!strcmp(o, "--out")) outDir = v;
 		else if (!strcmp(o, "--dump") && ndumps < 64) dumps[ndumps++] = v;
 		else if (!strcmp(o, "--watch")) watch = strtoul(v, NULL, 0);
+		else if (!strcmp(o, "--coverage")) coverage = v;
 		else { fprintf(stderr, "unknown option %s\n", o); return 1; }
 	}
 	if (nplayers < 1 || nplayers > MAX_GBAS) { fprintf(stderr, "--players 1-4\n"); return 1; }
@@ -292,12 +298,28 @@ int main(int argc, char **argv) {
 			struct Player *p = &players[i];
 			all &= p->done;
 			if (p->waiting) continue;  // a GBA past FRAMES keeps running: the others may wait on it
-			p->core->runLoop(p->core);
 			ran = 1;
+			if (coverage) {
+				// ARMRunLoop with each instruction's address recorded before it runs (as mGBA's
+				// ARMDebuggerCheckBreakpoints computes it), so GBAs interleave exactly as with runLoop.
+				struct ARMCore *cpu = ((struct GBA *) p->core->board)->cpu;
+				while (cpu->cycles < cpu->nextEvent) {
+					uint32_t pc = cpu->gprs[ARM_PC] - (cpu->executionMode == MODE_THUMB ? 2 : 4) - 0x08000000;
+					if (pc < 0x800000) covered[pc >> 4] |= 1 << ((pc >> 1) & 7);
+					p->core->step(p->core);
+				}
+				cpu->irqh.processEvents(cpu);
+			} else
+				p->core->runLoop(p->core);
 		}
 		if (all) break;
 		if (!ran) { fprintf(stderr, "link deadlock: every GBA is waiting\n"); return 1; }
 	}
 	for (int i = 0; i < nplayers; i++) players[i].core->deinit(players[i].core);
+	if (coverage) {
+		FILE *f = fopen(coverage, "wb");
+		if (!f || fwrite(covered, sizeof covered, 1, f) != 1) { perror(coverage); return 1; }
+		fclose(f);
+	}
 	return 0;
 }
