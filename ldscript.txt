@@ -95,4 +95,5 @@ gUnknown_02016D60_alt = gUnknown_02016D60;
 CreateObject = sub_0804C8A8;  /* unprototyped name for callers, see functions.h */
 gUnknown_0800A49C = 0x0800A49C;  /* table inside rom1's code area, read by sub_08051600 */
 gUnknown_0201ED90_fs = gUnknown_0201ED90;  /* Four Swords view, struct Struct0201ED90_fs */
+gUnknown_0201F020_fs = gUnknown_0201F020;  /* Four Swords view, struct Struct0200B320 */
 gUnknown_02016D60_fs = gUnknown_02016D60;  /* Four Swords view, struct Struct02016D60_fs */

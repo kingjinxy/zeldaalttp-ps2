@@ -563,9 +563,11 @@ struct Struct03006C80
     struct Entity *unk70[4];  // indexed by Entity.unk18
 };
 
+// Also the layout of gUnknown_0201F020 (Four Swords view: gUnknown_0201F020_fs)
 struct Struct0200B320
 {
-    u8 filler0[0x2004];
+    u8 filler0[4];
+    u16 unk4[0x1000];
     u8 unk2004[0x9000];
 };  // size = 0xB004 (sub_0803A2E8 clears it)
 
@@ -624,7 +626,9 @@ struct Struct08429004
 
 struct Struct03006A30
 {
-    u8 filler0[8];
+    u8 filler0[5];
+    u8 unk5;
+    u8 filler6[2];
     u16 unk8 : 16;
     u8 fillerA[2];
     u8 unkC : 8;

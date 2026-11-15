@@ -530,6 +530,7 @@ extern struct Struct0200B250 gUnknown_0200B250[];
 extern u32 gUnknown_0200B310;
 //extern gUnknown_0200B314;
 extern struct Struct0200B320 gUnknown_0200B320;
+extern struct Struct0200B320 gUnknown_0201F020_fs;  // ldscript alias of gUnknown_0201F020
 //extern gUnknown_0200B324;
 //extern gUnknown_0200BB00;
 //extern gUnknown_0200BB50;
@@ -5394,7 +5395,7 @@ extern const u32 gUnknown_08427C14[];  // music per area
 extern void (*const gUnknown_08427C28[])(struct Entity *);
 //extern gUnknown_08427C2C;
 extern void (*const gUnknown_084286E0[])(struct Manager *);
-//extern gUnknown_08428728;
+extern void (*const gUnknown_08428728[])(struct Entity *);
 //extern gUnknown_0842873C;
 //extern gUnknown_08428744;
 //extern gUnknown_0842874C;
