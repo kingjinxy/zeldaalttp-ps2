@@ -106,3 +106,7 @@
 - Left for later: `sub_08059A44` writes `gUnknown_03000520` fields as bitfields, but that struct is shared
   with -O2 C code; needs checking that a bitfield doesn't change those matches.
 - Remaining: 532 of the executed functions (120 in fs_game), 7,271 asm functions overall.
+- Batch 3: 5 more (fs_game 127 of 915). `struct Entity;`/`struct Manager;` are now forward-declared in
+  `types.h`: without it, each `struct Entity *` in `variables.h` was a new type scoped to that parameter
+  list (agbcc warned "incompatible pointer type"). `struct Manager` (entity.h) for `DoManagerEntity`.
+  Skipped: `sub_0803F550` calls a bare address (`bl 0x0800238C`) with no symbol.

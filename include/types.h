@@ -1,3 +1,7 @@
+// Defined in entity.h; declared here so variables.h and functions.h can use pointers to them
+struct Entity;
+struct Manager;
+
 struct BGConfig
 {
     /*0x00*/ u16 bgcnt;
@@ -467,13 +471,14 @@ struct Struct03000BE0
 
 struct Struct03000FC0
 {
-    u8 unk0;
-    u8 unk1;
+    // ": 8" / ": 16" bitfields: -O0 code clears them with ldrb/and #0/strb
+    u8 unk0 : 8;
+    u8 unk1 : 8;
     u8 unk2;
-    u8 unk3 : 8;  // bitfield: -O0 code clears it with and #0
-    u8 filler4[4];
+    u8 unk3 : 8;
+    u32 unk4;
     u32 unk8;
-    u8 fillerC[2];
+    u16 unkC : 16;
     u8 unkE : 8;
     u8 fillerF;
 };  // size = 16 (0x10), up to gUnknown_03000FD0

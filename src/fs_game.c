@@ -7,7 +7,15 @@
 
 asm(".INCLUDE \"macro.inc\"");
 
-asm(".include \"asm/non_matching/fs_game/sub_0803668C.inc\"");
+
+void sub_0803668C(void)
+{
+    CpuFill16(0, &gUnknown_03000FC0, 0x88);
+    sub_08036770(0);
+    sub_0800C41C();
+    gUnknown_03000BF0 = gUnknown_03000834 = 0;
+}
+
 
 void sub_080366D0(u8 a)
 {
@@ -24,7 +32,16 @@ void sub_08036760(void)
     sub_08036770(0);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08036770.inc\"");
+
+void sub_08036770(u32 a)
+{
+    gUnknown_03000FC0.unk0 = 0;
+    gUnknown_03000FC0.unk1 = 0;
+    gUnknown_03000FC0.unk4 = 0;
+    gUnknown_03000FC0.unk8 = a;
+    gUnknown_03000FC0.unkC = 0;
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_080367B4.inc\"");
 
 u32 sub_080367CC(void)
@@ -48,7 +65,13 @@ void sub_080367FC(void)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_08036834.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_08036864.inc\"");
+
+void sub_08036864(void)
+{
+    gUnknown_03000834 |= gUnknown_03000BF0;
+    gUnknown_08427B84[gUnknown_03000FC0.unk0]();
+}
+
 
 void sub_080368A0(void)
 {
@@ -252,7 +275,13 @@ asm(".include \"asm/non_matching/fs_game/sub_0803F550.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803F594.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803F628.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803F638.inc\"");
-asm(".include \"asm/non_matching/fs_game/DoManagerEntity.inc\"");
+
+void DoManagerEntity(struct Manager *this)
+{
+    gUnknown_084286E0[this->subtype](this);
+    this->unk41 &= 0x7F;
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0803F6F8.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803F710.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803F74C.inc\"");
@@ -927,7 +956,12 @@ void sub_080568A4(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_080568CC.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_0805694C.inc\"");
+
+void sub_0805694C(struct Entity *this)
+{
+    this->unk1C_0 = gSubState == 4 ? 2 : 0;
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_08056988.inc\"");
 
 void sub_080569F0(struct Entity *this)
