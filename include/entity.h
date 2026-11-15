@@ -40,7 +40,8 @@ typedef struct Entity {
     /* 0x30 */ union SplitWord x;  // tmc names; HALF.HI is the pixel position
     /* 0x34 */ union SplitWord y;
     /* 0x38 */ union SplitWord z;
-    /* 0x3C */ u8 filler3C[0x14];
+    /* 0x3C */ u8 filler3C[0x10];
+    /* 0x4C */ u32 unk4C;
     /* 0x50 */ u16 unk50 : 16;
     /* 0x52 */ u8 unk52 : 8;
     /* 0x53 */ u8 filler53;
