@@ -530,7 +530,8 @@ struct Struct03006C80
 {
     u8 unk0;  // number of players
     u8 unk1;
-    u8 filler2[0x1A];
+    u8 unk2;
+    u8 filler3[0x19];
     u32 unk1C;  // frames
     u8 filler20[8];
     struct {
@@ -593,7 +594,9 @@ struct Struct03006A30
     u8 unkC : 8;
     u8 fillerD[0xF];
     u8 unk1C;
-    u8 filler1D[0xB];
+    u8 filler1D[5];
+    u16 unk22;  // tile position << 1: x in bits 1-6, y in bits 7-12
+    u8 filler24[4];
     struct Entity *unk28;
     u8 filler2C[0xA];
     u16 unk36;

@@ -1080,7 +1080,23 @@ void sub_0804E0B8(struct Entity *this)
     gUnknown_0813FDBC[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0804E0E0.inc\"");
+
+void sub_0804E0E0(struct Entity *this)
+{
+    this->unk14++;
+    this->unk3C = 0;
+    this->unk17 = 30;
+    this->unk18 = 0;
+    this->unk1D_6 = 3;
+    this->unk5E_0 = 0;
+    if (gUnknown_03006C80.unk2 != 0)
+    {
+        this->unk1C_0 = 1;
+        this->unk14++;
+    }
+    sub_08003870(this, 0);
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0804E198.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0804E248.inc\"");
 
@@ -1527,7 +1543,20 @@ void sub_08053610(struct Entity *this)
     gUnknown_08428C40[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08053638.inc\"");
+
+void sub_08053638(struct Entity *this)
+{
+    u16 *map;
+
+    this->unk14++;
+    map = sub_08015DC0(this->unk50);
+    this->unk7C.p = &map[(((this->x.HALF.HI - gUnknown_03000450.unk18) >> 4)
+                          | (((this->y.HALF.HI - gUnknown_03000450.unk1A) >> 4) << 6)) + 2];
+    this->unk18 = this->form & 0x80;
+    this->form = this->form & 31;
+    this->unk60 = this->unk18 ? sub_08013D20(this->parameter) : 0;
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_080536F8.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_080537C4.inc\"");
 
@@ -2145,7 +2174,22 @@ void sub_080591AC(struct Entity *this)
 asm(".include \"asm/non_matching/fs_game/sub_080591D4.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0805950C.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_080597A8.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_08059818.inc\"");
+
+void sub_08059818(struct Entity *this)
+{
+    struct Entity *e;
+    u16 pos;
+
+    e = CreateObject(57, 0, 0);
+    if (e != NULL)
+    {
+        pos = gUnknown_03006A30[this->form].unk22 >> 1;
+        e->x.HALF.HI = ((pos & 63) << 4) | 8;
+        e->y.HALF.HI = ((u16)(pos & 0xFC0) >> 2) | 8;
+        e->unk50 = this->unk50;
+    }
+}
+
 
 void sub_080598D0(struct Entity *this)
 {
