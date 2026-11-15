@@ -407,7 +407,9 @@ asm(".include \"asm/non_matching/fs_game/sub_08039CD4.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08039D1C.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08039D64.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803A030.inc\"");
+
 asm(".include \"asm/non_matching/fs_game/sub_0803A20C.inc\"");
+
 
 void sub_0803A2E8(void)
 {
@@ -2607,7 +2609,9 @@ void sub_0805C0C8(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_0805C0F0.inc\"");
+
 asm(".include \"asm/non_matching/fs_game/sub_0805C1F4.inc\"");
+
 
 void sub_0805C2D8(struct Entity *this)
 {
@@ -3010,7 +3014,26 @@ void sub_0805E630(struct Entity *this)
         DeleteThisEntity(this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0805E698.inc\"");
+
+void sub_0805E698(struct Entity *this)
+{
+    switch (this->unk14)
+    {
+    case 0:
+        this->unk14++;
+        this->unk1D_6 = 1;
+        this->unk5E_0 = 0;
+        this->unk1F_6 = 1;
+        sub_0805E86C(this);
+        // fall through
+    case 1:
+        this->frameIdx = gUnknown_08429314[gUnknown_02016D60_fs.unk8] + gUnknown_03006C80.unk0 - 2;
+        this->x.HALF.HI = this->unk54->x.HALF_U.HI + 28;
+        this->y.HALF.HI = this->unk54->y.HALF_U.HI - 8;
+        break;
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0805E780.inc\"");
 
 void sub_0805E86C(struct Entity *this)

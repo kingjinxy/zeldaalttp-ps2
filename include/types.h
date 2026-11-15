@@ -533,9 +533,16 @@ struct Struct03006C80
     u8 unk0;  // number of players
     u8 unk1;
     u8 unk2;
-    u8 filler3[0x19];
+    u8 filler3[2];
+    u8 unk5;
+    u8 filler6;
+    u8 unk7;  // area? indexes the music table gUnknown_08427C14
+    u8 filler8[0x14];
     u32 unk1C;  // frames
-    u8 filler20[8];
+    u8 filler20[4];
+    u8 unk24;
+    u8 filler25;
+    u16 unk26 : 16;  // current music
     struct {
         u32 unk0;
         u8 unk4;
@@ -544,7 +551,9 @@ struct Struct03006C80
     } unk28[4];  // indexed by Entity.form (player)
     u8 filler48[7];
     u8 unk4F;
-    u8 filler50[4];
+    u8 filler50;
+    u8 unk51;
+    u8 filler52[2];
     u8 unk54[4];
     u8 filler58[4];
     u8 unk5C[4];  // per player

@@ -5390,7 +5390,7 @@ extern void (*const gUnknown_08427BA0[])(void);
 extern void (*const gUnknown_08427BCC[])(void);
 extern void (*const gUnknown_08427BFC[])(void);
 //extern gUnknown_08427C0C;
-//extern gUnknown_08427C14;
+extern const u32 gUnknown_08427C14[];  // music per area
 extern void (*const gUnknown_08427C28[])(struct Entity *);
 //extern gUnknown_08427C2C;
 extern void (*const gUnknown_084286E0[])(struct Manager *);
@@ -5504,7 +5504,7 @@ extern void (*const gUnknown_084292C8[])(struct Entity *);
 //extern gUnknown_084292D0;
 //extern gUnknown_08429300;
 extern void (*const gUnknown_0842930C[])(struct Entity *);
-//extern gUnknown_08429314;
+extern const u8 gUnknown_08429314[];
 extern const u8 gUnknown_08429319[];
 extern const u8 gUnknown_0842931E[];
 extern const u8 gUnknown_08429323[];
