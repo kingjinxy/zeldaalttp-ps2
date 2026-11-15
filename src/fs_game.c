@@ -890,7 +890,21 @@ void sub_0805002C(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_08050054.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_080500E0.inc\"");
+
+void sub_080500E0(struct Entity *this)
+{
+    if ((u8)(this->parameter & 0x80))
+    {
+        this->unk14 = 2;
+        sub_080501DC(this);
+    }
+    else if ((gUnknown_0201F000[this->unk52] & this->unk60) == this->unk60)
+    {
+        this->unk14 = 2;
+        sub_080501DC(this);
+    }
+}
+
 
 void sub_08050160(struct Entity *this)
 {
@@ -1261,7 +1275,13 @@ void sub_080552C0(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_080552E8.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_080553BC.inc\"");
+
+void sub_080553BC(struct Entity *this)
+{
+    if ((u16)(gUnknown_03000948.unk0 & 7) == 0)
+        this->z.HALF.HI = gUnknown_08428D8C[(u8)(++this->unk17 & 7)] - 8;
+}
+
 
 void sub_08055438(struct Entity *this)
 {
@@ -1436,7 +1456,18 @@ void sub_080568A4(struct Entity *this)
     gUnknown_08428E78[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_080568CC.inc\"");
+
+void sub_080568CC(struct Entity *this)
+{
+    this->unk14++;
+    this->unk1D_6 = 0;
+    this->unk1F_6 = 0;
+    this->x.HALF.HI = 0x100;
+    this->y.HALF.HI = 96;
+    gUnknown_02016D60_fs.unk20 = this;
+    sub_08003870(this, 8);
+}
+
 
 void sub_0805694C(struct Entity *this)
 {
@@ -1853,7 +1884,18 @@ void sub_0805D82C(struct Entity *this)
     gUnknown_08429258[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0805D854.inc\"");
+
+void sub_0805D854(struct Entity *this)
+{
+    this->unk14++;
+    this->unk1C_0 = 2;
+    this->unk1D_6 = 0;
+    this->unk1F_6 = 1;
+    this->unk17 = 30;
+    sub_0805D7D0(this);
+    sub_08003870(this, this->form);
+}
+
 
 void sub_0805D8D8(struct Entity *this)
 {
@@ -1962,7 +2004,17 @@ void sub_0805DEC8(struct Entity *this)
         DeleteThisEntity(this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0805DF08.inc\"");
+
+void sub_0805DF08(struct Entity *this)
+{
+    this->unk14++;
+    this->unk1D_6 = 1;
+    this->unk1F_6 = 1;
+    this->unk1C_0 = 1;
+    this->unk17 = 240;
+    sub_08003870(this, this->form);
+}
+
 
 void sub_0805DF8C(struct Entity *this)
 {

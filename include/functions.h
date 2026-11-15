@@ -2056,7 +2056,7 @@ void sub_0804FB80(struct Entity *);
 //sub_080500E0();
 //sub_08050160();
 //sub_080501C0();
-//sub_080501DC();
+void sub_080501DC(struct Entity *);
 //sub_08050338();
 //sub_0805039C();
 void sub_08050444(struct Entity *);
