@@ -1565,7 +1565,32 @@ void sub_08052BE4(struct Entity *this)
     gUnknown_08428C20[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08052C0C.inc\"");
+
+void sub_08052C0C(struct Entity *this)
+{
+    s32 i;
+    s32 n;
+    struct Entity *e;
+
+    for (i = 0; i <= 3; i++)
+        gUnknown_03006C80.unk70[i] = NULL;
+    n = 0;
+    for (i = 0; i < gUnknown_03006C80.unk0; i++)
+    {
+        if (i != gLCDRegisterBuffer)
+        {
+            e = CreateObject(16, 1, (u8)i);
+            if (e != NULL)
+            {
+                e->unk54 = this;
+                e->unk58 = gUnknown_03006A30[i].unk28;
+                e->unk18 = n++;
+            }
+        }
+    }
+    this->unk14++;
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_08052CE4.inc\"");
 
 void sub_08053028(struct Entity *this)
@@ -3001,7 +3026,23 @@ void sub_0805E86C(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0805E8C0.inc\"");
+
+void sub_0805E8C0(struct Entity *this)
+{
+    u8 v = gUnknown_03006C80.unk28[this->parameter].unk5 & gUnknown_08429319[gUnknown_02016D60_fs.unk8];
+
+    if (v == 0)
+    {
+        this->unk1C_0 = 0;
+    }
+    else
+    {
+        v >>= gUnknown_0842931E[gUnknown_02016D60_fs.unk8];
+        this->frameIdx = gUnknown_08429323[gUnknown_02016D60_fs.unk8];
+        this->unk1E_0 = v == 3 ? gUnknown_08429328[gUnknown_02016D60_fs.unk8 + 4] : gUnknown_08429328[v];
+    }
+}
+
 
 void sub_0805E99C(struct Entity *this)
 {
@@ -3173,7 +3214,9 @@ void sub_08063DF0(struct Entity *this)
     }
 }
 
+
 asm(".include \"asm/non_matching/fs_game/sub_08063E88.inc\"");
+
 
 void sub_08063F64(struct Entity *this)
 {

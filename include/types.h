@@ -538,7 +538,9 @@ struct Struct03006C80
     u8 filler20[8];
     struct {
         u32 unk0;
-        u32 unk4;
+        u8 unk4;
+        u8 unk5;
+        u8 filler6[2];
     } unk28[4];  // indexed by Entity.form (player)
     u8 filler48[7];
     u8 unk4F;
@@ -549,7 +551,7 @@ struct Struct03006C80
     u8 filler60[0xE];
     u8 unk6E : 8;
     u8 unk6F;
-    struct Entity *unk70[1];  // length unknown; indexed by Entity.unk18
+    struct Entity *unk70[4];  // indexed by Entity.unk18
 };
 
 struct Struct0200B320

@@ -23,6 +23,7 @@ void sub_08003B94(struct Entity *);
 u16 sub_0800935C(struct Entity *);
 void sub_08001B70(struct Entity *, u16, u16, u16);
 void sub_080074C0(struct Entity *);
+void sub_08003840(struct Entity *, u8, u8);
 u16 sub_08008F58(u16, u16);
 u8 sub_080093C8(u16, u16);
 u8 sub_08003F4C(struct Entity *, struct Entity *);

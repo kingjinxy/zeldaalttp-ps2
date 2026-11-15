@@ -23,7 +23,8 @@ typedef struct Entity {
     /* 0x1B */ u8 unk1B : 8;
     // 0x1C-0x1F: one u32 of bitfields (u32 fields are read with lsl/lsr pairs, e.g. lsl #26; lsr #27)
     /* 0x1C */ u32 unk1C_0 : 2;
-    /*      */ u32 unk1C_2 : 2;
+    /*      */ u32 unk1C_2 : 1;
+    /*      */ u32 unk1C_3 : 1;
     /*      */ u32 unk1C_4 : 2;
     /*      */ u32 unk1C_6 : 2;
     /* 0x1D */ u32 unk1D_0 : 2;
@@ -37,7 +38,7 @@ typedef struct Entity {
     /*      */ u32 unk1F_1 : 5;  // affine parameter index
     /*      */ u32 unk1F_6 : 2;
     /* 0x20 */ u8 unk20 : 8;
-    /* 0x21 */ u8 frameIdx;
+    /* 0x21 */ u8 frameIdx : 8;
     /* 0x22 */ u8 lastFrameIdx;
     /* 0x23 */ u8 unk23 : 8;
     /* 0x24 */ void* frame;
