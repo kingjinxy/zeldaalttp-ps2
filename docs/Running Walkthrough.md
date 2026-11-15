@@ -35,3 +35,23 @@
   the ROM's data (`0x08645BE5`). Nothing else moves. Trace: 8 → 6 (frame 838) → 9 (839), then the Four
   Swords title and "Linking with other systems…". `make compare` still matches.
 - Makefile: `FS_ONLY=1` adds `-DFS_ONLY`; `.cppflags` records the flags so switching rebuilds the C.
+
+## Step 4: linked GBAs in the mGBA runner (2026-11-15)
+
+- `tools/mgba_run --players N` (1-4) links GBAs with mGBA 0.10.5's lockstep SIO driver. The host callbacks
+  are a C port of mgba-qt's `MultiplayerController.cpp`.
+- First version ran each GBA on its own `mCoreThread`, as mgba-qt does. Problems on the way:
+  - Crash in `GBASIOLockstepNodeUnload` from `GBAReset`: the driver was attached before the first reset,
+    which unloads it. Attach after the reset.
+  - Threads exited at frame 0 / hung: the runner was compiled without the library's feature defines
+    (`ENABLE_SCRIPTING`, `USE_DEBUGGERS`, ...) and `NDEBUG`, which change `mCoreThread` and lockstep struct
+    layouts. `tools/mgba_run.sh` now force-includes `build/include/mgba/flags.h` and sets `-DNDEBUG`.
+  - Then it linked, but RAM after 6,000 frames differed on every run, and 1 run in 5 segfaulted: thread
+    scheduling decides where link transfers land. Not usable as a reference.
+- Final version: no threads. All GBAs run on one thread in a fixed order, one `core->runLoop` each,
+  skipping GBAs the link has put to wait (mgba-qt only parks a thread between `runLoop` calls, so this is
+  the same logic in a fixed order). Five runs: identical RAM, no crashes.
+- Result with `FS_ONLY` and A/Start mashing: 2 and 4 GBAs go 8 → 6 → 9 → 5 (frame 1288) → 2 (1438, in game)
+  on the same frames; 4 Links on screen; "P1 PAUSE!" on the other GBAs when GBA 1 pauses. FourSwordsRecomp
+  needed a link timing override (its DESIGN.md §9); mGBA 0.10.5 did not.
+- 2 GBAs × 6,000 frames: 5.4 s. 4 GBAs × 3,000 frames: 6.5 s.

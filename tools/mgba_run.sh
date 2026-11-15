@@ -8,6 +8,6 @@
 set -e
 cd "$(dirname "$0")/.."
 M=reference/mgba
-gcc -O2 -o tools/mgba_run tools/mgba_run.c -I$M/include -I$M/build/include -DM_CORE_GBA \
-    $(grep -oE '\-D[A-Z_0-9]+(=[^ ]*)?' $M/build/build.ninja | grep -E 'USE_|HAVE_|BUILD_' | sort -u | tr '\n' ' ') \
-    $M/build/libmgba.a -lpng -lz -lm -lpthread
+# The library's feature defines (mgba/flags.h) and NDEBUG change struct layouts, so they must match it.
+gcc -O2 -o tools/mgba_run tools/mgba_run.c -I$M/include -I$M/build/include -include mgba/flags.h -DNDEBUG \
+    -D_GNU_SOURCE $M/build/libmgba.a -lpng -lz -lm -lpthread

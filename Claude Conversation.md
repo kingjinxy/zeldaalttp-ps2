@@ -578,3 +578,258 @@ Next is adding linked instances to the runner, to get two GBAs past the link scr
 
 Yes
 
+## Claude
+
+Regenerating the conversation archive first, then committing:
+
+- tool `Bash`: D=~/.claude/projects/-home-alex-Documents-zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad
+
+- tool `Bash`: git add .gitignore Makefile ldscript.txt src/main.c src/fs_only.c tools/mgba_run.c tools/mgba_run.sh docs "Claude Conversation.md" && git status --short && git 
+
+## Claude
+
+I committed it on `ps2-port` as `f384a70`. The commit has the `FS_ONLY` boot option, the headless mGBA runner, the updated plan and walkthrough, and a refreshed `Claude Conversation.md`. I haven't pushed it.
+
+Next is adding linked instances to the runner, so two GBAs can get past "Linking with other systems…" together.
+
+## User
+
+Proceed
+
+## Claude
+
+Looking at how mGBA 0.10 links GBAs:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/reference/mgba && cat include/mgba/internal/gba/sio/lockstep.h | sed -n 1,200p | grep -v "^ \*\|^/\*" ; grep -n "struct m
+
+## Claude
+
+The link needs host callbacks (lock, signal, wait, cycle accounting) that the Qt frontend implements. Reading its version so I can port it:
+
+- tool `Bash`: sed -n 1,200p src/platform/qt/MultiplayerController.cpp | grep -v "^#include\|^$" | head -190
+
+- tool `Bash`: grep -nE "^(bool|void|int|struct|enum) .*mCoreThread[A-Za-z]*\(|frameCallback|startCallback|cleanCallback|userData|ThreadCallback" include/mgba/core/thread.h | 
+
+- tool `Bash`: sed -n 220,265p src/platform/qt/MultiplayerController.cpp; grep -n "awake\|waitMask" src/platform/qt/MultiplayerController.h
+
+- tool `Bash`: grep -n "void mLockstepInit" -A12 src/core/lockstep.c; grep -n "void GBASIOLockstepInit" -A8 src/gba/sio/lockstep.c; grep -n "union" -A4 src/platform/qt/Multipl
+
+- tool `Bash`: sed -n 32,40p src/gba/sio/lockstep.c
+
+## Claude
+
+I'll port the Qt link callbacks to C in the runner, with one emulation thread per GBA. The single-GBA case runs the same way with `--players 1`. Rewriting the runner:
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/tools/mgba_run.c
+
+- tool `Read`: /home/alex/Documents/zeldaalttp-ps2/tools/mgba_run.c
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2 && git diff --stat tools/mgba_run.c
+
+## Claude
+
+The file only changed through my own earlier edit, which is committed. Writing the new version:
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/tools/mgba_run.c
+
+## Claude
+
+Rebuilding, then checking that one GBA still gives the same trace as before:
+
+- tool `Bash`: tools/mgba_run.sh 2>&1 | grep -E "error|warning: (implicit|incompatible)" ; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c109
+
+## Claude
+
+The build failed (that output came from the old binary). mGBA's threading header needs `_GNU_SOURCE`:
+
+- tool `Bash`: sed -i 's/-DM_CORE_GBA \\/-DM_CORE_GBA -D_GNU_SOURCE \\/' tools/mgba_run.sh && tools/mgba_run.sh 2>&1 | grep -E "error" ; S=/tmp/claude-1000/-home-alex-Document
+
+## Claude
+
+Built. The thread's logger isn't using my silent one. Checking how `mCoreThread` sets up its logger:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/reference/mgba && grep -n "logger" src/core/thread.c | head -30
+
+## Claude
+
+The thread forwards to `logger.logger` when that's set, and it copies that logger's filter. Pointing it at the silent logger, with a filter of its own:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2 && python3 - <<'E' p="tools/mgba_run.c"; s=open(p).read() s=s.replace("		p->thread.logger.d = quiet;\n","		p->thread.logg
+
+## Claude
+
+One GBA gives the same trace as before. Now two linked GBAs on the `FS_ONLY` ROM, both pressing the same buttons:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 -c " for f in range(200,6000,30): print(f, 'S' i
+
+## Claude
+
+It crashes straight away, before any frame runs. Finding where:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; gdb -batch -ex run -ex bt --args tools/mgba_run $S/fs_on
+
+## Claude
+
+The driver gets unloaded during the thread's first reset, before it was ever loaded. Qt attaches the link only after the game has started. Checking the order in the thread's start-up:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/reference/mgba && sed -n 255,300p src/core/thread.c | grep -n "reset\|startCallback\|resetCallback"
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/reference/mgba && sed -n 300,340p src/core/thread.c | grep -n "reset\|startCallback\|resetCallback"
+
+## Claude
+
+`startCallback` runs before the reset and `resetCallback` after it. I'll attach each GBA in `resetCallback`, in player order, so link IDs equal player numbers (the callbacks rely on that):
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2 && python3 - <<'E' p="tools/mgba_run.c"; s=open(p).read() s=s.replace("""		if (nplayers > 1) { 			struct GBA *gba = core-
+
+## Claude
+
+It hangs with no CPU use, so both GBAs are waiting on each other. Output is buffered and lost on the kill, so I'll make it unbuffered and look at where each thread sits:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2 && sed -i 's/	mLogSetDefaultLogger(&quiet);/	setvbuf(stdout, NULL, _IOLBF, 0);\n	mLogSetDefaultLogger(\&quiet);/' tools/m
+
+## Claude
+
+Only the main thread is left: both emulation threads have already exited. I'll make the wait loop report a thread that exits early or crashes:
+
+- tool `Bash`: python3 - <<'E' p="tools/mgba_run.c"; s=open(p).read() s=s.replace("""		for (int i = 0; i < nplayers; i++) all &= players[i].done; ""","""		for (int i = 0; i < 
+
+## Claude
+
+GBA 0 stops at frame 0 without crashing. Checking what in mGBA ends a thread:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/reference/mgba && grep -n "mTHREAD_EXITING\|mTHREAD_SHUTDOWN" src/core/thread.c | head; grep -n "bool mCoreThreadHasExite
+
+- tool `Bash`: sed -n 60,80p src/core/thread.c; sed -n 324,336p src/core/thread.c; grep -n "mTHREAD_" include/mgba/core/thread.h | head -20
+
+- tool `Bash`: sed -n 185,200p src/core/thread.c; sed -n 545,556p src/core/thread.c
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2 && S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; timeout 60 gdb
+
+## Claude
+
+None of the shutdown paths fire, so the thread probably never got into its run loop. Looking at the start of the thread function:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/reference/mgba && sed -n 225,262p src/core/thread.c
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2 && sed -i 's/-DM_CORE_GBA -D_GNU_SOURCE \\/-DM_CORE_GBA -D_GNU_SOURCE -DNDEBUG \\/' tools/mgba_run.sh && sed -i 's|^# Bui
+
+## Claude
+
+It still fails, instantly. Checking whether the new early-exit check also trips with one GBA:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2 && S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; timeout 60 too
+
+- tool `Bash`: sed -n 56,72p reference/mgba/include/mgba/core/thread.h
+
+- tool `Bash`: sed -n 262,322p reference/mgba/src/core/thread.c
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/reference/mgba && grep -m1 "FLAGS = " build/build.ninja | tr ' ' '\n' | grep "^-D" | sort -u; ls build/include/mgba 2>/de
+
+- tool `Bash`: grep -E "^#define" build/include/mgba/flags.h | head -40; grep -n "flags.h" include/mgba-util/common.h
+
+## Claude
+
+The generated `build/include/mgba/flags.h` has the exact set, including `ENABLE_SCRIPTING` and `USE_DEBUGGERS`. Finding how it's meant to be included:
+
+- tool `Bash`: grep -rn "flags.h" include/mgba-util/common.h include/mgba/*.h 2>/dev/null | head
+
+## Claude
+
+Nothing includes it automatically, so I'll force-include it. That replaces my define-scraping from `build.ninja`.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2 && python3 - <<'E' p="tools/mgba_run.sh"; s=open(p).read() s=s.replace("""gcc -O2 -o tools/mgba_run tools/mgba_run.c -I$M
+
+## Claude
+
+Both GBAs linked and went through mode 5 into mode 2 at frame 1438. FourSwordsRecomp's notes call mode 2 "in the same Four Swords game together". Checking the screenshots:
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/run4/p0_f02000.png
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/run4/p1_f02000.png
+
+## Claude
+
+Both are in the game together. GBA 1 opened the pause menu (the script keeps pressing Start), and GBA 2 shows "P1 PAUSE!", so the two GBAs are talking over the link. The last frame:
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/run4/p1_f05999.png
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for r in 1 2 3; do timeout 120 tools/mgba_run $S/fs_only
+
+## Claude
+
+Two problems: run 2 printed nothing, and runs 1 and 3 differ. The difference may only be which GBA printed first, so I'll hash each GBA's dump separately and record the exit status:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for r in 1 2 3 4 5; do timeout 60 tools/mgba_run $S/fs_o
+
+## Claude
+
+Two separate problems:
+1. **Occasional segfault** (1 run in 5).
+2. **Runs aren't repeatable:** every run ends with different RAM.
+
+Checking how big the RAM differences are first:
+
+- tool `Bash`: cd /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad && python3 - <<'E' def load(f):     out={}; cur=None    
+
+- tool `Bash`: git ls-remote --tags https://github.com/mgba-emu/mgba | grep -oE "refs/tags/[0-9.]+$" | sort -V | tail -5
+
+- tool `Bash`: python3 - <<'E' p="tools/mgba_run.c"; s=open(p).read() rep=[ ("""// Each GBA runs on its own mCoreThread, linked with mGBA's lockstep SIO driver; the host callb
+
+## Claude
+
+One problem in what I just wrote: a GBA that reaches the frame limit stops, and the other might then wait for it forever. Done GBAs should keep running until all are done:
+
+- tool `Bash`: python3 - <<'E' p="tools/mgba_run.c"; s=open(p).read() a="			if (p->done || p->waiting) continue;" assert a in s s=s.replace(a,"			if (p->waiting) continue;  //
+
+- tool `TaskStop`: 
+
+- tool `Bash`: git checkout tools/mgba_run.c && wc -l tools/mgba_run.c
+
+- tool `Read`: /home/alex/Documents/zeldaalttp-ps2/tools/mgba_run.c
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/tools/mgba_run.c
+
+- tool `Bash`: tools/mgba_run.sh 2>&1 | grep -E "error|warning: [^u]" | head -5; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/sc
+
+## Claude
+
+Both GBAs now step through the modes on the same frame, and two linked GBAs run in 5 s. Checking repeatability (5 runs, RAM hashed per GBA) and the screenshot:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for r in 1 2 3 4 5; do timeout 60 tools/mgba_run $S/fs_o
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/run5/p1_f02000.png
+
+## Claude
+
+Five identical runs and no crashes. A quick 4-player check:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; mkdir -p $S/run6; time timeout 120 tools/mgba_run $S/fs_
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/run6/p3_f02000.png
+
+## Claude
+
+Four Links in one game. Updating the docs:
+
+- tool `Bash`: python3 - <<'E' p="docs/Planning Doc.md"; s=open(p).read() a="- [ ] Linked instances in `tools/mgba_run` (mGBA lockstep SIO); two GBAs reach the Four Swords gam
+
+## Claude
+
+The runner can now link up to four GBAs, and a linked run gives the same result every time. Two and four GBAs on the `FS_ONLY` ROM both get into the same Four Swords game on the same frame (1438). The four-player screenshot shows four Links together.
+
+On your question: no, Dolphin's mGBA link wouldn't help here. Dolphin embeds mGBA to connect a GBA to a GameCube through the controller-port cable. That's a different link from the GBA-to-GBA multiplayer cable Four Swords uses. mGBA's newer link code exists only on its development branch (the latest release is still 0.10.5). I didn't need it, because 0.10.5 now works for this.
+
+The repeatability problem, and the fix:
+- My first version gave each GBA its own emulation thread, as mgba-qt does. It linked, but RAM after 6,000 frames was different on every run, and about 1 run in 5 crashed. Which thread gets ahead decides where link transfers land, so the reference would have been useless for comparisons.
+- The runner now runs all GBAs on one thread in a fixed order. It uses mgba-qt's own link logic, only taking turns in a fixed order. Five runs gave identical RAM and no crashes.
+- Speed: two GBAs for 6,000 frames take 5.4 s, and four GBAs for 3,000 frames take 6.5 s.
+
+FourSwordsRecomp needed a link-timing workaround to get past the link screen. mGBA didn't, so our reference matches how a real emulator behaves.
+
+The planning doc and walkthrough (Step 4) are updated, including what failed along the way. These changes aren't committed yet. Next is the reachability map: every function Four Swords can reach with Link to the Past cut off, which becomes the decomp work queue.
+
+## User
+
+Commit and then proceed
+

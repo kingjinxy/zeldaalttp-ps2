@@ -27,7 +27,8 @@ player, linked in memory instead of by cable, each drawn into its own part of th
       (`0x08030E0C`). Checked in mGBA: mode 8 → 6 → 9 in one frame, Four Swords title, link wait.
 - [x] Headless mGBA runner (`tools/mgba_run`, built by `tools/mgba_run.sh` on mGBA 0.10.5 from source):
       button script, screenshots, RAM dumps, byte watch. One instance.
-- [ ] Linked instances in `tools/mgba_run` (mGBA lockstep SIO); two GBAs reach the Four Swords game together.
+- [x] Linked instances in `tools/mgba_run` (`--players 2-4`, mGBA lockstep SIO on one thread, repeatable):
+      2 and 4 GBAs reach the Four Swords game together (mode 2 at frame 1438).
 - [ ] Reachability map: every function reachable from `AgbMain` with modes 13 (LttP) cut off, including
       calls through pointer tables in data (FourSwordsRecomp's `scan_code_pointers` approach). This list
       is the decomp work queue; the rest stays asm and is left out of the port.
