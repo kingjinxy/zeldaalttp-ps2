@@ -1,5 +1,8 @@
 // Functions not decompiled yet are in asm/non_matching/rom2a/, one .inc each (tools/asm_split.py from asm/rom2a.s).
 
+#include "global.h"
+#include "entity.h"
+
 asm(".INCLUDE \"macro.inc\"");
 
 asm(".include \"asm/non_matching/rom2a/sub_0802DC80.inc\"");

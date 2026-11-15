@@ -956,7 +956,12 @@ asm(".include \"asm/non_matching/interface/sub_0812A5F8.inc\"");
 asm(".include \"asm/non_matching/interface/sub_0812A668.inc\"");
 asm(".include \"asm/non_matching/interface/sub_0812A6B8.inc\"");
 asm(".include \"asm/non_matching/interface/sub_0812A6CC.inc\"");
-asm(".include \"asm/non_matching/interface/sub_0812A798.inc\"");
+
+void sub_0812A798(void)
+{
+    sub_0812A85C();
+}
+
 asm(".include \"asm/non_matching/interface/sub_0812A7A4.inc\"");
 asm(".include \"asm/non_matching/interface/sub_0812A7C8.inc\"");
 asm(".include \"asm/non_matching/interface/sub_0812A85C.inc\"");

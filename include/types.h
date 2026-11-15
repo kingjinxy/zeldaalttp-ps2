@@ -214,7 +214,9 @@ struct UnknownStruct7
     u8 unkF12[0x10];
     u8 unkF22[0x30];
     u8 unkF52[0x10];
-    u8 unkF62[0x30];
+    u8 unkF62[0x10];
+    u8 unkF72[0x10];
+    u8 unkF82[0x10];
     u8 unkF92[0x10];
     u8 unkFA2[0x10];
     u8 unkFB2[0x10];
@@ -222,7 +224,8 @@ struct UnknownStruct7
     u8 unkFF2[0x10];
     u8 unk1002[0x30];
     u8 unk1032[0x10];
-    u8 unk1042[0x20];
+    u8 unk1042[0x10];
+    u8 unk1052[0x10];
     s8 unk1062[0x20];
     u8 unk1082[0x40];
     u8 unk10C2[0x10];

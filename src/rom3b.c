@@ -1,5 +1,8 @@
 // Functions not decompiled yet are in asm/non_matching/rom3b/, one .inc each (tools/asm_split.py from asm/rom3b.s).
 
+#include "global.h"
+#include "entity.h"
+
 asm(".INCLUDE \"macro.inc\"");
 
 asm(".include \"asm/non_matching/rom3b/sub_080C382C.inc\"");
@@ -79,7 +82,12 @@ asm(".include \"asm/non_matching/rom3b/sub_080C6240.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080C626C.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080C631C.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080C632C.inc\"");
-asm(".include \"asm/non_matching/rom3b/sub_080C6340.inc\"");
+
+void sub_080C6340(u8 a)
+{
+    sub_080C5D18(a);
+}
+
 asm(".include \"asm/non_matching/rom3b/sub_080C6350.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080C6368.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080C63A4.inc\"");
@@ -96,8 +104,18 @@ asm(".include \"asm/non_matching/rom3b/sub_080C6818.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080C6A24.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080C6B94.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080C6C7C.inc\"");
-asm(".include \"asm/non_matching/rom3b/sub_080C6DA8.inc\"");
-asm(".include \"asm/non_matching/rom3b/sub_080C6DB8.inc\"");
+
+void sub_080C6DA8(u8 a)
+{
+    sub_080C6818(a);
+}
+
+
+void sub_080C6DB8(u8 a)
+{
+    sub_080C6818(a);
+}
+
 asm(".include \"asm/non_matching/rom3b/sub_080C6DC8.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080C6E3C.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080C6E4C.inc\"");
@@ -117,7 +135,12 @@ asm(".include \"asm/non_matching/rom3b/sub_080C79D0.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080C79F8.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080C7A20.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080C7A48.inc\"");
-asm(".include \"asm/non_matching/rom3b/sub_080C7A70.inc\"");
+
+void sub_080C7A70(u8 a)
+{
+    sub_080C7014(a);
+}
+
 asm(".include \"asm/non_matching/rom3b/sub_080C7A80.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080C7AB8.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080C7AF8.inc\"");
@@ -130,7 +153,12 @@ asm(".include \"asm/non_matching/rom3b/sub_080C7FF4.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080C8094.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080C80C8.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080C811C.inc\"");
-asm(".include \"asm/non_matching/rom3b/sub_080C8168.inc\"");
+
+void sub_080C8168(u8 a)
+{
+    sub_080C811C(a);
+}
+
 asm(".include \"asm/non_matching/rom3b/sub_080C8178.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080C8194.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080C8388.inc\"");
@@ -186,7 +214,12 @@ asm(".include \"asm/non_matching/rom3b/sub_080CA3A0.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080CA400.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080CA538.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080CA54C.inc\"");
-asm(".include \"asm/non_matching/rom3b/sub_080CA58C.inc\"");
+
+void sub_080CA58C(u8 a)
+{
+    Sprite3_Move(a);
+}
+
 asm(".include \"asm/non_matching/rom3b/sub_080CA59C.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080CA5AC.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080CA5D8.inc\"");
@@ -257,15 +290,60 @@ asm(".include \"asm/non_matching/rom3b/sub_080CD4E4.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080CD4F4.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080CD544.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080CD574.inc\"");
-asm(".include \"asm/non_matching/rom3b/sub_080CD588.inc\"");
-asm(".include \"asm/non_matching/rom3b/sub_080CD598.inc\"");
-asm(".include \"asm/non_matching/rom3b/sub_080CD5A8.inc\"");
-asm(".include \"asm/non_matching/rom3b/sub_080CD5B8.inc\"");
-asm(".include \"asm/non_matching/rom3b/sub_080CD5C8.inc\"");
-asm(".include \"asm/non_matching/rom3b/sub_080CD5D8.inc\"");
-asm(".include \"asm/non_matching/rom3b/sub_080CD5E8.inc\"");
-asm(".include \"asm/non_matching/rom3b/sub_080CD5F8.inc\"");
-asm(".include \"asm/non_matching/rom3b/sub_080CD608.inc\"");
+
+void sub_080CD588(u8 a)
+{
+    sub_080CCB58(a);
+}
+
+
+void sub_080CD598(u8 a)
+{
+    sub_080CCB58(a);
+}
+
+
+void sub_080CD5A8(u8 a)
+{
+    sub_080CCB58(a);
+}
+
+
+void sub_080CD5B8(u8 a)
+{
+    sub_080CCB58(a);
+}
+
+
+void sub_080CD5C8(u8 a)
+{
+    sub_080CCB58(a);
+}
+
+
+void sub_080CD5D8(u8 a)
+{
+    sub_080CCB58(a);
+}
+
+
+void sub_080CD5E8(u8 a)
+{
+    sub_080CD098(a);
+}
+
+
+void sub_080CD5F8(u8 a)
+{
+    sub_080CD098(a);
+}
+
+
+void sub_080CD608(u8 a)
+{
+    sub_080CD098(a);
+}
+
 asm(".include \"asm/non_matching/rom3b/sub_080CD618.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080CD724.inc\"");
 asm(".include \"asm/non_matching/rom3b/sub_080CD8BC.inc\"");

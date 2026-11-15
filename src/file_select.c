@@ -1690,7 +1690,12 @@ void sub_0802B5B4(void)
 
 asm(".include \"asm/non_matching/file_select/sub_0802B5B8.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802B5D8.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_0802B608.inc\"");
+
+void sub_0802B608(void)
+{
+    sub_0802B5D8();
+}
+
 asm(".include \"asm/non_matching/file_select/sub_0802B614.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802B698.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802B6BC.inc\"");

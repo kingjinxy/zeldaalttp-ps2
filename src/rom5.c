@@ -1,5 +1,8 @@
 // Functions not decompiled yet are in asm/non_matching/rom5/, one .inc each (tools/asm_split.py from asm/rom5.s).
 
+#include "global.h"
+#include "entity.h"
+
 asm(".INCLUDE \"macro.inc\"");
 
 asm(".include \"asm/non_matching/rom5/sub_0812D32C.inc\"");
@@ -44,7 +47,12 @@ asm(".include \"asm/non_matching/rom5/sub_0812F87C.inc\"");
 asm(".include \"asm/non_matching/rom5/sub_0812F95C.inc\"");
 asm(".include \"asm/non_matching/rom5/sub_0812F9A8.inc\"");
 asm(".include \"asm/non_matching/rom5/sub_0812FA28.inc\"");
-asm(".include \"asm/non_matching/rom5/sub_0812FB84.inc\"");
+
+void sub_0812FB84(void)
+{
+    sub_0812E7B0();
+}
+
 asm(".include \"asm/non_matching/rom5/sub_0812FB90.inc\"");
 
 void sub_0812FBC0(void)
@@ -215,7 +223,12 @@ asm(".include \"asm/non_matching/rom5/sub_08134780.inc\"");
 asm(".include \"asm/non_matching/rom5/sub_081347D4.inc\"");
 asm(".include \"asm/non_matching/rom5/sub_08134808.inc\"");
 asm(".include \"asm/non_matching/rom5/sub_0813483C.inc\"");
-asm(".include \"asm/non_matching/rom5/sub_08134868.inc\"");
+
+void sub_08134868(void)
+{
+    sub_08134648();
+}
+
 asm(".include \"asm/non_matching/rom5/sub_08134874.inc\"");
 asm(".include \"asm/non_matching/rom5/sub_081348A0.inc\"");
 asm(".include \"asm/non_matching/rom5/sub_081348B0.inc\"");

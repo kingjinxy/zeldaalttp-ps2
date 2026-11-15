@@ -1,5 +1,8 @@
 // Functions not decompiled yet are in asm/non_matching/rom4/, one .inc each (tools/asm_split.py from asm/rom4.s).
 
+#include "global.h"
+#include "entity.h"
+
 asm(".INCLUDE \"macro.inc\"");
 
 asm(".include \"asm/non_matching/rom4/sub_080FFDD8.inc\"");
@@ -26,7 +29,12 @@ asm(".include \"asm/non_matching/rom4/sub_08101290.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_08101428.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_08101530.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_081015F4.inc\"");
-asm(".include \"asm/non_matching/rom4/sub_08101638.inc\"");
+
+void sub_08101638(u8 a)
+{
+    sub_08100624(a);
+}
+
 asm(".include \"asm/non_matching/rom4/sub_08101648.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_081016C8.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_08101714.inc\"");
@@ -36,7 +44,12 @@ asm(".include \"asm/non_matching/rom4/sub_08101808.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_081018A4.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_08101900.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_081019D0.inc\"");
-asm(".include \"asm/non_matching/rom4/sub_08101B14.inc\"");
+
+void sub_08101B14(u8 a)
+{
+    sub_080C35E0(a);
+}
+
 asm(".include \"asm/non_matching/rom4/sub_08101B24.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_08101B7C.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_08101BC0.inc\"");
@@ -140,7 +153,12 @@ asm(".include \"asm/non_matching/rom4/sub_08104A54.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_08104AC4.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_08104B3C.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_08104BA4.inc\"");
-asm(".include \"asm/non_matching/rom4/sub_08104F20.inc\"");
+
+void sub_08104F20(u8 a)
+{
+    sub_080ED830(a);
+}
+
 asm(".include \"asm/non_matching/rom4/sub_08104F30.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_08104FF4.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_08105148.inc\"");
@@ -185,7 +203,12 @@ asm(".include \"asm/non_matching/rom4/sub_08106AF0.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_08106DEC.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_08106FA4.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_081070A4.inc\"");
-asm(".include \"asm/non_matching/rom4/sub_08107134.inc\"");
+
+void sub_08107134(u8 a)
+{
+    sub_081089DC(a);
+}
+
 asm(".include \"asm/non_matching/rom4/sub_08107144.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_08107174.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_081071B4.inc\"");
@@ -196,7 +219,12 @@ asm(".include \"asm/non_matching/rom4/sub_081072EC.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_0810732C.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_08107368.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_081073C8.inc\"");
-asm(".include \"asm/non_matching/rom4/sub_081074E0.inc\"");
+
+void sub_081074E0(u8 a)
+{
+    sub_081089DC(a);
+}
+
 asm(".include \"asm/non_matching/rom4/sub_081074F0.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_08107520.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_08107588.inc\"");
@@ -269,7 +297,12 @@ asm(".include \"asm/non_matching/rom4/sub_0810AA24.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_0810AB64.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_0810ABE8.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_0810AC70.inc\"");
-asm(".include \"asm/non_matching/rom4/sub_0810AD80.inc\"");
+
+void sub_0810AD80(u8 a)
+{
+    sub_080E9A10(a);
+}
+
 asm(".include \"asm/non_matching/rom4/sub_0810AD90.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_0810AE1C.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_0810AEE0.inc\"");
@@ -292,7 +325,12 @@ void sub_0810B698(void)
 }
 
 asm(".include \"asm/non_matching/rom4/sub_0810B69C.inc\"");
-asm(".include \"asm/non_matching/rom4/sub_0810B7D4.inc\"");
+
+void sub_0810B7D4(u8 a)
+{
+    sub_080C3758(a);
+}
+
 asm(".include \"asm/non_matching/rom4/sub_0810B7E4.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_0810B8CC.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_0810B94C.inc\"");
@@ -301,8 +339,18 @@ asm(".include \"asm/non_matching/rom4/sub_0810BAB0.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_0810BB04.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_0810BBB0.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_0810BC40.inc\"");
-asm(".include \"asm/non_matching/rom4/sub_0810BD20.inc\"");
-asm(".include \"asm/non_matching/rom4/sub_0810BD30.inc\"");
+
+void sub_0810BD20(u8 a)
+{
+    sub_080C3758(a);
+}
+
+
+void sub_0810BD30(u8 a)
+{
+    gUnknown_0817CBAC[gRam.unk1052[a]](a);
+}
+
 asm(".include \"asm/non_matching/rom4/sub_0810BD5C.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_0810BDA0.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_0810BDDC.inc\"");
@@ -377,7 +425,12 @@ asm(".include \"asm/non_matching/rom4/sub_0810EC04.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_0810ECDC.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_0810EDB4.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_0810EE80.inc\"");
-asm(".include \"asm/non_matching/rom4/sub_0810EF18.inc\"");
+
+void sub_0810EF18(u8 a)
+{
+    gUnknown_0817D034[gRam.unk1052[a]](a);
+}
+
 asm(".include \"asm/non_matching/rom4/sub_0810EF44.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_0810EF98.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_0810EFC0.inc\"");
@@ -400,7 +453,12 @@ asm(".include \"asm/non_matching/rom4/sub_0810F260.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_0810F28C.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_0810F2B4.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_0810F328.inc\"");
-asm(".include \"asm/non_matching/rom4/sub_0810F394.inc\"");
+
+void sub_0810F394(u8 a)
+{
+    sub_0810E70C(a);
+}
+
 asm(".include \"asm/non_matching/rom4/sub_0810F3A4.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_0810F3B8.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_0810F3C8.inc\"");
@@ -420,7 +478,12 @@ asm(".include \"asm/non_matching/rom4/sub_0810F740.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_0810F804.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_0810F940.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_0810F9B4.inc\"");
-asm(".include \"asm/non_matching/rom4/sub_0810FA0C.inc\"");
+
+void sub_0810FA0C(u8 a)
+{
+    gUnknown_0817D304[gRam.unk1052[a]](a);
+}
+
 asm(".include \"asm/non_matching/rom4/sub_0810FA38.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_0810FA94.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_0810FB20.inc\"");
@@ -452,7 +515,12 @@ asm(".include \"asm/non_matching/rom4/sub_08110DC8.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_08110E60.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_08110EF8.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_08110FA0.inc\"");
-asm(".include \"asm/non_matching/rom4/sub_08110FD8.inc\"");
+
+void sub_08110FD8(u8 a)
+{
+    gUnknown_0817D4B0[gRam.unkF92[a]](a);
+}
+
 asm(".include \"asm/non_matching/rom4/sub_08111004.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_08111054.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_08111070.inc\"");
