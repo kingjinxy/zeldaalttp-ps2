@@ -34,8 +34,10 @@ player, linked in memory instead of by cable, each drawn into its own part of th
       Upper bound: eight unlabelled data blobs over 64 KB pass on every pointer-shaped word.
 - [x] Coverage (`mgba_run --coverage`, `reach.py --coverage`): executed functions; lower bound. Lobby run:
       657 functions. Finds calls the static map can't see (10 in `rom1.s`, via a function table in RAM).
-- [ ] Recording mode in `mgba_run` (window, 2-4 pads), so the user's play becomes coverage and replay tests
-- [ ] Coverage runs that play Four Swords (stages, items, enemies, bosses), to grow the lower bound
+- [x] Recording mode: `mgba_run --play DIR --start STATES` (window, GBA 1 on WASD, GBA 2 on arrows), starting
+      linked at Choose a Stage from saved states; replays exactly with `--start DIR`
+- [ ] Coverage runs that play Four Swords (stages, items, enemies, bosses), to grow the lower bound.
+      Session 1 (one stage, 44,522 frames): 1,135 functions executed (705 before)
 - [ ] Work queue = static ∪ executed; order by coverage first
 - [ ] Split `asm/` by that map into Four Swords, shared engine and LttP files; name shared engine
       functions from `reference/tmc`.

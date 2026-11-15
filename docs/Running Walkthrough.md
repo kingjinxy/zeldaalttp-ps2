@@ -158,3 +158,19 @@
   Four Swords uses an ldscript alias, `gUnknown_02016D60_fs`, with its own struct.
 - Found: the Makefile didn't rebuild C files when a header changed (no SCANINC), so a header edit could
   leave a stale object and hide a mismatch. Every C object now depends on all headers.
+
+## Step 11: recording play sessions (2026-11-15)
+
+- `mgba_run --play DIR` (SDL2): both GBAs side by side, real-time pacing, GBA 1 on WASD (F=A G=B R=L T=R
+  1=Start 2=Select), GBA 2 on the arrows (/=A .=B ;=L '=R Enter=Start RShift=Select). Inputs are
+  recorded in the replay format; `--saveP` files are now read into memory only, so replays are exact.
+- First build attempt didn't happen: under `set -e`, `SDL=$(pkg-config ...)` failing exits the build
+  script silently, so the old binary ran. `|| true` fixed it.
+- Skipping the intro: `--save-states FRAME` writes each GBA's save state plus its EEPROM (states don't
+  include EEPROM) and `--start DIR` loads them. `tests/intro_linked.inputs` gets two GBAs from empty saves
+  to Choose a Stage (mode 5); states at frame 1600 are `recordings/start_linked` (local only).
+  Check: continuous run vs states + 600 frames: same mode changes on the same frames, RAM identical except
+  20 bytes of GBA 2's stack (0x03007D21-0x03007E80, mid-frame leftovers); runs from states repeat exactly.
+- Session 1: 44,522 frames, one stage (mode 2 from frame 1752, back to Choose a Stage at 44297). Replay
+  (1 m 37 s with coverage) reaches the same end screen; EEPROM equal (but unchanged during play, so a weak
+  check). Coverage with the lobby run: 1,135 functions executed, 939 of them still asm (219 in fs_game).

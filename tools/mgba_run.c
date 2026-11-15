@@ -7,10 +7,12 @@
 // P is a player number 0-3: --inputs1 a.inputs is GBA 1's script; --inputs is the default for all.
 // --saveP FILE: GBA P's EEPROM is loaded from FILE into memory and never written back, so a run can be
 // repeated exactly. Without it a GBA starts with an empty EEPROM.
-// --play DIR (built with SDL2, tools/mgba_run.sh): a window to play GBAs 0 and 1 in real time, recording
-// each GBA's buttons to DIR/inputsP and its EEPROM at the start and end to DIR/start_saveP.sav and
-// DIR/end_saveP.sav. FRAMES is ignored; Esc or closing the window stops. Replay a recording with
-//   mgba_run ROM N --players 2 --inputs0 DIR/inputs0 --inputs1 DIR/inputs1 [--save0 DIR/start_save0.sav ...]
+// --start DIR: each GBA P starts from DIR/saveP.sav (EEPROM) and, if present, DIR/stateP.ss (save state).
+// --save-states FRAME: at the end of FRAME, write that pair for every GBA to --out DIR.
+// --play DIR (built with SDL2, tools/mgba_run.sh): a window to play GBAs 0 and 1 in real time. Writes the
+// starting pair (saveP.sav, stateP.ss) to DIR, records each GBA's buttons to DIR/inputsP, and writes the
+// final EEPROM to DIR/end_saveP.sav. FRAMES is ignored; Esc or closing the window stops. Replay with
+//   mgba_run ROM N --players 2 --start DIR --inputs0 DIR/inputs0 --inputs1 DIR/inputs1
 // Keys: GBA 0: WASD, F=A G=B R=L T=R 1=Start 2=Select. GBA 1: arrows, /=A .=B ;=L '=R Enter=Start
 // RShift=Select.
 // Inputs file: lines "FRAME KEYS", KEYS = '-' or letters A B s(elect) S(tart) R L U D r(ight) l(eft);
@@ -34,6 +36,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #ifdef MGBA_RUN_SDL
 #include <SDL.h>
 #endif
@@ -73,6 +76,8 @@ static int ndumps;
 static unsigned frames, watch;
 static const char *coverage;
 static const char *play;            // --play DIR
+static const char *start;           // --start DIR
+static unsigned saveStates = ~0u;   // --save-states FRAME
 static int liveKeys[MAX_GBAS];      // --play: keys from the keyboard
 static FILE *rec[MAX_GBAS];         // --play: recorded inputs
 static int frameReady;              // --play: GBA 0 finished a frame
@@ -251,6 +256,20 @@ static void onFrame(void *context) {
 			p->last = v;
 		}
 	}
+	if (frame == saveStates) {
+		char path[512];
+		size_t size = core->stateSize(core);
+		void *data = malloc(size);
+		if (!core->saveState(core, data)) { fprintf(stderr, "cannot save state %d\n", id); exit(1); }
+		snprintf(path, sizeof path, "%s/state%d.ss", outDir, id);
+		writeFile(path, data, size);
+		free(data);
+		data = NULL;
+		size = core->savedataClone(core, &data);
+		snprintf(path, sizeof path, "%s/save%d.sav", outDir, id);
+		writeFile(path, data, size);
+		free(data);
+	}
 	if (inList(shots, frame)) {
 		char path[512];
 		snprintf(path, sizeof path, "%s/p%d_f%05u.png", outDir, id, frame);
@@ -337,6 +356,8 @@ int main(int argc, char **argv) {
 		else if (!strcmp(o, "--watch")) watch = strtoul(v, NULL, 0);
 		else if (!strcmp(o, "--coverage")) coverage = v;
 		else if (!strcmp(o, "--play")) play = v;
+		else if (!strcmp(o, "--start")) start = v;
+		else if (!strcmp(o, "--save-states")) saveStates = strtoul(v, NULL, 0);
 		else { fprintf(stderr, "unknown option %s\n", o); return 1; }
 	}
 	if (nplayers < 1 || nplayers > MAX_GBAS) { fprintf(stderr, "--players 1-4\n"); return 1; }
@@ -390,12 +411,19 @@ int main(int argc, char **argv) {
 		p->pixels = calloc(p->w * p->h, sizeof(color_t));
 		core->setVideoBuffer(core, p->pixels, p->w);
 		if (!mCoreLoadFile(core, rom)) { fprintf(stderr, "cannot load %s\n", rom); return 1; }
-		size_t saveSize = 0;
+		char path[512], statePath[512];
+		snprintf(path, sizeof path, "%s/save%d.sav", start, i);
+		snprintf(statePath, sizeof statePath, "%s/state%d.ss", start, i);
+		if (start && !saves[i]) saves[i] = strdup(path);
+		size_t saveSize = 0, stateSize = 0;
 		void *saveData = saves[i] ? readFile(saves[i], &saveSize) : NULL;
-		if (play && saves[i]) {
-			char path[512];
-			snprintf(path, sizeof path, "%s/start_save%d.sav", play, i);
+		void *stateData = start && access(statePath, R_OK) == 0 ? readFile(statePath, &stateSize) : NULL;
+		if (play) {
+			snprintf(path, sizeof path, "%s/save%d.sav", play, i);
 			writeFile(path, saveData, saveSize);
+			snprintf(path, sizeof path, "%s/state%d.ss", play, i);
+			if (stateData) writeFile(path, stateData, stateSize);
+			else unlink(path);
 		}
 		struct VFile *sv = VFileMemChunk(saveData, saveSize);
 		free(saveData);
@@ -415,6 +443,13 @@ int main(int argc, char **argv) {
 			GBASIOLockstepAttachNode(&lockstep, &p->node);
 			GBASIOSetDriver(&gba->sio, &p->node.d, SIO_MULTI);
 			GBASIOSetDriver(&gba->sio, &p->node.d, SIO_NORMAL_32);
+		}
+		if (stateData) {
+			if (stateSize != core->stateSize(core) || !core->loadState(core, stateData)) {
+				fprintf(stderr, "cannot load %s\n", statePath);
+				return 1;
+			}
+			free(stateData);
 		}
 	}
 
