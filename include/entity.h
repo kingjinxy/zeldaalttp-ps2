@@ -49,6 +49,11 @@ typedef struct Entity {
     /* 0x58 */ u8 filler58[6];
     /* 0x5E */ u8 unk5E_0 : 2;
     /*      */ u8 unk5E_2 : 6;
+    /* 0x5F */ u8 filler5F[0x19];
+    /* 0x78 */ u16 unk78;
+    /* 0x7A */ u8 unk7A;
+    /* 0x7B */ u8 filler7B;
+    /* 0x7C */ u16 unk7C;
 } Entity;
 
 // Managers (DoManagerEntity): same list header as Entity, bigger body
