@@ -95,7 +95,7 @@ void sub_0800C8E4(void);
 //sub_0800C9F8();
 //sub_0800CA34();
 //sub_0800CA38();
-//sub_0800CA3C();
+void sub_0800CA3C(void);
 //sub_0800CA84();
 //sub_0800CAD4();
 //sub_0800CBBC();

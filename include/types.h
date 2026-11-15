@@ -478,7 +478,7 @@ struct Struct020309C0
 
 struct Struct03000520
 {
-	u8 unk0;  // screen fading?
+	u8 unk0 : 8;  // screen fading? written as a bitfield by -O0 code
     u8 unk1;
     u8 unk2;
     u8 unk3;

@@ -1773,7 +1773,15 @@ u32 sub_08059A2C(void)
     return gUnknown_0202E1E4;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08059A44.inc\"");
+
+void sub_08059A44(void)
+{
+    sub_0800CA3C();
+    gUnknown_0202E1E4 = 1;
+    gUnknown_03000520.unk4 = 1;
+    gUnknown_03000520.unk0 = 0;
+}
+
 
 void sub_08059A80(struct Entity *this)
 {
