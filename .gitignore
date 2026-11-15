@@ -27,3 +27,5 @@ Thumbs.db
 zeldaalttp.gba.pal
 baserom.gba.pal
 .idea/
+.cppflags
+tools/mgba_run

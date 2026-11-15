@@ -23,6 +23,14 @@ CC1FLAGS := -mthumb-interwork -Wimplicit -Wparentheses -O2
 CPPFLAGS := -Itools/agbcc/include -iquote include -nostdinc -undef
 ASFLAGS  := -mcpu=arm7tdmi -mthumb-interwork -Iasminclude
 
+# make FS_ONLY=1: boot straight into Four Swords (does not match the original ROM)
+ifneq ($(FS_ONLY),)
+  CPPFLAGS += -DFS_ONLY
+endif
+# Rebuild C objects when CPPFLAGS change
+CPPFLAGS_STAMP := .cppflags
+$(shell echo '$(CPPFLAGS)' | cmp -s - $(CPPFLAGS_STAMP) || echo '$(CPPFLAGS)' > $(CPPFLAGS_STAMP))
+
 SHA1 := $(shell { command -v sha1sum || command -v shasum; } 2>/dev/null) -c
 
 # Build tools when building the ROM
@@ -92,7 +100,7 @@ $(ELF): $(OFILES) $(LDSCRIPT)
 #### Recipes ####
 
 # C source code
-src/%.o: src/%.c
+src/%.o: src/%.c $(CPPFLAGS_STAMP)
 	$(CPP) $(CPPFLAGS) $< | $(CC1) $(CC1FLAGS) -o src/$*.s
 	echo '.ALIGN 2, 0' >> src/$*.s
 	$(AS) $(ASFLAGS) src/$*.s -o src/$*.o

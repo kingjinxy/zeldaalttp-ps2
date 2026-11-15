@@ -8,6 +8,10 @@
 // 9 = four swords intro?
 // 6 = game select
 // 0xD = link to the past
+#ifdef FS_ONLY
+void fs_only_choose_game(void);
+#endif
+
 void (*const gUnknown_0842731C[])(void) =
 {
     splash_screen_main,
@@ -16,7 +20,11 @@ void (*const gUnknown_0842731C[])(void) =
     sub_080310B4,
     sub_080317F4,
     sub_0803006C,
+#ifdef FS_ONLY
+    fs_only_choose_game,
+#else
     sub_0803074C,
+#endif
     sub_0802DC60,
     sub_0800F808,
     sub_0802E764,

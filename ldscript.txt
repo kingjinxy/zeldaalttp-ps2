@@ -67,6 +67,14 @@ SECTIONS
 		data/4swords_text.o(.rodata);
 	} = 0
 
+	/* FS_ONLY code, in the unused space after the ROM's data so nothing before it moves */
+	. = 0x08700000;
+	.fs_only :
+	ALIGN(4)
+	{
+		src/fs_only.o(.text);
+	} = 0
+
 	. = 0x02000000;
 	.ewram_data :
 	ALIGN(4)
