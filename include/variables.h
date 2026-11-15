@@ -979,7 +979,7 @@ extern u8 gSubState;
 extern u8 gUnknown_03000C00;
 //extern gUnknown_03000C1C;
 //extern gUnknown_03000C20;
-extern u8 gUnknown_03000E20[];
+extern struct Struct03000E20 gUnknown_03000E20;
 extern void *gUnknown_03000E34;
 extern u8 gUnknown_03000E40[0x100];
 extern u32 gRandom;

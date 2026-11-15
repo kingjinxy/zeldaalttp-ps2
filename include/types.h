@@ -582,6 +582,13 @@ struct MapData
     u16 unk5004[0x2800];
 };
 
+struct Struct03000E20
+{
+    u16 unk0;
+    u8 filler2[0x10];
+    u8 unk12;
+};
+
 struct Struct03000450
 {
     u8 filler0[0x18];
@@ -602,7 +609,8 @@ struct Struct03006A30
     u16 unk8 : 16;
     u8 fillerA[2];
     u8 unkC : 8;
-    u8 fillerD[0xF];
+    u8 fillerD[0xE];
+    u8 unk1B;
     u8 unk1C;
     u8 filler1D[5];
     u16 unk22;  // tile position << 1: x in bits 1-6, y in bits 7-12

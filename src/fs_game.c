@@ -196,9 +196,37 @@ bool32 sub_08037554(void)
 
 asm(".include \"asm/non_matching/fs_game/sub_08037574.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08037750.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_0803781C.inc\"");
+
+// Which player (1-4) newly pressed all of these buttons, or 0
+u8 sub_0803781C(u16 mask)
+{
+    if (gUnknown_03005E10[0] != 0xFFFF && (u16)(gUnknown_03005E10[0] & mask) == mask)
+        return 1;
+    if (gUnknown_03005E10[1] != 0xFFFF && (u16)(gUnknown_03005E10[1] & mask) == mask)
+        return 2;
+    if (gUnknown_03005E10[2] != 0xFFFF && (u16)(gUnknown_03005E10[2] & mask) == mask)
+        return 3;
+    if (gUnknown_03005E10[3] != 0xFFFF && (u16)(gUnknown_03005E10[3] & mask) == mask)
+        return 4;
+    return 0;
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_080378F4.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_080379BC.inc\"");
+
+// Which player (1-4) holds all of these buttons, or 0
+u8 sub_080379BC(u16 mask)
+{
+    if (gUnknown_03000940[0] != 0xFFFF && (u16)(gUnknown_03000940[0] & mask) == mask)
+        return 1;
+    if (gUnknown_03000940[1] != 0xFFFF && (u16)(gUnknown_03000940[1] & mask) == mask)
+        return 2;
+    if (gUnknown_03000940[2] != 0xFFFF && (u16)(gUnknown_03000940[2] & mask) == mask)
+        return 3;
+    if (gUnknown_03000940[3] != 0xFFFF && (u16)(gUnknown_03000940[3] & mask) == mask)
+        return 4;
+    return 0;
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_08037A94.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08037B5C.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08037C58.inc\"");
@@ -242,7 +270,7 @@ void sub_080381A8(void)
     gPaletteBuf2[0] &= 0;
     sub_0803A030();
     CpuFill32(0, gUnknown_03006A30, 0x240);
-    gUnknown_03000E20[18] &= 0;
+    gUnknown_03000E20.unk12 &= 0;
     gUnknown_03006730 = &gUnknown_03006A30[gLCDRegisterBuffer];
     gUnknown_03005050++;
 }
@@ -3068,7 +3096,27 @@ void sub_08060734(struct Entity *this)
 asm(".include \"asm/non_matching/fs_game/sub_0806075C.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_080608F8.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08060CF0.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_08060E08.inc\"");
+
+void sub_08060E08(struct Entity *this)
+{
+    sub_0800238C(this, gUnknown_03006A30[this->form].unk28);
+    GetNextFrame(this);
+    if (gUnknown_03006A30[this->form].unk1B != 0)
+    {
+        if ((u16)(gUnknown_03000E20.unk0 & 3) == 0)
+            this->unk1E_0 ^= 7;
+    }
+    else if ((u8)(this->unk29 & 0x80))
+    {
+        this->unk14++;
+        sub_08003870(this, (this->unk2A >> 1) + 8);
+    }
+    else
+    {
+        DeleteThisEntity(this);
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_08060EE8.inc\"");
 
 void sub_08060F1C(struct Entity *this)
