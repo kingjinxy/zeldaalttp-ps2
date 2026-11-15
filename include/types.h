@@ -521,7 +521,9 @@ struct Struct03000FC0
     u8 unk10 : 8;  // gUnknown_03000FD0 starts here
     u8 filler11[3];
     u32 unk14;
-    u8 filler18[0x24];
+    u8 filler18[0xC];
+    u8 unk24 : 8;
+    u8 filler25[0x17];
     u32 unk3C;
     u8 filler40[0x48];
 };  // size = 0x88 (sub_0803668C clears it)

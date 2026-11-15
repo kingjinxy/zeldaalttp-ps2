@@ -159,7 +159,31 @@ void sub_08036F9C(void)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_08036FC8.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_080370C0.inc\"");
+
+void sub_080370C0(void)
+{
+    u32 unused;  // the frame is 4 bytes
+
+    gUnknown_03000FC0.unk8 = 3;
+    gUnknown_03000FC0.unk24 = gUnknown_03000FC0.unk10 = 80;
+    if (sub_08037B5C(80))
+    {
+        if ((u8)(gUnknown_03000FC0.unk3 & 1))
+            sub_0803719C(0);
+        if ((u8)(gUnknown_03000FC0.unk3 & 2))
+            sub_0803719C(1);
+        if ((u8)(gUnknown_03000FC0.unk3 & 4))
+            sub_0803719C(2);
+        if ((u8)(gUnknown_03000FC0.unk3 & 8))
+            sub_0803719C(3);
+        sub_08037300();
+    }
+    else
+    {
+        gUnknown_03000FC0.unkC++;
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0803719C.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08037300.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08037414.inc\"");
@@ -451,7 +475,17 @@ bool32 sub_0803A940(struct Entity *a, struct Entity *b, u8 c)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_0803AA04.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_0803AB30.inc\"");
+
+bool32 sub_0803AB30(struct Entity *a, struct Entity *b, u8 c)
+{
+    a->unk42 = b->unk46;
+    a->unk3D = (u8)(b->unk46 & 0x80) ? b->unk46 + (s8)b->unk46 / 4 : -b->unk46 - (s8)b->unk46 / 4;
+    if (b->unk3D == 0)
+        b->unk3D = 0xFF;
+    sub_0803A6DC(a, b);
+    return TRUE;
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0803AC00.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803ACC8.inc\"");
 
@@ -2680,7 +2714,22 @@ void sub_0805D9C4(struct Entity *this)
 
 asm(".include \"asm/non_matching/fs_game/sub_0805D9EC.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0805DAA0.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_0805DAEC.inc\"");
+
+void sub_0805DAEC(struct Entity *this)
+{
+    if (this->unk14 == 0)
+    {
+        this->unk14++;
+        this->unk1B = 78;
+        this->unk1F_6 = 0;
+        this->unk1D_6 = 0;
+        this->unk5E_0 = 3;
+        this->unk1E_0 = 8;
+        this->unk20 = 128;
+    }
+    this->unk1C_0 = (u16)(gUnknown_03000948.unk0 & 16) ? 2 : 0;
+}
+
 
 void sub_0805DBBC(struct Entity *this)
 {
