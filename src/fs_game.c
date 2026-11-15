@@ -275,7 +275,19 @@ asm(".include \"asm/non_matching/fs_game/sub_0803857C.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_080386C0.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803883C.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08038A30.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_08038CA8.inc\"");
+
+bool32 sub_08038CA8(void)
+{
+    u8 i;
+
+    for (i = 0; i < gUnknown_03006C80.unk0; i++)
+    {
+        if ((u16)(gUnknown_03006A30[i].unk36 & 1) || gUnknown_03006A30[i].unk28->unk45 == 0)
+            return FALSE;
+    }
+    return (u8)(sub_080367E4() & 15) == gUnknown_03006C80.unk6F;
+}
+
 
 void sub_08038D50(void)
 {
@@ -422,7 +434,22 @@ asm(".include \"asm/non_matching/fs_game/sub_0803AA04.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803AB30.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803AC00.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803ACC8.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_0803AE00.inc\"");
+
+u32 sub_0803AE00(struct Entity *a, struct Entity *b, u8 c)
+{
+    if (a->type == 6 && a->subtype == 0)
+    {
+        a->unk3C &= 0x7F;
+        sub_0804C448(a, gUnknown_03006A30[b->form].unk28);
+    }
+    else
+    {
+        b->unk3C &= 0x7F;
+        sub_0804C448(b, gUnknown_03006A30[a->form].unk28);
+    }
+    return 2;
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0803AEB4.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803AFB8.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803B0D8.inc\"");
@@ -1473,7 +1500,27 @@ void sub_08053514(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08053564.inc\"");
+
+void sub_08053564(struct Entity *this, u16 a)
+{
+    s32 x;
+    s32 y;
+    u8 i;
+    u8 j;
+
+    y = 16;
+    for (i = 3; i != 0; i--)
+    {
+        x = 16;
+        for (j = 3; j != 0; j--)
+        {
+            sub_08001B70(this, a, this->x.HALF_U.HI + x, this->y.HALF_U.HI + y);
+            x -= 16;
+        }
+        y -= 16;
+    }
+}
+
 
 void sub_08053610(struct Entity *this)
 {

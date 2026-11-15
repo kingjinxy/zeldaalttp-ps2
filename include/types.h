@@ -5,6 +5,10 @@ union SplitWord {
         s16 LO : 16;
         s16 HI : 16;
     } HALF;
+    struct {
+        u16 LO : 16;
+        u16 HI : 16;
+    } HALF_U;
 };
 
 // Four Swords view of the area at gUnknown_0201ED90 (ldscript alias gUnknown_0201ED90_fs)
@@ -541,7 +545,7 @@ struct Struct03006C80
     u8 unk5C[4];  // per player
     u8 filler60[0xE];
     u8 unk6E : 8;
-    u8 filler6F;
+    u8 unk6F;
     struct Entity *unk70[1];  // length unknown; indexed by Entity.unk18
 };
 
@@ -591,7 +595,8 @@ struct Struct03006A30
     u8 unk1C;
     u8 filler1D[0xB];
     struct Entity *unk28;
-    u8 filler2C[0xC];
+    u8 filler2C[0xA];
+    u16 unk36;
     u8 unk38;
     u8 unk39;
     u8 filler3A[0x56];
