@@ -53,7 +53,7 @@ typedef struct Entity {
     /* 0x41 */ u8 unk41 : 8;
     /* 0x42 */ u8 filler42[6];
     /* 0x48 */ const void *unk48;
-    /* 0x4C */ u32 unk4C;
+    /* 0x4C */ struct Entity *unk4C;
     /* 0x50 */ u16 unk50 : 16;
     /* 0x52 */ u8 unk52 : 8;
     /* 0x53 */ u8 filler53;
@@ -79,6 +79,10 @@ typedef struct Entity {
         u32 w;
         u16 h;
         u16 *p;
+        struct {
+            u16 h;
+            u16 unk7E : 16;
+        } s;
     } unk7C;  // a halfword for some entity kinds, a pointer for others
 } Entity;
 

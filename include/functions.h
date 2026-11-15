@@ -352,7 +352,7 @@ u32 sub_08013D20(u8);
 //sub_080144F0();
 //sub_080145B4();
 //sub_080145D8();
-//sub_08014658();
+void sub_08014658(u16, u16, u16);
 //sub_080146D4();
 //sub_0801478C();
 //sub_0801484C();
@@ -1978,7 +1978,7 @@ u8 sub_08043EE0(u8);
 //DoObjectEntity();
 void sub_0804C200(struct Entity *);
 //sub_0804C410();
-void sub_0804C448(struct Entity *, u32);
+void sub_0804C448(struct Entity *, struct Entity *);
 //sub_0804C808();
 struct Entity *sub_0804C8A8(u8 subtype, u8 form, u8 parameter);  // tmc: CreateObject
 // ldscript alias of sub_0804C8A8, without a prototype: the original callers were in other source files and
