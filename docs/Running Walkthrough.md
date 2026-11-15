@@ -142,6 +142,6 @@
   the blob start sometimes already had a label; a blob in the middle of a file needs the text after it
   moved behind the new chunks; and the original rom1 asm switches to `.syntax unified` at
   `0x080007C4` for good, so the closing `.syntax` must restore the mode in effect, not assume divided.
-- Result: all 15 blobs (34 KB) disassembled, 264 new functions, `make compare` matches. The ARM IWRAM
+- Result: all 15 blobs (34 KB) disassembled, 249 new functions, `make compare` matches. The ARM IWRAM
   code at `0x08008FA4` and the m4a block at `0x081339C4` included. `ShowNPCDialogue` is now
   `sub_08009924`.

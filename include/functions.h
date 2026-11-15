@@ -2,6 +2,8 @@
 void interrupt_main(void);
 void UpdateAllEntities(void);
 void GetNextFrame();  // tmc: GetNextFrame(Entity *)
+void sub_08009924(struct Entity *, const void *);  // tmc: ShowNPCDialogue
+void sub_080098A0(struct Entity *, const void *);
 
 // rom1.s
 //sub_08000358();
