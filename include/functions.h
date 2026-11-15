@@ -4,6 +4,8 @@ void UpdateAllEntities(void);
 void GetNextFrame();  // tmc: GetNextFrame(Entity *)
 void sub_08009924(struct Entity *, const void *);  // tmc: ShowNPCDialogue
 void sub_080098A0(struct Entity *, const void *);
+u32 sub_0800099C(void);
+void sub_0800238C(struct Entity *, struct Entity *);
 
 // rom1.s
 //sub_08000358();
@@ -1718,7 +1720,7 @@ void sub_08038168(void);
 //sub_0803C810();
 //sub_0803C9FC();
 //sub_0803CB7C();
-//sub_0803CC20();
+void sub_0803CC20(struct Entity *);  // tmc: ProcessMovement2
 //sub_0803CC9C();
 //sub_0803CD8C();
 //sub_0803CE04();

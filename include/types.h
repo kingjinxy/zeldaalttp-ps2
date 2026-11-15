@@ -486,6 +486,13 @@ struct Struct03000FC0
     u8 fillerF;
 };  // size = 16 (0x10), up to gUnknown_03000FD0
 
+struct Struct03006A30
+{
+    u8 filler0[8];
+    u16 unk8 : 16;
+    u8 fillerA[0x86];
+};  // size = 0x90
+
 struct Struct03006CA8
 {
     u32 unk0;
