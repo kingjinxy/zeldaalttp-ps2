@@ -1806,7 +1806,18 @@ void sub_080552C0(struct Entity *this)
     gUnknown_08428D84[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_080552E8.inc\"");
+
+void sub_080552E8(struct Entity *this)
+{
+    this->unk14++;
+    this->unk1C_0 = 1;
+    this->unk2E = 1;
+    this->unk1C_4 = 1;
+    this->unk1E_0 = sub_0802C3E0(this->form);
+    this->unk20 = this->unk20 + gUnknown_08428D70[this->form];
+    this->z.HALF.HI = -4;
+}
+
 
 void sub_080553BC(struct Entity *this)
 {
@@ -2215,7 +2226,27 @@ void sub_08057904(struct Entity *this)
     gUnknown_08428E98[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0805792C.inc\"");
+
+void sub_0805792C(struct Entity *this)
+{
+    if (this->form == 0)
+    {
+        this->unk1C_0 = 1;
+        this->unk1E_0 = gUnknown_03006730->unk28->form + 7;
+        this->unk4C = gUnknown_03006730->unk28;
+    }
+    else
+    {
+        this->unk1C_0 = 2;
+    }
+    this->unk1D_6 = 0;
+    this->unk1F_6 = 1;
+    this->unk17 = this->parameter;
+    this->unk14++;
+    sub_08003870(this, 0);
+    sub_08057A00(this);
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_08057A00.inc\"");
 
 void sub_08057B20(struct Entity *this)
