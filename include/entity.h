@@ -12,7 +12,7 @@ typedef struct Entity {
     /* 0x09 */ u8 subtype : 8;
     /* 0x0A */ u8 form : 8;
     /* 0x0B */ u8 parameter : 8;
-    /* 0x0C */ s32 unkC;
+    /* 0x0C */ s32 speed;  // ProcessMovement2 (sub_0803CC20)
     /* 0x10 */ u8 filler10[4];
     /* 0x14 */ u8 unk14 : 8;
     /* 0x15 */ u8 unk15 : 8;
@@ -36,7 +36,7 @@ typedef struct Entity {
     /* 0x28 */ u8 frameTimer : 8;
     /* 0x29 */ u8 unk29;
     /* 0x2A */ u8 unk2A;
-    /* 0x2B */ u8 unk2B : 8;
+    /* 0x2B */ u8 direction : 8;  // 0-0x3F, bit 7 = not moving; index into gSineTable/8
     /* 0x2C */ u8 filler2C[4];
     /* 0x30 */ union SplitWord x;  // tmc names; HALF.HI is the pixel position
     /* 0x34 */ union SplitWord y;

@@ -198,7 +198,28 @@ void sub_0803818C(void)
 
 asm(".include \"asm/non_matching/fs_game/sub_080381A8.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08038238.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_08038358.inc\"");
+
+void sub_08038358(void)
+{
+    switch (gSubState)
+    {
+    case 0:
+        sub_08036704(4);
+        gSubState++;
+        break;
+    case 1:
+        if (sub_080367CC() == 1)
+        {
+            gUnknown_03000490 = gRandom;
+            gUnknown_03005050++;
+            gSubState = 0;
+        }
+        break;
+    default:
+        break;
+    }
+}
+
 
 void sub_080383CC(void)
 {
@@ -327,7 +348,16 @@ asm(".include \"asm/non_matching/fs_game/sub_0803C72C.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803C810.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803C9FC.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803CB7C.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_0803CC20.inc\"");
+
+// tmc: ProcessMovement2
+void sub_0803CC20(struct Entity *this)
+{
+    if ((u8)(this->direction & 0x80))
+        return;
+    this->x.WORD += gUnknown_0813E4CC[this->direction << 3] * this->speed;
+    this->y.WORD -= gUnknown_0813E4CC[(this->direction << 3) + 64] * this->speed;
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0803CC9C.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803CD8C.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803CE04.inc\"");
@@ -910,7 +940,17 @@ void sub_080515E8(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_08051600.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_080516C8.inc\"");
+
+void sub_080516C8(struct Entity *this)
+{
+    if (--this->unk17 == 0)
+    {
+        this->unk1C_0 = 1;
+        this->unk17 = 32;
+        this->unk14++;
+    }
+}
+
 
 void sub_08051744(struct Entity *this)
 {
@@ -1319,8 +1359,8 @@ void sub_080561EC(struct Entity *this)
     if (--this->unk17 == 0xFF)
     {
         this->unk14++;
-        this->unk2B = 8;
-        this->unkC = 0x200;
+        this->direction = 8;
+        this->speed = 0x200;
     }
 }
 
@@ -1328,8 +1368,8 @@ void sub_080561EC(struct Entity *this)
 void sub_08056260(struct Entity *this)
 {
     sub_0803CC20(this);
-    this->unkC -= 16;
-    if (this->unkC <= 0)
+    this->speed -= 16;
+    if (this->speed <= 0)
     {
         this->unk14++;
         this->unk17 = 0;
@@ -1426,7 +1466,20 @@ void sub_080569F0(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_08056A18.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_08056AE0.inc\"");
+
+void sub_08056AE0(struct Entity *this)
+{
+    if (gLCDRegisterBuffer == 0)
+    {
+        this->unk1C_0 = ((u8)(gUnknown_02016D60_fs.unk8 & 0x80) && gSubState == 4) ? 2 : 0;
+        GetNextFrame(this);
+    }
+    else
+    {
+        this->unk1C_0 = 0;
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_08056B54.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08056C80.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08056D40.inc\"");
@@ -1647,7 +1700,20 @@ void sub_08059A80(struct Entity *this)
 
 asm(".include \"asm/non_matching/fs_game/sub_08059AA8.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08059BD0.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_08059E34.inc\"");
+
+void sub_08059E34(struct Entity *this)
+{
+    if ((u8)sub_08003B64(this))
+    {
+        if (this->parameter != 0xFF)
+            gUnknown_0201F000[this->unk52] |= gUnknown_08137B10[this->parameter];
+    }
+    else
+    {
+        gUnknown_08140E44[this->unk14](this);
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_08059EB0.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08059FBC.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0805A040.inc\"");
@@ -1917,7 +1983,17 @@ void sub_0805DFE0(struct Entity *this)
 asm(".include \"asm/non_matching/fs_game/sub_0805E020.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0805E0AC.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0805E154.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_0805E2B8.inc\"");
+
+void sub_0805E2B8(struct Entity *this)
+{
+    if (--this->unk17 == 0xFF)
+    {
+        this->unk17 = (sub_0800099C() & 15) << 3;
+        this->unk14--;
+    }
+    GetNextFrame(this);
+}
+
 
 void sub_0805E334(struct Entity *this)
 {
