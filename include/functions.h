@@ -23,6 +23,8 @@ void sub_08003B94(struct Entity *);
 u16 sub_0800935C(struct Entity *);
 void sub_08001B70(struct Entity *, u16, u16, u16);
 void sub_080074C0(struct Entity *);
+u16 sub_08008F58(u16, u16);
+u8 sub_080093C8(u16, u16);
 u8 sub_08003F4C(struct Entity *, struct Entity *);
 
 // rom1.s
@@ -2461,7 +2463,7 @@ void sub_0805E154(struct Entity *);
 //sub_08063384();
 //sub_08063524();
 //sub_080637F4();
-//sub_08063C5C();
+struct Entity *sub_08063C5C(u8);
 //sub_08063D28();
 //sub_08063DBC();
 void sub_08063DF0(struct Entity *);

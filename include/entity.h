@@ -81,7 +81,7 @@ typedef struct Entity {
         u16 *p;
         struct {
             u16 h;
-            u8 unk7A;
+            u8 unk7A : 8;
             u8 filler7B;
         } s;
         struct {
