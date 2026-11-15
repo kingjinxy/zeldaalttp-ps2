@@ -77,7 +77,7 @@ typedef struct Entity {
     } unk78;  // halfword + byte for some entity kinds, a pointer for others
     /* 0x7C */ union {
         u32 w;
-        u16 h;
+        u16 h : 16;
         u16 *p;
         struct {
             u16 h;

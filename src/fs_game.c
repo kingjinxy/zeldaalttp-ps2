@@ -849,7 +849,27 @@ void DoObjectEntity(struct Entity *this)
 asm(".include \"asm/non_matching/fs_game/sub_0804C200.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0804C410.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0804C448.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_0804C808.inc\"");
+
+// Spawns objects from a list of (subtype, form, parameter, x, y) bytes ending with 0
+bool32 sub_0804C808(const u8 *p)
+{
+    struct Entity *e;
+    u8 subtype, form, parameter;
+
+    while (*p != 0)
+    {
+        subtype = *p++;
+        form = *p++;
+        parameter = *p++;
+        e = CreateObject(subtype, form, parameter);
+        if (e == NULL)
+            return FALSE;
+        e->x.HALF.HI = *p++;
+        e->y.HALF.HI = *p++;
+    }
+    return TRUE;
+}
+
 
 // tmc: CreateObject
 struct Entity *sub_0804C8A8(u8 subtype, u8 form, u8 parameter)
@@ -1093,7 +1113,7 @@ void sub_080501C0(struct Entity *this)
 
 asm(".include \"asm/non_matching/fs_game/sub_080501DC.inc\"");
 
-bool32 sub_08050338(struct Entity *this)
+u8 sub_08050338(struct Entity *this)
 {
     u16 pos = this->unk78.h + gUnknown_08137B90[(u8)(this->parameter & 3)];
 
@@ -1102,7 +1122,17 @@ bool32 sub_08050338(struct Entity *this)
     return FALSE;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0805039C.inc\"");
+
+u8 sub_0805039C(struct Entity *this)
+{
+    this->unk7C.s.unk7E |= sub_08050338(this);
+    if ((u8)(this->parameter & 4))
+        return this->unk7C.s.unk7E;
+    if (sub_0800935C(this) == 91)
+        this->unk7C.s.unk7E |= 2;
+    return this->unk7C.s.unk7E;
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_08050444.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08050B50.inc\"");
 
@@ -1149,7 +1179,19 @@ void sub_080518B0(struct Entity *this)
     gUnknown_0814085C[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_080518D8.inc\"");
+
+void sub_080518D8(struct Entity *this)
+{
+    this->unk14++;
+    this->unk60 = sub_08013D20(this->form);
+    this->unk7C.h = ((this->x.HALF.HI - gUnknown_03000450.unk18) >> 4)
+                  | (((this->y.HALF.HI - gUnknown_03000450.unk1A) >> 4) << 6);
+    if ((u8)(this->parameter & 2))
+        this->unk48 = gUnknown_0814088C;
+    else
+        this->unk48 = gUnknown_08140884;
+}
+
 
 void sub_0805197C(struct Entity *this)
 {
@@ -1633,7 +1675,18 @@ void sub_080564C0(struct Entity *this)
     gUnknown_08428E64[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_080564E8.inc\"");
+
+void sub_080564E8(struct Entity *this)
+{
+    this->unk1C_0 = 2;
+    this->unk1D_6 = this->parameter + 1;
+    this->unk1F_6 = 1;
+    this->speed = (6 - this->parameter * 2) << 8;
+    this->direction = 24;
+    this->unk14++;
+    sub_08003870(this, this->parameter + 12);
+}
+
 
 void sub_08056594(struct Entity *this)
 {

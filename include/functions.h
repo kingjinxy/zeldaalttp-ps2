@@ -20,6 +20,7 @@ void sub_08003DFC(u8);
 void sub_08008F48(u16, u16, u16);
 void sub_08008F3C(u8, u16, u16);
 void sub_08003B94(struct Entity *);
+u16 sub_0800935C(struct Entity *);
 u8 sub_08003F4C(struct Entity *, struct Entity *);
 
 // rom1.s
@@ -1979,7 +1980,7 @@ u8 sub_08043EE0(u8);
 void sub_0804C200(struct Entity *);
 //sub_0804C410();
 void sub_0804C448(struct Entity *, struct Entity *);
-//sub_0804C808();
+bool32 sub_0804C808(const u8 *);
 struct Entity *sub_0804C8A8(u8 subtype, u8 form, u8 parameter);  // tmc: CreateObject
 // ldscript alias of sub_0804C8A8, without a prototype: the original callers were in other source files and
 // passed their arguments unconverted, which a call to the prototyped name can't reproduce.
@@ -2064,8 +2065,8 @@ void sub_0804FB80(struct Entity *);
 //sub_08050160();
 //sub_080501C0();
 void sub_080501DC(struct Entity *);
-//sub_08050338();
-void sub_0805039C(struct Entity *);
+u8 sub_08050338(struct Entity *);
+u8 sub_0805039C(struct Entity *);
 void sub_08050444(struct Entity *);
 void sub_08050B50(struct Entity *);
 //sub_080515C0();
