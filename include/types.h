@@ -486,6 +486,13 @@ struct Struct03000FC0
     u8 fillerF;
 };  // size = 16 (0x10), up to gUnknown_03000FD0
 
+struct Struct03006C80
+{
+    u8 unk0;
+    u8 filler1[0x6F];
+    struct Entity *unk70[1];  // length unknown; indexed by Entity.unk18
+};
+
 struct Struct03006A30
 {
     u8 filler0[8];

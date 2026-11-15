@@ -273,7 +273,7 @@ void sub_08010834(void);
 //sub_08012494();
 //sub_080124C0();
 //sub_080124EC();
-//DeleteThisEntity();
+void DeleteThisEntity(struct Entity *);
 //sub_080126CC();
 //sub_08012728();
 //sub_0801276C();

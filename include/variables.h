@@ -1159,7 +1159,7 @@ extern struct Struct03006A30 gUnknown_03006A30[];
 //extern gUnknown_03006B50;
 //extern gUnknown_03006BE0;
 extern void *gUnknown_03006C70;  // ARM function pointer
-//extern gUnknown_03006C80;
+extern struct Struct03006C80 gUnknown_03006C80;
 extern struct Struct03006CA8 gUnknown_03006CA8[];
 //extern gUnknown_03006CE8;
 //extern gUnknown_03006D04;
@@ -1839,7 +1839,7 @@ extern void (*const gUnknown_08141268[])(struct Entity *);
 //extern gUnknown_081412CC;
 extern void (*const gUnknown_081412D4[])(struct Entity *);
 //extern gUnknown_081412EC;
-//extern gUnknown_081413CC;
+extern const u16 gUnknown_081413CC[];
 extern void (*const gUnknown_081414B4[])(struct Entity *);
 //extern gUnknown_081414E4;
 extern void (*const gUnknown_081414F0[])(struct Entity *);

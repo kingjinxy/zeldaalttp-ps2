@@ -104,7 +104,8 @@ $(ELF): $(OFILES) $(LDSCRIPT)
 # C source code
 # Functions not decompiled yet: asm/non_matching/NAME/*.inc, included by src/NAME.c (tools/asm_split.py)
 .SECONDEXPANSION:
-src/%.o: src/%.c $(CPPFLAGS_STAMP) $$(wildcard asm/non_matching/$$*/*.inc)
+# Every header, coarsely: SCANINC isn't in this repo, and a stale object hides a header change.
+src/%.o: src/%.c $(CPPFLAGS_STAMP) $$(wildcard asm/non_matching/$$*/*.inc) $(wildcard include/*.h include/gba/*.h)
 	$(CPP) $(CPPFLAGS) $< | $(CC1) $(CC1FLAGS) -o src/$*.s
 	echo '.ALIGN 2, 0' >> src/$*.s
 	$(AS) $(ASFLAGS) src/$*.s -o src/$*.o
