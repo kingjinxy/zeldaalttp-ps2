@@ -12,7 +12,9 @@
 GBAGFX   := tools/gbagfx/gbagfx
 CC1      := tools/agbcc/bin/agbcc
 CC1_OLD  := tools/agbcc/bin/old_agbcc
-CPP      := $(DEVKITARM)/bin/arm-none-eabi-cpp
+SHELL    := /bin/bash -o pipefail
+# Distro binutils packages have no arm-none-eabi-cpp; the host cpp only preprocesses, so it works the same.
+CPP      := $(if $(DEVKITARM),$(DEVKITARM)/bin/arm-none-eabi-cpp,cpp)
 AS       := $(DEVKITARM)/bin/arm-none-eabi-as
 LD       := $(DEVKITARM)/bin/arm-none-eabi-ld
 OBJCOPY  := $(DEVKITARM)/bin/arm-none-eabi-objcopy
