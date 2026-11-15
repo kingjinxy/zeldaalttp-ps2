@@ -740,7 +740,8 @@ extern u32 gPaletteBuf2Bitmask;
 extern u8 gUnknown_0201EF18;
 //extern gUnknown_0201EF30;
 //extern gUnknown_0201EFF0;
-//extern gUnknown_0201EFF8;
+extern u16 gUnknown_0201EFF8[][2];
+extern const u16 gUnknown_0800A49C[][2];  // ldscript: inside rom1's code area
 extern u32 gUnknown_0201F000[];
 extern struct UnknownStruct3 *gUnknown_0201F020;
 //extern gUnknown_0201F024;
@@ -1187,7 +1188,6 @@ extern void *gUnknown_03007FFC;  // interrupt callback?
 //extern gUnknown_080046DC;
 //extern gUnknown_08008840;
 //extern gUnknown_08008FA4;
-//extern gUnknown_0800A49C;
 //extern gUnknown_0800B7A1;
 //extern gUnknown_0800B7FD;
 //extern gUnknown_0800C7E9;

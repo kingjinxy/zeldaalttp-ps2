@@ -23,7 +23,8 @@ typedef struct Entity {
     /* 0x1B */ u8 unk1B : 8;
     // 0x1C-0x1F: one u32 of bitfields (u32 fields are read with lsl/lsr pairs, e.g. lsl #26; lsr #27)
     /* 0x1C */ u32 unk1C_0 : 2;
-    /*      */ u32 unk1C_2 : 6;
+    /*      */ u32 unk1C_2 : 4;
+    /*      */ u32 unk1C_6 : 2;
     /* 0x1D */ u32 unk1D_0 : 2;
     /*      */ u32 unk1D_2 : 4;
     /*      */ u32 unk1D_6 : 2;
@@ -32,14 +33,14 @@ typedef struct Entity {
     /* 0x1F */ u32 unk1F_0 : 1;
     /*      */ u32 unk1F_1 : 5;  // affine parameter index
     /*      */ u32 unk1F_6 : 2;
-    /* 0x20 */ u8 unk20;
+    /* 0x20 */ u8 unk20 : 8;
     /* 0x21 */ u8 frameIdx;
     /* 0x22 */ u8 lastFrameIdx;
     /* 0x23 */ u8 unk23 : 8;
     /* 0x24 */ void* frame;
     /* 0x28 */ u8 frameTimer : 8;
     /* 0x29 */ u8 unk29;
-    /* 0x2A */ u8 unk2A;
+    /* 0x2A */ u8 unk2A : 8;
     /* 0x2B */ u8 direction : 8;  // 0-0x3F, bit 7 = not moving; index into gSineTable/8
     /* 0x2C */ u8 filler2C[2];
     /* 0x2E */ u8 unk2E : 8;
