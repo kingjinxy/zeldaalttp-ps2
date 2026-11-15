@@ -1,0 +1,7 @@
+	THUMB_FUNC_START sub_080FE120
+sub_080FE120: @ 0x080FE120
+	bx lr
+	THUMB_FUNC_END sub_080FE120
+
+	.byte 0x00
+	.byte 0x00

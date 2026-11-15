@@ -784,3 +784,37 @@ void sub_0800C190(struct Struct03000520 *a)
         }
     }
 }
+
+// Functions not decompiled yet are in asm/non_matching/rom2/, one .inc each (tools/asm_split.py from asm/rom2.s).
+
+asm(".INCLUDE \"macro.inc\"");
+
+asm(".include \"asm/non_matching/rom2/sub_0800C1EC.inc\"");
+asm(".include \"asm/non_matching/rom2/sub_0800C2B8.inc\"");
+asm(".include \"asm/non_matching/rom2/sub_0800C328.inc\"");
+asm(".include \"asm/non_matching/rom2/sub_0800C41C.inc\"");
+asm(".include \"asm/non_matching/rom2/sub_0800C4E8.inc\"");
+asm(".include \"asm/non_matching/rom2/sub_0800C4FC.inc\"");
+asm(".include \"asm/non_matching/rom2/sub_0800C54C.inc\"");
+asm(".include \"asm/non_matching/rom2/sub_0800C658.inc\"");
+asm(".include \"asm/non_matching/rom2/sub_0800C6A8.inc\"");
+asm(".include \"asm/non_matching/rom2/sub_0800C75C.inc\"");
+asm(".include \"asm/non_matching/rom2/sub_0800C7E8.inc\"");
+asm(".include \"asm/non_matching/rom2/sub_0800C8E4.inc\"");
+asm(".include \"asm/non_matching/rom2/sub_0800C940.inc\"");
+asm(".include \"asm/non_matching/rom2/sub_0800C984.inc\"");
+asm(".include \"asm/non_matching/rom2/sub_0800C9AC.inc\"");
+asm(".include \"asm/non_matching/rom2/sub_0800C9F8.inc\"");
+asm(".include \"asm/non_matching/rom2/sub_0800CA34.inc\"");
+asm(".include \"asm/non_matching/rom2/sub_0800CA38.inc\"");
+asm(".include \"asm/non_matching/rom2/sub_0800CA3C.inc\"");
+asm(".include \"asm/non_matching/rom2/sub_0800CA84.inc\"");
+asm(".include \"asm/non_matching/rom2/sub_0800CAD4.inc\"");
+asm(".include \"asm/non_matching/rom2/sub_0800CBBC.inc\"");
+asm(".include \"asm/non_matching/rom2/sub_0800CCAC.inc\"");
+asm(".include \"asm/non_matching/rom2/sub_0800CE74.inc\"");
+asm(".include \"asm/non_matching/rom2/sub_0800D0A8.inc\"");
+asm(".include \"asm/non_matching/rom2/sub_0800D1A0.inc\"");
+asm(".include \"asm/non_matching/rom2/sub_0800D1C0.inc\"");
+asm(".include \"asm/non_matching/rom2/sub_0800D200.inc\"");
+asm(".include \"asm/non_matching/rom2/play_sound.inc\"");

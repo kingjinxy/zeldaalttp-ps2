@@ -1,0 +1,16 @@
+	THUMB_FUNC_START sub_080C6350
+sub_080C6350: @ 0x080C6350
+	push {lr}
+	lsl r0, r0, #24
+	lsr r0, r0, #24
+	lsl r1, r1, #24
+	lsr r1, r1, #24
+	lsl r2, r2, #24
+	lsr r2, r2, #24
+	bl sub_080C5DA0
+	pop {r0}
+	bx r0
+	THUMB_FUNC_END sub_080C6350
+
+	.byte 0x00
+	.byte 0x00

@@ -366,3 +366,51 @@ void sub_0800DBE0(struct Struct0202A5E0 *a)
         sub_0800EB08(2);
 }
 
+
+// Functions not decompiled yet are in asm/non_matching/rom_0800D4F0/, one .inc each (tools/asm_split.py from asm/rom_0800D4F0.s).
+
+asm(".INCLUDE \"macro.inc\"");
+
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800DCDC.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800DFC4.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E094.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E1D4.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E240.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E324.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E39C.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E3B0.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E430.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E4EC.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E570.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E5EC.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E63C.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E69C.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E6B0.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E78C.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E80C.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E950.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EA38.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EAA4.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EB08.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EB50.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EBD4.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EC08.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800ED7C.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EDB8.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EDE4.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EDF0.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EE08.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EE2C.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EE50.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EEA8.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EEE0.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EF14.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EF34.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800F0A0.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800F190.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800F22C.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800F408.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800F4C4.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800F68C.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800F76C.inc\"");
+asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800F7B4.inc\"");

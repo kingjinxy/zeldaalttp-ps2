@@ -1,0 +1,11 @@
+	THUMB_FUNC_START sub_08016F9C
+sub_08016F9C: @ 0x08016F9C
+	push {lr}
+	ldr r1, _08016FA8  @ =gUnknown_08139364
+	bl 0x08009924
+	pop {r0}
+	bx r0
+_08016FA8:
+	.4byte gUnknown_08139364
+	THUMB_FUNC_END sub_08016F9C
+

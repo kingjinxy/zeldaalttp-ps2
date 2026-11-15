@@ -116,3 +116,28 @@ void sub_08127E4C(void)
     gRam.unk1AD2++;
 }
 */
+
+// Functions not decompiled yet are in asm/non_matching/hud/, one .inc each (tools/asm_split.py from asm/hud.s).
+
+asm(".INCLUDE \"macro.inc\"");
+
+asm(".include \"asm/non_matching/hud/sub_08127E4C.inc\"");
+asm(".include \"asm/non_matching/hud/sub_081280C0.inc\"");
+asm(".include \"asm/non_matching/hud/sub_081283E4.inc\"");
+asm(".include \"asm/non_matching/hud/sub_08128520.inc\"");
+asm(".include \"asm/non_matching/hud/sub_081285D4.inc\"");
+asm(".include \"asm/non_matching/hud/sub_08128634.inc\"");
+asm(".include \"asm/non_matching/hud/sub_08128694.inc\"");
+asm(".include \"asm/non_matching/hud/sub_08128748.inc\"");
+asm(".include \"asm/non_matching/hud/sub_08128780.inc\"");
+asm(".include \"asm/non_matching/hud/sub_081288BC.inc\"");
+asm(".include \"asm/non_matching/hud/sub_08128A10.inc\"");
+asm(".include \"asm/non_matching/hud/sub_08128B4C.inc\"");
+asm(".include \"asm/non_matching/hud/sub_08128E58.inc\"");
+asm(".include \"asm/non_matching/hud/sub_08128F00.inc\"");
+asm(".include \"asm/non_matching/hud/sub_08128F68.inc\"");
+asm(".include \"asm/non_matching/hud/sub_08128FBC.inc\"");
+asm(".include \"asm/non_matching/hud/sub_0812904C.inc\"");
+asm(".include \"asm/non_matching/hud/sub_081290B4.inc\"");
+asm(".include \"asm/non_matching/hud/sub_081291C8.inc\"");
+asm(".include \"asm/non_matching/hud/sub_08129258.inc\"");

@@ -1,0 +1,22 @@
+	thumb_func_start sub_08008EFC
+sub_08008EFC: @ 0x08008EFC
+	ldr r0, [r5, #4]
+	ldr r1, _08008F34 @ =0x020031D0
+	ldr r2, _08008F38 @ =0x08008F07
+	mov lr, r2
+	bx r4
+_08008F06:
+	pop {r4, r5, pc}
+_08008F08:
+	.byte 0x40, 0x04, 0x00, 0x02, 0x40, 0x0C, 0x00, 0x02
+	.byte 0x40, 0x14, 0x00, 0x02, 0x40, 0x1C, 0x00, 0x02
+_08008F18: .4byte 0x02000028
+_08008F1C: .4byte 0x03000204
+_08008F20: .4byte 0x03000204
+_08008F24: .4byte 0x08008F08
+_08008F28: .4byte 0x02016D90
+_08008F2C: .4byte sub_08008EFC
+_08008F30: .4byte 0x03000530
+_08008F34: .4byte 0x020031D0
+_08008F38: .4byte 0x08008F07
+

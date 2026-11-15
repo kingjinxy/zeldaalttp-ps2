@@ -1,0 +1,7 @@
+	THUMB_FUNC_START sub_080AB738
+sub_080AB738: @ 0x080AB738
+	bx lr
+	THUMB_FUNC_END sub_080AB738
+
+	.byte 0x00
+	.byte 0x00

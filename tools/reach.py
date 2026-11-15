@@ -19,6 +19,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--cut", nargs="*", default=["0x0800B69C"])
 ap.add_argument("--why", help="print the chain of edges from boot to this function")
 ap.add_argument("--coverage", action="append", default=[], help="mgba_run --coverage bitmap(s): report executed functions")
+ap.add_argument("--list-executed", help="with --coverage: write executed functions (addr name file size) here")
 ap.add_argument("--list", help="write reachable functions (addr name file size) here")
 args = ap.parse_args()
 
@@ -150,6 +151,10 @@ if args.coverage:
     print(f"executed but not statically reachable: {len(missed)}")
     for a in missed[:20]:
         print(f"  {a:08X} {names[a]} {objfile[a]}")
+    if args.list_executed:
+        with open(args.list_executed, "w") as f:
+            for a in ran:
+                f.write(f"{a:08X} {names[a]} {objfile[a]} {size[a]}\n")
     per_x = Counter(objfile[a] for a in ran)
     print("executed per file: " + ", ".join(f"{o} {n}" for o, n in per_x.most_common(12)))
 if args.list:

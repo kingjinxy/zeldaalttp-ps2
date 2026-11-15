@@ -944,3 +944,161 @@ Which do you prefer? And should I commit this step first?
 
 Commit, and then let's go with 3 for now. We'll get to 1 after
 
+- tool `Bash`: D=~/.claude/projects/-home-alex-Documents-zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/reference/tmc && grep -n "ASM_FUNC\|NONMATCH\|INCLUDE_ASM" include/global.h | head; grep -rln "ASM_FUNC\|NONMATCH(" src |
+
+- tool `Bash`: sed -n 70,100p include/global.h; grep -rn "NONMATCH(\"" src | head -2; grep -rln "NONMATCH(\"" src | wc -l
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2 && cat asminclude/macro.inc | head -40; grep -n "NAKED" reference/tmc/include/global.h | head -3; grep -n "define NAKED\|
+
+## Claude
+
+Both align functions to 4 bytes. Checking that agbcc supports `naked`:
+
+- tool `Bash`: grep -rn "define NAKED" reference/tmc/include | head -2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad;
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; printf 'asm(".include \\"a.inc\\"");\nint h(int x) { ret
+
+- tool `Bash`: head -8 asm/rom6.s; tail -3 asm/rom6.s; for f in asm/*.s asm/lttp/*.s; do printf "%s: " $f; head -3 $f | tr '\n' '|'; echo; done | cut -c1-120
+
+## Claude
+
+All files have the same shape: an `.INCLUDE "macro.inc"` preamble, then functions starting at `THUMB_FUNC_START`. Writing the tool:
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/tools/asm_split.py
+
+- tool `Bash`: python3 tools/asm_split.py asm/rom6.s rom6 && head -8 src/rom6.c && rm -f asm/rom6.o && make -j8 compare 2>&1 | grep -E "error|OK|FAIL" | head
+
+- tool `Bash`: python3 - <<'E' p="tools/asm_split.py"; s=open(p).read() rep=[ ('''src/NAME.c holds one top-level''','''If src/NAME.c exists and directly precedes asm/X.o in ld
+
+## Claude
+
+The safety check couldn't parse that command (a heredoc with nested quoting), so nothing ran. I'll make the same changes with the Edit tool instead.
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/tools/asm_split.py
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/tools/asm_split.py
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/tools/asm_split.py
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/tools/asm_split.py
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/Makefile
+
+## Claude
+
+Those are only flake8 style warnings (line length). Testing the append path on `hud`:
+
+- tool `Bash`: python3 tools/asm_split.py asm/hud.s hud && grep -n "hud" ldscript.txt && make -j8 compare 2>&1 | grep -E "error|OK|FAIL"
+
+- tool `Bash`: touch asm/non_matching/hud/sub_08127E4C.inc && make -n compare 2>/dev/null | grep -c "src/hud"
+
+## Claude
+
+Editing an `.inc` triggers a rebuild of its C file. Converting the remaining game code files: all except `crt0`, `syscall`, the interwork veneers, and the Link to the Past `sprite_bee`.
+
+- tool `Bash`: for f in rom1 rom2 rom_0800D4F0 file_select rom2a game_select rom3 rom3a rom3b rom3c rom4 interface rom5; do python3 tools/asm_split.py asm/$f.s $f || break; do
+
+- tool `Bash`: make -j8 FS_ONLY=1 2>&1 | grep -E " error|FAILED" | head -3; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratch
+
+## Claude
+
+The `FS_ONLY` ROM is byte-identical to before (its `FAILED` line is the expected checksum mismatch). Next, a list of the executed functions to work from: adding `--list-executed FILE` to `reach.py`:
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/tools/reach.py
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/tools/reach.py
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 tools/reach.py --coverage $S/cov_tmp.bin --list-
+
+## Claude
+
+657 functions executed, 571 of them still asm, median 88 bytes. Starting with the smallest, to try the decompile workflow end to end:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for f in $(awk '{print $2}' $S/exec.txt); do i=$(ls asm/
+
+- tool `Bash`: python3 - <<'E' import re,glob,collections rows=[] for d in glob.glob("asm/non_matching/*"):     for f in glob.glob(d+"/*.inc"):         t=open(f).read()       
+
+- tool `Bash`: python3 - <<'E' import re,glob for f in sorted(glob.glob("asm/non_matching/game_select/*.inc")+glob.glob("asm/non_matching/rom3/*.inc")):     t=open(f).read(); 
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; printf 'void sub_08036770(int);\nvoid sub_08036760(void)
+
+- tool `Write`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/split_fs.py
+
+- tool `Bash`: grep -n "game_select\|rom3.o" ldscript.txt && python3 /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/split
+
+## Claude
+
+915 functions moved, matching the region's count. Adding the `-O0` flags for `fs_game.o` to the Makefile:
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/Makefile
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -E " error|OK|FAIL"
+
+## Claude
+
+Still matches. Now the first real decompilations: the two small `-O0` functions in `fs_game.c`, and `sub_08011408` in `file_select.c` (one `play_sound` call):
+
+- tool `Bash`: grep -rn "play_sound" include/*.h | head -3; grep -n "sub_08036770\|sub_08036760\|sub_080368C0\|sub_08011408" include/*.h src/*.c | grep -v "asm(" | head; head 
+
+- tool `Bash`: grep -n "0x80090000\|0x8009\b\|SOUND.*0x80" include/sounds.h | head -5; grep -n "play_sound(" src/*.c | head -3
+
+## Claude
+
+I'll replace each function's include line with C:
+
+- tool `Bash`: grep -n "sub_08011408\|sub_08036760\|sub_080368C0" src/file_select.c src/fs_game.c
+
+- tool `Read`: /home/alex/Documents/zeldaalttp-ps2/src/fs_game.c
+
+- tool `Read`: /home/alex/Documents/zeldaalttp-ps2/src/file_select.c
+
+## Claude
+
+`sub_080368C0.inc` ends with two padding bytes, which the next function's `.ALIGN` produces anyway.
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/src/fs_game.c
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/src/fs_game.c
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/src/file_select.c
+
+- tool `Bash`: git rm -q --cached asm/non_matching 2>/dev/null; mkdir -p /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/d
+
+## Claude
+
+All three match: the workflow works end to end. Updating the docs:
+
+- tool `Bash`: python3 - <<'E' p="docs/Planning Doc.md"; s=open(p).read() a="## Phase 2: decompile the reachable set to C\n" assert a in s s=s.replace(a,a+"""- [x] Per-functio
+
+## Claude
+
+The setup for decompiling one function at a time is in place, and the first three functions are decompiled and match. Nothing is committed yet. This is a large restructure: the 13 asm files become about 7,400 `.inc` files.
+
+**New layout:**
+- [tools/asm_split.py](tools/asm_split.py) turns an asm file into a C file plus one `.inc` file per function in `asm/non_matching/<name>/`. The C file includes them in the original order.
+- Decompiling a function means replacing its one include line with C and deleting its `.inc`. No file splitting and no ldscript edits.
+- I converted all game asm this way. The startup code, BIOS calls, interwork glue and the Link to the Past sprite file stay as they were.
+- `make compare` still matches, and the `FS_ONLY` ROM is byte-for-byte unchanged.
+- Editing an `.inc` now triggers a rebuild of its C file.
+
+**Unoptimized Four Swords code:**
+- One region, `0x0803668C`–`0x080668E4` (915 functions), was compiled without optimization. Everything else used `-O2`.
+- That region holds the Four Swords game-mode handlers, so it's very likely the Four Swords game code itself.
+- It's now [src/fs_game.c](src/fs_game.c), built without `-O2`.
+- Unoptimized code is usually much easier to match, which is good news for the part you care about most.
+- Four `-O2` functions inside the region will need their own file when they're decompiled.
+
+**First matches:**
+- `sub_08036760` and `sub_080368C0` in `fs_game.c` (unoptimized).
+- `sub_08011408` in `file_select.c` (`-O2`).
+
+So 3 of the 657 executed functions are done. The planning doc and walkthrough (Step 6) are updated.
+
+Shall I commit this and then keep working through the executed functions? I'd go in batches, committing after each batch with `make compare` still matching.
+
+## User
+
+Yes, commit and keep working
+

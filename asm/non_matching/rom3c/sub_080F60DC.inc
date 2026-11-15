@@ -1,0 +1,7 @@
+	THUMB_FUNC_START sub_080F60DC
+sub_080F60DC: @ 0x080F60DC
+	bx lr
+	THUMB_FUNC_END sub_080F60DC
+
+	.byte 0x00
+	.byte 0x00

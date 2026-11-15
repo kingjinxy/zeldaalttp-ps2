@@ -6,23 +6,19 @@ SECTIONS
 	ALIGN(4)
 	{
 		asm/crt0.o(.text);
-		asm/rom1.o(.text);
+		src/rom1.o(.text);
 		src/main.o(.text);
 		src/math.o(.text);
 		src/rom2.o(.text);
-		asm/rom2.o(.text);
         src/rom_0800D4F0.o(.text);
-        asm/rom_0800D4F0.o(.text);
         src/file_select.o(.text);
-        asm/file_select.o(.text);
-        asm/rom2a.o(.text);
+        src/rom2a.o(.text);
         src/game_select.o(.text);
-		asm/game_select.o(.text);
-		asm/rom3.o(.text);
+		src/fs_game.o(.text);
+		src/rom3.o(.text);
 		src/rom3a.o(.text);
-		asm/rom3a.o(.text);
 		src/lttp/sprite.o(.text);
-		asm/rom3b.o(.text);
+		src/rom3b.o(.text);
 		src/lttp/sprite2.o(.text);
 		src/lttp/sprite_unused.o(.text);
 		src/lttp/sprite_heart_refill.o(.text);
@@ -31,15 +27,13 @@ SECTIONS
 		asm/lttp/sprite_bee.o(.text);
 		src/lttp/sprite_bottle_vendor.o(.text);
 		src/lttp/sprite_witch.o(.text);
-		asm/rom3c.o(.text);
-		asm/rom4.o(.text);
+		src/rom3c.o(.text);
+		src/rom4.o(.text);
         src/hud.o(.text);
-        asm/hud.o(.text);
 		src/interface.o(.text);
-		asm/interface.o(.text);
-		asm/rom5.o(.text);
+		src/rom5.o(.text);
 		asm/syscall.o(.text);
-		asm/rom6.o(.text);
+		src/rom6.o(.text);
 		tools/agbcc/lib/libgcc.a:_call_via_rX.o(.text);
 		tools/agbcc/lib/libgcc.a:_divsi3.o(.text);
 		tools/agbcc/lib/libgcc.a:_dvmd_tls.o(.text);

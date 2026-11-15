@@ -74,3 +74,20 @@
 - Lobby run (2 GBAs, mashing to the pause menu): 657 functions executed. 10 of them (`rom1.s`,
   `0x080074D4`–`0x08008EFC`) aren't in the static map: called via `ldr r1, [sl, #0x2c]`, a function table
   in RAM whose entries don't appear as words in the ROM.
+
+## Step 6: per-function decomp layout, -O0 Four Swords code (2026-11-15)
+
+- `tools/asm_split.py asm/X.s NAME`: one `.inc` per function in `asm/non_matching/NAME/`, included from
+  `src/NAME.c` by top-level `asm(".include ...")` lines (checked first: agbcc keeps top-level asm in source
+  order between C functions). Top-level asm instead of tmc's `NAKED` functions means no C declarations for
+  undecompiled functions, so nothing clashes with header prototypes. Where `src/NAME.c` already existed
+  directly before `asm/X.o` in the ldscript, the includes are appended to it. All chunks stay one assembly
+  unit, so labels shared between functions still work. `make compare` matches; `FS_ONLY` ROM unchanged.
+- Makefile: `src/%.o` depends on `asm/non_matching/%/*.inc` (`.SECONDEXPANSION`), as `SCANINC` isn't in
+  this repo.
+- Prologues show two compiler settings: `-O2` everywhere except `0x0803668C`–`0x080668E4`, where functions
+  start `push {r7, lr}; mov r7, sp` (agbcc without `-O2`; checked by compiling). That region holds the
+  mode 1 and 2 handlers (Four Swords game). Moved to `src/fs_game.c` (915 functions), built without `-O2`.
+  Four functions inside it are `-O2` (`sub_08039288`, `sub_0803E518`, `sub_0804721C`, `sub_0804BD9C`).
+- First decompiled functions, all matching: `sub_08036760`, `sub_080368C0` (fs_game, -O0),
+  `sub_08011408` (file_select, -O2).

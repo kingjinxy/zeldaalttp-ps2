@@ -1,0 +1,11 @@
+	THUMB_FUNC_START sub_08092780
+sub_08092780: @ 0x08092780
+	push {lr}
+	ldr r0, _0809278C  @ =0x00000A1E
+	bl sub_0808F678
+	pop {r0}
+	bx r0
+_0809278C:
+	.4byte 0x00000A1E
+	THUMB_FUNC_END sub_08092780
+

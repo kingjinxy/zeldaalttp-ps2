@@ -41,6 +41,12 @@ player, linked in memory instead of by cable, each drawn into its own part of th
       functions from `reference/tmc`.
 
 ## Phase 2: decompile the reachable set to C
+- [x] Per-function layout (`tools/asm_split.py`): each not-yet-decompiled function is
+      `asm/non_matching/NAME/FUNC.inc`, included in order from `src/NAME.c` by a top-level `asm(".include")`.
+      Decompiling = replacing that line with C. All game asm converted except crt0, syscall, veneers, LttP bee.
+- [x] Four Swords game code `0x0803668C`–`0x080668E4` (915 functions) is `-O0` (frame pointer in r7); it is
+      `src/fs_game.c`, built without `-O2`. Four `-O2` functions inside it need their own file when decompiled.
+- [ ] Executed functions first (`reach.py --coverage ... --list-executed`): 3 of 657 done
 - [ ] Library code first, where C already exists elsewhere: BIOS calls (`syscall.s`), m4a sound
       driver, EEPROM, link/SIO (tmc and pret decomps).
 - [ ] Shared engine code (tmc as reference)

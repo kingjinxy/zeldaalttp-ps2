@@ -76,6 +76,8 @@ src/main.o:         CC1FLAGS += -fprologue-bugfix
 src/file_select.o:  CC1FLAGS += -fprologue-bugfix
 src/rom2.o:         CC1FLAGS += -fprologue-bugfix
 #src/interface.o: CC1FLAGS += -fprologue-bugfix
+# Four Swords game code was built without optimization (frame pointer in r7)
+src/fs_game.o:      CC1FLAGS := $(filter-out -O2,$(CC1FLAGS))
 
 #### Main Targets ####
 
@@ -100,7 +102,9 @@ $(ELF): $(OFILES) $(LDSCRIPT)
 #### Recipes ####
 
 # C source code
-src/%.o: src/%.c $(CPPFLAGS_STAMP)
+# Functions not decompiled yet: asm/non_matching/NAME/*.inc, included by src/NAME.c (tools/asm_split.py)
+.SECONDEXPANSION:
+src/%.o: src/%.c $(CPPFLAGS_STAMP) $$(wildcard asm/non_matching/$$*/*.inc)
 	$(CPP) $(CPPFLAGS) $< | $(CC1) $(CC1FLAGS) -o src/$*.s
 	echo '.ALIGN 2, 0' >> src/$*.s
 	$(AS) $(ASFLAGS) src/$*.s -o src/$*.o

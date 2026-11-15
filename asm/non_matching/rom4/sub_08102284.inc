@@ -1,0 +1,17 @@
+	THUMB_FUNC_START sub_08102284
+sub_08102284: @ 0x08102284
+	push {r4,lr}
+	add r4, r0, #0
+	lsl r4, r4, #24
+	lsr r4, r4, #24
+	add r0, r4, #0
+	bl sub_080C35E0
+	add r0, r4, #0
+	bl sub_081022A0
+	pop {r4}
+	pop {r0}
+	bx r0
+	THUMB_FUNC_END sub_08102284
+
+	.byte 0x00
+	.byte 0x00
