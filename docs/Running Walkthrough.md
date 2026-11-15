@@ -193,3 +193,13 @@
   extra branch to the epilogue. Deferred (in asm, tried and noted): `sub_0804E394` (argument narrowing),
   `sub_0803D770` (add operand order), `sub_0803CD8C`, `sub_08056D40`/`sub_08055FA0` (bitfield writes
   to the shared BGConfig struct). Executed fs_game left: 115; fs_game: 642; all: 6531.
+- Commit `6a0ac77` did not match: `tools/first_diff.py` exited 0 on a difference and a chained commit ran.
+  Fixed in the next commit (`feed8e7`); `first_diff.py` now exits 1, and commits are gated on
+  `make compare` printing OK.
+- Lessons: a raw ROM address in a literal pool may have been a symbol in the original (different
+  register allocation); give it an ldscript symbol (`gUnknown_0800A49C`). A field at a large offset
+  shows `add rX, rY, #0` before the constant add (`struct MapData.unk5004`), a 2-D array `[i][1]`
+  adds the column before the row. agbcc rounds structs up to 4 bytes on ARM, and `packed` makes it
+  assume unaligned access, so arrays whose u16 elements are written with the bitfield pattern can't be
+  typed yet (`sub_08037750`, the link input ring buffer `gUnknown_0200B1D0[4][16]`, deferred).
+  Executed fs_game left: 99; fs_game: 626; all: 6515.
