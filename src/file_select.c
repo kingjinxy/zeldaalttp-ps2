@@ -290,7 +290,12 @@ void sub_0800FDB0(void)
 {
 }
 
-asm(".include \"asm/non_matching/file_select/sub_0800FDB4.inc\"");
+
+void sub_0800FDB4(void)
+{
+    gUnknown_084274D8[gSubState]();
+}
+
 asm(".include \"asm/non_matching/file_select/sub_0800FDD4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0800FEAC.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0800FEE0.inc\"");
@@ -301,12 +306,22 @@ asm(".include \"asm/non_matching/file_select/sub_0801017C.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080101C0.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801022C.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08010270.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_080103F8.inc\"");
+
+void sub_080103F8(void)
+{
+    gUnknown_084274EC[gSubState]();
+}
+
 asm(".include \"asm/non_matching/file_select/sub_08010418.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08010434.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080104F4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080105E0.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_08010628.inc\"");
+
+void sub_08010628(void)
+{
+    gUnknown_084274FC[gSubState]();
+}
+
 asm(".include \"asm/non_matching/file_select/sub_08010648.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08010664.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08010724.inc\"");
@@ -1779,7 +1794,12 @@ asm(".include \"asm/non_matching/file_select/sub_0802D8E4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802D954.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802D970.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802D97C.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_0802D988.inc\"");
+
+void sub_0802D988(void)
+{
+    gUnknown_084277D4[gUnknown_0201EF18]();
+}
+
 asm(".include \"asm/non_matching/file_select/sub_0802D9A8.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802DA30.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802DAE0.inc\"");
@@ -1787,4 +1807,9 @@ asm(".include \"asm/non_matching/file_select/sub_0802DB24.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802DB8C.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802DBE8.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802DC2C.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_0802DC60.inc\"");
+
+void sub_0802DC60(void)
+{
+    gUnknown_084277E8[gUnknown_03005050]();
+}
+

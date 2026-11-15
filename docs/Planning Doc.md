@@ -48,6 +48,8 @@ player, linked in memory instead of by cable, each drawn into its own part of th
       `src/fs_game.c`, built without `-O2`. Four `-O2` functions inside it need their own file when decompiled.
 - [ ] Executed functions first (`reach.py --coverage ... --list-executed`): 130 of 657 done (fs_game: 41 of 156)
 - [ ] fs_game: 127 of 915 done
+- [ ] Disassemble the code still `.INCBIN`: 15 blobs, 34 KB in the code range (rom1 mostly, rom5 m4a ARM
+      part); includes ARM code copied to RAM and Thumb code such as `0x08009924` (tmc `ShowNPCDialogue`)
 - [ ] Library code first, where C already exists elsewhere: BIOS calls (`syscall.s`), m4a sound
       driver, EEPROM, link/SIO (tmc and pret decomps).
 - [ ] Shared engine code (tmc as reference)

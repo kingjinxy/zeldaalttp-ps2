@@ -920,7 +920,12 @@ void sub_081271A4(void)
 {
 }
 
-asm(".include \"asm/non_matching/rom4/sub_081271A8.inc\"");
+
+void sub_081271A8(void)
+{
+    gUnknown_08180740[gUnknown_03000050]();
+}
+
 asm(".include \"asm/non_matching/rom4/sub_081271C8.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_081272B0.inc\"");
 asm(".include \"asm/non_matching/rom4/sub_08127334.inc\"");

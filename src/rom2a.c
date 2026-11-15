@@ -49,7 +49,12 @@ asm(".include \"asm/non_matching/rom2a/sub_0802FEE8.inc\"");
 asm(".include \"asm/non_matching/rom2a/sub_0802FFE4.inc\"");
 asm(".include \"asm/non_matching/rom2a/sub_08030018.inc\"");
 asm(".include \"asm/non_matching/rom2a/sub_08030054.inc\"");
-asm(".include \"asm/non_matching/rom2a/sub_0803006C.inc\"");
+
+void sub_0803006C(void)
+{
+    gUnknown_084278F8[gUnknown_03005050]();
+}
+
 asm(".include \"asm/non_matching/rom2a/sub_0803008C.inc\"");
 asm(".include \"asm/non_matching/rom2a/sub_08030100.inc\"");
 asm(".include \"asm/non_matching/rom2a/sub_08030214.inc\"");

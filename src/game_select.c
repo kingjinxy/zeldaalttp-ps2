@@ -364,7 +364,12 @@ asm(".include \"asm/non_matching/game_select/sub_08031F08.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_08031F20.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_08031F7C.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_08031FC0.inc\"");
-asm(".include \"asm/non_matching/game_select/sub_08031FD8.inc\"");
+
+void sub_08031FD8(void)
+{
+    gUnknown_08427A10[gUnknown_03005050]();
+}
+
 asm(".include \"asm/non_matching/game_select/sub_08031FF8.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_08032138.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_080321D0.inc\"");
@@ -381,7 +386,12 @@ asm(".include \"asm/non_matching/game_select/sub_08032B18.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_08032B7C.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_08032D88.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_08032DD4.inc\"");
-asm(".include \"asm/non_matching/game_select/sub_08032E08.inc\"");
+
+void sub_08032E08(void)
+{
+    gUnknown_08427A4C[gUnknown_03005050]();
+}
+
 asm(".include \"asm/non_matching/game_select/sub_08032E28.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_08032EE0.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_08032F50.inc\"");
