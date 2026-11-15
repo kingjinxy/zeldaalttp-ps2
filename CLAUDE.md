@@ -7,8 +7,9 @@ and Silent Hill PS2 ports.
 
 ## Scope
 
-- **Four Swords only.** Leave A Link to the Past code (`src/lttp`, LttP-only asm) in assembly. The first
-  target is a program that boots straight into Four Swords, as FourSwordsRecomp does.
+- **Four Swords first.** The port targets Four Swords only, and executed Four Swords functions come first.
+  A Link to the Past code may be decompiled too when that's easier, e.g. a template group spanning both
+  (user, 2026-11-15); it just isn't a goal of its own.
 - **Only USA matches.** `baserom.gba` is USA (`checksum.sha1`). `baserom_eu.gba` and `baserom_jp.gba` are
   reference only. No ROM, BIOS or extracted asset is ever committed.
 
