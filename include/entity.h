@@ -13,7 +13,7 @@ typedef struct Entity {
     /* 0x0A */ u8 form : 8;
     /* 0x0B */ u8 parameter : 8;
     /* 0x0C */ s32 speed;  // ProcessMovement2 (sub_0803CC20)
-    /* 0x10 */ u8 filler10[4];
+    /* 0x10 */ u32 unk10;
     /* 0x14 */ u8 unk14 : 8;
     /* 0x15 */ u8 unk15 : 8;
     /* 0x16 */ u8 unk16 : 8;
