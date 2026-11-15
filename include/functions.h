@@ -7,6 +7,7 @@ void sub_080098A0(struct Entity *, const void *);
 u32 sub_0800099C(void);
 void sub_0800238C(struct Entity *, struct Entity *);
 void sub_08008DD8(struct Entity *);
+void sub_08003688(struct Entity *);
 u8 sub_08003F4C(struct Entity *, struct Entity *);
 
 // rom1.s
@@ -1737,7 +1738,7 @@ void sub_0803CC20(struct Entity *);  // tmc: ProcessMovement2
 //sub_0803D310();
 //sub_0803D350();
 //sub_0803D398();
-//sub_0803D3D0();
+void sub_0803D3D0(struct Entity *, struct Entity *);
 //sub_0803D440();
 //sub_0803D4A4();
 //sub_0803D520();

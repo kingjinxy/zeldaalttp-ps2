@@ -174,3 +174,7 @@
 - Session 1: 44,522 frames, one stage (mode 2 from frame 1752, back to Choose a Stage at 44297). Replay
   (1 m 37 s with coverage) reaches the same end screen; EEPROM equal (but unchanged during play, so a weak
   check). Coverage with the lobby run: 1,135 functions executed, 939 of them still asm (219 in fs_game).
+- Step 11 batches: 14 more fs_game functions matching (Entity `unk4C`; `gUnknown_03006C80` has 9 eight-byte
+  entries at +0x28 indexed by Entity.form). A callee's return type shows in the caller: `lsl r2, r0, #24;
+  lsr r1, r2, #24` right after the call means the callee returns u8. Executed fs_game functions still asm
+  (lobby + session 1): 205; fs_game: 732; all asm: 6621.

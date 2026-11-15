@@ -507,7 +507,11 @@ struct Struct03000FC0
 struct Struct03006C80
 {
     u8 unk0;
-    u8 filler1[0x6F];
+    u8 filler1[0x27];
+    struct {
+        u32 unk0;
+        u32 unk4;
+    } unk28[9];  // indexed by Entity.form
     struct Entity *unk70[1];  // length unknown; indexed by Entity.unk18
 };
 
