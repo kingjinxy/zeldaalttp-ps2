@@ -1408,7 +1408,28 @@ void sub_0803D7E8(struct Entity *this, const u16 *p, u8 n)
     return;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0803D8AC.inc\"");
+
+bool32 sub_0803D8AC(struct Entity *this)
+{
+    s32 d;
+    u16 v;
+
+    if (U8_AT(this, 0x76) >= U8_AT(this, 0x77))
+    {
+        this->x.HALF_U.HI = U16_AT(this, 0x7C);
+        this->y.HALF_U.HI = U16_AT(this, 0x7E);
+        return 1;
+    }
+    this->unk74.b.unk76++;
+    d = S16_AT(this, 0x7C) - S16_AT(this, 0x78);
+    v = U8_AT(this, 0x76) * d * 256 / U8_AT(this, 0x77) >> 8;
+    this->x.HALF_U.HI = U16_AT(this, 0x78) + v;
+    d = S16_AT(this, 0x7E) - S16_AT(this, 0x7A);
+    v = U8_AT(this, 0x76) * d * 256 / U8_AT(this, 0x77) >> 8;
+    this->y.HALF_U.HI = U16_AT(this, 0x7A) + v;
+    return 0;
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0803D9F4.inc\"");
 
 void sub_0803DB4C(struct Entity *this)
@@ -6417,7 +6438,31 @@ void sub_08057048(struct Entity *this)
     gUnknown_08140C28[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08057070.inc\"");
+
+void sub_08057070(struct Entity *this)
+{
+    struct MapData *m;
+    u16 t;
+
+    m = (struct MapData *)sub_08015DC0(this->unk50);
+    t = ((this->x.HALF.HI - gUnknown_03000450.unk18) >> 4) | (((this->y.HALF.HI - gUnknown_03000450.unk1A) >> 4) << 6);
+    if (gUnknown_03006C80.unk2 == 0 && sub_0805722C(this, t, m->unk5004[m->unk4[t]]))
+    {
+        DeleteThisEntity(this);
+    }
+    else
+    {
+        this->unk78.p = &m->unk4[t];
+        this->unk7C.h = *this->unk78.p;
+        this->unk1E_0 = gUnknown_08140C34[this->form];
+        this->unk14++;
+        this->unk1C_0 = 1;
+        this->unk2E = 0;
+        this->unk5E_0 = 0;
+        sub_08003870(this, 0);
+    }
+}
+
 
 void sub_080571BC(struct Entity *this)
 {
@@ -6432,7 +6477,7 @@ void sub_080571BC(struct Entity *this)
 }
 
 
-bool32 sub_0805722C(struct Entity *this, u16 a, u16 b)
+u8 sub_0805722C(struct Entity *this, u16 a, u16 b)
 {
     struct Entity *e;
 
@@ -6999,7 +7044,30 @@ void sub_08058AA8(struct Entity *this)
         DeleteThisEntity(this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08058BC4.inc\"");
+
+void sub_08058BC4(struct Entity *this)
+{
+    const u16 *p;
+
+    if (this->unk14 == 0)
+    {
+        this->unk14++;
+        this->unk1F_6 = 0;
+        this->unk1D_6 = 0;
+        this->unk5E_0 = 3;
+        this->unk1B = 78;
+        this->unk20 = 96;
+        this->unk1C_6 = 2;
+        this->unk1E_0 = 5;
+        p = &gUnknown_08428F04[this->form * 3];
+        this->x.HALF_U.HI = *p++;
+        this->y.HALF_U.HI = *p++;
+    }
+    this->unk1C_0 = (u16)(gUnknown_03000948.unk0 & 16) ? 2 : 0;
+    if (gUnknown_02016D60_fs.unk8 != 0)
+        DeleteThisEntity(this);
+}
+
 
 void sub_08058D04(void)
 {

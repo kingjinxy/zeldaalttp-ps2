@@ -72,6 +72,10 @@ struct LinkKeys {
 // bitfield pattern (ldr, and #0, orr, str), where the shared struct can't change type yet
 #define BITU16_AT(base, off) (((struct { u8 pad[off]; u16 v : 16; } *)(base))->v)
 #define BITU8_AT(base, off) (((struct { u8 pad[off]; u8 v : 8; } *)(base))->v)
+// Plain (not bitfield) reads at an offset, with the large-offset field pattern
+#define S16_AT(base, off) (((struct { u8 pad[off]; s16 v; } *)(base))->v)
+#define U16_AT(base, off) (((struct { u8 pad[off]; u16 v; } *)(base))->v)
+#define U8_AT(base, off) (((struct { u8 pad[off]; u8 v; } *)(base))->v)
 
 struct XY16 {
     u16 x;

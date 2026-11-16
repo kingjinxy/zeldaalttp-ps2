@@ -1820,7 +1820,7 @@ extern void (*const gUnknown_08140984[])(struct Entity *);
 extern void (*const gUnknown_081409A4[])(struct Entity *);
 extern const u16 gUnknown_081409F0[];
 extern void (*const gUnknown_08140C28[])(struct Entity *);
-//extern gUnknown_08140C34;
+extern const u8 gUnknown_08140C34[];
 extern void (*const gUnknown_08140C44[])(struct Entity *);
 extern const s8 gUnknown_08140C88[];
 extern void (*const gUnknown_08140DB0[])(struct Entity *);
