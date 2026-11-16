@@ -203,3 +203,10 @@
   assume unaligned access, so arrays whose u16 elements are written with the bitfield pattern can't be
   typed yet (`sub_08037750`, the link input ring buffer `gUnknown_0200B1D0[4][16]`, deferred).
   Executed fs_game left: 99; fs_game: 626; all: 6515.
+- Switched from executed-first to smallest-first across all of fs_game (the port needs all of it, and the
+  remaining executed functions are long): 10-17 matching functions per batch instead of 2-3. Found along the
+  way: the 0x14-byte records at `gUnknown_0202A7E0` are script interpreters (script pointer at +0x10,
+  commands read halfword arguments and advance it); `gUnknown_0201F020` has the layout of
+  `gUnknown_0200B320` (alias `gUnknown_0201F020_fs`); Entity 0x68/0x70 are word/byte unions; a pointer to
+  a non-packed `struct BitU16` handles bitfield writes through a pointer. fs_game: 531 functions left in
+  asm (of 915); all code: 6,420 left (of 7,894 incl. the disassembled blobs).
