@@ -523,7 +523,7 @@ extern struct BitU16A gUnknown_0200B1D0[4][16];  // each player's keys from the 
 //extern gUnknown_0200B1DE;
 extern u16 gUnknown_0200B1F8[];
 extern struct Struct0200B250 gUnknown_0200B250[];
-//extern gUnknown_0200B254;
+extern struct Struct0200B250 gUnknown_0200B254[];  // gUnknown_0200B250 + 4
 //extern gUnknown_0200B270;
 //extern gUnknown_0200B272;
 //extern gUnknown_0200B274;

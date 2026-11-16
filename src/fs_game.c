@@ -152,7 +152,32 @@ void sub_08036DEC(u8 index, u32 a, u32 b)
     p[1] = b;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08036E24.inc\"");
+
+void sub_08036E24(void)
+{
+    if (gUnknown_03000FC0.unk3 == 0)
+    {
+        sub_08036770(5);
+        return;
+    }
+    gUnknown_03000FC0.unk10 = 48;
+    gUnknown_03000FC0.unk14 = gUnknown_0200B250[unk3000000.unk4].unk0;
+    gUnknown_03000FC0.unk18 = unk3000000.unk4[gUnknown_0200B254].unk0;
+    if (sub_08037B5C(48))
+    {
+        if ((u8)(gUnknown_03000FC0.unk3 & 1))
+            sub_08036DEC(0, gUnknown_03000FC0.unk3C, gUnknown_03000FC0.unk40);
+        if ((u8)(gUnknown_03000FC0.unk3 & 2))
+            sub_08036DEC(1, gUnknown_03000FC0.unk50, gUnknown_03000FC0.unk54);
+        if ((u8)(gUnknown_03000FC0.unk3 & 4))
+            sub_08036DEC(2, gUnknown_03000FC0.unk64, gUnknown_03000FC0.unk68);
+        if ((u8)(gUnknown_03000FC0.unk3 & 8))
+            sub_08036DEC(3, gUnknown_03000FC0.unk78, gUnknown_03000FC0.unk7C);
+        sub_08036770(1);
+    }
+    sub_08037D64(48);
+}
+
 
 void sub_08036F28(void)
 {
