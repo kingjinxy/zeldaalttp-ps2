@@ -4493,7 +4493,25 @@ void sub_08052348(struct Entity *this)
     gUnknown_08428B30[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08052370.inc\"");
+
+void sub_08052370(struct Entity *this)
+{
+    this->unk14++;
+    this->unk1C_0 = 2;
+    this->unk1B = 147;
+    this->unk1F_6 = 0;
+    this->unk1D_6 = 0;
+    this->unk5E_0 = 2;
+    this->direction = 16;
+    this->speed = 64;
+    this->unk20 = 128;
+    this->unk1C_6 = 1;
+    this->x.HALF_U.HI = gUnknown_03006A30[this->parameter].unk28->x.HALF_U.HI;
+    this->y.HALF_U.HI = 0xFFF0;
+    sub_08003870(this, 0);
+    play_sound(0x215);
+}
+
 
 void sub_08052494(struct Entity *this)
 {
@@ -5108,7 +5126,32 @@ void sub_080545D4(struct Entity *this)
     this->unk14++;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08054620.inc\"");
+
+void sub_08054620(struct Entity *this)
+{
+    if (--this->unk17 == 0)
+    {
+        this->unk17 = 60;
+        play_sound(42);
+        sub_08014658(0x10E, ((struct { u8 pad[0x60]; struct BitU16A v[12]; } *)this->unk4C)->v[this->unk18].v, this->unk50);
+        if (++this->unk18 > 5)
+        {
+            this->unk17 = sub_08054974(this);
+            if (this->unk17 != 0)
+            {
+                play_sound(3);
+                gUnknown_0201F000[this->unk52] |= 4;
+                sub_08054A38(this);
+                this->unk14 = 0;
+            }
+            else
+            {
+                this->unk14++;
+            }
+        }
+    }
+}
+
 
 void sub_08054744(struct Entity *this)
 {
@@ -8630,7 +8673,33 @@ void sub_08065678(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_080656F4.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_08065958.inc\"");
+
+void sub_08065958(struct Entity *this)
+{
+    struct Entity *e;
+
+    if (this->unk17 == 0)
+    {
+        this->unk14 = 8;
+        this->unk17 = 8;
+    }
+    else
+    {
+        this->unk17--;
+        if (this->unk17 <= 120)
+        {
+            if ((u8)(this->unk17 & 1))
+                this->unk58->x.HALF_U.HI = this->unk58->x.HALF_U.HI + gUnknown_081421FC[(u8)((u8)(this->unk17 & 6) >> 1)];
+            if ((u8)(this->unk17 & 7) == 0)
+            {
+                e = sub_0804C8A8(15, 15, 0);
+                if (e != NULL)
+                    sub_0803D4A4(this, e, gUnknown_08142200[(u8)(this->unk17 >> 2)] << 16, gUnknown_08142200[(u8)(this->unk17 >> 2) + 1] << 16);
+            }
+        }
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_08065A74.inc\"");
 
 void sub_08065CEC(struct Entity *this)
