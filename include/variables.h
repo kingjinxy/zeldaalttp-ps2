@@ -989,7 +989,7 @@ extern struct Struct03000E20 gUnknown_03000E20;
 extern void *gUnknown_03000E34;
 extern u8 gUnknown_03000E40[0x100];
 extern u32 gRandom;
-//extern gUnknown_03000F44;
+extern u32 gUnknown_03000F44;
 extern struct GPURegConfig gUnknown_03000F50;
 extern struct Struct03000FC0 gUnknown_03000FC0;
 extern u8 gUnknown_03000FD0[20];

@@ -603,7 +603,33 @@ void sub_080381A8(void)
     gUnknown_03005050++;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08038238.inc\"");
+
+void sub_08038238(void)
+{
+    u32 zero;
+
+    BITU8_AT(&gUnknown_03006C80, 0x5C) = BITU8_AT(&gUnknown_03006C80, 0x5D) = BITU8_AT(&gUnknown_03006C80, 0x5E) = BITU8_AT(&gUnknown_03006C80, 0x5F) = 0;
+    BITU16_AT(&gUnknown_03006C80, 0x80) = BITU16_AT(&gUnknown_03006C80, 0x82) = 0;
+    gUnknown_03006C80.unk6E = 1;
+    gUnknown_03006C80.unk6D = 0;
+    gUnknown_03006C80.unk1C = 0;
+    BITU16_AT(&gUnknown_03006C80, 0x26) = 0xFFFF;
+    gUnknown_03000F44 = ((struct BitU16 *)gUnknown_03000208)->v = 0;
+    gUnknown_03000200 = NULL;
+    sub_0800BED8();
+    sub_080137DC();
+    sub_0800BEC4();
+    sub_0802D954();
+    sub_0800D6F4();
+    sub_0800D744();
+    zero = 0;
+    CpuFastSet(&zero, gBG0Buffer, 0x01000400);
+    sub_0801424C();
+    sub_080138BC();
+    sub_0803E518();
+    gUnknown_03005050++;
+}
+
 
 void sub_08038358(void)
 {
