@@ -54,7 +54,8 @@ typedef struct Entity {
     /* 0x38 */ union SplitWord z;
     /* 0x3C */ u8 unk3C : 8;
     /* 0x3D */ u8 unk3D : 8;
-    /* 0x3E */ u8 filler3E[2];
+    /* 0x3E */ u8 unk3E;
+    /* 0x3F */ u8 filler3F;
     /* 0x40 */ u8 unk40 : 8;
     /* 0x41 */ u8 unk41 : 8;
     /* 0x42 */ s8 unk42 : 8;
