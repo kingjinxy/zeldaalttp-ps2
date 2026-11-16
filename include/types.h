@@ -610,7 +610,9 @@ struct Struct03006C80
     u8 unk54[4];
     u8 unk58[4];
     u8 unk5C[4];  // per player
-    u8 filler60[0xE];
+    u8 filler60[0xC];
+    u8 unk6C : 8;
+    u8 unk6D : 8;
     u8 unk6E : 8;
     u8 unk6F;
     struct Entity *unk70[4];  // indexed by Entity.unk18

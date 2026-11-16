@@ -2256,7 +2256,29 @@ void sub_08046440(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08046490.inc\"");
+
+void sub_08046490(struct Entity *this)
+{
+    GetNextFrame(this);
+    this->unk70.s.unk73 = this->unk70.s.unk73 + BITU8_AT(this, 0x7D);
+    if (this->unk6E <= 31)
+    {
+        BITU16_AT(this, 0x6E)++;
+        this->unk70.s.unk72 = 32 - ((gUnknown_0813E4CC[this->unk6E] * 32) >> 8);
+    }
+    else
+    {
+        this->unk17--;
+        if (this->unk17 == 0)
+        {
+            this->unk70.bf = 255;
+            this->unk14 = 29;
+            this->unk17 = 60;
+            sub_08003DFC(159);
+        }
+    }
+}
+
 
 void sub_0804659C(struct Entity *this)
 {
@@ -4060,7 +4082,21 @@ void sub_08051B58(struct Entity *this)
     gUnknown_08428B18[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08051B80.inc\"");
+
+void sub_08051B80(struct Entity *this)
+{
+    this->unk14++;
+    this->unk1C_0 = 1;
+    this->unk1D_6 = 3;
+    this->unk1F_6 = 3;
+    this->unk1E_0 = this->parameter + 8;
+    this->unk1D_2 = 1;
+    this->x.HALF_U.HI = gUnknown_03006A30[this->parameter].unk28->x.HALF_U.HI;
+    this->y.HALF_U.HI = gUnknown_03006A30[this->parameter].unk28->y.HALF_U.HI + 24;
+    BITU16_AT(this, 0x60) = this->y.HALF_U.HI + 32;
+    sub_08003870(this, 0);
+}
+
 
 void sub_08051C8C(struct Entity *this)
 {
@@ -4312,7 +4348,27 @@ void sub_080528B4(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_0805293C.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_08052A88.inc\"");
+
+void sub_08052A88(void)
+{
+    u8 i;
+    u8 j;
+
+    if (gUnknown_03000420[0] == 0)
+        return;
+    if ((u16)(gUnknown_03000E20.unk0 & 31) == 0)
+        gUnknown_03006C80.unk6C = (gUnknown_03006C80.unk6C + 1) & 3;
+    for (i = 0; i <= 3; i++)
+    {
+        j = (gUnknown_03006C80.unk6C + i) & 3;
+        if (gUnknown_03006C80.unk70[j] != NULL && !((gUnknown_03006C80.unk6D >> j) & 1))
+        {
+            gUnknown_03006C80.unk70[j]->unk1C_0 = 2;
+            sub_08003688(gUnknown_03006C80.unk70[j]);
+        }
+    }
+}
+
 
 void sub_08052B88(struct Entity *this)
 {
