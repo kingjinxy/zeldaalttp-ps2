@@ -790,7 +790,7 @@ extern u8 gUnknown_0202A6D8;
 //extern gUnknown_0202A770;
 //extern gUnknown_0202A788;
 extern struct Struct0202A7E0 gUnknown_0202A7E0[8];
-//extern gUnknown_0202A880;
+extern struct Struct0202A7E0 gUnknown_0202A880[];  // end of gUnknown_0202A7E0
 extern u8 gGameLanguage;
 //extern gUnknown_0202A8C4;
 //extern gUnknown_0202A8CE;
@@ -1760,7 +1760,7 @@ extern const u8 gUnknown_0813F208[];
 extern void (*const gUnknown_0813F420[])(struct Entity *);
 //extern gUnknown_0813F53C;
 //extern gUnknown_0813F544;
-//extern gUnknown_0813F54C;
+extern const u8 gUnknown_0813F54C[];
 extern const u8 gUnknown_0813F554[];
 extern const u8 gUnknown_0813F55C[];
 extern void (*const gUnknown_0813F578[])(struct Entity *);
