@@ -726,7 +726,8 @@ struct Struct03006A30
     u8 filler24[3];
     u8 unk27 : 8;
     struct Entity *unk28;
-    u8 filler2C[0xA];
+    struct Entity *unk2C;
+    u8 filler30[6];
     u16 unk36 : 16;
     u8 unk38 : 8;
     u8 unk39 : 8;
