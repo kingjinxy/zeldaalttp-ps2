@@ -1914,7 +1914,47 @@ void sub_080437F8(struct Entity *this)
 
 asm(".include \"asm/non_matching/fs_game/sub_08043834.inc\"");
 
-asm(".include \"asm/non_matching/fs_game/sub_08043A34.inc\"");
+
+void sub_08043A34(struct Entity *this)
+{
+    struct MapData *m;
+    u16 v;
+
+    if (--this->unk64 != -1)
+    {
+        GetNextFrame(this);
+        sub_0803CC20(this);
+        this->unk17++;
+        if (this->parameter == 0)
+            sub_0800402C(this);
+        sub_0803F0E4(this);
+        m = (struct MapData *)sub_08015DC0(this->unk50);
+        v = m->unk4[((this->x.HALF.HI - gUnknown_03000450.unk18) >> 4) | ((this->y.HALF.HI - gUnknown_03000450.unk1A) >> 4 << 6)] & 0x7FF;
+        if (sub_080012CC(m->unk5004[v], gUnknown_08008840) == 0 && sub_0800935C(this) != 70 && sub_08003748(this, gUnknown_08003538, this->x.HALF_U.HI, this->y.HALF_U.HI))
+        {
+            sub_08000620(this);
+            sub_0804CB38(this, 25, 0);
+            DeleteThisEntity(this);
+        }
+        if (this->unk41 != 0)
+        {
+            sub_08000620(this);
+            sub_0804CB38(this, 25, 0);
+            DeleteThisEntity(this);
+        }
+        if (sub_080017E0(this, 12))
+        {
+            sub_08000620(this);
+            DeleteThisEntity(this);
+        }
+    }
+    else
+    {
+        sub_08000620(this);
+        DeleteThisEntity(this);
+    }
+}
+
 
 asm(".include \"asm/non_matching/fs_game/sub_08043B94.inc\"");
 
