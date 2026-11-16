@@ -613,6 +613,15 @@ struct Struct0200B320
 };  // size = 0xB004 (sub_0803A2E8 clears it)
 
 // Affine source (scale x, scale y, rotation) for ObjAffineSet, written as 16-bit bitfields by -O0 code
+// What Entity.unk48 points to for some kinds (sub_0803CC9C); tmc's Hitbox has offsets at 0 and 1
+struct EntityBox {
+    s8 unk0;
+    s8 unk1;
+    u8 unk2;
+    u8 filler3[2];
+    u8 unk5;
+};
+
 struct Struct03000488
 {
     u16 unk0 : 16;
