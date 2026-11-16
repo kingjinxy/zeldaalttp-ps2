@@ -1173,7 +1173,7 @@ extern struct Struct03006CA8 gUnknown_03006CA8[];
 //extern gUnknown_03006CE8;
 //extern gUnknown_03006D04;
 extern u8 gMainState;
-//extern gUnknown_03006D14;
+extern u16 gUnknown_03006D14;
 //extern gUnknown_03006D18;
 //extern gUnknown_03007F00;
 //extern gUnknown_03007FA0;
