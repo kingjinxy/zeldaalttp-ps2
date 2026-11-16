@@ -2323,7 +2323,40 @@ void sub_08046D24(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_08046D3C.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_08046FB4.inc\"");
+
+u8 sub_08046FB4(struct Entity *this)
+{
+    struct Entity *a;
+    struct Entity *b;
+
+    a = sub_080123E8();
+    if (a != NULL)
+    {
+        b = sub_08012410(a);
+        if (b != NULL)
+        {
+            a->type = 3;
+            b->type = 3;
+            a->subtype = 48;
+            b->subtype = 48;
+            a->parameter = 0;
+            b->parameter = 1;
+            a->direction = 160;
+            b->direction = 96;
+            a->unk54 = this;
+            b->unk54 = this;
+            a->unk58 = b;
+            b->unk58 = a;
+            sub_0803D3D0(this, a);
+            sub_0803D3D0(this, b);
+            sub_08012728(4, a);
+            sub_08012728(4, b);
+            return 1;
+        }
+    }
+    return 0;
+}
+
 
 void sub_080470C0(struct Entity *this)
 {
@@ -4163,7 +4196,30 @@ void sub_080525FC(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_08052648.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_080527AC.inc\"");
+
+void sub_080527AC(struct Entity *this)
+{
+    if (this->unk14 == 0)
+    {
+        this->unk14++;
+        this->unk1C_0 = 2;
+        this->unk1B = 42;
+        this->unk1F_6 = 0;
+        this->unk1D_6 = 0;
+        this->unk5E_0 = 3;
+        this->direction = 16;
+        this->speed = 32;
+        this->unk20 = 60;
+        this->unk1C_6 = 3;
+        this->unk1E_0 = 1;
+        sub_08003870(this, 7);
+    }
+    GetNextFrame(this);
+    sub_0803CC20(this);
+    if ((u8)(this->unk29 & 0x80))
+        DeleteThisEntity(this);
+}
+
 
 void sub_080528B4(struct Entity *this)
 {
@@ -5573,7 +5629,21 @@ void sub_08057EB0(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08057F58.inc\"");
+
+void sub_08057F58(struct Entity *this)
+{
+    BITU16_AT(&gUnknown_030004A0, 0x68) = ((16 - this->unk17) << 8) | this->unk17;
+    if (--this->unk17 == 0)
+    {
+        this->unk14++;
+        this->unk1D_2 = 0;
+        this->unk1C_0 = 0;
+        this->x.HALF_U.HI = gUnknown_08428F70[this->parameter * 2];
+        this->y.HALF_U.HI = gUnknown_08428F70[this->parameter * 2 + 1];
+        gUnknown_02016D60_fs.unk8 = 4;
+    }
+}
+
 
 void sub_08058058(struct Entity *this)
 {
