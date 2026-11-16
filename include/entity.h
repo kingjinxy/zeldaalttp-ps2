@@ -113,6 +113,7 @@ typedef struct Entity {
         u16 h : 16;
         u16 *p;
         u8 *pb;
+        u8 b;
         struct {
             u16 h;
             u16 unk7E : 16;

@@ -1941,7 +1941,7 @@ void sub_08047538(struct Entity *);
 //sub_08048FB4();
 //sub_08049140();
 //sub_080492B4();
-//sub_0804930C();
+void sub_0804930C(struct Entity *);
 void sub_080494B8(struct Entity *);
 //sub_080496DC();
 //sub_08049708();
