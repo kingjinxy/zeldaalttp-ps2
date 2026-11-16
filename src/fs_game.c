@@ -11281,7 +11281,20 @@ void sub_08066808(struct Entity *a, struct Entity *b)
     b->y.WORD = a->y.WORD;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0806682C.inc\"");
+
+u8 sub_0806682C(struct Struct03006A30 *p)
+{
+    if ((u16)(p->unk36 & 0x201))
+        return 1;
+    if (p->unk2 != 0)
+        return 1;
+    if (p->unk3C != 0 || p->unk28->unk45 == 0)
+        return 1;
+    if (p->unk28->unk14 == 2 || p->unk28->unk14 == 3)
+        return 1;
+    return 0;
+}
+
 
 void sub_080668A4(struct Entity *this)
 {
