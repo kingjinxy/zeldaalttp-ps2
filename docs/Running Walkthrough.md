@@ -165,6 +165,29 @@
   `&((u8 *)p)[off]`. Named `Struct03006C80.unk6`/`unk8` (stage and score thresholds 999/2999/4999) and
   `Struct02016D60_fs.unk9`/`unkA`. fs_game: 395 functions left in asm (of 915); all code: 6,284 left.
 
+- (2026-11-16, later) Batches 67-103, 155 more fs_game functions (the user asked to keep going until
+  everything is in C). What made the remaining ones match:
+  - `struct BitU16A { u16 v : 16; } __attribute__((packed, aligned(2)))` is a 2-byte element with halfword
+    access, so arrays the original writes with the bitfield pattern can be typed (the link input ring buffer
+    `gUnknown_0200B1D0`, now done in `sub_08037750` through a `struct LinkKeys` view with an 11-bit field).
+  - Where a shared array or field is plain in -O2 code but bitfield-written in -O0 code, an ldscript alias
+    gives the -O0 view (`gUnknown_03005E10_b`, `gUnknown_03000940_b`, `gUnknown_0200B1D0_k`,
+    `sub_0802C12C_int` for a caller that had no prototype). Use the same alias for reads and writes in one
+    function, or the literal pool gets a second entry.
+  - `BITU16_AT(base, off)` / `BITU8_AT` cast macros give the large-offset field pattern for single bytes or
+    halfwords the shared struct still has as padding or as a wider field.
+  - Order of operands decides load order: `a->f + b` loads `a` first but `b` before the field; `x |= y`
+    computes the address of `x`, then `y`, then loads `x`. Pointer subtraction that shows `lsr` is
+    `((u32)p - (u32)base) >> 1`. `p->f` through `unk3000000` (a struct at 0x03000000) keeps the base and
+    offset separate where a constant address is folded.
+  - Control flow: `if (c) return;` shows as `b!c next; b end`; `continue` the same; a switch with one case
+    and `default: break;` gives the extra jump; `case 0: default:` puts 0 in the compare chain.
+  - `sub_08008F78` is code after a 16-byte table at the start of `sub_08008F68`'s .inc; it now has a label.
+    `sub_08003828` is `GetNextFrame`.
+  Deferred (left in asm): `sub_0803D134` (agbcc folds `v - (x - 1)`), `sub_0803A5DC` (a max() whose select
+  happens before the store), `sub_08038238` (a CpuFastSet source that is never stored), plus the earlier list.
+  fs_game: 240 left in asm (of 915); all code: 6,129 left.
+
 ## Step 11: recording play sessions (2026-11-15)
 
 - `mgba_run --play DIR` (SDL2): both GBAs side by side, real-time pacing, GBA 1 on WASD (F=A G=B R=L T=R
