@@ -765,7 +765,9 @@ struct Struct03006A30
     u16 unk36 : 16;
     u8 unk38 : 8;
     u8 unk39 : 8;
-    u8 filler3A[5];
+    u8 filler3A[4];
+    u8 unk3E_0 : 2;
+    u8 unk3E_2 : 6;
     s8 unk3F : 8;
     u8 filler40[0x50];
 };  // size = 0x90
