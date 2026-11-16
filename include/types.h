@@ -686,7 +686,8 @@ struct Struct03006A30
     u8 unkC : 8;
     u8 fillerD[7];
     u8 unk14 : 8;
-    u8 filler15[6];
+    u8 filler15[5];
+    u8 unk1A : 8;
     u8 unk1B;
     u8 unk1C;
     u8 filler1D[5];
