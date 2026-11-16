@@ -1314,7 +1314,20 @@ u8 sub_0803C72C(struct Entity *this, struct Entity *other, u8 c)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_0803C810.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_0803C9FC.inc\"");
+
+u8 sub_0803C9FC(struct Entity *this, struct Entity *other, u8 d)
+{
+    gUnknown_03006A30[this->form].unk28->unk41 = other->unk40 | 0x80;
+    gUnknown_03006A30[this->form].unk28->unk3D = (other->unk46 & 0x80) ? -other->unk46 - 16 : other->unk46 + 16;
+    gUnknown_03006A30[this->form].unk28->unk42 = other->unk46;
+    gUnknown_03006A30[this->form].unk28->unk3E = d ^ 16;
+    gUnknown_03006A30[this->form].unk28->unk45 = sub_0803A5DC(gUnknown_03006A30[this->form].unk28, other);
+    sub_080023C8(this);
+    if (other->unk3D == 0)
+        other->unk3D = 255;
+    return 1;
+}
+
 
 u8 sub_0803CB7C(struct Entity *this, struct Entity *other, u8 c)
 {
@@ -8254,7 +8267,43 @@ void sub_0805B838(struct Entity *this)
     sub_08008DD8(this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0805B8A4.inc\"");
+
+void sub_0805B8A4(struct Entity *this)
+{
+    u16 v;
+
+    if (this->unk54->unk7C.h <= 7)
+    {
+        this->unk1C_0 = 0;
+    }
+    else
+    {
+        this->unk1C_0 = 1;
+        v = (this->unk54->unk7C.h - 8) & 7;
+        switch (this->form)
+        {
+        case 0:
+            this->y.HALF_U.HI = this->unk54->y.HALF_U.HI - v - 16;
+            break;
+        case 1:
+            this->x.HALF_U.HI = this->unk54->x.HALF_U.HI + v + 17;
+            break;
+        case 2:
+            this->y.HALF_U.HI = this->unk54->y.HALF_U.HI + v + 16;
+            break;
+        case 3:
+            this->x.HALF_U.HI = this->unk54->x.HALF_U.HI - v - 17;
+            break;
+        }
+        v = (this->unk54->unk7C.h - 8) >> 4;
+        if (v != (u16)this->unk2A)
+        {
+            this->unk2A = v;
+            sub_08003870(this, v * 4 + this->form + 8);
+        }
+    }
+}
+
 
 void sub_0805BA18(struct Entity *this)
 {
