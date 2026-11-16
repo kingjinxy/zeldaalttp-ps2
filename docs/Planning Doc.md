@@ -83,6 +83,15 @@ four-instance build, which stays as the reference and fallback.
 - [ ] Rendering: one PPU pass per player view
 - [ ] Simulation once, per-player state as arrays (`FS_SHARED_WORLD`, breaks GBA matching on purpose)
 
+## Medium priority: more than 4 players
+Requested by the user (2026-11-16). After Phase 4 works with 4 players.
+- [ ] Find every 4-player limit: per-player arrays (`gUnknown_03006A30[4]`, `gUnknown_03006C80.unk28[4]`,
+      key arrays, the link ring buffer `gUnknown_0200B1D0[4][16]`), 2-bit player indices and masks
+      (`& 3`, `& 15`), loops `i <= 3`, and the link protocol itself
+- [ ] Data that comes in four (Link colours, palettes, HUD slots, spawn points, item/rupee splits)
+- [ ] Input beyond 4 pads on the PS2 (two multitaps give 8) and a screen layout for 5+ views
+- [ ] Easier in the Phase 5 shared world (per-player arrays sized by a constant) than with linked instances
+
 ## Open decisions
 - Whether to use automatic Thumb-to-C translation for not-yet-decompiled functions, so Phase 3 starts
   before Phase 2 is finished (decomp then replaces it function by function).
