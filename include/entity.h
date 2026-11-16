@@ -58,7 +58,8 @@ typedef struct Entity {
     /* 0x40 */ u8 unk40 : 8;
     /* 0x41 */ u8 unk41 : 8;
     /* 0x42 */ s8 unk42 : 8;
-    /* 0x43 */ u8 filler43[2];
+    /* 0x43 */ u8 unk43 : 8;
+    /* 0x44 */ u8 filler44;
     /* 0x45 */ u8 unk45 : 8;
     /* 0x46 */ u8 unk46;
     /* 0x47 */ u8 filler47;
