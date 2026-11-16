@@ -1144,7 +1144,7 @@ extern struct Struct03005060 gUnknown_03005060;
 //extern gUnknown_03005980;
 extern struct GPURegConfig *gUnknown_030059A0;
 extern u8 gInterruptMainBuf[0x120];
-//extern gUnknown_03005AD8;
+extern u8 gUnknown_03005AD8;
 extern u8 gUnknown_03005ADC[];
 extern u8 gUnknown_03005AE0[0x100];
 extern u16 gUnknown_03005BE0;
