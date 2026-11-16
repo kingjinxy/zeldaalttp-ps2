@@ -57,6 +57,11 @@ struct BitU16A {
     u16 v : 16;
 } __attribute__((packed, aligned(2)));
 
+// A u8 written with the bitfield pattern, as an array element
+struct BitU8A {
+    u8 v : 8;
+} __attribute__((packed));
+
 // A link input ring buffer entry (gUnknown_0200B1D0_k): keys in the low 11 bits
 struct LinkKeys {
     u16 keys : 11;
@@ -659,6 +664,14 @@ struct MapData
     u16 unk0[2];
     u16 unk4[0x2800];
     u16 unk5004[0x2800];
+};
+
+// The first half of MapData as -O0 code writes it (sub_0805AED4): tiles, then one byte per tile
+struct MapDataB
+{
+    u16 unk0[2];
+    struct BitU16A unk4[0x1000];
+    struct BitU8A unk2004[0x1000];
 };
 
 struct Struct03000E20
