@@ -2521,7 +2521,44 @@ void sub_08046828(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08046918.inc\"");
+
+void sub_08046918(struct Entity *this)
+{
+    u8 v;
+
+    GetNextFrame(this);
+    if (this->unk17 != 0)
+    {
+        this->unk17--;
+    }
+    else
+    {
+        if ((u16)(gUnknown_03000E20.unk0 & 7) == 0)
+            sub_0804CB7C(this, 1, 1, 20);
+        v = sub_0804721C(this);
+        if (v == 0)
+        {
+            this->unk18--;
+            if (this->unk18 != 0)
+            {
+                this->unk14 = 32;
+                this->unk17 = 60;
+            }
+            else
+            {
+                this->unk14 = 13;
+                this->unk17 = 60;
+                this->speed = 256;
+                sub_08003870(this, 0);
+            }
+        }
+        else if (v == 2)
+        {
+            this->unk17 = 30;
+        }
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_08046A2C.inc\"");
 
 void sub_08046C7C(struct Entity *this)
@@ -5107,7 +5144,29 @@ void sub_08054744(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0805485C.inc\"");
+
+#define ARR60(i) (((struct { u8 pad[0x60]; struct BitU16A v[12]; } *)this)->v[i].v)
+void sub_0805485C(struct Entity *this)
+{
+    u32 n;
+    u32 r;
+    u16 t;
+
+    n = 5;
+    while (n != 0)
+    {
+        r = sub_0800099C() % n;
+        t = ARR60(n);
+        ARR60(n) = ARR60(r);
+        ARR60(r) = t;
+        t = ARR60(n + 6);
+        ARR60(n + 6) = ARR60(r + 6);
+        ARR60(r + 6) = t;
+        n--;
+    }
+}
+#undef ARR60
+
 
 u8 sub_08054974(struct Entity *this)
 {
@@ -6280,7 +6339,31 @@ void sub_080589CC(struct Entity *this)
         DeleteThisEntity(this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08058AA8.inc\"");
+
+void sub_08058AA8(struct Entity *this)
+{
+    const u16 *p;
+
+    if (this->unk14 == 0)
+    {
+        this->unk14++;
+        this->unk1F_6 = 0;
+        this->unk1D_6 = 0;
+        this->unk1C_0 = 2;
+        this->unk1B = 107;
+        this->unk20 = 64;
+        this->unk1C_6 = 2;
+        this->unk1E_0 = 5;
+        p = &gUnknown_08428F04[this->form * 3];
+        this->x.HALF_U.HI = *p++;
+        this->y.HALF_U.HI = *p++;
+        sub_08003870(this, 0);
+    }
+    GetNextFrame(this);
+    if (gUnknown_02016D60_fs.unk8 != 0)
+        DeleteThisEntity(this);
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_08058BC4.inc\"");
 
 void sub_08058D04(void)
