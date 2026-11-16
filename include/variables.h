@@ -517,7 +517,7 @@ extern u16 gUnknown_0200B198[];
 //extern gUnknown_0200B1A2;
 //extern gUnknown_0200B1C4;
 //extern gUnknown_0200B1CA;
-extern u16 gUnknown_0200B1D0[4][16];  // each player's keys from the link, ring buffer of 16 frames
+extern struct BitU16A gUnknown_0200B1D0[4][16];  // each player's keys from the link, ring buffer of 16 frames
 //extern gUnknown_0200B1D2;
 //extern gUnknown_0200B1D8;
 //extern gUnknown_0200B1DE;
@@ -990,7 +990,7 @@ extern u32 gRandom;
 extern struct GPURegConfig gUnknown_03000F50;
 extern struct Struct03000FC0 gUnknown_03000FC0;
 extern u8 gUnknown_03000FD0[20];
-//extern gUnknown_03000FE4;
+extern u8 gUnknown_03000FE4[];
 extern u8 gUnknown_03000FF8[];
 //extern gEntityList;
 //extern gUnknown_03001400;
