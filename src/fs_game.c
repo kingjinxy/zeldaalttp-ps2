@@ -633,7 +633,35 @@ u8 sub_08039744(u8 a, u8 b)
     return r;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_080397F0.inc\"");
+
+u8 sub_080397F0(void)
+{
+    u8 i;
+    u8 v;
+    u8 a;
+    u8 b;
+    u8 c;
+
+    a = b = c = 0;
+    for (i = 0; i < gUnknown_03006C80.unk0; i++)
+    {
+        v = gUnknown_03006C80.unk28[i].unk5;
+        if (sub_08039744(v, 1) == 7)
+            a++;
+        if (sub_08039744(v, 2) == 7)
+            b++;
+        if (sub_08039744(v, 3) == 7)
+            c++;
+    }
+    if (c == gUnknown_03006C80.unk0)
+        return 3;
+    if (b == gUnknown_03006C80.unk0)
+        return 2;
+    if (a == gUnknown_03006C80.unk0)
+        return 1;
+    return 0;
+}
+
 
 void sub_080398F8(u8 a)
 {
@@ -1501,7 +1529,38 @@ void sub_08042298(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_080422D4.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_08042490.inc\"");
+
+void sub_08042490(struct Entity *this)
+{
+    struct Entity *p;
+    struct Entity *a;
+    struct Entity *b;
+
+    p = gUnknown_03006A30[this->form].unk28;
+    a = this->unk54;
+    b = this->unk58;
+    if (BITU16_AT(this, 0x64) == (u16)b->type || BITU16_AT(this, 0x66) == (u16)b->subtype)
+    {
+        if (b->unk14 != 2)
+        {
+            sub_080012A0(this->form + gUnknown_03006A30);
+            DeleteThisEntity(this);
+        }
+        else if (gUnknown_03006A30[this->form].unk5 == 0 || p->unk70.s.unk71 != 0)
+        {
+            sub_08042A90(this);
+            this->unk15++;
+            this->direction = 255;
+            this->unk10 = 0;
+        }
+    }
+    else
+    {
+        sub_080012A0(this->form + gUnknown_03006A30);
+        DeleteThisEntity(this);
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_080425A0.inc\"");
 
 void sub_08042A78(struct Entity *this)
@@ -4027,7 +4086,25 @@ void sub_08051744(struct Entity *this)
     sub_0804C448(this, this->unk4C);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08051760.inc\"");
+
+void sub_08051760(struct Entity *this)
+{
+    if ((u16)(gUnknown_03000E20.unk0 & 1))
+        this->z.HALF_U.HI--;
+    if (--this->unk17 == 0)
+    {
+        this->unk17 = 60;
+        this->x.HALF_U.HI = this->unk4C->x.HALF_U.HI;
+        this->y.HALF_U.HI = this->unk4C->y.HALF_U.HI + 1;
+        this->z.HALF_U.HI = 0xFFED;
+        this->unk1D_6 = 0;
+        this->unk1F_6 = 1;
+        play_sound(15);
+        sub_08051744(this);
+        this->unk14++;
+    }
+}
+
 
 void sub_08051870(struct Entity *this)
 {
