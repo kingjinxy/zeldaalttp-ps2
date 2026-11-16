@@ -981,7 +981,27 @@ asm(".include \"asm/non_matching/fs_game/sub_0803FAE8.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803FEAC.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08040074.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0804055C.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_080407E0.inc\"");
+
+void sub_080407E0(struct Entity *this)
+{
+    u8 i;
+    u8 j;
+    s8 x;
+    s8 y;
+
+    y = -16;
+    for (i = 0; i <= 2; i++)
+    {
+        x = -16;
+        for (j = 0; j <= 2; j++)
+        {
+            sub_08001B70(this, 0, this->x.HALF_U.HI + x, this->y.HALF_U.HI + y);
+            x += 16;
+        }
+        y += 16;
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_08040890.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08040B10.inc\"");
 
@@ -1717,7 +1737,16 @@ void sub_08046D24(struct Entity *this)
 
 asm(".include \"asm/non_matching/fs_game/sub_08046D3C.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08046FB4.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_080470C0.inc\"");
+
+void sub_080470C0(struct Entity *this)
+{
+    this->unk14 = 15;
+    this->unk70.s.unk71 = gUnknown_084287A4[(this->unk70.s.unk71 << 3) + (sub_0800099C() & 7)];
+    if (this->unk70.s.unk71 == 255)
+        this->unk70.s.unk71 = sub_0800099C() & 1;
+    this->unk70.bf = gUnknown_08137B10[this->unk70.s.unk71];
+}
+
 
 void sub_08047174(struct Entity *this)
 {
@@ -2094,7 +2123,21 @@ void sub_0804A16C(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_0804A218.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_0804A2D8.inc\"");
+
+void sub_0804A2D8(struct Entity *this)
+{
+    if (--this->unk17 == 0)
+        this->unk3C = this->unk3C | 0x80;
+    GetNextFrame(this);
+    sub_0803CC20(this);
+    if (!sub_08003594(this, 0x1800))
+    {
+        this->unk14 = 2;
+        this->unk10 = 0x1C000;
+        this->unk3C = this->unk3C | 16;
+    }
+}
+
 
 void sub_0804A38C(struct Entity *this)
 {
@@ -2580,7 +2623,24 @@ void sub_0804E0E0(struct Entity *this)
     sub_08003870(this, 0);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0804E198.inc\"");
+
+void sub_0804E198(struct Entity *this)
+{
+    if (this->unk17 == 0)
+    {
+        if (!sub_0802C12C(this))
+        {
+            sub_080009F4((void *)((this->unk53 + 1) * 0x200 + 0x06010000), (gUnknown_03006C80.unk1 * 256 + 0x42120) + gUnknown_03000030, 0x100);
+            this->unk1C_0 = 1;
+            this->unk14++;
+        }
+    }
+    else
+    {
+        this->unk17--;
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0804E248.inc\"");
 
 void sub_0804E364(struct Entity *a, struct Entity *b)
@@ -5220,7 +5280,20 @@ void sub_0805D9C4(struct Entity *this)
     gUnknown_08429268[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0805D9EC.inc\"");
+
+void sub_0805D9EC(struct Entity *this)
+{
+    this->unk14++;
+    this->unk1C_0 = 1;
+    this->unk1D_6 = 2;
+    this->unk1F_6 = 2;
+    if (this->form != 4)
+        this->unk1D_2 = 1;
+    sub_0805D7D0(this);
+    this->x.HALF_U.HI = this->x.HALF_U.HI + gUnknown_02016D60_fs.unk26;
+    sub_08003870(this, this->form);
+}
+
 
 void sub_0805DAA0(struct Entity *this)
 {
@@ -6255,7 +6328,27 @@ void sub_08066148(struct Entity *this)
     gUnknown_0814231C[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08066170.inc\"");
+
+void sub_08066170(struct Entity *this)
+{
+    struct Entity *e;
+    const s16 *p;
+    u16 i;
+
+    p = gUnknown_0813FD90[gUnknown_03006C80.unk0 - 1];
+    for (i = 0; i < (u16)gUnknown_03006C80.unk0; i++)
+    {
+        e = sub_0804C8A8(102, 1, i);
+        if (e != NULL)
+        {
+            e->unk54 = this;
+            sub_0803D4A4(this, e, p[0] << 16, p[1] << 16);
+            p += 2;
+        }
+    }
+    this->unk14 = 1;
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_08066224.inc\"");
 
 void sub_080663C4(struct Entity *this)
@@ -6300,7 +6393,7 @@ void sub_080664A8(struct Entity *this)
     {
         this->unk17--;
     }
-    else if (!sub_0802C12C(this))
+    else if (!sub_0802C12C_int(this))
     {
         sub_080009F4((void *)(0x06010000 + (this->unk53 + 1) * 0x200), gUnknown_03000030 + 0x42320, 0x100);
         this->unk14 = 2;
