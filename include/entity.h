@@ -92,10 +92,16 @@ typedef struct Entity {
             u8 unk72 : 8;
         } s;
     } unk70;
-    /* 0x74 */ u8 unk74 : 8;
-    /* 0x75 */ u8 unk75 : 8;
-    /* 0x76 */ u8 unk76 : 8;
-    /* 0x77 */ u8 unk77 : 8;
+    /* 0x74 */ union {
+        const u16 *p;  // a script of halfwords for some entity kinds
+        u32 w;
+        struct {
+            u8 unk74 : 8;
+            u8 unk75 : 8;
+            u8 unk76 : 8;
+            u8 unk77 : 8;
+        } b;
+    } unk74;
     /* 0x78 */ union {
         u32 w;
         struct Entity *e;
@@ -128,6 +134,10 @@ typedef struct Entity {
             u8 filler[3];
             u8 unk7F : 8;
         } s3;
+        struct {
+            u8 filler[2];
+            u8 unk7E : 8;
+        } s4;
     } unk7C;  // a halfword for some entity kinds, a pointer for others
 } Entity;
 
