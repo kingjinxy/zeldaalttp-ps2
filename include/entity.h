@@ -91,6 +91,10 @@ typedef struct Entity {
             u8 unk71 : 8;
             u8 unk72 : 8;
         } s;
+        struct {
+            u16 lo;
+            u16 unk72 : 16;
+        } s2;
     } unk70;
     /* 0x74 */ union {
         const u16 *p;  // a script of halfwords for some entity kinds

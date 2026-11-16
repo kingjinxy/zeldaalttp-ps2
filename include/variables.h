@@ -1750,7 +1750,7 @@ extern const u16 gUnknown_0813F058[];
 extern const u8 gUnknown_0813F070[];
 extern const u16 *const gUnknown_0813F0F8[];
 //extern gUnknown_0813F10C;
-//extern gUnknown_0813F11C;
+extern const u8 gUnknown_0813F11C[];
 extern const u16 *const gUnknown_0813F164[];
 extern const u16 *const gUnknown_0813F1F4[];
 extern const u8 gUnknown_0813F208[];
