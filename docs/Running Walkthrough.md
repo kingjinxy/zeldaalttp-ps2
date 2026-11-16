@@ -158,6 +158,12 @@
   Four Swords uses an ldscript alias, `gUnknown_02016D60_fs`, with its own struct.
 - Found: the Makefile didn't rebuild C files when a header changed (no SCANINC), so a header edit could
   leave a stale object and hide a mismatch. Every C object now depends on all headers.
+- (2026-11-16) Batches 62-66, 33 more fs_game functions. When a byte or halfword field at a large offset
+  is written with the bitfield pattern but the shared `Entity` layout can't change yet (0x60, 0x6E, 0x76),
+  a cast to `struct { u8 pad[N]; u16 v : 16; } *` gives the original's `add rX, rY, #0` field pattern, where
+  a `struct BitU16 *` built from an address doesn't. A pointer plus an offset added without scaling is
+  `&((u8 *)p)[off]`. Named `Struct03006C80.unk6`/`unk8` (stage and score thresholds 999/2999/4999) and
+  `Struct02016D60_fs.unk9`/`unkA`. fs_game: 395 functions left in asm (of 915); all code: 6,284 left.
 
 ## Step 11: recording play sessions (2026-11-15)
 

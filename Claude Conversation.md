@@ -2748,3 +2748,558 @@ All twelve match; 543 left. Next batch:
 
 - tool `Bash`: make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A asm/non_matching src include && git commit -q -m "Decompile 12 more small Four Swords functio
 
+## Claude
+
+All twelve match. 531 Four Swords functions left in asm, 6,420 overall. Updating the walkthrough and the conversation archive:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat >> "docs/Running Walkthrough.md" <<'E' - Switched fr
+
+## Claude
+
+Decompiling continues to go well, and the rebuilt ROM still matches after every commit. The last commit on `ps2-port` is `8353987`.
+
+**Where things stand:**
+- **Four Swords code:** 384 of 915 functions are in C, 531 still in assembly.
+- **Whole ROM:** 1,474 of 7,894 functions are in C, 6,420 still in assembly. The total includes the code disassembled earlier.
+- **Executed in the lobby test or your session:** 92 Four Swords functions still in assembly, 16 of them set aside for later.
+
+**Change of approach:** the executed functions left were long, so each batch only managed 2–3. I switched to smallest-first across all the Four Swords code, which needs to be in C for the port anyway. That raised it to 10–17 per batch.
+
+**Relevant to the port:**
+- **Player input:** each Link runs with its own player's buttons, from per-player arrays filled from the link cable. The ring buffer that fills those arrays is mapped too: 16 frames, read 2 frames behind. On the PS2, the four controllers will feed those arrays directly.
+- **Helpers:** functions that answer "which player pressed this button", the music selection, and object spawning (`CreateObject` and the spawn lists) are identified.
+- **Scripts:** cutscene and event scripts run on eight small interpreter records, and their commands are being decompiled.
+
+**One mistake, fixed:** commit `6a0ac77` didn't match. My helper reported a difference but exited as if everything was fine, so the commit went ahead. The next commit fixed it. The helper now exits with an error, and I only commit when the build itself prints OK.
+
+**Set aside:** 16 functions, each written up in the walkthrough. The main pattern is code that writes 16-bit array elements in a way plain C arrays can't reproduce with this compiler. That includes the link input ring buffer, so it may need a different approach later; it doesn't block the port.
+
+I'll keep going in batches.
+
+## User
+
+Continue unprompted until you need me to make a decision
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; while read i; do [ -f $i ] && echo $i; done < $S/todo_al
+
+## Claude
+
+Twelve more. A few small layout additions: `gUnknown_03006C80` `unk4` (plus `unk1`/`unk5` as bitfields), `gUnknown_02016D60_fs` a halfword at `+0x26`, and `Entity` `0x6E`.
+
+- tool `Bash`: python3 - <<'E' p="include/types.h"; s=open(p).read() rep=[("    u8 unk0;  // number of players\n    u8 unk1;\n    u8 unk2;\n    u8 filler3[2];\n    u8 unk5;\n"
+
+- tool `Bash`: python3 tools/declare.py 'void sub_0805BC44(struct Entity *);' 'extern const u16 gUnknown_0842947C[];' 'void sub_0803DE94(u8);' 'void sub_08051C8C(struct Entity
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A asm/non_matching src include && git commit -q -m "Decompile 12 more small Four Swords functio
+
+## Claude
+
+Twelve more. These need a few more union views: a byte bitfield at `0x71` inside the `0x70` union, a byte view of `0x78`, and a byte-pointer view of `0x7C`.
+
+- tool `Bash`: python3 - <<'E' p="include/entity.h"; s=open(p).read() rep=[("""    /* 0x70 */ union {         u32 w;         u8 b;     } unk70;""","""    /* 0x70 */ union {   
+
+- tool `Bash`: for t in 0813F74C 0813F744 0813F928 084293D8 084293D0 0813EF60; do python3 tools/declare.py "extern void (*const gUnknown_$t[])(struct Entity *);"; done && pyth
+
+## Claude
+
+`sub_0804F6EC` reads the second value as a field at `+2`, not as an array index, so the offset parameter is a struct of two halfwords:
+
+- tool `Bash`: python3 - <<'E' p="src/fs_game.c"; s=open(p).read() a="""void sub_0804F6EC(struct Entity *this, const u16 *offset) {     this->x.HALF.HI = this->x.HALF_U.HI + o
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A asm/non_matching src include && git commit -q -m "Decompile 12 more small Four Swords functio
+
+- tool `Bash`: for n in gUnknown_08428908 gUnknown_08428900 sub_0805AD74 gUnknown_03000200 sub_08047490 sub_0806041C; do printf "%s: " $n; grep -hn "\b$n\b" include/variables.
+
+- tool `Bash`: python3 tools/declare.py 'extern void (*const gUnknown_08428908[])(struct Entity *);' 'extern void (*const gUnknown_08428900[])(struct Entity *);' 'void sub_080
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A asm/non_matching src include && git commit -q -m "Decompile 12 more small Four Swords functio
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; echo sub_080447C8 >> $S/deferred.txt; python3 - <<'E' p=
+
+- tool `Bash`: python3 tools/declare.py 'void sub_0804930C(struct Entity *);' && sed -i 's/(u8)(gUnknown_02000010 \& 0x7F)/(u8)(gUnknown_02000010.unk0.asNotBitfield.unk0 \& 0x
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; echo sub_08054A38 >> $S/deferred.txt; python3 - "$S" <<'
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A asm/non_matching src include && git commit -q -m "Decompile 10 more small Four Swords functio
+
+## Claude
+
+Ten more matched. 485 left. Next batch:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; while read i; do [ -f $i ] && echo $i; done < $S/todo_al
+
+## Claude
+
+Writing eleven; `sub_0804CF84` waits, since it writes bitfields in the shared `gUnknown_02000010` struct. `Entity` gets a halfword at `0x2C` and a word at `0x64`.
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; echo sub_0804CF84 >> $S/deferred.txt; python3 - <<'E' p=
+
+- tool `Bash`: python3 tools/declare.py 'void sub_0805CE18(struct Entity *);' 'void sub_0805CA84(struct Entity *);' 'extern const u8 gUnknown_0813F554[];' 'void sub_0804894C(s
+
+## Claude
+
+`sub_0803CE68` is 4 bytes short. Comparing:
+
+- tool `Bash`: sed -n '/^sub_0803CE68:/,/^.Lfe/p' src/fs_game.s | grep -v "^\s*\.\(type\|globl\|thumb\|word\|align\)" | sed -n 1,45p
+
+## Claude
+
+The original truncates `y & 0x3F0` to 16 bits explicitly; agbcc drops my `(u16)` cast as redundant. Two quick variants, and otherwise defer:
+
+- tool `Bash`: cur='    u16 tile = ((x >> 4) & 63) + ((u16)(y & 0x3F0) << 2);'; ok=; for v in '    u16 tile = ((x >> 4) & 63) + ((u16)(s16)(y & 0x3F0) << 2);' '    u16 tile = 
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; echo sub_0803CE68 >> $S/deferred.txt; python3 - "$S" <<'
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A asm/non_matching src include && git commit -q -m "Decompile 10 more small Four Swords functio
+
+## Claude
+
+Ten more matched; 475 left. Next batch:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; while read i; do [ -f $i ] && echo $i; done < $S/todo_al
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; printf "sub_0803D440\nsub_0804894C\n" >> $S/deferred.txt
+
+- tool `Bash`: python3 tools/declare.py 'u8 sub_08046FB4(struct Entity *);' 'void sub_080470C0(struct Entity *);' 'u8 sub_08047678(struct Entity *);' 'extern const u16 gUnknow
+
+- tool `Bash`: sed -n '/^sub_08047678:/,/^.Lfe/p' src/fs_game.s | grep -v "^\s*\.\(type\|globl\|thumb\|word\|align\)" | sed -n 8,40p
+
+## Claude
+
+The original shifts `unk3` directly, without the extra move that `* 2` produces, the same lesson as `direction << 3`. Switching to `<< 1`:
+
+- tool `Bash`: sed -i 's/gUnknown_0813F208\[gUnknown_03006C80.unk3 \* 2\]/gUnknown_0813F208[gUnknown_03006C80.unk3 << 1]/; s/gUnknown_0813F208\[gUnknown_03006C80.unk3 \* 2 + 1
+
+## Claude
+
+`sub_08047678` matches now. `sub_0803CEF0` loads `b` before `dx`, so swapping the operands again:
+
+- tool `Bash`: sed -i 's/dx + b->x.HALF_U.HI, dy + b->y.HALF_U.HI);/b->x.HALF_U.HI + dx, b->y.HALF_U.HI + dy);/' src/fs_game.c && make -j8 compare 2>&1 | grep -E "rror|OK|FAIL
+
+## Claude
+
+Only the return conversion is left. The pattern says the callee returns `u8`, as with `sub_08003F4C` earlier:
+
+- tool `Bash`: sed -i 's/^u32 sub_08003F54(s16, s16, s16, s16);$/u8 sub_08003F54(s16, s16, s16, s16);/' include/functions.h && make -j8 compare 2>&1 | grep -E "rror|OK|FAIL" |
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A asm/non_matching src include && git commit -q -m "Decompile 8 more Four Swords functions  Co-
+
+## Claude
+
+All eight match; 467 left. Next batch:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; while read i; do [ -f $i ] && echo $i; done < $S/todo_al
+
+- tool `Bash`: python3 - <<'E' p="include/types.h"; s=open(p).read() rep=[("""    u8 fillerA[2];     u8 unkC : 8;     u8 fillerD[0xE];     u8 unk1B;""","""    u8 fillerA[2];  
+
+## Claude
+
+The layout change broke something. Finding where:
+
+- tool `Bash`: python3 tools/first_diff.py; arm-none-eabi-nm -n zeldaalttp.elf | awk '$3 ~ /^sub_[0-9A-F]{8}$/ { a=toupper($1); n=substr($3,5); if (a != n) { print "first move
+
+- tool `Bash`: python3 - <<'E' p="include/types.h"; s=open(p).read() a="    u8 filler24[2];\n    union {\n        u16 h;\n        struct {\n            u8 lo;\n            u8 
+
+- tool `Bash`: python3 tools/declare.py 'extern const u8 gUnknown_0813F7A8[];' 'void sub_08051ED4(struct Entity *);' 'void sub_0804CD94(u8);' && S=/tmp/claude-1000/-home-alex-
+
+- tool `Bash`: sed -n '/^sub_080520F8:/,/^.Lfe/p' src/fs_game.s | grep -v "^\s*\.\(type\|globl\|thumb\|word\|align\)" | tail -16
+
+- tool `Bash`: python3 - <<'E' p="include/types.h"; s=open(p).read() a="// Four Swords view of the area at gUnknown_0201ED90" s=s.replace(a,"""// Byte view of gUnknown_02016D6
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A asm/non_matching src include ldscript.txt && git commit -q -m "Decompile 10 more Four Swords 
+
+## Claude
+
+All ten match; 457 left. Next batch:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; while read i; do [ -f $i ] && echo $i; done < $S/todo_al
+
+## Claude
+
+Ten more, including four small collision callbacks. `Entity` gets a bitfield at `0x43`. Writing them:
+
+- tool `Bash`: python3 - <<'E' p="include/entity.h"; s=open(p).read() a="    /* 0x43 */ u8 filler43[2];\n" assert a in s s=s.replace(a,"    /* 0x43 */ u8 unk43 : 8;\n    /* 0x
+
+- tool `Bash`: sed -n '/^sub_0805B1CC:/,/^.Lfe/p' src/fs_game.s | grep -v "^\s*\.\(type\|globl\|thumb\|word\|align\)" | sed -n 16,36p
+
+## Claude
+
+Same so far, so the extra 4 bytes come from the order of the case bodies: the original places `case 66` before `case 33`. Reordering:
+
+- tool `Bash`: python3 - <<'E' p="src/fs_game.c"; s=open(p).read() a="""    case 33:         break;     case 66:         sub_0804CB38(this, 0, 0);         DeleteThisEntity(thi
+
+## Claude
+
+Still 4 bytes. The original's `default` body ends without a branch, so I'll try removing the final `break`:
+
+- tool `Bash`: python3 - <<'E' p="src/fs_game.c"; s=open(p).read() a="""    default:         sub_0804CB38(this, 4, 0);         DeleteThisEntity(this);         break;     }""" 
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A asm/non_matching src include && git commit -q -m "Decompile 10 more Four Swords functions  Co
+
+## Claude
+
+All ten match. 447 left. Next batch:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; while read i; do [ -f $i ] && echo $i; done < $S/todo_al
+
+- tool `Bash`: python3 - <<'E' p="include/types.h"; s=open(p).read() a="    struct Entity *unk70[4];  // indexed by Entity.unk18\n" assert a in s s=s.replace(a,a+"    u8 fille
+
+- tool `Bash`: python3 tools/declare.py 'extern const u16 gUnknown_081412EC[];' 'u8 sub_08048850(struct Entity *);' 'extern const u8 gUnknown_08428DC8[];' 'u8 sub_08053B24(u32
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A asm/non_matching src include && git commit -q -m "Decompile 10 more Four Swords functions  Co
+
+## Claude
+
+All ten match. 437 left. Next batch:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; while read i; do [ -f $i ] && echo $i; done < $S/todo_al
+
+## Claude
+
+Nine more. One note: `sub_080597A8` compares its `u16` counter against the player count with an explicit `(u16)` conversion. Writing them:
+
+- tool `Bash`: for n in sub_08047174 sub_08000358; do printf "%s: " $n; grep -hn "\b$n\b" include/functions.h | head -1; echo; done; arm-none-eabi-nm zeldaalttp.elf | grep -i 
+
+- tool `Bash`: python3 tools/declare.py 'void sub_08047174(struct Entity *);' 'u8 sub_08000358(struct Entity *, struct Entity *);' && S=/tmp/claude-1000/-home-alex-Documents-z
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A asm/non_matching src include && git commit -q -m "Decompile 9 more Four Swords functions  Co-
+
+## Claude
+
+All nine match. 428 left. Next batch:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; while read i; do [ -f $i ] && echo $i; done < $S/todo_al
+
+- tool `Bash`: python3 - <<'E' p="include/entity.h"; s=open(p).read() rep=[("""        struct {             u8 b;             u8 unk71 : 8;         } s;     } unk70;""","""   
+
+- tool `Bash`: python3 tools/declare.py 'struct Entity *sub_08012494(u8);' 'void sub_080144F0(u8, u16, u16);' 'void sub_08056DCC(struct Entity *, u8);' && S=/tmp/claude-1000/-
+
+## User
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+<system-reminder>
+<tools-used-before-summary>Bash, Edit, PushNotification, Read, TaskStop, ToolSearch, Write</tools-used-before-summary>
+</system-reminder>
+Summary:
+1. Primary Request and Intent:
+   - **Goal:** fork of the zeldaalttp GBA disassembly (USA `AZLE`, SHA-1 `a272055a…`). Finish decompiling it to C and port it to the PS2 so that Four Swords is playable in split screen instead of on separate linked GBAs.
+   - **Scope:**
+     - A Link to the Past isn't relevant as a goal, but may be decompiled when that's easier.
+     - First target: boot straight into Four Swords, like FourSwordsRecomp does.
+   - **References:**
+     - `reference/` holds FourSwordsRecomp (structure only, not to be copied as code), zeldaret/tmc, pret/agbcc, mGBA 0.10.5 and pret/pokeruby (m4a files only).
+     - `reference/` is excluded via `.git/info/exclude` and must never be uploaded.
+   - **ROMs:** `baserom.gba` (USA), `baserom_eu.gba`, `baserom_jp.gba`. Never committed.
+   - **Agent rules:** adapted from tp-ps2 into `CLAUDE.md`, with mGBA as the reference emulator.
+   - **Workflow:**
+     - Work in batches and commit after each one.
+     - Check the Minish Cap decomp for exact matches before decompiling by hand.
+     - Keep `docs/Running Walkthrough.md`, `docs/Planning Doc.md` and `Claude Conversation.md` updated at milestones and before commits.
+   - **Recording:** the user records 2-player sessions later; controlling both players at once is hard for them.
+   - **Latest instruction:** "Continue unprompted until you need me to make a decision".
+   - **Rules from `CLAUDE.md` that stay in effect:**
+     - Web access: GitHub only without asking.
+     - Never access tcrf.net in any way (no fetch, curl or search-result fetches, even if the user approves or asks).
+     - No `pkill -f` with a pattern that matches its own command line.
+     - PCSX2 rules: software renderer, PINE, never block with interrupts off, never dismiss "TLB Miss".
+     - Never commit ROMs, BIOS, saves, states or extracted assets.
+     - Private information (the user's email) must not go to external services.
+
+2. Key Technical Concepts:
+   - **Compilers:** agbcc. `-O2` for most code; `-O0` for the Four Swords region `0x0803668C`–`0x080668E4`, now `src/fs_game.c`.
+   - **`make compare`:** the SHA-1 check against `checksum.sha1`. Commits are gated on its output containing `zeldaalttp.gba: OK`.
+   - **Per-function layout:** `asm/non_matching/NAME/FUNC.inc`, included from `src/NAME.c` by top-level `asm(".include ...")` lines. Decompiling a function replaces its include line with C.
+   - **Matching idioms at `-O0`:**
+     - `ldrb` / `and #0` / `orr` / `strb` is an 8-bit bitfield write (`u8 x : 8`); `: 16` for halfwords.
+     - A `u32` bitfield container is read with `lsl`/`lsr` pairs.
+     - `x &= 0` compiles the same as a bitfield store of 0.
+     - Unused locals are still allocated, so a frame that's too small means a missing local.
+     - An explicit `return;` at the end shows as an extra branch to the epilogue.
+     - A `u16 *` indexed as `p[1]` shows an add before the load; a struct field doesn't.
+     - A field at a large offset shows `add rX, rY, #0` before the constant add.
+     - In a 2-D array, `[i][1]` adds the column before the row.
+     - A callee's return type shows in the caller: a `u8` return is truncated after the call.
+     - A callee without a prototype gets no argument conversion, so the original's casts are explicit.
+     - Operand order matters for load order.
+     - `<< 3` vs `* 8`.
+     - Order of switch case bodies, and no `break` on the last case.
+   - **Struct size on ARM:** structs and unions are rounded up to 4 bytes. `packed` makes agbcc assume unaligned access. So:
+     - Arrays of bitfield-written `u16` can't be typed yet.
+     - A pointer to a non-packed `struct BitU16` works for single writes.
+     - Two layouts of the same area use separate ldscript aliases.
+   - **ldscript aliases:**
+     - `CreateObject = sub_0804C8A8` (unprototyped name for callers).
+     - `gUnknown_02016D60_fs`, `gUnknown_02016D60_fsb`, `gUnknown_0201ED90_fs`, `gUnknown_0201F020_fs`.
+     - `gUnknown_0800A49C = 0x0800A49C`.
+   - **mGBA runner:**
+     - Lockstep link with all GBAs on one thread, so runs are deterministic.
+     - `--coverage`, `--play` (SDL2), `--save-states` / `--start`.
+     - `tests/intro_linked.inputs` gets two GBAs from empty saves to "Choose a Stage"; the states are in `recordings/start_linked` (local only).
+   - **Game structures:**
+     - `Entity` (many fields).
+     - `gUnknown_03006A30`: per-player structs of 0x90 bytes.
+     - `gUnknown_03006C80`: game state.
+     - `gUnknown_0202A7E0[8]`: script interpreters of 0x14 bytes each, with the script pointer at `+0x10`.
+     - Player input swap: `sub_0803DBD4`, using `gUnknown_03000940` and `gUnknown_03005E10`.
+     - Link input ring buffer: `gUnknown_0200B1D0[4][16]`, position `gUnknown_03000494`.
+
+3. Files and Code Sections:
+   - **Created files:**
+     - `CLAUDE.md`, `docs/Planning Doc.md`, `docs/Running Walkthrough.md`, `Claude Conversation.md`, `tools/ps2/archive_conversation.py`.
+     - `tools/mgba_run.c` and `tools/mgba_run.sh` (`-include mgba/flags.h -DNDEBUG -D_GNU_SOURCE`, SDL optional with `|| true`).
+     - `tools/reach.py`, `tools/asm_split.py`, `tools/declare.py`, `tools/first_diff.py` (exits 1 on a difference), `tools/tmc_match.py`, `tools/clusters.py`, `tools/cluster_fill.py`, `tools/disasm_blob.py`.
+     - `src/fs_only.c`, `tests/intro_linked.inputs`.
+   - **Makefile:**
+     - `SHELL := /bin/bash -o pipefail`.
+     - `CPP` falls back to the host `cpp` when devkitARM isn't set.
+     - `FS_ONLY` build option with a `.cppflags` stamp.
+     - `.SECONDEXPANSION` dependencies on the `.inc` files and on all headers.
+     - `src/fs_game.o` is built without `-O2`.
+   - **`asminclude/macro.inc`:** added `THUMB_FUNC_START_NOALIGN`.
+   - **`include/entity.h`:** `Entity` with many fields by offset:
+     - `type`/`subtype`/`form`/`parameter` as `: 8` bitfields; `speed` at `0xC`; `unk10`.
+     - `unk14`/`15`/`16`/`17`/`18` as `: 8` bitfields.
+     - `0x1C`–`0x1F` as one `u32` of bitfields: `unk1C_0:2`, `1C_2:1`, `1C_3:1`, `1C_4:2`, `1C_6:2`, `1D_0:2`, `1D_2:2`, `1D_4:1`, `1D_5:1`, `1D_6:2`, `1E_0:4`, `1E_4:4`, `1F_0:1`, `1F_1:5`, `1F_6:2`.
+     - `frameIdx : 8`, `frameTimer : 8`, `unk29`, `unk2A : 8`, `direction : 8` at `0x2B`, `unk2C` (u16), `unk2E : 8`.
+     - `x`/`y`/`z` as `union SplitWord` (with `HALF` and `HALF_U`).
+     - `unk3C:8`, `unk3D:8`, `unk40:8`, `unk41:8`, `unk42` (s8 : 8), `unk43:8`, `unk45:8`, `unk46`, `unk48` (`const void *`), `unk4C` (`Entity *`), `unk50:16`, `unk52:8`, `unk54` (`Entity *`), `unk58` (`Entity *`), `unk5C:16`, `unk5E_0:2`, `unk60`, `unk64`.
+     - `unk68` union {`w`, `b`}; `unk6E`.
+     - `unk70` union {`w`, `b`, `bf:8`, `s` {`b`, `unk71:8`, `unk72:8`}}; `unk74:8`, `unk75:8`, `unk76:8`, `unk77:8`.
+     - `unk78` union {`w`, `e`, `b:8`, `h:16`, `p`, `s` {`h`, `unk7A:8`}, `s2` {`h`, `unk7A:16`}}.
+     - `unk7C` union {`w`, `e`, `h:16`, `p`, `pb`, `b`, `s` {`h`, `unk7E:16`}, `s3` {`unk7F:8`}}.
+     - Also `struct Manager`.
+   - **`include/types.h`:**
+     - `union SplitWord`, `struct BitU16` (not packed), `struct XY16`.
+     - Forward declarations of `struct Entity` and `struct Manager`.
+     - `Struct03000FC0` (0x88 bytes), `Struct03006A30` (0x90 bytes), `Struct03006C80` (many fields), `Struct0200B320` (also used for `0201F020`), `MapData`, `Struct0202A7E0`, `Struct03000488`, `Struct03000450`, `Struct03005060`, `Struct03000E20`, `Struct02016D60_fs`/`_fsb`, `Struct0201ED90_fs`.
+     - `Struct03000520`: `unk0` and `unk4` are `: 8`.
+   - **`include/variables.h`, `include/functions.h`:** many declarations replacing the commented placeholders.
+   - **`src/fs_game.c`:** most decompiled Four Swords functions.
+   - **Scratch files** in `/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/`:
+     - `place.py` (`@@ FUNC` blocks; moves `.inc` files to `done/`; `--undo`).
+     - `todo_all_fs.txt` (all fs_game functions, smallest first).
+     - `deferred.txt`.
+     - The batch files `bNN.c`.
+
+4. Errors and fixes:
+   - **Build:** the cpp pipe failure was silent, fixed with `pipefail` and the host `cpp`.
+   - **`FS_ONLY`:**
+     - Code size changes break the build, because `.INCBIN` data holds fixed addresses.
+     - The hook is placed at `0x08700000` instead.
+   - **mGBA runner:**
+     - Link struct layouts didn't match the library: fixed by including `flags.h` and defining `NDEBUG`.
+     - Threaded runs weren't deterministic: switched to a single thread.
+     - Coverage mode is an `ARMRunLoop` reimplementation.
+   - **`disasm_blob.py`:**
+     - Entry points on 2-byte boundaries.
+     - Thumb `+1` jump-table entries.
+     - A label already present at the blob start.
+     - The tail of the host file had to stay after the new chunks.
+     - The syntax mode must be restored (`rom1` switches to unified syntax for good).
+   - **Bad commit `6a0ac77` (didn't match):**
+     - Fixed in `feed8e7`.
+     - `first_diff.py` now exits 1 on a difference.
+     - Commits are gated on `grep -q "zeldaalttp.gba: OK"`.
+   - **Header dependencies** weren't tracked; fixed in the Makefile.
+   - **Unions and packed structs:** rounding and unaligned-access problems, solved with separate aliases.
+   - **Deferred functions**, left in asm: `sub_0804E394`, `sub_0803D770`, `sub_0803CD8C`, `sub_08056D40`, `sub_08055FA0`, `sub_08063C5C`, `sub_08037750` (link ring buffer: bitfield array writes), `sub_08063E88`, `sub_0803A20C`, `sub_0805C1F4`, `sub_080447C8`, `sub_08054A38`, `sub_0804CF84`, `sub_0803CE68`, `sub_0803D440`, `sub_0804894C`.
+
+5. Problem Solving:
+   - The smallest-first approach across all of fs_game gives about 10 matching functions per batch.
+   - Progress at the last count: 428 fs_game functions left in asm (of 915). About 6,300 left overall.
+   - The walkthrough is updated periodically.
+
+6. All user messages:
+   - "Take a look at this repository. How much work remains for disassembly?"
+   - "I have 3 .gba ROMs here: /media/sf_VirtualBox_Shared_Folder Copy them to the requisite part of the repository. They won't be uploaded to GitHub"
+   - "What I want to do in this fork is finish converting the disassembly to C and port it to the PS2. The end goal is to be able to play Four Swords on the PS2 with split screen instead of separate GBAs. The Link to the Past part is not really relevant to me right now. For reference, I recommend the following: https://github.com/Jyhsus/FourSwordsRecomp and https://github.com/zeldaret/tmc. The recomp is not what I want to achieve here, but it could be useful for structural goals. The Minish Cap decompilation can be used as a reference for shared engine code between Four Swords and Minish Cap. Download them both to this repository folder for reference, but don't upload them to GitHub. Once again, pull the agent rules from tp-ps2 and let me review for how they apply to this project."
+   - "As far as TAS goes, that will be difficult because I don't know of any TASes for Four Swords, probably because it would require linking 2 GBAs in an emulator. I am open to other kinds of unit tests for checking accuracy, however. I would like to use mGBA. Let's leave Link to the Past in assembly for now and focus on building a program that just boots into Four Swords, much like the recomp does. If there's anything you need me to install for assisting with disassembly and decomp, let me know."
+   - "I've installed everything. I'll worry about the GBA BIOS later"
+   - "Commit. Then, lay out the plan for porting"
+   - "Explain this layered approach a little more."
+   - "I was thinking of having four 240x160 windows drawn on a 640x480 canvas for 4-player mode. With this layered system in mind, would I be able to change to have four 320x240 windows drawn on a 640x480 canvas?"
+   - "As far as "Then compile that same C for PC and PS2 on top of a layer that stands in for the GBA hardware. Each player gets their own copy of the game running in the one program. The copies are linked in memory instead of by cable, and each is drawn into its own part of the screen." goes, I think we could eventually simplify this by just having one game instance and four player instances. For example, instead of running 4 different audio instances, we just have 1, using the four screens as audio sources."
+   - "Alright, let's get started with the plan"
+   - "Yes" (commit)
+   - "Proceed"
+   - "Does Dolphin have better mGBA link code? If needed, just get the mGBA development branch if it makes things easier"
+   - "Commit and then proceed"
+   - "Commit, and then let's go with 3 for now. We'll get to 1 after"
+   - "Yes, commit and keep working"
+   - "Keep going in batches and commit after each one. Remember to look at the Minish Cap decomp to see if there are any exact matches for functions that we can just use."
+   - "Yes" (disassemble the blobs first)
+   - "Continue"
+   - "Let's record a little bit. Set things up so I can control one GBA with WASD and the other with the arrow keys"
+   - "I've installed sdl2's dev files"
+   - "There is an intro that I have to sit through. Let's find a way to only record inputs once the two GBAs are linked, or otherwise skip the intro."
+   - "It is a bit difficult to record sessions with me controlling both players, so I'll record more replays later. If it makes decompilation easier, just decompile A Link to the Past too"
+   - "Continue unprompted unless you need me to make a decision"
+   - "Would you find this helpful: https://github.com/vgrichina/re-skill I don't want to make a web app, but I wonder if this would helpful for disassembly Continue" (answer: not helpful, continued)
+   - "Continue"
+   - "Continue unprompted until you need me to make a decision"
+
+7. Pending Tasks:
+   - Keep decompiling Four Swords functions, smallest first, in batches. Commit after each batch, only when `make compare` prints OK.
+   - Later:
+     - Revisit the deferred functions.
+     - Recording mode with more sessions, when the user records them.
+     - PC host and PS2 phases.
+     - m4a can use pret's C for the port.
+   - Update the walkthrough, planning doc and conversation archive at milestones.
+
+8. Current Work:
+   - Batch b62 is in progress. Struct changes already applied, and the build is OK:
+     - `Entity.unk70.s.unk72 : 8`.
+     - `unk74 : 8` replaced `filler74`.
+     - `sub_08012468` returns `struct Entity *`, and `sub_0806640C` uses `struct Entity *found`.
+   - Next: declare `sub_08012494`, `sub_080144F0` and `sub_08056DCC`. Then write and place the C for:
+     - `sub_080457EC`: `e = sub_08012494(10)`; if found, `e->unk54 = this; e->form = 1; this->unk58 = e; unk14 = 8`.
+     - `sub_0804CABC`: CreateObject(0,0,0), copy x/y words, form, unk50, `sub_08008DD8`, return e.
+     - `sub_0805722C`: `(this, u16 a, u16 b)`, random check, `sub_08012468(9)`, `sub_080144F0(79 or 120, a, 0x4000 or 0x8000)`, return 1 or 0.
+     - `sub_0805CDA4`: uses `unk70.s.unk72` and the `gUnknown_0201F000[unk52] & unk60` comparison.
+     - `sub_08048074`: halfword at `0x76` set to 300 via `((struct BitU16 *)&this->unk76)->v`; `unk74 = 0`.
+     - `sub_08064464`: `direction = ((unk2A + 4) & 7) << 2`; `speed = 128`; `6A30[form].unk8 = 4`.
+     - `sub_08046258`: timer; then `unk14 = 24`, `unk70.bf = 0`, `unk70.s.unk72 = 32`, `sub_08003870(this, 3)`, `sub_08003DFC(178)`.
+     - `sub_08056E6C`: delete unless `gSubState == 3`; else a jump-table switch on `unk14` calling `sub_08056DCC(this, 0/1/2/1/0)`; default deletes.
+   - Then `make compare`, and commit if it prints OK.
+
+9. Optional Next Step:
+   - Per "Continue unprompted until you need me to make a decision": finish batch b62 as described in section 8, then continue with the next smallest fs_game functions from `todo_all_fs.txt`, excluding `deferred.txt`.
+   - Placement and the checks:
+     - `python3 $S/place.py $S/b62.c`
+     - `make -j8 compare` plus `tools/first_diff.py` and the "first moved sub_" awk check.
+     - Commit only if `make compare 2>&1 | grep -q "zeldaalttp.gba: OK"`.
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /home/alex/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9.jsonl
+Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.
+
+The messages after this summary are the most recent messages from before compaction, kept verbatim. The summary was written without seeing them, so something it says has not happened yet may already have happened in them.
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -B2 -A3 rror | head -20
+
+- tool `Bash`: make src/fs_game.o 2>&1 | grep -v "warning" | head; grep -n "sub_080660BC\|sub_0803DF84\|sub_08048850" include/functions.h
+
+- tool `Bash`: sed -n 5105,5109p src/fs_game.c; sed -i 's|((struct BitU16 \*)&this->unk76)->v = 300;|((struct BitU16 *)((u8 *)this + 0x76))->v = 300;|' src/fs_game.c && sed -i
+
+- tool `Bash`: sed -n '/sub_08048074/,/pop/p' src/done/sub_08048074.inc 2>/dev/null | head -60 || ls /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-97
+
+## Claude
+
+Batch 62 builds; one function (`sub_08048074`) still differs in register allocation. Fixing that now.
+
+- tool `Bash`: git show HEAD:asm/non_matching/fs_game/sub_08048074.inc | sed -n 18,45p
+
+- tool `Bash`: grep -n "unk7[4567]" include/entity.h; grep -c "unk77\|unk76" src/*.c
+
+- tool `Bash`: grep -n "unk7[67]" src/fs_game.c
+
+- tool `Bash`: sed -i 's|((struct BitU16 \*)((u8 \*)this + 0x76))->v = 300;|((struct { u8 pad[0x76]; u16 v : 16; } *)this)->v = 300;|' src/fs_game.c && make -j8 compare 2>&1 |
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 8 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad && n=0; for f in $(cat $S/todo_all_fs.txt | awk '{print $
+
+## Claude
+
+Batch 62 committed (420 fs_game functions left in asm). Picking the next batch now.
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; head -3 $S/todo_all_fs.txt; head -3 $S/deferred.txt
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad && n=0; for p in $(cat $S/todo_all_fs.txt); do [ -f $p ] 
+
+- tool `Bash`: grep -n "sub_0804721C\|sub_0804C9F4\|sub_08003E10\|sub_08003870\|gUnknown_03000948\|gUnknown_0813E4CC\|sub_0800099C" include/*.h; grep -n "Struct02016D60_fs" -A
+
+- tool `Bash`: sed -n 32,50p include/types.h; sed -n 551,565p include/types.h; grep -n "UnknownStruct2$" -A6 include/*.h | head; sed -n 45,60p include/entity.h
+
+- tool `Bash`: grep -n "union SplitWord" -A12 include/types.h | head -16; grep -rn "filler6\b\|filler8\[\|filler9\[" src | head
+
+- tool `Bash`: python3 - <<'E' p='include/types.h'; s=open(p).read() s=s.replace("    u8 filler9[0x17];\n    struct Entity *unk20;","    u8 unk9;\n    u8 fillerA[0x16];\n    s
+
+## Claude
+
+Batch 63 (8 functions) is written; fixing prototypes and building.
+
+- tool `Bash`: sed -i -e 's|^void sub_0805AD74(struct Entity \*);|struct Entity *sub_0805AD74(struct Entity *);|' -e 's|^//sub_080399CC();|u8 sub_080399CC(void);|' -e 's|^//su
+
+- tool `Bash`: sed -i '/^void sub_08045870/,/^}/s/e->form = 1;/e->parameter = 1;/' src/fs_game.c && make -j8 compare 2>&1 | grep -E "OK|FAIL"; python3 tools/first_diff.py
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 8 more Four Swords functions  Co-Authored-By: Claude
+
+## Claude
+
+I committed two more batches of Four Swords decompilation, 16 functions in all, and both build to the original ROM's SHA-1. 412 of the 915 Four Swords game functions are still in assembly.
+
+- **`4299122`** (8 functions) had one that came out with the registers in a different order than the original. It now matches, but only by writing to that byte (offset `0x76` in the entity struct) through a pointer cast. Typing that byte properly in the shared struct header would also change how other functions use it, so I left the struct alone for now.
+- **`76a6854`** (8 functions) needed two struct fields named that had been padding before, in two of the game's global structs. The first build differed in one function because it wrote the wrong field; one line fixed it.
+
+The walkthrough and conversation archive haven't been updated since an earlier batch. I'll catch them up at the next milestone. I'll keep going with the next smallest functions and commit after each batch.
+
+## User
+
+Continue unprompted until you need me to make a decision
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad && n=0; for p in $(cat $S/todo_all_fs.txt); do [ -f $p ] 
+
+- tool `Bash`: grep -n "gUnknown_0202A4F8\|sub_0803D8AC\|sub_0804C938\|sub_080037EC\|sub_0800D67C\|gUnknown_08137B10\|sub_08064C30\|sub_08058D04\|sub_080641F0\|sub_08045524\|s
+
+- tool `Bash`: sed -i -e 's|^//sub_08045524();|void sub_08045524(struct Entity *);|' -e 's|^//sub_080460CC();|void sub_080460CC(struct Entity *);|' -e 's|^//sub_08058D04();|vo
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad && echo sub_0806682C >> $S/deferred.txt && make compare 2
+
+- tool `Bash`: grep -n "gUnknown_0813F070\|sub_0803D4A4\|gUnknown_081410F0\|gUnknown_081410F8\|sub_08015DC0\|sub_0804679C\|sub_0805CE18\|sub_08060560\|sub_08044ED8\|sub_08044F
+
+## Claude
+
+Batch 64 committed (5 functions). Writing batch 65 now: 6 more small entity functions.
+
+- tool `Bash`: sed -i -e 's|^//sub_0803D4A4();|void sub_0803D4A4(struct Entity *, struct Entity *, s32, s32);|' -e 's|^//sub_08044ED8();|void sub_08044ED8(struct Entity *);|' 
+
+- tool `Bash`: arm-none-eabi-nm -n zeldaalttp.elf | awk '$3 ~ /^sub_[0-9A-F]{8}$/ { a=toupper($1); n=substr($3,5); if (a != n) { print "first moved:", $3, "prev:", prev; exit 
+
+- tool `Bash`: python3 - <<'E' import subprocess a=open("baserom.gba","rb").read(); b=open("zeldaalttp.gba","rb").read() syms=[(int(l.split()[0],16)&~1,l.split()[2]) for l in 
+
+- tool `Bash`: awk '/^sub_0805CE18:/,/THUMB_FUNC_END|\.size/' src/fs_game.s | head -60
+
+- tool `Bash`: sed -i 's|^extern const s8 gUnknown_081410F0\[\];|extern const s8 gUnknown_081410F0[][2];|' include/variables.h && sed -i -e 's|gUnknown_081410F0\[this->form \*
+
+- tool `Bash`: awk '/^sub_0805CE18:/,/^\.L1405:/' src/fs_game.s | sed -n 14,40p; awk '/^sub_0805CE18:/,/^\.L1405:/' src/fs_game.s | tail -14
+
+- tool `Bash`: sed -i 's|^extern const s8 gUnknown_081410F0\[\]\[2\];|extern const s8 gUnknown_081410F0[];|' include/variables.h && sed -i -e 's|gUnknown_081410F0\[this->form\
+
+## Claude
+
+Batch 65: one function is 2 instructions off; trying an index variant.
+
+- tool `Bash`: sed -i -e 's|gUnknown_081410F0\[this->form \* 2\] << 16|gUnknown_081410F0[this->form << 1] << 16|' -e 's|gUnknown_081410F0\[this->form \* 2 + 1\] << 16|gUnknown
+
+- tool `Bash`: for v in 'this->unk78.s2.unk7A + 0x2004 + p' 'p + this->unk78.s2.unk7A + 0x2004' '(u32)\&((u8 *)p)[this->unk78.s2.unk7A + 0x2004]'; do python3 - "$v" <<'E' impo
+
+- tool `Bash`: python3 - <<'E' s=open('src/fs_game.c').read() i=s.index('void sub_08060560'); e=s.index('\n}\n',i) f=s[i:e] f=f.replace('u32 p;','u8 *p;').replace('p = (u32)su
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 6 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad && echo sub_0805AC94 >> $S/deferred.txt; n=0; for p in $(
+
+- tool `Bash`: grep -n "gUnknown_08143FD8\|sub_0801484C\|gUnknown_0200B310\|sub_0800C0B0\|sub_08002E64\|sub_08003594\|play_sound\|sub_080456F0\|sub_080528B4\|sub_08055B24\|sub
+
+## Claude
+
+Batch 65 committed (401 left). Writing batch 66.
+
+- tool `Bash`: grep -n "sub_0801484C\|sub_0800C0B0" src/*.c src/lttp/*.c | head -4
+
+- tool `Bash`: sed -i -e 's|^//sub_080456F0();|void sub_080456F0(struct Entity *);|' -e 's|^//sub_08047B70();|void sub_08047B70(struct Entity *);|' -e 's|^//sub_080528B4();|vo
+
+- tool `Bash`: sed -i 's|    u8 fillerA\[0x16\];|    u8 unkA;\n    u8 fillerB[0x15];|' include/types.h && sed -i 's|gUnknown_02016D60_fs.fillerA\[0\]|gUnknown_02016D60_fs.unkA
+
+## Claude
+
+Now updating the walkthrough, planning doc and conversation archive at this milestone (395 left).
+
+- tool `Bash`: grep -n "^## Step" "docs/Running Walkthrough.md" | tail -2; tail -15 "docs/Running Walkthrough.md"; grep -n "fs_game\|left in asm\|remaining" "docs/Planning Doc
+
+- tool `Bash`: t=$(find asm/non_matching -name "*.inc" | wc -l); f=$(ls asm/non_matching/fs_game | wc -l); echo $t $f; sed -n 149,161p "docs/Running Walkthrough.md" | head -3
+
+- tool `Bash`: sed -i '52s|.*|- [ ] fs_game: 520 of 915 done; all code: 1,610 of 7,894 functions in C (6,284 left in asm/non_matching)|' "docs/Planning Doc.md" && python3 - <<
+
