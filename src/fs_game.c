@@ -1892,7 +1892,9 @@ void sub_080437F8(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_08043834.inc\"");
+
 asm(".include \"asm/non_matching/fs_game/sub_08043A34.inc\"");
+
 asm(".include \"asm/non_matching/fs_game/sub_08043B94.inc\"");
 
 u8 sub_08043EA4(u8 a)

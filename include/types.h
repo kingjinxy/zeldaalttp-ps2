@@ -666,6 +666,19 @@ struct MapData
     u16 unk5004[0x2800];
 };
 
+// A map tile entry read as an 11-bit index (sub_08043A34)
+struct MapTile {
+    u16 id : 11;
+    u16 unkB : 5;
+} __attribute__((packed, aligned(2)));
+
+struct MapDataC
+{
+    u16 unk0[2];
+    struct MapTile unk4[0x2800];
+    u16 unk5004[0x2800];
+};
+
 // The first half of MapData as -O0 code writes it (sub_0805AED4): tiles, then one byte per tile
 struct MapDataB
 {
