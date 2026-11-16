@@ -11,6 +11,13 @@ union SplitWord {
     } HALF_U;
 };
 
+// Byte view of gUnknown_02016D60_fs at 0x27, the high byte of its unk26 (ldscript alias gUnknown_02016D60_fsb)
+struct Struct02016D60_fsb
+{
+    u8 filler0[0x27];
+    u8 unk27;
+};
+
 // Four Swords view of the area at gUnknown_0201ED90 (ldscript alias gUnknown_0201ED90_fs)
 struct Struct0201ED90_fs
 {
@@ -31,7 +38,7 @@ struct Struct02016D60_fs
     u8 filler9[0x17];
     struct Entity *unk20;
     u8 filler24[2];
-    u16 unk26;
+    u16 unk26;  // its high byte is also read alone (sub_080520F8)
 };
 
 // A u16 that -O0 code writes as a 16-bit bitfield; only for pointers (an array of these would be 4-byte
@@ -652,7 +659,9 @@ struct Struct03006A30
     u16 unk8 : 16;
     u8 fillerA[2];
     u8 unkC : 8;
-    u8 fillerD[0xE];
+    u8 fillerD[7];
+    u8 unk14 : 8;
+    u8 filler15[6];
     u8 unk1B;
     u8 unk1C;
     u8 filler1D[5];
