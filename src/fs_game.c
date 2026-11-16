@@ -1266,7 +1266,18 @@ void sub_08044CBC(struct Entity *this)
     this->unk7C.bf = this->unk45;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08044D64.inc\"");
+
+void sub_08044D64(struct Entity *this)
+{
+    GetNextFrame(this);
+    if (--this->unk17 != 0)
+        return;
+    this->unk14++;
+    this->unk17 = 72;
+    this->direction = sub_0800099C() & 24;
+    sub_08003870(this, (this->direction >> 3) + 1);
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_08044E10.inc\"");
 
 void sub_08044ED8(struct Entity *this)
@@ -4214,7 +4225,20 @@ void sub_08057DBC(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_08057DE4.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_08057EB0.inc\"");
+
+void sub_08057EB0(struct Entity *this)
+{
+    if (gUnknown_02016D60_fs.unk8 > 2 && gUnknown_02016D60_fs.unk2 == this->parameter)
+    {
+        this->unk14++;
+        this->unk1D_2 = 1;
+        BITU16_AT(&gUnknown_030004A0, 0x66) = 0x3F40;
+        BITU16_AT(&gUnknown_030004A0, 0x68) = 16;
+        this->unk17 = 16;
+        play_sound(127);
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_08057F58.inc\"");
 
 void sub_08058058(struct Entity *this)
@@ -4335,7 +4359,18 @@ void sub_080585EC(struct Entity *this)
     gUnknown_08428FA4[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08058614.inc\"");
+
+void sub_08058614(struct Entity *this)
+{
+    this->unk14++;
+    this->unk1C_0 = 2;
+    this->unk1F_6 = 3;
+    this->unk1D_6 = 3;
+    this->direction = 8;
+    this->speed = (sub_0800099C() & 63) + 64;
+    this->frameIdx = *(this->form * 3 + gUnknown_08428F08);
+}
+
 
 void sub_080586C0(struct Entity *this)
 {
@@ -4685,7 +4720,26 @@ void sub_0805B2BC(struct Entity *this)
 {
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0805B2CC.inc\"");
+
+void sub_0805B2CC(struct Entity *this)
+{
+    switch (this->unk7C.s.unk7E)
+    {
+    case 0:
+        gUnknown_08140F14[this->unk14](this);
+        sub_08003C10(this);
+        gUnknown_0201EDB0[this->unk74.b.unk74].v = this->unk7C.h;
+        break;
+    case 1:
+        gUnknown_08140F20[this->unk14](this);
+        break;
+    case 2:
+        if (this->unk14 == 0)
+            sub_0805BA18(this);
+        break;
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0805B370.inc\"");
 
 void sub_0805B5FC(struct Entity *this)

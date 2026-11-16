@@ -50,6 +50,17 @@ struct BitU16 {
     u16 v : 16;
 };
 
+// A u16 written with the bitfield pattern, usable as an array element: packed keeps it at 2 bytes and
+// aligned(2) keeps halfword access (packed alone makes agbcc assume unaligned access)
+struct BitU16A {
+    u16 v : 16;
+} __attribute__((packed, aligned(2)));
+
+// The u16 / u8 at byte offset `off` of `base`, as a bitfield: -O0 code that writes a plain field with the
+// bitfield pattern (ldr, and #0, orr, str), where the shared struct can't change type yet
+#define BITU16_AT(base, off) (((struct { u8 pad[off]; u16 v : 16; } *)(base))->v)
+#define BITU8_AT(base, off) (((struct { u8 pad[off]; u8 v : 8; } *)(base))->v)
+
 struct XY16 {
     u16 x;
     u16 y;
