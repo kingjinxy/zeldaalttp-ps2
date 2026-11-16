@@ -2139,7 +2139,7 @@ void sub_08052370(struct Entity *);
 void sub_08052494(struct Entity *);
 void sub_0805251C(struct Entity *);
 //sub_080525FC();
-//sub_08052648();
+void sub_08052648(struct Entity *);
 void sub_080527AC(struct Entity *);
 void sub_080528B4(struct Entity *);
 void sub_0805293C(struct Entity *);

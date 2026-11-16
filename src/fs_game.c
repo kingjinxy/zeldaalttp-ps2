@@ -4954,7 +4954,37 @@ void sub_080501C0(struct Entity *this)
     DeleteThisEntity(this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_080501DC.inc\"");
+
+void sub_080501DC(struct Entity *this)
+{
+    const u16 *q;
+    u32 unused;
+    u16 t;
+    u16 i;
+    u16 d;
+    u16 v;
+    s16 step;
+
+    this->unk7C.h = 0xFFFF;
+    d = (u8)(this->parameter & 7);
+    if (d > 3)
+        return;
+    t = U16_AT(this, 0x78);
+    step = gUnknown_08137B90[d];
+    q = &gUnknown_0813FED8[d * 4];
+    t = t + step * 3;
+    for (i = 0; i <= 7; i++)
+    {
+        v = sub_0800932C(t, this->unk50);
+        if (q[0] == v || q[1] == v || q[2] == v || q[3] == v)
+        {
+            this->unk7C.h = t;
+            return;
+        }
+        t = t + step;
+    }
+}
+
 
 u8 sub_08050338(struct Entity *this)
 {
@@ -5411,7 +5441,26 @@ void sub_080525FC(struct Entity *this)
     this->unk1E_0 = (u16)(gUnknown_03000948.unk0 & 2) ? 3 : 0;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08052648.inc\"");
+
+void sub_08052648(struct Entity *this)
+{
+    if (this->unk14 == 0)
+    {
+        this->unk14++;
+        this->unk16 = (this->parameter >> 4) & 3;
+        this->parameter = this->parameter & 3;
+        this->frameIdx = this->unk16 + 22;
+        this->x.HALF_U.HI = gUnknown_03006A30[this->parameter].unk28->x.HALF_U.HI;
+        this->y.HALF_U.HI = gUnknown_03006A30[this->parameter].unk28->y.HALF_U.HI - gUnknown_03000450.unk22 + 20;
+        this->unk17 = (this->unk16 + 1) * 30;
+    }
+    if (this->unk17 != 0 && --this->unk17 == 0)
+    {
+        this->unk1C_0 = 2;
+        play_sound(0x217);
+    }
+}
+
 
 void sub_080527AC(struct Entity *this)
 {
@@ -8730,7 +8779,39 @@ void sub_0805E0AC(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0805E154.inc\"");
+
+void sub_0805E154(struct Entity *this)
+{
+    const u16 *p;
+    struct Entity *e;
+
+    p = &gUnknown_084292A8[(sub_0800099C() & 3) * 4];
+    e = sub_0804C8A8(70, 11, this->parameter);
+    if (e != NULL)
+    {
+        e->x.HALF_U.HI = *p++;
+        e->y.HALF_U.HI = *p++;
+        e->direction = *p++;
+        e->speed = *p++;
+        switch (sub_0800099C() & 15)
+        {
+        case 0:
+            e->direction = e->direction + 1;
+            break;
+        case 1:
+            e->direction = e->direction - 1;
+            break;
+        case 2:
+            e->direction = e->direction + 2;
+            break;
+        case 3:
+            e->direction = e->direction - 2;
+            break;
+        }
+        e->direction = e->direction & 31;
+    }
+}
+
 
 void sub_0805E2B8(struct Entity *this)
 {
