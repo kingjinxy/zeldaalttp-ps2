@@ -2954,7 +2954,22 @@ void sub_08049FA4(struct Entity *this)
     gUnknown_0813F7B0[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08049FCC.inc\"");
+
+void sub_08049FCC(struct Entity *this)
+{
+    this->unk14++;
+    this->unk17 = 30;
+    this->unk1E_0++;
+    this->unk1E_4 = this->unk1E_0;
+    this->unk1C_0 = 1;
+    this->unk2E = 4;
+    this->z.HALF_U.HI = 0xFFC4;
+    this->unk48 = gUnknown_0813F7C4;
+    this->unk50 = 0x4000;
+    this->unk20 = 128;
+    sub_08003870(this, 7);
+}
+
 
 void sub_0804A0DC(struct Entity *this)
 {
@@ -3155,7 +3170,33 @@ void sub_0804B208(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_0804B300.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_0804B5FC.inc\"");
+
+void sub_0804B5FC(struct Entity *this)
+{
+    GetNextFrame(this);
+    if (this->unk15 != 0)
+    {
+        if (!sub_08003594(this, 0x2000))
+            DeleteThisEntity(this);
+    }
+    else if (--this->unk18 != 255)
+    {
+        if (this->z.HALF.HI > this->unk54->z.HALF.HI)
+            this->z.HALF_U.HI--;
+        else if (this->unk54->unk78.s3.unk79 == 4)
+            this->unk15++;
+        if (this->x.HALF.HI == this->unk54->x.HALF.HI && this->y.HALF.HI == this->unk54->y.HALF.HI + 8)
+        {
+            this->direction = sub_0803CEF0(this, this->unk54, 0, 8);
+            sub_0803CC20(this);
+        }
+    }
+    else
+    {
+        DeleteThisEntity(this);
+    }
+}
+
 
 void sub_0804B708(struct Entity *this, u8 form)
 {
@@ -6246,7 +6287,29 @@ void sub_08059E34(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08059EB0.inc\"");
+
+void sub_08059EB0(struct Entity *this)
+{
+    if (this->form == 255)
+    {
+        this->unk14 = 2;
+        this->unk1C_0 = 1;
+        this->unk3C = 137;
+    }
+    else
+    {
+        this->unk14 = 1;
+        this->unk3C = 9;
+        this->unk60 = sub_08013D20(this->form);
+    }
+    this->unk3F = 42;
+    this->unk46 = 8;
+    this->unk40 = 56;
+    this->unk5C = 0x21FF;
+    this->unk48 = gUnknown_08140E84;
+    sub_08003870(this, 0);
+}
+
 
 void sub_08059FBC(struct Entity *this)
 {
