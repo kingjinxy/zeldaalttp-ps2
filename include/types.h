@@ -577,9 +577,19 @@ struct Struct03000FC0
         u16 unk2;  // keys
         u32 unk4;
         u32 unk8;
-        u8 fillerC[8];
+        u32 unkC;  // ring buffer position
+        u32 unk10;
     } unk38[4];  // per player
 };  // size = 0x88 (sub_0803668C clears it)
+
+// One player's link packet at gUnknown_03000FF8 (the same memory as gUnknown_03000FC0.unk38[])
+struct LinkPacket
+{
+    u8 unk0;
+    u8 unk1;
+    u16 unk2[5];  // keys
+    u8 fillerC[8];
+};  // size = 0x14
 
 struct Struct03006C80
 {

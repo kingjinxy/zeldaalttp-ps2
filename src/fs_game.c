@@ -248,7 +248,31 @@ void sub_080370C0(void)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0803719C.inc\"");
+
+void sub_0803719C(u8 player)
+{
+    struct LinkPacket *p;
+    u32 i;
+
+    p = &gUnknown_03000FF8[player];
+    i = gUnknown_03000FC0.unk38[player].unkC & 15;
+    if (i > 15)
+        while (1)
+            ;
+    if (p->unk1 != 0 && player != gLCDRegisterBuffer)
+    {
+        gUnknown_0200B1D0[player][i].v = p->unk2[0];
+        i = (i - 1) & 15;
+        gUnknown_0200B1D0[player][i].v = p->unk2[1];
+        i = (i - 1) & 15;
+        gUnknown_0200B1D0[player][i].v = p->unk2[2];
+        i = (i - 1) & 15;
+        gUnknown_0200B1D0[player][i].v = p->unk2[3];
+        i = (i - 1) & 15;
+        gUnknown_0200B1D0[player][i].v = p->unk2[4];
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_08037300.inc\"");
 
 u32 sub_08037414(void)
@@ -1806,7 +1830,38 @@ void sub_08041048(struct Entity *this)
         DeleteThisEntity(this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08041088.inc\"");
+
+void sub_08041088(struct Entity *this)
+{
+    struct Entity *p;
+
+    p = this->unk54;
+    if (this->unk14 == 0)
+    {
+        this->unk14++;
+        this->unk1B = 9;
+        this->unk1C_0 = 1;
+        this->unk20 = 206;
+        this->unk1C_6 = 3;
+        this->unk1E_0 = this->unk1E_4 = 0;
+        this->unk1B = 9;
+        sub_08003870(this, 6);
+    }
+    GetNextFrame(this);
+    this->x.WORD = p->x.WORD;
+    this->y.WORD = p->y.WORD + 1;
+    this->z.WORD = p->z.WORD;
+    this->unk1D_6 = p->unk1D_6;
+    this->unk1F_6 = p->unk1F_6;
+    if (--this->unk17 == 255)
+    {
+        this->unk17 = 30;
+        sub_08003DFC(83);
+    }
+    if (p->unk14 == 3 || p->type != 8 || p->subtype != 4)
+        DeleteThisEntity(this);
+}
+
 
 void sub_08041200(struct Entity *this)
 {
@@ -3574,7 +3629,26 @@ void sub_08048F8C(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_08048FB4.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_08049140.inc\"");
+
+void sub_08049140(struct Entity *this)
+{
+    this->unk14 = 1;
+    this->unk1C_0 = 1;
+    this->unk2E = 4;
+    this->z.HALF_U.HI = 0xFFFE;
+    this->unk48 = gUnknown_0813F5FC;
+    if (this->form != 0)
+        this->unk1C_4 = 1;
+    if (this->direction == 255)
+        this->direction = sub_08003F54(this->x.HALF.HI, this->y.HALF.HI, (sub_0800099C() & 31) + 472, (sub_0800099C() & 31) + 488);
+    if (this->speed == 0)
+        this->speed = gUnknown_0813F5A4[sub_0800099C() & 3];
+    sub_080496DC(this);
+    if ((u8)(this->direction & 15))
+        this->unk1C_2 = (u8)((this->direction >> 4) ^ 1);
+    sub_08003870(this, 0);
+}
+
 
 void sub_080492B4(struct Entity *this)
 {
