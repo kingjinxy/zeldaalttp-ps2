@@ -264,7 +264,20 @@ bool32 sub_08037554(void)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_08037574.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_08037750.inc\"");
+
+void sub_08037750(void)
+{
+    u16 v;
+    u16 i;
+
+    for (i = 0; i <= 3; i++)
+    {
+        v = gUnknown_0200B1D0_k[i][(gUnknown_03000494 - 2) & 15].keys;
+        gUnknown_03005E10_b[i].v = gUnknown_03000494 > 7 ? v & ~gUnknown_03000940_b[i].v : 0;
+        gUnknown_03000940_b[i].v = v;
+    }
+}
+
 
 // Which player (1-4) newly pressed all of these buttons, or 0
 u8 sub_0803781C(u16 mask)

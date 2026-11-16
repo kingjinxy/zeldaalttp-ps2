@@ -57,6 +57,12 @@ struct BitU16A {
     u16 v : 16;
 } __attribute__((packed, aligned(2)));
 
+// A link input ring buffer entry (gUnknown_0200B1D0_k): keys in the low 11 bits
+struct LinkKeys {
+    u16 keys : 11;
+    u16 unkB : 5;
+} __attribute__((packed, aligned(2)));
+
 // The u16 / u8 at byte offset `off` of `base`, as a bitfield: -O0 code that writes a plain field with the
 // bitfield pattern (ldr, and #0, orr, str), where the shared struct can't change type yet
 #define BITU16_AT(base, off) (((struct { u8 pad[off]; u16 v : 16; } *)(base))->v)
