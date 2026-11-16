@@ -1836,7 +1836,27 @@ void sub_0804140C(struct Entity *this)
     sub_08003688(this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08041448.inc\"");
+
+void sub_08041448(struct Entity *this)
+{
+    struct Entity *e;
+
+    e = gUnknown_03006A30[this->form].unk28;
+    gUnknown_03006A30[this->form].unk2C = this;
+    this->unk14++;
+    this->unk1C_0 = 1;
+    this->unk1E_0 = 4;
+    this->unk1B = 20;
+    this->unk17 = 8;
+    this->unk2A = e->unk2A & 14;
+    this->unk1D_6 = e->unk1D_6;
+    this->unk1F_6 = e->unk1F_6;
+    this->unk20 = e->unk20;
+    this->unk1C_6 = e->unk1C_6;
+    sub_0800238C(this, e);
+    sub_0804159C(this);
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0804159C.inc\"");
 
 void sub_08041748(struct Entity *this)
@@ -5091,7 +5111,41 @@ void sub_08051ED4(struct Entity *this)
         this->y.HALF_U.HI = 144;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08051F94.inc\"");
+
+void sub_08051F94(struct Entity *this)
+{
+    struct Entity *e;
+
+    this->unk14++;
+    this->unk1C_0 = 2;
+    this->unk1D_6 = 1;
+    this->unk1F_6 = 0;
+    this->unk54 = gUnknown_03006A30[this->parameter].unk28;
+    this->x.HALF_U.HI = this->unk54->x.HALF_U.HI;
+    sub_08051ED4(this);
+    if (this->unk54->form == gLCDRegisterBuffer)
+    {
+        sub_08003870(this, 6);
+        this->unk1E_0 = gLCDRegisterBuffer + 8;
+    }
+    else
+    {
+        sub_08003870(this, this->unk54->form + 2);
+    }
+    this->unk60 = gUnknown_03006C80.unkC[this->parameter];
+    this->unk64 = 0;
+    e = sub_0804C8A8(13, 3, 0);
+    e->unk54 = this;
+    e = sub_0804C8A8(13, 4, 0);
+    e->unk54 = this;
+    e = sub_0804C8A8(13, 5, 0);
+    e->unk54 = this;
+    e = sub_0804C8A8(13, 6, 0);
+    e->unk54 = this;
+    e = sub_0804C8A8(13, 7, 0);
+    e->unk54 = this;
+}
+
 
 void sub_080520F8(struct Entity *this)
 {
@@ -5277,7 +5331,53 @@ void sub_080528B4(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0805293C.inc\"");
+
+void sub_0805293C(struct Entity *this)
+{
+    struct Entity *e;
+
+    switch (this->unk14)
+    {
+    case 0:
+        this->unk14++;
+        this->unk60 = sub_08013D20(this->form);
+        break;
+    case 1:
+        if ((gUnknown_0201F000[this->unk52] & this->unk60) == this->unk60)
+        {
+            switch (this->unk17)
+            {
+            case 0:
+            default:
+                sub_0804C9C8(this);
+                e = sub_0804CABC(this, this->parameter);
+                if (e != NULL && this->parameter != 5)
+                {
+                    e->parameter = e->parameter | 1;
+                    e->unk17 = 8;
+                }
+                break;
+            case 1:
+                e = sub_0804CABC(this, this->parameter);
+                if (e != NULL)
+                {
+                    e->parameter = e->parameter | 128;
+                    e->unk10 = 1;
+                    if (this->parameter != 5)
+                    {
+                        e->parameter = e->parameter | 1;
+                        e->unk17 = 8;
+                    }
+                }
+                break;
+            }
+            play_sound(16);
+            DeleteThisEntity(this);
+        }
+        break;
+    }
+}
+
 
 void sub_08052A88(void)
 {
