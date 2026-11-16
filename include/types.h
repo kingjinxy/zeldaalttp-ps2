@@ -591,7 +591,7 @@ struct Struct03006C80
     u8 unk6;
     u8 unk7;  // area? indexes the music table gUnknown_08427C14
     u32 unk8;
-    u8 fillerC[0x10];
+    s32 unkC[4];  // per player
     u32 unk1C;  // frames
     u8 filler20[4];
     u8 unk24;
