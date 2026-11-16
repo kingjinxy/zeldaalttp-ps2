@@ -5486,7 +5486,7 @@ extern const u8 gUnknown_08428F88[];
 extern void (*const gUnknown_08428F94[])(struct Entity *);
 extern void (*const gUnknown_08428FA4[])(struct Entity *);
 extern void (*const gUnknown_08428FAC[])(struct Entity *);
-//extern gUnknown_08428FB4;
+extern const u8 gUnknown_08428FB4[];
 extern void (*const gUnknown_08428FE0[])(struct Entity *);
 extern void (*const gUnknown_08428FFC[])(struct Entity *);
 extern const struct Struct08429004 gUnknown_08429004[];

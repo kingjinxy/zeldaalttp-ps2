@@ -4697,7 +4697,43 @@ void sub_0804D298(struct Entity *this)
     gUnknown_0813FB8C[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0804D2C0.inc\"");
+
+void sub_0804D2C0(struct Entity *this)
+{
+    struct Entity *e;
+
+    if ((u8)(this->parameter & 1))
+    {
+        this->unk14 = 2;
+        this->unk17 = 30;
+        this->unk18 = 8;
+        play_sound(0x80010000);
+        play_sound(46);
+        if (gUnknown_03006C80.unk1C <= 3599)
+            this->unk7C.bf = 3;
+        else if (gUnknown_03006C80.unk1C <= 10799)
+            this->unk7C.bf = 2;
+        else if (gUnknown_03006C80.unk1C <= 17999)
+            this->unk7C.bf = 1;
+    }
+    else
+    {
+        this->unk14 = 1;
+        this->unk1C_0 = 1;
+        if (this->unk17 != 255)
+            this->unk17 %= gUnknown_03006C80.unk0;
+        sub_08003870(this, 0);
+        sub_08003DFC(5);
+        if (this->form == 18)
+        {
+            this->unk1C_0 = 0;
+            e = sub_0804C8A8(32, 0, 0);
+            if (e != NULL)
+                sub_0803D3D0(this, e);
+        }
+    }
+}
+
 
 void sub_0804D448(struct Entity *this)
 {
@@ -7641,7 +7677,35 @@ void sub_08058734(struct Entity *this)
     this->y.HALF_U.HI = y;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_080587BC.inc\"");
+
+void sub_080587BC(struct Entity *this)
+{
+    this->unk14++;
+    this->unk1C_0 = 2;
+    this->unk1F_6 = 0;
+    this->unk1D_6 = 0;
+    this->unk1B = 141;
+    this->frameIdx = gUnknown_08428FB4[this->parameter];
+    this->unk20 = 48;
+    this->unk1C_6 = 2;
+    switch (gUnknown_02016D60_fs.unk2)
+    {
+    case 0:
+        this->unk1E_0 = 11;
+        break;
+    case 2:
+        this->unk1E_0 = 12;
+        break;
+    case 1:
+        load_palette_from_gfx_group(36);
+        this->unk1E_0 = this->parameter + 11;
+        break;
+    }
+    this->unk17 = this->parameter * 21 + 60;
+    BITU8_AT(this, 0x60) = 106 - this->parameter * 42;
+    sub_08058734(this);
+}
+
 
 void sub_0805893C(struct Entity *this)
 {
