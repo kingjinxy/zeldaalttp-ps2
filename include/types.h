@@ -591,6 +591,16 @@ struct LinkPacket
     u8 fillerC[8];
 };  // size = 0x14
 
+// gUnknown_08428840: start position and speed per entity form (sub_0804D8A4)
+struct Struct08428840
+{
+    u16 x;
+    u16 y;
+    s16 speed;
+    u8 unk6;
+    u8 unk7;
+};
+
 struct Struct03006C80
 {
     u8 unk0;  // number of players
