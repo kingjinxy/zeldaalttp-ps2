@@ -1860,7 +1860,41 @@ void sub_0803F284(void)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0803F3C4.inc\"");
+
+void sub_0803F3C4(struct Entity *this)
+{
+    u8 a;
+    struct Entity *e;
+    u8 b;
+    const s8 *t;
+
+    a = this->unk29 & 127;
+    e = ((struct { u8 pad[0x6C]; struct Entity *v; } *)this)->v->unk58;
+    b = e->unk1A >> 4;
+    t = gUnknown_08427C2C[b];
+    if (e->unk14 == 2)
+    {
+        e->z.WORD = this->z.WORD;
+        e->unk1F_6 = this->unk1F_6;
+        e->unk50 = this->unk50;
+        if (this->unk1C_2)
+            e->x.HALF_U.HI = this->x.HALF_U.HI - t[a];
+        else
+            e->x.HALF_U.HI = this->x.HALF_U.HI + t[a];
+        e->z.HALF_U.HI = e->z.HALF_U.HI + t[a + 1];
+        e->y.WORD = this->y.WORD + 1;
+        if (gUnknown_03006A30[this->form].unk5 == 4)
+        {
+            e->unk1D_6 = this->unk1D_6;
+            sub_0803D010(e);
+        }
+        else if ((u8)(this->unk2A >> 1))
+        {
+            e->y.WORD = this->y.WORD + 1;
+        }
+    }
+}
+
 
 void sub_0803F550(struct Entity *a, struct Entity *b)
 {
@@ -3844,7 +3878,37 @@ void sub_08048F8C(struct Entity *this)
     gUnknown_0813F578[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08048FB4.inc\"");
+
+void sub_08048FB4(struct Entity *this)
+{
+    struct Entity *e;
+    u8 k;
+
+    if ((u8)(this->unk41 + 124) <= 158)
+    {
+        this->direction = this->unk3E;
+        if ((u8)(this->direction & 15))
+            this->unk1C_2 = (u8)((this->direction >> 4) ^ 1);
+        this->speed = 0x480;
+        if (this->form == 0)
+            k = gUnknown_0813F584[sub_0800099C() & 15];
+        else
+            k = gUnknown_0813F594[this->form - 1];
+        e = sub_0804C8A8(0, k, 1);
+        if (e != NULL)
+        {
+            e->direction = (this->direction ^ 16) | 0x80;
+            sub_0803D3D0(this, e);
+        }
+    }
+    else if (this->unk41 == 128)
+    {
+        this->direction += (sub_0800099C() & 1) ? 2 : -2;
+        this->direction = this->direction & 31;
+    }
+    sub_080098A0(this, gUnknown_0813F55C);
+}
+
 
 void sub_08049140(struct Entity *this)
 {

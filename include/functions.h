@@ -1969,7 +1969,7 @@ void sub_0804894C(struct Entity *);
 //sub_08048BF4();
 //sub_08048F70();
 //sub_08048F8C();
-//sub_08048FB4();
+void sub_08048FB4(struct Entity *);
 void sub_08049140(struct Entity *);
 //sub_080492B4();
 void sub_0804930C(struct Entity *);
