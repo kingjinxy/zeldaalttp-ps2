@@ -966,8 +966,9 @@ extern u32 gUnknown_03000834;
 //extern gUnknown_03000838;
 //extern gUnknown_03000840;
 extern u16 gUnknown_03000940[];  // each player's held keys (from the link)
+extern struct BitU16A gUnknown_03000940_b[];  // ldscript alias
 extern struct UnknownStruct2 gUnknown_03000948;
-//extern gUnknown_03000950;
+extern u16 gUnknown_03000950;
 extern u8 gUnknown_03000954[];
 //extern gUnknown_0300095C;
 extern struct UnknownStruct5 gUnknown_03000B70;
@@ -1148,6 +1149,7 @@ extern u16 gUnknown_03005BE0;
 extern void *gUnknown_03005E04;
 extern void *gUnknown_03005E08;
 extern u16 gUnknown_03005E10[];  // each player's newly pressed keys
+extern struct BitU16A gUnknown_03005E10_b[];  // ldscript alias: the same array as -O0 code writes it
 extern u8 gOAMBuffer[];
 extern u16 gUnknown_03005E26[];  // OAM affine parameters (pa) in the OAM buffer
 extern u8 gUnknown_03005E60[];
@@ -1156,7 +1158,7 @@ extern struct Entity *gUnknown_03006620;
 extern u8 gUnknown_03006630[];
 //extern gUnknown_030066A6;
 extern struct Struct03006A30 *gUnknown_03006730;
-//extern gUnknown_03006734;
+extern u16 gUnknown_03006734;
 extern u8 gUnknown_03006740[0xE0];
 extern struct Struct03006A30 gUnknown_03006A30[];
 //extern gUnknown_03006A44;

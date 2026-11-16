@@ -19,7 +19,8 @@ typedef struct Entity {
     /* 0x16 */ u8 unk16 : 8;
     /* 0x17 */ u8 unk17 : 8;
     /* 0x18 */ u8 unk18 : 8;
-    /* 0x19 */ u8 filler19[2];
+    /* 0x19 */ u8 unk19 : 8;
+    /* 0x1A */ u8 filler1A;
     /* 0x1B */ u8 unk1B : 8;
     // 0x1C-0x1F: one u32 of bitfields (u32 fields are read with lsl/lsr pairs, e.g. lsl #26; lsr #27)
     /* 0x1C */ u32 unk1C_0 : 2;

@@ -166,13 +166,13 @@ void sub_08036E24(void)
     if (sub_08037B5C(48))
     {
         if ((u8)(gUnknown_03000FC0.unk3 & 1))
-            sub_08036DEC(0, gUnknown_03000FC0.unk3C, gUnknown_03000FC0.unk40);
+            sub_08036DEC(0, gUnknown_03000FC0.unk38[0].unk4, gUnknown_03000FC0.unk38[0].unk8);
         if ((u8)(gUnknown_03000FC0.unk3 & 2))
-            sub_08036DEC(1, gUnknown_03000FC0.unk50, gUnknown_03000FC0.unk54);
+            sub_08036DEC(1, gUnknown_03000FC0.unk38[1].unk4, gUnknown_03000FC0.unk38[1].unk8);
         if ((u8)(gUnknown_03000FC0.unk3 & 4))
-            sub_08036DEC(2, gUnknown_03000FC0.unk64, gUnknown_03000FC0.unk68);
+            sub_08036DEC(2, gUnknown_03000FC0.unk38[2].unk4, gUnknown_03000FC0.unk38[2].unk8);
         if ((u8)(gUnknown_03000FC0.unk3 & 8))
-            sub_08036DEC(3, gUnknown_03000FC0.unk78, gUnknown_03000FC0.unk7C);
+            sub_08036DEC(3, gUnknown_03000FC0.unk38[3].unk4, gUnknown_03000FC0.unk38[3].unk8);
         sub_08036770(1);
     }
     sub_08037D64(48);
@@ -192,7 +192,7 @@ void sub_08036F28(void)
         if (sub_08037B5C(64))
         {
             if ((u8)(gUnknown_03000FC0.unk3 & 1))
-                gRandom = gUnknown_03000FC0.unk3C;
+                gRandom = gUnknown_03000FC0.unk38[0].unk4;
             sub_08036770(1);
         }
         sub_08037D64(64);
@@ -857,7 +857,20 @@ u8 sub_0803B644(struct Entity *this, struct Entity *other, u8 c)
     return 1;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0803B73C.inc\"");
+
+u8 sub_0803B73C(struct Entity *this, struct Entity *other, u8 c)
+{
+    if (this->unk70.b == 0 && other->unk70.b == 0)
+    {
+        this->unk42 = other->unk46;
+        this->unk70.bf = (other->unk46 & 0x80) ? other->unk46 : -other->unk46;
+        other->unk42 = this->unk46;
+        other->unk70.bf = (this->unk46 & 0x80) ? this->unk46 : -this->unk46;
+        return 1;
+    }
+    return 0;
+}
+
 
 u8 sub_0803B834(struct Entity *this, struct Entity *other, u8 c)
 {
@@ -1177,7 +1190,23 @@ void sub_0803DD0C(struct Entity *this)
     ObjAffineSet((struct ObjAffineSrcData *)&gUnknown_03000488, &gUnknown_03006226[this->unk1F_1 * 16], 1, 8);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0803DD94.inc\"");
+
+void sub_0803DD94(void)
+{
+    u16 v;
+    u16 i;
+
+    for (i = 0; i <= 3; i++)
+    {
+        v = gUnknown_03000FC0.unk38[i].unk2;
+        gUnknown_03005E10_b[i].v = v & (v ^ gUnknown_03000940_b[i].v);
+        gUnknown_03000940_b[i].v = v;
+    }
+    gUnknown_03000950 = gUnknown_03000940[gLCDRegisterBuffer];
+    gUnknown_03006734 = gUnknown_03005E10[gLCDRegisterBuffer];
+    gUnknown_03000FC0.unk12 = gHeldKeys;
+}
+
 
 void sub_0803DE94(u8 i)
 {
@@ -1551,7 +1580,22 @@ void sub_08043F20(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08044018.inc\"");
+
+void sub_08044018(struct Entity *this, struct Entity *other)
+{
+    other->unk19 = this->unk19 & 254;
+    other->x.WORD = this->x.WORD;
+    other->y.WORD = this->y.WORD;
+    other->z.WORD = this->z.WORD;
+    other->unk50 = this->unk50;
+    other->unk52 = this->unk52;
+    other->unk60 = this->unk60;
+    BITU8_AT(other, 0x68) = BITU8_AT(this, 0x68);
+    BITU8_AT(other, 0x69) = BITU8_AT(this, 0x69);
+    BITU8_AT(other, 0x6B) = BITU8_AT(this, 0x6B);
+    BITU16_AT(other, 0x6C) = BITU16_AT(this, 0x6C);
+}
+
 
 struct Entity *sub_0804411C(struct Entity *this, u8 subtype, u8 form)
 {

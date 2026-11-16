@@ -554,24 +554,20 @@ struct Struct03000FC0
     u8 unkE : 8;
     u8 fillerF;
     u8 unk10 : 8;  // gUnknown_03000FD0 starts here
-    u8 filler11[3];
+    u8 filler11;
+    u16 unk12 : 16;
     u32 unk14;
     u32 unk18;
     u8 filler1C[8];
     u8 unk24 : 8;
-    u8 filler25[0x17];
-    u32 unk3C;  // per-player pairs at 0x3C, 0x50, 0x64, 0x78 (sub_08036E24)
-    u32 unk40;
-    u8 filler44[0xC];
-    u32 unk50;
-    u32 unk54;
-    u8 filler58[0xC];
-    u32 unk64;
-    u32 unk68;
-    u8 filler6C[0xC];
-    u32 unk78;
-    u32 unk7C;
-    u8 filler80[8];
+    u8 filler25[0x13];
+    struct {
+        u8 filler0[2];
+        u16 unk2;  // keys
+        u32 unk4;
+        u32 unk8;
+        u8 fillerC[8];
+    } unk38[4];  // per player
 };  // size = 0x88 (sub_0803668C clears it)
 
 struct Struct03006C80
