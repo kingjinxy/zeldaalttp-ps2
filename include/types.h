@@ -36,7 +36,8 @@ struct Struct02016D60_fs
     u8 filler4[4];
     u8 unk8 : 8;
     u8 unk9;
-    u8 fillerA[0x16];
+    u8 unkA;
+    u8 fillerB[0x15];
     struct Entity *unk20;
     u8 filler24[2];
     u16 unk26;  // its high byte is also read alone (sub_080520F8)
