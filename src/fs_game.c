@@ -239,7 +239,20 @@ u8 sub_0803781C(u16 mask)
     return 0;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_080378F4.inc\"");
+
+u8 sub_080378F4(u16 mask)
+{
+    if (gUnknown_03005E10[0] != 0xFFFF && (u16)(gUnknown_03005E10[0] & mask))
+        return 1;
+    if (gUnknown_03005E10[1] != 0xFFFF && (u16)(gUnknown_03005E10[1] & mask))
+        return 2;
+    if (gUnknown_03005E10[2] != 0xFFFF && (u16)(gUnknown_03005E10[2] & mask))
+        return 3;
+    if (gUnknown_03005E10[3] != 0xFFFF && (u16)(gUnknown_03005E10[3] & mask))
+        return 4;
+    return 0;
+}
+
 
 // Which player (1-4) holds all of these buttons, or 0
 u8 sub_080379BC(u16 mask)
@@ -255,7 +268,20 @@ u8 sub_080379BC(u16 mask)
     return 0;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08037A94.inc\"");
+
+u8 sub_08037A94(u16 mask)
+{
+    if (gUnknown_03000940[0] != 0xFFFF && (u16)(gUnknown_03000940[0] & mask))
+        return 1;
+    if (gUnknown_03000940[1] != 0xFFFF && (u16)(gUnknown_03000940[1] & mask))
+        return 2;
+    if (gUnknown_03000940[2] != 0xFFFF && (u16)(gUnknown_03000940[2] & mask))
+        return 3;
+    if (gUnknown_03000940[3] != 0xFFFF && (u16)(gUnknown_03000940[3] & mask))
+        return 4;
+    return 0;
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_08037B5C.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08037C58.inc\"");
 
@@ -616,7 +642,16 @@ bool32 sub_0803AB30(struct Entity *a, struct Entity *b, u8 c)
     return TRUE;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0803AC00.inc\"");
+
+u8 sub_0803AC00(struct Entity *this, struct Entity *other, u8 c)
+{
+    other->unk42 = this->unk46;
+    other->unk3D = (this->unk46 & 0x80) ? this->unk46 + (s8)this->unk46 / 4 : -this->unk46 - (s8)this->unk46 / 4;
+    if (this->unk3D == 0)
+        this->unk3D = 255;
+    return 1;
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0803ACC8.inc\"");
 
 u32 sub_0803AE00(struct Entity *a, struct Entity *b, u8 c)
@@ -6146,7 +6181,27 @@ void sub_0805FF24(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0805FFEC.inc\"");
+
+void sub_0805FFEC(struct Entity *this)
+{
+    GetNextFrame(this);
+    if ((u8)(this->unk29 & 1))
+    {
+        BITU8_AT(this, 0x29) = 0;
+        sub_08003DFC(123);
+    }
+    if (this->unk7C.h != 0)
+    {
+        this->unk7C.h--;
+    }
+    else if ((u8)(this->unk29 & 0x80))
+    {
+        this->unk14 = 1;
+        this->unk1C_0 = 0;
+        this->unk3C = this->unk3C & 0x7F;
+    }
+}
+
 
 void sub_080600BC(struct Entity *this)
 {
@@ -6750,7 +6805,30 @@ void sub_08065250(struct Entity *this)
     sub_0803DF84();
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0806527C.inc\"");
+
+void sub_0806527C(struct Entity *this)
+{
+    struct Entity *e = sub_0804C8A8(95, 1, 0);
+
+    if (e != NULL)
+    {
+        sub_0803D3D0(this, e);
+        this->unk58 = e;
+        this->unk14 = 1;
+        this->unk17 = 180;
+        this->unk1C_0 = 1;
+        this->z.HALF_U.HI = 0xFF90;
+        this->unk5E_0 = 3;
+        this->unk7C.h = 0x901;
+        sub_08003870(this, 0);
+        sub_08065E44(this);
+        gUnknown_03000450.unk0 = this;
+        sub_0802D970();
+        sub_0802C8E4();
+        sub_0801624C(this->x.HALF_U.HI, this->y.HALF_U.HI);
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0806535C.inc\"");
 
 void sub_0806547C(struct Entity *this)
