@@ -34,7 +34,8 @@ struct Struct02016D60_fs
     u8 filler0[2];
     u8 unk2;
     u8 unk3 : 8;
-    u8 filler4[4];
+    u16 unk4 : 16;
+    u8 filler6[2];
     u8 unk8 : 8;
     u8 unk9;
     u8 unkA;
