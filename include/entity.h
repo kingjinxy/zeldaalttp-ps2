@@ -97,6 +97,7 @@ typedef struct Entity {
     /* 0x77 */ u8 unk77 : 8;
     /* 0x78 */ union {
         u32 w;
+        struct Entity *e;
         u8 b : 8;
         u16 h : 16;  // map tile index for some kinds: (x - scroll x) >> 4 | ((y - scroll y) >> 4) << 6
         u16 *p;
@@ -112,6 +113,7 @@ typedef struct Entity {
     } unk78;  // halfword + byte for some entity kinds, a pointer for others
     /* 0x7C */ union {
         u32 w;
+        struct Entity *e;
         u16 h : 16;
         u16 *p;
         u8 *pb;

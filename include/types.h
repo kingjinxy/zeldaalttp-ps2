@@ -582,6 +582,8 @@ struct Struct03006C80
     u8 unk6E : 8;
     u8 unk6F;
     struct Entity *unk70[4];  // indexed by Entity.unk18
+    u8 filler80[4];
+    u8 unk84[8];  // per player: x, y in 16-pixel tiles
 };
 
 // Also the layout of gUnknown_0201F020 (Four Swords view: gUnknown_0201F020_fs)
