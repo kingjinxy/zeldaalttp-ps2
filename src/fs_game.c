@@ -959,7 +959,29 @@ void sub_08039D1C(void)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_08039D64.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_0803A030.inc\"");
+
+void sub_0803A030(void)
+{
+    u32 saved;
+    u32 buf[8];
+    u32 zero;
+
+    saved = *(u32 *)&gUnknown_03006C80;
+    CpuSet(gUnknown_03006CA8, buf, 0x04000008);
+    zero = 0;
+    CpuSet(&zero, &gUnknown_03006C80, 0x05000024);
+    *(u32 *)&gUnknown_03006C80 = saved;
+    CpuSet(buf, gUnknown_03006CA8, 0x04000008);
+    BITU8_AT(&gUnknown_03006C80, 6) = sub_08039650();
+    BITU8_AT(&gUnknown_03006C80, 7) = gUnknown_03006C80.unk2 == 0 ? gUnknown_03006C80.unk1 : 4;
+    BITU8_AT(&gUnknown_03006C80, 0x58) = BITU8_AT(&gUnknown_03006C80, 0x59) = BITU8_AT(&gUnknown_03006C80, 0x5A) = BITU8_AT(&gUnknown_03006C80, 0x5B) = 9;
+    BITU8_AT(&gUnknown_03006C80, 0x60) = BITU8_AT(&gUnknown_03006C80, 0x61) = BITU8_AT(&gUnknown_03006C80, 0x62) = BITU8_AT(&gUnknown_03006C80, 0x63) = 40;
+    BITU8_AT(&gUnknown_03006C80, 0x64) = BITU8_AT(&gUnknown_03006C80, 0x65) = BITU8_AT(&gUnknown_03006C80, 0x66) = BITU8_AT(&gUnknown_03006C80, 0x67) = 6;
+    gUnknown_03006C80.unk26 |= 0xFFFF;
+    if (gUnknown_03006C80.unk3 != 0)
+        gUnknown_03006C80.unk1 = sub_0800099C() & 3;
+}
+
 
 asm(".include \"asm/non_matching/fs_game/sub_0803A20C.inc\"");
 
