@@ -2213,7 +2213,7 @@ void sub_08054AB4(struct Entity *);
 //sub_08054CDC();
 void sub_08054D30(struct Entity *);
 //sub_08054EE0();
-//sub_08054F08();
+void sub_08054F08(struct Entity *);
 void sub_080550C0(struct Entity *);
 //sub_08055170();
 //sub_08055198();
