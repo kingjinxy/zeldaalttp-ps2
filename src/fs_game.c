@@ -309,7 +309,7 @@ void sub_08037750(void)
 
     for (i = 0; i <= 3; i++)
     {
-        v = gUnknown_0200B1D0_k[i][(gUnknown_03000494 - 2) & 15].keys;
+        v = gUnknown_0200B1D0[i][(gUnknown_03000494 - 2) & 15].v & 0x7FF;
         gUnknown_03005E10_b[i].v = gUnknown_03000494 > 7 ? v & ~gUnknown_03000940_b[i].v : 0;
         gUnknown_03000940_b[i].v = v;
     }
