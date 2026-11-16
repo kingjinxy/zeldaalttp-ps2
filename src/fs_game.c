@@ -866,7 +866,15 @@ u32 sub_0803AE00(struct Entity *a, struct Entity *b, u8 c)
     return 2;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0803AEB4.inc\"");
+
+u8 sub_0803AEB4(struct Entity *this, struct Entity *other, u8 c)
+{
+    this->unk3D = (other->unk46 & 0x80) ? other->unk46 + (s8)other->unk46 / 4 : -other->unk46 - (s8)other->unk46 / 4;
+    other->unk3D = (this->unk46 & 0x80) ? this->unk46 + (s8)this->unk46 / 4 : -this->unk46 - (s8)this->unk46 / 4;
+    sub_0803A788(this, other);
+    return 1;
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0803AFB8.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803B0D8.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803B1F8.inc\"");
@@ -1174,7 +1182,24 @@ void sub_0803D4A4(struct Entity *a, struct Entity *b, s32 dx, s32 dy)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_0803D520.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_0803D65C.inc\"");
+
+void sub_0803D65C(u8 a, u16 n)
+{
+    s16 c;
+
+    c = n / 20;
+    n = n % 20;
+    while (--c != -1)
+        sub_0803D520(a, 20, sub_0800099C() & 31);
+    c = n / 5;
+    while (--c != -1)
+        sub_0803D520(a, 5, sub_0800099C() & 31);
+    c = n % 5;
+    while (--c != -1)
+        sub_0803D520(a, 1, sub_0800099C() & 31);
+    return;
+}
+
 
 asm(".include \"asm/non_matching/fs_game/sub_0803D770.inc\"");
 
@@ -1720,7 +1745,9 @@ void sub_08044198(struct Entity *this, struct Entity *a, struct Entity *b)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_08044240.inc\"");
+
 asm(".include \"asm/non_matching/fs_game/sub_08044594.inc\"");
+
 asm(".include \"asm/non_matching/fs_game/sub_0804469C.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_080447C8.inc\"");
 
