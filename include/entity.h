@@ -81,7 +81,8 @@ typedef struct Entity {
         u32 w;
         u8 b;
     } unk70;
-    /* 0x74 */ u8 filler74[2];
+    /* 0x74 */ u8 filler74;
+    /* 0x75 */ u8 unk75 : 8;
     /* 0x76 */ u8 unk76 : 8;
     /* 0x77 */ u8 unk77 : 8;
     /* 0x78 */ union {
