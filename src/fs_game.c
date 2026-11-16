@@ -940,7 +940,16 @@ u8 sub_0803AC00(struct Entity *this, struct Entity *other, u8 c)
     return 1;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0803ACC8.inc\"");
+
+u8 sub_0803ACC8(struct Entity *this, struct Entity *other, u8 c)
+{
+    this->unk42 = other->unk46;
+    this->unk3D = (other->unk46 & 0x80) ? other->unk46 + (s8)other->unk46 / 4 : -other->unk46 - (s8)other->unk46 / 4;
+    other->unk42 = this->unk46;
+    other->unk3D = (this->unk46 & 0x80) ? this->unk46 + (s8)this->unk46 / 4 : -this->unk46 - (s8)this->unk46 / 4;
+    return 1;
+}
+
 
 u32 sub_0803AE00(struct Entity *a, struct Entity *b, u8 c)
 {
@@ -3879,7 +3888,30 @@ void sub_0804BB08(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0804BB58.inc\"");
+
+void sub_0804BB58(struct Entity *this)
+{
+    if (this->form == 0)
+    {
+        this->unk14 = 1;
+    }
+    else
+    {
+        this->unk14 = 2;
+        this->unk1E_4 = this->unk1E_0 = this->unk17 + 7;
+        BITU16_AT(this, 0x70) = 20;
+        this->unk3C = this->unk3C & 127;
+        this->speed = 256;
+        this->unk74.b.unk75 = gUnknown_03006C80.unk6 + 1;
+    }
+    this->unk17 = sub_0800099C();
+    this->unk70.s2.unk72 = 5;
+    this->unk2E = 8;
+    this->unk1C_0 = 1;
+    this->unk48 = gUnknown_0813F990;
+    sub_08003870(this, 0);
+}
+
 
 void sub_0804BCA4(struct Entity *this)
 {
