@@ -30,6 +30,8 @@ struct Struct02016D60_fs
     u8 unk8 : 8;
     u8 filler9[0x17];
     struct Entity *unk20;
+    u8 filler24[2];
+    u16 unk26;
 };
 
 // A u16 that -O0 code writes as a 16-bit bitfield; only for pointers (an array of these would be 4-byte
@@ -537,10 +539,11 @@ struct Struct03000FC0
 struct Struct03006C80
 {
     u8 unk0;  // number of players
-    u8 unk1;
+    u8 unk1 : 8;
     u8 unk2;
-    u8 filler3[2];
-    u8 unk5;
+    u8 filler3;
+    u8 unk4;
+    u8 unk5 : 8;
     u8 filler6;
     u8 unk7;  // area? indexes the music table gUnknown_08427C14
     u8 filler8[0x14];
