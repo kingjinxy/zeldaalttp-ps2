@@ -70,6 +70,7 @@ struct BitU8A {
 #define S16_AT(base, off) (((struct { u8 pad[off]; s16 v; } *)(base))->v)
 #define U16_AT(base, off) (((struct { u8 pad[off]; u16 v; } *)(base))->v)
 #define U8_AT(base, off) (((struct { u8 pad[off]; u8 v; } *)(base))->v)
+#define S8_AT(base, off) (((struct { u8 pad[off]; s8 v; } *)(base))->v)
 
 struct XY16 {
     u16 x;

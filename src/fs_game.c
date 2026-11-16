@@ -3294,7 +3294,31 @@ void sub_08047CE8(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_08047D34.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_08047EA4.inc\"");
+
+void sub_08047EA4(struct Entity *this)
+{
+    if ((u8)(this->unk54->unk70.b & 4))
+        return;
+    this->direction = this->direction + this->unk70.s.unk71;
+    if (S8_AT(this, 0x71) > 0)
+    {
+        if (this->direction == 88)
+        {
+            this->direction = 96;
+            this->unk14 = 9;
+            this->unk54->unk70.bf |= gUnknown_08137B10[this->parameter];
+            sub_08003DFC(158);
+        }
+    }
+    else if (this->direction == 168)
+    {
+        this->direction = 160;
+        this->unk14 = 9;
+        this->unk54->unk70.bf |= gUnknown_08137B10[this->parameter];
+        sub_08003DFC(158);
+    }
+}
+
 
 void sub_08047FFC(struct Entity *this)
 {
@@ -4708,7 +4732,32 @@ void sub_0804F22C(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_0804F254.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_0804F458.inc\"");
+
+void sub_0804F458(struct Entity *this)
+{
+    if (--this->unk17 == 0)
+    {
+        this->unk17 = 8;
+        if ((gUnknown_0201F000[this->unk52] & this->unk60) == this->unk60)
+        {
+            if (this->unk16 != this->unk18)
+            {
+                sub_0804F6EC(this, (const struct XY16 *)&this->unk64);
+                sub_08014658(BITU16_AT(this, 0x6C), ((this->x.HALF.HI - gUnknown_03000450.unk18) >> 4) | (((this->y.HALF.HI - gUnknown_03000450.unk1A) >> 4) << 6), this->unk50);
+                this->unk18++;
+                play_sound(7);
+            }
+        }
+        else if (this->unk18 != 0)
+        {
+            sub_0801478C(((this->x.HALF.HI - gUnknown_03000450.unk18) >> 4) | (((this->y.HALF.HI - gUnknown_03000450.unk1A) >> 4) << 6), this->unk50);
+            sub_0804F6EC(this, (const struct XY16 *)&this->unk68);
+            this->unk18--;
+            play_sound(7);
+        }
+    }
+}
+
 
 void sub_0804F5B8(struct Entity *this)
 {
@@ -9001,7 +9050,38 @@ void sub_08060248(struct Entity *this)
     gUnknown_0842935C[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08060270.inc\"");
+
+void sub_08060270(struct Entity *this)
+{
+    this->unk50 = 0x8000;
+    this->unk1C_0 = 1;
+    this->unk1F_6 = 1;
+    this->unk14++;
+    switch (sub_08009308(this))
+    {
+    case 205:
+        this->x.HALF_U.HI = this->x.HALF_U.HI + 16;
+        this->y.HALF_U.HI = this->y.HALF_U.HI + 16;
+        break;
+    case 206:
+        this->y.HALF_U.HI = this->y.HALF_U.HI + 16;
+        break;
+    case 207:
+        this->x.HALF_U.HI = this->x.HALF_U.HI + 16;
+        break;
+    case 208:
+        break;
+    default:
+        DeleteThisEntity(this);
+        return;
+    }
+    this->x.HALF.HI = this->x.HALF.HI & ~15;
+    this->y.HALF.HI = this->y.HALF.HI & ~15;
+    sub_08003870(this, 0);
+    sub_0806041C(this, 209);
+    sub_080603C4(this);
+}
+
 
 void sub_080603C4(struct Entity *this)
 {
