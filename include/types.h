@@ -568,7 +568,8 @@ struct Struct03000FC0
     u8 unk24 : 8;
     u8 filler25[0x13];
     struct {
-        u8 filler0[2];
+        u8 unk0;
+        u8 filler1;
         u16 unk2;  // keys
         u32 unk4;
         u32 unk8;
