@@ -4701,7 +4701,21 @@ void sub_080536F8(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_080537C4.inc\"");
+
+void sub_080537C4(struct Entity *this)
+{
+    if (this->unk18 != 0 && (gUnknown_0201F000[this->unk52] & this->unk60) == this->unk60)
+    {
+        DeleteThisEntity(this);
+    }
+    else if (--this->unk78.h == 0)
+    {
+        sub_08014658(0x10D, ((this->x.HALF.HI - gUnknown_03000450.unk18) >> 4) | (((this->y.HALF.HI - gUnknown_03000450.unk1A) >> 4) << 6), this->unk50);
+        gUnknown_0201F000[this->unk52] &= ~gUnknown_08137B10[this->form];
+        this->unk14--;
+    }
+}
+
 
 void sub_080538D8(struct Entity *this)
 {
@@ -7359,7 +7373,28 @@ void sub_0805E40C(struct Entity *this)
         DeleteThisEntity(this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0805E4F8.inc\"");
+
+void sub_0805E4F8(struct Entity *this)
+{
+    if (this->unk14 == 0)
+    {
+        this->unk14++;
+        this->unk17 = 12;
+        this->unk18 = 0;
+    }
+    if (--this->unk17 == 255)
+    {
+        load_palette((u16 *)(gUnknown_08429300[this->unk18] + 0x1FC0 + gUnknown_03000030), 15, 1);
+        this->unk17 = 12;
+        this->unk18 = this->unk18 != 5 ? this->unk18 + 1 : 0;
+    }
+    if (gUnknown_02016D60_fs.unk8 != this->parameter)
+    {
+        load_palette((u16 *)(gUnknown_03000030 + 0x1FA0), 15, 1);
+        DeleteThisEntity(this);
+    }
+}
+
 
 void sub_0805E608(struct Entity *this)
 {
@@ -7509,7 +7544,29 @@ void sub_0805EDA0(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_0805EE88.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_0805F938.inc\"");
+
+void sub_0805F938(struct Entity *this)
+{
+    u32 unused;
+    u16 a;
+    u16 b;
+    u16 i;
+    u16 step;
+
+    this->unk7C.s.unk7E = 0xFFFF;
+    step = gUnknown_08137B90[(u8)(this->form & 3)];
+    a = this->unk7C.h + step;
+    b = gUnknown_081414FC[((this->form + 2) & 3) + (u8)(this->form & 12)];
+    for (i = 0; i <= 7; i++, a = a + step)
+    {
+        if (sub_0800932C(a, this->unk50) == b)
+        {
+            this->unk7C.s.unk7E = a;
+            break;
+        }
+    }
+}
+
 
 void sub_0805FA48(struct Entity *this)
 {
