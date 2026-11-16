@@ -995,7 +995,17 @@ u8 sub_0803B0D8(struct Entity *this, struct Entity *other, u8 c)
     return 1;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0803B1F8.inc\"");
+
+u8 sub_0803B1F8(struct Entity *this, struct Entity *other, u8 c)
+{
+    this->unk42 = other->unk46;
+    this->unk3D = (other->unk46 & 0x80) ? other->unk46 + (s8)other->unk46 / 4 : -other->unk46 - (s8)other->unk46 / 4;
+    other->unk42 = this->unk46;
+    other->unk3D = (this->unk46 & 0x80) ? this->unk46 + (s8)this->unk46 / 4 : -this->unk46 - (s8)this->unk46 / 4;
+    sub_0803A788(this, other);
+    return 1;
+}
+
 
 u32 sub_0803B338(struct Entity *a, struct Entity *b, u8 c)
 {
@@ -5913,7 +5923,27 @@ void sub_08054A8C(struct Entity *this)
     gUnknown_08428CEC[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08054AB4.inc\"");
+
+void sub_08054AB4(struct Entity *this)
+{
+    u32 unused;
+    u32 v;
+
+    this->unk60 = sub_08013D20(this->form);
+    this->unk14++;
+    v = sub_08012F84(this->unk52, this->unk17);
+    BITU16_AT(this, 0x68) = ((v & 255) << 4) + gUnknown_0201EFF8[this->unk52][0];
+    v >>= 8;
+    BITU16_AT(this, 0x6A) = ((v & 255) << 4) + gUnknown_0201EFF8[this->unk52][1];
+    v >>= 8;
+    BITU16_AT(this, 0x6C) = v & 255;
+    v >>= 8;
+    BITU16_AT(this, 0x6E) = v & 255;
+    if (this->y.HALF.HI == 0)
+        this->y.HALF_U.HI = 2;
+    BITU16_AT(this, 0x70) = this->x.HALF.HI * 60;
+}
+
 
 void sub_08054C04(struct Entity *this)
 {
@@ -7305,7 +7335,32 @@ void sub_08058F60(struct Entity *this)
     GetNextFrame(this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08059060.inc\"");
+
+void sub_08059060(struct Entity *this)
+{
+    if (this->unk14 == 0)
+    {
+        this->unk14++;
+        this->unk1E_0 = 0;
+        this->unk1D_6 = 1;
+        this->unk1F_6 = 0;
+        this->x.HALF_U.HI = ((S16_AT(&gUnknown_03006C80, 0x80) >> 4) & 63) + 88;
+        this->y.HALF_U.HI = ((S16_AT(&gUnknown_03006C80, 0x82) >> 4) & 63) + 48;
+        sub_08003870(this, this->form);
+    }
+    if (S16_AT(&gUnknown_03006C80, 0x80) != 0)
+    {
+        this->unk1C_0 = 2;
+        this->x.HALF_U.HI = ((S16_AT(&gUnknown_03006C80, 0x80) >> 4) & 63) + 88;
+        this->y.HALF_U.HI = ((S16_AT(&gUnknown_03006C80, 0x82) >> 4) & 63) + 48;
+    }
+    else
+    {
+        this->unk1C_0 = 0;
+    }
+    GetNextFrame(this);
+}
+
 
 void sub_080591AC(struct Entity *this)
 {
