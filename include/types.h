@@ -35,7 +35,8 @@ struct Struct02016D60_fs
     u8 unk3 : 8;
     u8 filler4[4];
     u8 unk8 : 8;
-    u8 filler9[0x17];
+    u8 unk9;
+    u8 fillerA[0x16];
     struct Entity *unk20;
     u8 filler24[2];
     u16 unk26;  // its high byte is also read alone (sub_080520F8)
@@ -556,9 +557,10 @@ struct Struct03006C80
     u8 unk3;
     u8 unk4;
     u8 unk5 : 8;
-    u8 filler6;
+    u8 unk6;
     u8 unk7;  // area? indexes the music table gUnknown_08427C14
-    u8 filler8[0x14];
+    u32 unk8;
+    u8 fillerC[0x10];
     u32 unk1C;  // frames
     u8 filler20[4];
     u8 unk24;
