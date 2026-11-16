@@ -27,7 +27,7 @@ struct Struct02016D60_fs
     u8 filler0[3];
     u8 unk3 : 8;
     u8 filler4[4];
-    u8 unk8;
+    u8 unk8 : 8;
     u8 filler9[0x17];
     struct Entity *unk20;
 };
@@ -617,7 +617,8 @@ struct Struct0202A7E0
     u8 unk4 : 8;
     u8 filler5[3];
     u16 unk8 : 16;
-    u8 fillerA[6];
+    u8 fillerA[2];
+    struct Entity *unkC;
     u32 unk10;
 };  // size = 0x14; 8 of them (sub_0804CCBC clears 0xA0 bytes)
 
