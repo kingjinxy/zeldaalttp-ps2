@@ -80,7 +80,7 @@ typedef struct Entity {
         u32 w;
         u8 b;
     } unk68;
-    /* 0x6C */ u8 filler6C[2];
+    /* 0x6C */ u8 unk6C[2];  // some entity kinds keep a u16 array from here (sub_08054974)
     /* 0x6E */ u16 unk6E;
     /* 0x70 */ union {
         u32 w;
