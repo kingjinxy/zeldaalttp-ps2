@@ -1173,7 +1173,25 @@ bool32 sub_0803B360(struct Entity *a, struct Entity *b, u8 c)
     return TRUE;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0803B3C0.inc\"");
+
+u8 sub_0803B3C0(struct Entity *this, struct Entity *other, u8 c)
+{
+    if (sub_08003FB0(this) && !(u16)(gUnknown_03006A30[this->form].unk36 & 129))
+    {
+        gUnknown_03006A30[this->form].unk1A = gUnknown_03006A30[this->form].unk1A | 128;
+        gUnknown_03006A30[this->form].unkA = gUnknown_03006A30[this->form].unkA | 128;
+        gUnknown_03006A30[this->form].unk36 = gUnknown_03006A30[this->form].unk36 | 16;
+        gUnknown_03006A30[this->form].unk2 = 0;
+        sub_0803D4A4(other, this, 0, 1);
+        this->unk1D_6 = other->unk1D_6;
+        this->unk1F_6 = other->unk1F_6;
+        this->unk3D = 255;
+        other->unk3D = 248;
+        return 1;
+    }
+    return 0;
+}
+
 
 u8 sub_0803B550(struct Entity *this, struct Entity *other, u8 c)
 {
@@ -9458,7 +9476,27 @@ void sub_0805E9AC(struct Entity *this)
     gUnknown_081414B4[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0805E9D4.inc\"");
+
+void sub_0805E9D4(struct Entity *this)
+{
+    this->unk14 = 1;
+    this->unk1C_0 = 1;
+    this->unk60 = gUnknown_08137B10[this->form];
+    if (this->parameter != 255)
+    {
+        this->unk7C.w = sub_08013D20(this->parameter);
+        this->unk14 = 2;
+    }
+    this->unk1E_0 = (gUnknown_0201F000[this->unk52] & this->unk60) ? 0x8001 : 0x8000;
+    this->unk48 = gUnknown_081414E4;
+    this->unk3F = 57;
+    this->unk5C = 0x21AA;
+    this->unk3C = 153;
+    sub_08003870(this, 0);
+    sub_08008F48(0, ((this->x.HALF.HI - gUnknown_03000450.unk18) >> 4) | (((this->y.HALF.HI - gUnknown_03000450.unk1A) >> 4) << 6), this->unk50);
+    sub_08008F3C(15, ((this->x.HALF.HI - gUnknown_03000450.unk18) >> 4) | (((this->y.HALF.HI - gUnknown_03000450.unk1A) >> 4) << 6), this->unk50);
+}
+
 
 void sub_0805EB68(struct Entity *this)
 {
