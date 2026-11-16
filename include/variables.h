@@ -902,6 +902,7 @@ extern u8 gUnknown_03000010[];
 extern const u32 gUnknown_080046DC[];  // ldscript address
 extern const u8 gUnknown_08008840[];  // ldscript address
 extern const u8 gUnknown_08003538[];  // ldscript address
+extern const u8 gUnknown_08003566[];  // ldscript address
 //extern gUnknown_03000040;
 extern u8 gUnknown_03000050;
 extern u8 gUnknown_030000B8;
@@ -5493,7 +5494,7 @@ extern const struct Struct08429004 gUnknown_08429004[];
 extern void (*const gUnknown_08429040[])(struct Entity *);
 //extern gUnknown_08429048;
 extern const u8 gUnknown_08429054[];
-//extern gUnknown_0842905C;
+extern const s8 gUnknown_0842905C[];
 extern const u8 gUnknown_084290A4[];
 extern void (*const gUnknown_084290AC[])(struct Entity *);
 extern void (*const gUnknown_084290D0[])(struct Entity *);

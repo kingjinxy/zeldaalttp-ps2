@@ -98,6 +98,7 @@ gUnknown_0800A49C = 0x0800A49C;  /* table inside rom1's code area, read by sub_0
 gUnknown_080046DC = 0x080046DC;  /* table inside rom1's code area, read by sub_0803F594 */
 gUnknown_08008840 = 0x08008840;  /* table inside rom1's code area, read by sub_08043A34 */
 gUnknown_08003538 = 0x08003538;  /* table inside rom1's code area, read by sub_08043A34 */
+gUnknown_08003566 = 0x08003566;  /* table inside rom1's code area, read by sub_0805B01C */
 gUnknown_0201ED90_fs = gUnknown_0201ED90;  /* Four Swords view, struct Struct0201ED90_fs */
 gUnknown_0201F020_fs = gUnknown_0201F020;  /* Four Swords view, struct Struct0200B320 */
 gUnknown_03005E10_b = gUnknown_03005E10;  /* bitfield-written view, struct BitU16A */
