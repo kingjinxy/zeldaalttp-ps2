@@ -1731,7 +1731,7 @@ void sub_0803A788(struct Entity *, struct Entity *);
 //sub_0803A858();
 bool32 sub_0803A880(struct Entity *, struct Entity *, u8);
 bool32 sub_0803A940(struct Entity *, struct Entity *, u8);
-//sub_0803AA04();
+u8 sub_0803AA04(struct Entity *, struct Entity *, u8);
 bool32 sub_0803AB30(struct Entity *, struct Entity *, u8);
 u8 sub_0803AC00(struct Entity *, struct Entity *, u8);
 //sub_0803ACC8();
@@ -1862,7 +1862,7 @@ void sub_08044018(struct Entity *, struct Entity *);
 void sub_08044198(struct Entity *, struct Entity *, struct Entity *);
 //sub_08044240();
 struct Entity *sub_08044594();  // no prototype in the original: sub_08049B30 calls it with no arguments
-void sub_0804469C(struct Entity *, u8, u8, u8);
+void sub_0804469C(struct Entity *, u8, s16, s16);
 //sub_080447C8();
 //sub_0804482C();
 //sub_08044854();

@@ -845,7 +845,18 @@ bool32 sub_0803A940(struct Entity *a, struct Entity *b, u8 c)
     return TRUE;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0803AA04.inc\"");
+
+u8 sub_0803AA04(struct Entity *this, struct Entity *other, u8 c)
+{
+    this->unk45 = sub_0803A5DC(this, other);
+    this->unk42 = other->unk46;
+    this->unk3D = (other->unk46 & 0x80) ? -other->unk46 - 16 : other->unk46 + 16;
+    other->unk45 = sub_0803A5DC(other, this);
+    other->unk42 = this->unk46;
+    other->unk3D = (other->unk46 & 0x80) ? -other->unk46 - 16 : other->unk46 + 16;
+    return 1;
+}
+
 
 bool32 sub_0803AB30(struct Entity *a, struct Entity *b, u8 c)
 {
@@ -1845,7 +1856,33 @@ asm(".include \"asm/non_matching/fs_game/sub_08044240.inc\"");
 
 asm(".include \"asm/non_matching/fs_game/sub_08044594.inc\"");
 
-asm(".include \"asm/non_matching/fs_game/sub_0804469C.inc\"");
+
+void sub_0804469C(struct Entity *this, u8 n, s16 x, s16 y)
+{
+    struct Entity *e;
+    const u8 *p;
+    u8 i;
+    u8 j;
+    u8 d;
+
+    if (n > 7)
+        n = 7;
+    p = &gUnknown_0813ED60[n << 2];
+    j = sub_0800099C() & 3;
+    d = ((this->unk3E ^ 16) - 3) & 31;
+    for (i = 0; i <= 3; i++)
+    {
+        e = sub_0804C8A8(0, p[j], 1);
+        if (e != NULL)
+        {
+            e->direction = d | 0x80;
+            sub_0803D4A4(this, e, x << 16, y << 16);
+        }
+        j = (j + 1) & 3;
+        d = (d + 2) & 31;
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_080447C8.inc\"");
 
 void sub_0804482C(struct Entity *this)
@@ -3015,7 +3052,40 @@ void sub_080484AC(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_08048514.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_0804871C.inc\"");
+
+u8 sub_0804871C(struct Entity *this)
+{
+    struct Entity *a;
+    struct Entity *b;
+
+    a = sub_080123E8();
+    if (a == NULL)
+        goto fail;
+    b = sub_08012410(a);
+    if (b == NULL)
+        goto fail;
+    a->type = 3;
+    b->type = 3;
+    a->subtype = 48;
+    b->subtype = 48;
+    a->form = 3;
+    b->form = 3;
+    a->parameter = 2;
+    b->parameter = 3;
+    a->unk54 = this->unk54;
+    b->unk54 = this->unk54;
+    a->unk58 = this;
+    b->unk58 = this;
+    b->unk70.bf = this->direction;
+    sub_0803D3D0(this, a);
+    sub_0803D3D0(this, b);
+    sub_08012728(4, a);
+    sub_08012728(4, b);
+    return 1;
+fail:
+    return 0;
+}
+
 
 u8 sub_08048850(struct Entity *this)
 {
