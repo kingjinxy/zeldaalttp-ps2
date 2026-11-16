@@ -46,6 +46,7 @@ void sub_08003C84(struct Entity *, struct Entity *);
 u16 sub_08008F58(u16, u16);
 u8 sub_080093C8(u16, u16);
 u8 sub_08003F4C(struct Entity *, struct Entity *);
+u8 sub_08003170(void);
 
 // rom1.s
 u8 sub_08000358(struct Entity *, struct Entity *);
