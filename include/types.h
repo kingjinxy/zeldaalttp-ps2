@@ -32,6 +32,12 @@ struct Struct02016D60_fs
     struct Entity *unk20;
 };
 
+// A u16 that -O0 code writes as a 16-bit bitfield; only for pointers (an array of these would be 4-byte
+// elements, and packed makes agbcc assume unaligned access)
+struct BitU16 {
+    u16 v : 16;
+};
+
 // Defined in entity.h; declared here so variables.h and functions.h can use pointers to them
 struct Entity;
 struct Manager;
@@ -602,11 +608,16 @@ struct Struct03000E20
     u8 unk12;
 };
 
+// A script interpreter (8 of them); unk10 is the script position
 struct Struct0202A7E0
 {
-    u8 filler0[2];
+    u16 unk0 : 16;
     u8 unk2;
-    u8 filler3[0xD];
+    u8 filler3;
+    u8 unk4 : 8;
+    u8 filler5[3];
+    u16 unk8 : 16;
+    u8 fillerA[6];
     u32 unk10;
 };  // size = 0x14; 8 of them (sub_0804CCBC clears 0xA0 bytes)
 
