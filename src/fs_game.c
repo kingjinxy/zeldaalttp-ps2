@@ -2286,7 +2286,31 @@ void sub_08042CB8(struct Entity *this)
     sub_08003688(this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08042DB0.inc\"");
+
+void sub_08042DB0(struct Entity *this)
+{
+    struct Entity *e;
+
+    e = gUnknown_03006A30[this->form].unk28;
+    gUnknown_03006A30[this->form].unk2C = this;
+    this->unk14++;
+    this->unk1C_0 = 1;
+    if (gLCDRegisterBuffer == this->form)
+        this->unk1F_0 = 1;
+    this->unk1E_0 = 3;
+    this->unk1B = 16;
+    this->unk40 = 1;
+    this->unk44 = 0;
+    this->unk46 = 12;
+    this->unk3F = 18;
+    this->unk2A = e->unk2A & 14;
+    this->unk1D_6 = e->unk1D_6;
+    this->unk1F_6 = e->unk1F_6;
+    this->unk20 = e->unk20;
+    this->unk1C_6 = e->unk1C_6;
+    sub_08042F5C(this);
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_08042F5C.inc\"");
 
 void sub_080432FC(struct Entity *this)
@@ -5289,7 +5313,39 @@ void sub_0804EDBC(struct Entity *this)
     this->unk15 = 0;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0804EDEC.inc\"");
+
+void sub_0804EDEC(struct Entity *this)
+{
+    struct MapDataB *m;
+
+    if (--this->unk17 != 255)
+    {
+        sub_0803CC20(this);
+        sub_08008DFC(this);
+    }
+    else if (sub_08003B64(this))
+    {
+        return;
+    }
+    else
+    {
+        this->unk14 = 1;
+        m = (struct MapDataB *)sub_08015DC0(this->unk50);
+        BITU16_AT(this, 0x68) = m->unk4[((this->x.HALF.HI - gUnknown_03000450.unk18) >> 4) | ((this->y.HALF.HI - gUnknown_03000450.unk1A) >> 4 << 6)].v;
+        if (BITU16_AT(this, 0x68) == 0x4002)
+        {
+            sub_0804EF98(this, 0);
+        }
+        else
+        {
+            BITU8_AT(this, 0x6A) = m->unk2004[((this->x.HALF.HI - gUnknown_03000450.unk18) >> 4) | ((this->y.HALF.HI - gUnknown_03000450.unk1A) >> 4 << 6)].v;
+            m->unk4[((this->x.HALF.HI - gUnknown_03000450.unk18) >> 4) | ((this->y.HALF.HI - gUnknown_03000450.unk1A) >> 4 << 6)].v = 0x4002;
+            m->unk2004[((this->x.HALF.HI - gUnknown_03000450.unk18) >> 4) | ((this->y.HALF.HI - gUnknown_03000450.unk1A) >> 4 << 6)].v = 29;
+            sub_080077D0(this);
+        }
+    }
+}
+
 
 void sub_0804EF98(struct Entity *this, struct Entity *target)
 {
