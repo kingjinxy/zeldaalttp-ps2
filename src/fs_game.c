@@ -9974,7 +9974,37 @@ void sub_08060734(struct Entity *this)
     gUnknown_084293A4[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0806075C.inc\"");
+
+void sub_0806075C(struct Entity *this)
+{
+    struct Entity *e;
+
+    e = gUnknown_03006A30[this->form].unk28;
+    this->unk5E_0 = 3;
+    this->unk1F_6 = e->unk1F_6;
+    this->unk14++;
+    this->unk2A = e->unk2A >> 1;
+    this->direction = ((this->unk2A + 1) & 3) << 3;
+    this->unk18 = 6;
+    BITU16_AT(this, 0x6A) = BITU16_AT(this, 0x64) = 0;
+    this->speed = 320;
+    this->unk20 = 60;
+    this->unk1C_6 = 3;
+    this->unk1E_0 = 6;
+    this->unk1B = 42;
+    sub_08003870(this, 7);
+    if (this->parameter != 0)
+    {
+        this->unk17 = 40;
+    }
+    else
+    {
+        this->unk1C_0 = 1;
+        this->unk17 = 40;
+        sub_080608F8(this);
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_080608F8.inc\"");
 
 void sub_08060CF0(struct Entity *this)
@@ -10141,7 +10171,35 @@ void sub_08063338(struct Entity *this)
         gUnknown_084293D0[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08063384.inc\"");
+
+void sub_08063384(struct Entity *this)
+{
+    this->unk14++;
+    this->unk48 = gUnknown_081420BC;
+    this->unk3C = this->unk58->unk3C | 0x80;
+    this->unk5C = this->unk58->unk5C;
+    this->unk3F = 1;
+    this->unk40 = 63;
+    if (this->form != 0)
+    {
+        this->unk17 = 120;
+        BITU16_AT(this, 0x64) = 480;
+        this->unk1C_0 = 1;
+        sub_08003870(this, 0);
+        sub_080637F4(this);
+    }
+    else
+    {
+        this->x.WORD = this->unk58->x.WORD;
+        this->y.WORD = this->unk58->y.WORD;
+        this->unk50 = this->unk58->unk50;
+        this->unk1D_6 = this->unk58->unk1D_6;
+        this->unk5E_0 = this->unk58->unk5E_0;
+        if (gLCDRegisterBuffer == this->unk58->form)
+            gUnknown_03000450.unk0 = this;
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_08063524.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_080637F4.inc\"");
 

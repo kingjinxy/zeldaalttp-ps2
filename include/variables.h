@@ -1879,7 +1879,7 @@ extern const u16 gUnknown_08141F64[];
 extern const u16 gUnknown_08141FC4[];
 extern const u16 gUnknown_08142024[];
 //extern gUnknown_081420A8;
-//extern gUnknown_081420BC;
+extern const u8 gUnknown_081420BC[];
 extern void (*const gUnknown_0814216C[])(struct Entity *);
 extern const u8 gUnknown_08142178[];
 extern const u16 gUnknown_0814217C[];
