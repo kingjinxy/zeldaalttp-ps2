@@ -2195,7 +2195,7 @@ void sub_08054188(struct Entity *);
 //sub_08054234();
 //sub_0805425C();
 void sub_08054284(struct Entity *);
-//sub_08054370();
+void sub_08054370(struct Entity *);
 //sub_08054508();
 //sub_08054554();
 //sub_0805457C();
