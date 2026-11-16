@@ -3032,7 +3032,37 @@ void sub_08045B9C(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08045C18.inc\"");
+
+void sub_08045C18(struct Entity *this)
+{
+    u8 i;
+
+    GetNextFrame(this);
+    sub_080660BC(this);
+    this->unk17--;
+    if (this->unk17 == 0)
+    {
+        this->unk14 = 13;
+        this->speed = 256;
+        this->unk17 = 1;
+        this->unk1D_6 = 2;
+        this->unk1F_6 = 2;
+        this->unk5E_0 = 2;
+        gUnknown_03000450.unk0 = gUnknown_03006A30[gLCDRegisterBuffer].unk28;
+        for (i = 0; i < gUnknown_03006C80.unk0; i++)
+        {
+            gUnknown_03006A30[i].unk8 = 12;
+            gUnknown_03006A30[i].unk38 = 1;
+            gUnknown_03006A30[i].unk2 = 65;
+            gUnknown_03006A30[i].unk28->unk10 = 0x20000;
+        }
+        play_sound(0x1AF);
+        BITU8_AT(gUnknown_03000420, 0) = 1;
+        sub_0802D97C();
+        sub_0802C8F8();
+    }
+}
+
 
 void sub_08045DC8(struct Entity *this)
 {
@@ -10218,7 +10248,44 @@ void sub_08060F1C(struct Entity *this)
     gUnknown_084293B8[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08060F44.inc\"");
+
+void sub_08060F44(struct Entity *this)
+{
+    sub_08008DD8(this);
+    this->unk1C_0 = 1;
+    this->unk14++;
+    this->unk7C.w = 0;
+    if (this->parameter != 0)
+    {
+        this->unk14++;
+        sub_08061364(this);
+    }
+    else
+    {
+        this->unk2A = this->form;
+        this->unk5E_0 = 1;
+        this->unk17 = this->unk18 = 255;
+        if ((u8)(this->form & 251))
+            this->unk48 = gUnknown_08141DFC;
+        else
+            this->unk48 = gUnknown_08141E04;
+        BITU16_AT(this, 0x70) = this->x.HALF_U.HI;
+        this->unk70.s2.unk72 = this->y.HALF_U.HI;
+        this->unk78.b = this->unk2A;
+        BITU16_AT(this, 0x74) = sub_08009308(this);
+        sub_08003870(this, this->unk2A);
+        if ((this->unk58 = sub_0804C8A8(83, 0, 1)) != NULL)
+        {
+            this->unk58->unk2A = this->unk2A;
+            this->unk58->unk54 = this;
+        }
+        else
+        {
+            DeleteThisEntity(this);
+        }
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_080610F0.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08061364.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_080618B4.inc\"");
