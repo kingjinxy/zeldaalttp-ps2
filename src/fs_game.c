@@ -1983,7 +1983,61 @@ void sub_0803F710(struct Entity *this)
 
 asm(".include \"asm/non_matching/fs_game/sub_0803F74C.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803FAE8.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_0803FEAC.inc\"");
+
+void sub_0803FEAC(struct Entity *this)
+{
+    struct Entity *link = gUnknown_03006A30[this->form].unk28;
+
+    if (gUnknown_03006A30[this->form].unk2C != this)
+    {
+        sub_08000620(this);
+        sub_0800BE50((u8 *)this->unk48);
+        DeleteThisEntity(this);
+    }
+    if (gUnknown_03006A30[this->form].unk4 != 0)
+    {
+        if (gUnknown_03006A30[this->form].unk2 == 0)
+        {
+            gUnknown_03006A30[this->form].unk2C = NULL;
+            sub_08000620(this);
+            sub_0800BE50((u8 *)this->unk48);
+            DeleteThisEntity(this);
+            return;
+        }
+        if (link->unk29 & 0x80)
+        {
+            gUnknown_03006A30[this->form].unk2C = NULL;
+            sub_08000620(this);
+            sub_0800BE50((u8 *)this->unk48);
+            DeleteThisEntity(this);
+        }
+        else
+        {
+            sub_08040074(this, link);
+            if (link->unk29 & 0x20)
+                sub_08003E10(link, 0xC0);
+            if (this->frameIdx > 104)
+                this->frameIdx |= 0xFF;
+            if (link->unk29 & 8)
+            {
+                this->unk3C = this->unk3C | 0x80;
+                sub_080407E0(this);
+            }
+            else
+            {
+                this->unk3C = 0;
+            }
+        }
+    }
+    else
+    {
+        gUnknown_03006A30[this->form].unk2C = NULL;
+        sub_08000620(this);
+        sub_0800BE50((u8 *)this->unk48);
+        DeleteThisEntity(this);
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_08040074.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0804055C.inc\"");
 
@@ -2248,7 +2302,39 @@ void sub_08042298(struct Entity *this)
     sub_08003688(this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_080422D4.inc\"");
+
+void sub_080422D4(struct Entity *this)
+{
+    struct Entity *link = gUnknown_03006A30[this->form].unk28;
+    struct Entity *e = this->unk58;
+
+    this->unk15++;
+    this->unk48 = gUnknown_0813EC00;
+    if (e != NULL)
+    {
+        this->x = e->x;
+        this->y = e->y;
+        this->z = e->z;
+        BITU8_AT(this, 0x1A) = e->unk1A;
+        e->unk1D_6 = link->unk1D_6;
+    }
+    else
+    {
+        this->unk58 = e = this;
+        this->unk14 = 2;
+        this->unk20 = gUnknown_0813EBB4[this->unk18 * 4 + 1];
+        this->unk1E_0 = gUnknown_0813EBB4[this->unk18 * 4 + 2];
+        this->unk1C_0 = 1;
+        this->unk1B = 11;
+        this->unk1C_6 = 3;
+        sub_08003870(this, gUnknown_0813EBB4[this->unk18 * 4]);
+        BITU8_AT(this, 0x1A) = 0;
+        this->unk1D_6 = link->unk1D_6;
+    }
+    BITU16_AT(this, 0x64) = e->type;
+    BITU16_AT(this, 0x66) = e->subtype;
+}
+
 
 void sub_08042490(struct Entity *this)
 {

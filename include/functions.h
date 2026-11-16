@@ -1824,7 +1824,7 @@ void DoManagerEntity(struct Manager *);
 //sub_0803F74C();
 //sub_0803FAE8();
 //sub_0803FEAC();
-//sub_08040074();
+void sub_08040074(struct Entity *, struct Entity *);
 //sub_0804055C();
 void sub_080407E0(struct Entity *);
 //sub_08040890();
