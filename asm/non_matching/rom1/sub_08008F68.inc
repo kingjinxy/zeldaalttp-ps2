@@ -8,6 +8,9 @@ sub_08008F68: @ 0x08008F68
 	lsls r1, r0, #8
 	str r4, [r4, r0]
 	lsls r2, r0, #8
+	.thumb_func
+	.global sub_08008F78
+sub_08008F78: @ 0x08008F78 (code after the 16-byte table at sub_08008F68)
 	lsrs r2, r2, #0xe
 	lsls r2, r2, #2
 	ldr r3, _08008F9C @ =0x08008F68

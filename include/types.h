@@ -594,7 +594,7 @@ struct Struct03006C80
     u8 unk51;
     u8 filler52[2];
     u8 unk54[4];
-    u8 filler58[4];
+    u8 unk58[4];
     u8 unk5C[4];  // per player
     u8 filler60[0xE];
     u8 unk6E : 8;
@@ -648,7 +648,8 @@ struct MapData
 struct Struct03000E20
 {
     u16 unk0;
-    u8 filler2[0x10];
+    u16 unk2 : 16;
+    u8 filler4[0xE];
     u8 unk12;
 };
 
@@ -701,8 +702,10 @@ struct Struct03006A30
     u8 filler15[5];
     u8 unk1A : 8;
     u8 unk1B;
-    u8 unk1C;
-    u8 filler1D[5];
+    u8 unk1C : 8;
+    u8 filler1D;
+    u8 unk1E;
+    u8 filler1F[3];
     u16 unk22;  // tile position << 1: x in bits 1-6, y in bits 7-12
     u8 filler24[3];
     u8 unk27 : 8;

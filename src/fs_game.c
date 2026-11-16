@@ -437,7 +437,35 @@ void sub_080383CC(void)
     gUnknown_08427BFC[gSubState]();
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_080383F0.inc\"");
+
+void sub_080383F0(void)
+{
+    u8 i;
+
+    sub_0801239C();
+    sub_080144A0();
+    sub_080123BC();
+    sub_0803A320();
+    sub_080152E0();
+    sub_0802BF60();
+    sub_0802C278();
+    zero_memory((void *)0x03000040, 0x1C0);
+    sub_0803E518();
+    for (i = 0; i <= 3; i++)
+        gUnknown_03006A30[i].unk1C = gUnknown_03006C80.unk58[i];
+    load_palette_from_gfx_group(2);
+    load_gfx_group(16);
+    *(u16 *)0x05000000 = 0;
+    ((struct BitU16 *)gPaletteBuf2)->v = 0;
+    gSubState++;
+    gUnknown_0202E1E0 = 0;
+    gUnknown_03000E20.unk2 = 10;
+    set_palette_color(0, 0);
+    set_palette_color(14, 0xFFFF);
+    ((struct BitU16 *)&gUnknown_030004A0)->v = 0;
+    *(u16 *)0x04000000 = 0;
+}
+
 
 void sub_08038508(void)
 {
@@ -776,7 +804,21 @@ bool32 sub_0803B360(struct Entity *a, struct Entity *b, u8 c)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_0803B3C0.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_0803B550.inc\"");
+
+u8 sub_0803B550(struct Entity *this, struct Entity *other, u8 c)
+{
+    if ((u8)(gUnknown_03006A30[this->form].unk1E & 96))
+    {
+        other->unk3C = other->unk3C & 127;
+    }
+    else
+    {
+        this->unk42 = other->unk46;
+        this->unk3D = (other->unk46 & 0x80) ? other->unk46 + (s8)other->unk46 / 4 : -other->unk46 - (s8)other->unk46 / 4;
+    }
+    return 1;
+}
+
 
 u8 sub_0803B644(struct Entity *this, struct Entity *other, u8 c)
 {
@@ -7194,7 +7236,32 @@ void sub_080605EC(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08060638.inc\"");
+
+void sub_08060638(struct Entity *this)
+{
+    u16 v;
+
+    v = sub_0800932C(this->unk78.s2.unk7A, this->unk50);
+    if (v == 1)
+    {
+        if ((u16)(this->unk50 >> 14) != 2)
+            sub_08008F78(47, this->unk78.s2.unk7A, this->unk50);
+        else
+            sub_08008F78(88, this->unk78.s2.unk7A, this->unk50);
+        DeleteThisEntity(this);
+    }
+    else if (this->unk78.s3.unk79 != 0)
+    {
+        if (*this->unk7C.pb != 0)
+            this->unk78.s3.unk79 = 0;
+    }
+    else if (this->unk78.b != *this->unk7C.pb)
+    {
+        this->unk78.s3.unk79 = 1;
+        sub_08014658(gUnknown_081419E8[this->form], this->unk78.s2.unk7A, this->unk50);
+    }
+}
+
 
 void sub_08060734(struct Entity *this)
 {

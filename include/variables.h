@@ -1856,7 +1856,7 @@ extern void (*const gUnknown_08141828[])(struct Entity *);
 //extern gUnknown_08141838;
 //extern gUnknown_081419A4;
 extern void (*const gUnknown_081419D4[])(struct Entity *);
-//extern gUnknown_081419E8;
+extern const u16 gUnknown_081419E8[];
 //extern gUnknown_08141A00;
 //extern gUnknown_08141A08;
 //extern gUnknown_08141D10;
