@@ -2091,7 +2091,21 @@ void sub_08047804(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_080478AC.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_0804799C.inc\"");
+
+void sub_0804799C(struct Entity *this)
+{
+    this->unk17--;
+    if (this->unk17 == 0)
+    {
+        this->unk70.s.unk71 = this->direction > 128 ? 1 : 255;
+        this->unk70.s.unk73 = (sub_0800099C() % gUnknown_084287B4[gUnknown_03006C80.unk0 - 2]) * 2;
+        if (gUnknown_08137B10[this->parameter] & this->unk54->unk70.b)
+            this->unk14 = 2;
+        else
+            this->unk14 = 5;
+    }
+}
+
 
 void sub_08047A7C(struct Entity *this)
 {
@@ -2502,7 +2516,37 @@ void sub_0804A438(struct Entity *this)
         DeleteThisEntity(this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0804A498.inc\"");
+
+void sub_0804A498(struct Entity *this)
+{
+    struct Entity *e;
+
+    if (this->unk14 == 0)
+    {
+        this->unk14 = 1;
+        this->unk1C_0 = 1;
+        this->unk48 = gUnknown_0813F82C;
+        sub_08003870(this, (this->direction >> 2) + 11);
+    }
+    if ((u8)(this->unk41 & 0x80) && this->unk4C->unk44 > 6)
+    {
+        sub_0804CA20(this);
+        if (gUnknown_03006C80.unk1C <= 35999)
+        {
+            e = sub_0804C8A8(0, gUnknown_0813F818[sub_0800099C() & 7], 1);
+            if (e != NULL)
+                sub_0803D3D0(this, e);
+        }
+        DeleteThisEntity(this);
+    }
+    else
+    {
+        sub_08009FB8(this);
+        if (this->unk2C != 0)
+            DeleteThisEntity(this);
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0804A584.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0804A790.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0804ABB8.inc\"");
@@ -2943,7 +2987,34 @@ void sub_0804D448(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0804D4FC.inc\"");
+
+void sub_0804D4FC(struct Entity *this)
+{
+    struct Entity *e;
+
+    if (this->unk17 == 0)
+    {
+        e = sub_0804C8A8(15, 1, 32);
+        if (e != NULL)
+        {
+            this->unk17 = 10;
+            this->unk18--;
+            if (this->unk18 == 0)
+            {
+                this->unk14 = 3;
+                this->unk17 = 2;
+                play_sound(16);
+                DeleteThisEntity(this->unk58);
+            }
+            sub_0803D4A4(this, e, gUnknown_0842882C[this->unk18 << 1] << 16, gUnknown_0842882C[(this->unk18 << 1) + 1] << 16);
+        }
+    }
+    else
+    {
+        this->unk17--;
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0804D5E0.inc\"");
 
 void sub_0804D854(struct Entity *this)
@@ -4824,7 +4895,36 @@ void sub_08057758(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0805781C.inc\"");
+
+void sub_0805781C(struct Entity *this)
+{
+    struct Entity *e;
+
+    switch (this->unk14)
+    {
+    case 0:
+        this->unk14++;
+        this->unk60 = sub_08013D20(this->form);
+        break;
+    case 1:
+        if ((gUnknown_0201F000[this->unk52] & this->unk60) == this->unk60)
+        {
+            sub_0804C9C8(this);
+            e = sub_0804C8A8(33, this->parameter, 0);
+            if (e != NULL)
+            {
+                e->x.WORD = this->x.WORD;
+                e->y.WORD = this->y.WORD;
+                sub_08008D90(e);
+            }
+            sub_08014658(this->unk17 + 0x109, (this->x.HALF.HI >> 4) | ((this->y.HALF.HI >> 4) << 6), this->unk50);
+            play_sound(16);
+            DeleteThisEntity(this);
+        }
+        break;
+    }
+}
+
 
 void sub_08057904(struct Entity *this)
 {
@@ -6870,7 +6970,31 @@ void sub_08064A10(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08064AB4.inc\"");
+
+void sub_08064AB4(struct Entity *this)
+{
+    if (this->unk17 != 0)
+    {
+        if (--this->unk17 == 0)
+        {
+            gUnknown_03006A30[this->form].unk8 = 0x1AD;
+            play_sound(28);
+            gUnknown_0202A4F8 |= 2;
+        }
+    }
+    else if ((u8)(this->unk29 & 0x80) == 0)
+    {
+        sub_080037EC(this, this->unk1B);
+    }
+    else
+    {
+        play_sound(0x80040008);
+        play_sound(32);
+        gUnknown_0202A4F8 |= 4;
+        this->unk15++;
+    }
+}
+
 
 void sub_08064B98(struct Entity *this)
 {
