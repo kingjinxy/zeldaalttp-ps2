@@ -5962,7 +5962,32 @@ void sub_080566EC(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08056778.inc\"");
+
+void sub_08056778(struct Entity *this)
+{
+    if (gSubState != 4 || !((gUnknown_02016D60_fs.unk8 >> this->parameter) & 1))
+    {
+        if (gSubState != 4 || ++this->unk17 > 59)
+        {
+            this->unk14 = 1;
+            this->x.HALF_U.HI = 256;
+        }
+    }
+    else
+    {
+        this->unk17 = 0;
+        if (this->x.HALF.HI > 228 - (3 - this->parameter) * 24)
+        {
+            sub_0803CC20(this);
+            if (this->speed > 256)
+                this->speed -= 32;
+        }
+        if (this->x.HALF.HI <= 228 - (3 - this->parameter) * 24)
+            this->x.HALF_U.HI = 228 - (3 - this->parameter) * 24;
+    }
+    sub_08056988(this);
+}
+
 
 void sub_080568A4(struct Entity *this)
 {
@@ -6038,7 +6063,35 @@ void sub_08056AE0(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08056B54.inc\"");
+
+void sub_08056B54(struct Entity *this)
+{
+    if (this->unk14 == 0)
+    {
+        this->unk14 = 1;
+        this->unk1D_6 = 0;
+        this->unk1F_6 = 0;
+        this->x.HALF_U.HI = 120;
+        this->y.HALF_U.HI = 80;
+        this->unk1B = 78;
+        this->unk20 = 160;
+        this->unk1C_6 = 2;
+        this->unk1E_0 = 7;
+    }
+    else
+    {
+        this->unk1C_0 = 0;
+        if (gSubState == 4)
+        {
+            if (gLCDRegisterBuffer != 0 || !(u8)(gUnknown_02016D60_fs.unk8 & 0x80))
+            {
+                if ((u16)(gUnknown_03000948.unk0 & 16))
+                    this->unk1C_0 = 2;
+            }
+        }
+    }
+}
+
 
 void sub_08056C80(struct Entity *this)
 {
@@ -7317,7 +7370,35 @@ void sub_0805BF2C(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0805BF9C.inc\"");
+
+void sub_0805BF9C(struct Entity *this)
+{
+    struct Entity *e;
+    u32 unused;
+    u16 v;
+
+    GetNextFrame(this);
+    if (BITU8_AT(this, 0x47) == 0)
+        return;
+    e = gUnknown_03006A30[BITU8_AT(this, 0x47) - 1].unk28;
+    gUnknown_0201F000[this->unk52] |= gUnknown_08137B10[this->unk16];
+    v = sub_0803CECC(this, e);
+    if ((u16)(v & 15))
+    {
+        if (v <= 15)
+            this->unk1C_2 = 1;
+        else
+            this->unk1C_2 = 0;
+    }
+    if (gLCDRegisterBuffer == e->form)
+    {
+        sub_0800D67C(BITU16_AT(this, 0x64));
+        this->unk18 = 1;
+    }
+    BITU8_AT(this, 0x47) = 0;
+    e->unk3D = 248;
+}
+
 
 void sub_0805C0C8(struct Entity *this)
 {
