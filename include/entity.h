@@ -89,9 +89,10 @@ typedef struct Entity {
         struct {
             u8 b;
             u8 unk71 : 8;
+            u8 unk72 : 8;
         } s;
     } unk70;
-    /* 0x74 */ u8 filler74;
+    /* 0x74 */ u8 unk74 : 8;
     /* 0x75 */ u8 unk75 : 8;
     /* 0x76 */ u8 unk76 : 8;
     /* 0x77 */ u8 unk77 : 8;
