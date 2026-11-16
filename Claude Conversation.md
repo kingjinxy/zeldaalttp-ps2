@@ -3919,3 +3919,419 @@ Batch 103 matches; committing and updating the docs (milestone: under 250 left).
 
 - tool `Bash`: sed -i '52s|.*|- [ ] fs_game: 675 of 915 done; all code: 1,765 of 7,894 functions in C (6,129 left in asm/non_matching)|' "docs/Planning Doc.md" && python3 - <<
 
+- tool `Bash`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/next.sh 3
+
+- tool `Bash`: for f in gUnknown_03000420 sub_08046490 sub_08051B80 sub_08052A88; do grep -n "$f\b" include/*.h | head -1; done; grep -rn "gUnknown_03006C80.filler60" src | he
+
+- tool `Bash`: python3 - <<'E' p='include/types.h'; s=open(p).read() a=s.index('struct Struct03006C80'); b=s.index('};',a) seg=s[a:b].replace("    u8 filler60[0xE];","    u8 f
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 3 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_0803CEF0 gUnknown_08140E84 gUnknown_0813F7C4 sub_0804B5FC sub_08059EB0 sub_08049FCC; do grep -n "$f\b" include/*.h | head -1; done; grep -n "0x46\|
+
+## Claude
+
+Batch 104 committed (237 left). Writing batch 105.
+
+- tool `Bash`: sed -i -e 's|    /\* 0x3F \*/ u8 filler3F;|    /* 0x3F */ u8 unk3F : 8;|' -e 's|    /\* 0x46 \*/ u8 unk46;|    /* 0x46 */ u8 unk46 : 8;|' include/entity.h && fo
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 3 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_08051744 sub_080012A0 sub_08042A90 sub_08051760 sub_08042490 sub_080397F0; do grep -n "$f\b" include/*.h | head -1; done; arm-none-eabi-nm zeldaalt
+
+- tool `Bash`: grep -rn "@ 0x080012A0" asm/ | head -2; arm-none-eabi-nm -n zeldaalttp.elf | awk '$1 >= "08001280" && $1 <= "080012b0"'
+
+- tool `Bash`: grep -rn "^_080012A0:" asm src | head -2
+
+- tool `Bash`: sed -n 1,20p asm/non_matching/rom1/sub_08001290.inc
+
+## Claude
+
+Batch 105 committed (234 left). `sub_080012A0` is an entry point (`mov r1, r0`, then falls into `sub_080012A4`); giving it a label.
+
+- tool `Bash`: sed -i 's|^_080012A0:$|\t.thumb_func\n\t.global sub_080012A0\nsub_080012A0: @ entry point: mov r1, r0, then falls into sub_080012A4\n_080012A0:|' asm/non_matchi
+
+## Claude
+
+You've hit your 5-hour limit · resets 12:10pm (America/Chicago)
+
+## User
+
+Continue with the assembly to C conversion. I want to add a medium priority item to the planning doc: playing with more than 4 players.
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 3 more Four Swords functions  sub_080012A0 gets a la
+
+- tool `Bash`: sed -n 60,100p "docs/Planning Doc.md"
+
+- tool `Bash`: python3 - <<'E' p='docs/Planning Doc.md'; s=open(p).read() s=s.replace("## Open decisions","""## Medium priority: more than 4 players Requested by the user (202
+
+## Claude
+
+Committed batch 106 and added the "more than 4 players" item to the planning doc (`1e6b50b`). Continuing with batch 107.
+
+- tool `Bash`: for f in sub_0803D520 sub_0803AEB4 sub_0803D65C sub_08044594; do grep -n "$f\b" include/functions.h; done
+
+- tool `Bash`: sed -i -e 's|^//sub_0803D520();|void sub_0803D520(u8, u8, u8);|' -e 's|^//sub_0803AEB4();|u8 sub_0803AEB4(struct Entity *, struct Entity *, u8);|' -e 's|^//sub_
+
+- tool `Bash`: python3 - <<'E' s=open('src/fs_game.c').read() s=s.replace("        sub_0803D520(a, 1, sub_0800099C() & 31);\n}","        sub_0803D520(a, 1, sub_0800099C() & 31
+
+- tool `Bash`: awk '/^sub_08044594:/{f=1} f' src/fs_game.s | grep -v "^\s*\.[a-z]\|^\.L[0-9]*:$" | sed -n 1,50p | paste -sd';' | sed 's/\t//g' | fold -w 3000
+
+- tool `Bash`: for v in '(void)\&gUnknown_03006A30[i];' 'gUnknown_03006A30 + i;' '(void)(i + gUnknown_03006A30);'; do python3 - "$v" <<'E' import sys s=open('src/fs_game.c').r
+
+- tool `Bash`: python3 - <<'E' s=open('src/fs_game.c').read() i=s.index('struct Entity *sub_08044594'); j=s.index('    {\n        ',i)+14; k=s.index('\n',j) s=s[:j-8]+s[k+1:] 
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad && python3 - <<'E' s=open('src/fs_game.c').read() i=s.ind
+
+## Claude
+
+Batch 107 is committed: 2 of its 3 functions match; the third (`sub_08044594`, an address computed and discarded) is deferred. 229 Four Swords functions left. Continuing.
+
+- tool `Bash`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/next.sh 3
+
+- tool `Bash`: for f in gUnknown_08429300 gUnknown_08137B90 sub_080537C4 sub_0805E4F8 sub_0805F938; do grep -n "$f\b" include/*.h | head -1; done
+
+- tool `Bash`: for f in sub_080537C4 sub_0805E4F8; do sed -i "s|^//$f();|void $f(struct Entity *);|" include/functions.h; done; sed -i 's|^//extern gUnknown_08429300;|extern c
+
+- tool `Bash`: python3 - <<'E' s=open('src/fs_game.c').read() s=s.replace("    for (i = 0; i <= 7; i++)\n    {\n        if (sub_0800932C(a, this->unk50) == b)\n        {\n    
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 3 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_0806041C sub_08037C58 sub_0803B99C; do grep -n "$f\b" include/functions.h; done
+
+## Claude
+
+Batch 108 committed (226 left). Writing batch 109.
+
+- tool `Bash`: grep -n "sub_0806041C(" src/fs_game.c | head -3; sed -i -e 's|^void sub_0806041C(struct Entity \*, u8);|void sub_0806041C(struct Entity *, u16);|' -e 's|^//sub_
+
+- tool `Bash`: awk '/^sub_0806041C:/{f=1} f' src/fs_game.s | grep -v "^\s*\.[a-z]\|^\.L[0-9]*:$" | sed -n 1,30p | paste -sd';' | sed 's/\t//g'
+
+- tool `Bash`: sed -i -e 's/(this->x.HALF.HI - (gUnknown_03000450.unk18 + 16))/(this->x.HALF.HI - gUnknown_03000450.unk18 - 16)/g' -e 's/(this->y.HALF.HI - (gUnknown_03000450.
+
+- tool `Bash`: arm-none-eabi-nm -n zeldaalttp.elf | awk '$3 ~ /^sub_[0-9A-F]{8}$/ { a=toupper($1); n=substr($3,5); if (a != n) { print "first moved:", $3, prev; exit } prev=$3
+
+- tool `Bash`: for v in '(this->x.HALF.HI - (s32)(gUnknown_03000450.unk18 + 16))' '(this->x.HALF.HI - (u32)(gUnknown_03000450.unk18 + 16))' '(this->x.HALF.HI - (u16)(gUnknown_
+
+- tool `Bash`: sed -i 's/(u16)(gUnknown_03000450.unk1\([8A]\) + 16)/(u32)(gUnknown_03000450.unk1\1 + 16)/g' src/fs_game.c && make -j8 src/fs_game.o 2>&1 | grep -i error; awk '
+
+## Claude
+
+Batch 109: `sub_0806041C` resists (agbcc reassociates `x - (s + 16)`); deferring it and committing the other two.
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad && python3 - <<'E' s=open('src/fs_game.c').read() i=s.ind
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 2 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_08054A38 sub_0800238C gUnknown_0813F3F8 gUnknown_0813EFFC sub_08054744 sub_08060CF0 sub_0804521C; do grep -n "$f\b" include/*.h | head -1; done; ar
+
+## Claude
+
+Batch 109 committed (224 left). Writing batch 110.
+
+- tool `Bash`: for f in sub_08054A38 sub_08054744 sub_08060CF0 sub_0804521C; do sed -i "s|^//$f();|void $f(struct Entity *);|" include/functions.h; done; sed -i -e 's|^//exter
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 3 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_08046918 sub_0805485C sub_08058AA8; do grep -n "$f\b" include/functions.h; sed -i "s|^//$f();|void $f(struct Entity *);|" include/functions.h; done
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 3 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_08052370 sub_08054620 sub_08065958; do grep -n "$f\b" include/functions.h; sed -i "s|^//$f();|void $f(struct Entity *);|" include/functions.h; done
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 3 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_08000580 sub_0803BD78 sub_0804E248 sub_080562B0; do grep -n "$f\b" include/functions.h; done; awk '/^struct Struct03006C80/,/^};/' include/types.h 
+
+- tool `Bash`: grep -n "^u8 sub_08000A40\|^.*sub_08000A40" include/functions.h; grep -rn "sub_08000580\b" include/*.h asm/non_matching/rom1/sub_08000580.inc 2>/dev/null | head
+
+## Claude
+
+Batch 112 committed (215 left). Writing batch 113.
+
+- tool `Bash`: python3 - <<'E' p='include/types.h'; s=open(p).read() a=s.index('struct Struct03006C80'); b=s.index('};',a) seg=s[a:b].replace("    u8 unk4F;","    u8 unk4F : 8
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 3 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_0804B8B0 sub_0804B788 sub_08049B30 sub_08059AA8 sub_08044594 gUnknown_08429004; do grep -n "$f\b" include/*.h | head -2; done; grep -rn "gUnknown_0
+
+## Claude
+
+Batch 113 committed (212 left). Writing batch 114.
+
+- tool `Bash`: sed -i 's|^struct Entity \*sub_08044594(struct Struct03006A30 \*);|struct Entity *sub_08044594();  // no prototype in the original: sub_08049B30 calls it with n
+
+- tool `Bash`: python3 - <<'E' s=open('src/fs_game.c').read() i=s.index('void sub_08049B30'); j=s.index('e->z.HALF_U.HI -= 26;',i) s=s[:j]+'e->y.HALF_U.HI -= 26;'+s[j+len('e->
+
+- tool `Bash`: for v in 'this->frameTimer + (sub_0800099C() \& 3) + 254' '(sub_0800099C() \& 3) + this->frameTimer + 254' 'this->frameTimer - 2 + (sub_0800099C() \& 3)'; do py
+
+- tool `Bash`: for v in '(sub_0800099C() \& 3) + (this->frameTimer + 254)' '(this->frameTimer + 254) + (sub_0800099C() \& 3)' '(sub_0800099C() \& 3) + (this->frameTimer - 2)' 
+
+- tool `Bash`: for v in 'this->frameTimer += (sub_0800099C() \& 3) - 2' 'this->frameTimer += (sub_0800099C() \& 3) + 254' 'this->frameTimer += -2 + (sub_0800099C() \& 3)'; do 
+
+- tool `Bash`: python3 - <<'E' s=open('src/fs_game.c').read() s=s.replace("this->frameTimer += -2 + (sub_0800099C() & 3);","this->frameTimer += (sub_0800099C() & 3) - 2;",1) o
+
+## Claude
+
+Batch 114 committed (209 left). Writing batch 115.
+
+- tool `Bash`: for f in sub_0806535C sub_0803BC5C sub_08057A00 sub_0803A6DC; do grep -n "$f\b" include/functions.h; done
+
+- tool `Bash`: sed -i -e 's|^//sub_0806535C();|void sub_0806535C(struct Entity *);|' -e 's|^//sub_0803BC5C();|u8 sub_0803BC5C(struct Entity *, struct Entity *, u8);|' include/
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 3 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad && echo sub_08037300 >> $S/deferred.txt; for f in sub_080
+
+## Claude
+
+Batch 115 committed (206 left). Writing batch 116.
+
+- tool `Bash`: sed -i -e 's|^//sub_0805BD30();|void sub_0805BD30(struct Entity *);|' -e 's|^//sub_0803D010();|u8 sub_0803D010(struct Entity *);|' include/functions.h && sed -i
+
+- tool `Bash`: python3 - <<'E' s=open('src/fs_game.c').read() s=s.replace("u8 sub_0803D010(struct Entity *this)\n{\n","u8 sub_0803D010(struct Entity *this)\n{\n    u32 unused;
+
+- tool `Bash`: python3 - <<'E' s=open('src/fs_game.c').read() i=s.index('u8 sub_0803D010(struct Entity *this)'); e=s.index('\n}\n',i) new='''u8 sub_0803D010(struct Entity *thi
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 2 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_08049DA8 sub_0803AFB8 sub_0803B0D8; do grep -n "$f\b" include/functions.h; done
+
+## Claude
+
+Batch 116 committed (204 left). Writing batch 117.
+
+- tool `Bash`: sed -i -e 's|^//sub_08049DA8();|void sub_08049DA8(struct Entity *);|' -e 's|^//sub_0803AFB8();|u8 sub_0803AFB8(struct Entity *, struct Entity *, u8);|' -e 's|^/
+
+- tool `Bash`: python3 - <<'E' a=open("baserom.gba","rb").read(); b=open("zeldaalttp.gba","rb").read() o=0x08049DA8-0x08000000 for k in range(0,300,2):   if a[o+k:o+k+2]!=b[o+
+
+- tool `Bash`: awk '/^sub_08049DA8:/{f=1} f' src/fs_game.s | grep -v "^\s*\.[a-z]\|^\.L[0-9]*:$" | sed -n 50,100p | paste -sd';' | sed 's/\t//g' | fold -w 3000
+
+- tool `Bash`: for v in '(sub_0800099C() % 4) * 2 + 1' '(sub_0800099C() % 4) * 2 + 1'; do python3 - "$v" <<'E' import sys s=open('src/fs_game.c').read() i=s.index('void sub_08
+
+- tool `Bash`: for v in '((s32)sub_0800099C() \& 3) * 2 + 1' '((u32)sub_0800099C() \& 3) * 2 + 1' '(3 \& sub_0800099C()) * 2 + 1'; do python3 - "$v" <<'E' import sys s=open('s
+
+- tool `Bash`: sed -n '/^void sub_08049DA8/,/^}/p' src/fs_game.c | grep -n "parameter\|r = \|rand\|099C"
+
+## Claude
+
+Fixing a botched test edit in `sub_08049DA8`, then retrying the variants.
+
+- tool `Bash`: sed -i 's|            e->parameter = (3 \& sub_0800099C()) \* 2 + 1;|            e->parameter = 64;|' src/fs_game.c && for v in '(sub_0800099C() \& 3) * 2 + 1' 
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 3 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_0803AA04 sub_0804469C sub_0804871C gUnknown_0813ED60; do grep -n "$f\b" include/*.h | head -1; done
+
+## Claude
+
+Batch 117 committed (201 left). Writing batch 118.
+
+- tool `Bash`: sed -i -e 's|^//sub_0803AA04();|u8 sub_0803AA04(struct Entity *, struct Entity *, u8);|' -e 's|^void sub_0804469C(struct Entity \*, u8, u8, u8);|void sub_080446
+
+- tool `Bash`: python3 - <<'E' a=open("baserom.gba","rb").read(); b=open("zeldaalttp.gba","rb").read() o=0x0804469C-0x08000000 for k in range(0,300,2):   if a[o+k:o+k+2]!=b[o+
+
+- tool `Bash`: sed -i 's|    p = &gUnknown_0813ED60\[n \* 4\];|    p = \&gUnknown_0813ED60[n << 2];|' src/fs_game.c && make -j8 compare 2>&1 | grep -E "OK|FAIL"; python3 - <<'
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 3 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_08056B54 sub_08056778 sub_0805BF9C sub_08056988; do grep -n "$f\b" include/functions.h; done; grep -n "0x47" include/entity.h
+
+## Claude
+
+Batch 118 committed (198 left). Writing batch 119.
+
+- tool `Bash`: for f in sub_08056B54 sub_08056778 sub_0805BF9C sub_08056988; do sed -i "s|^//$f();|void $f(struct Entity *);|" include/functions.h; done S=/tmp/claude-1000/-ho
+
+- tool `Bash`: python3 - <<'E' s=open('src/fs_game.c').read() i=s.index('void sub_08056778(struct Entity *this)'); e=s.index('\n}\n',i) new='''void sub_08056778(struct Entity 
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 3 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_08012BE4 sub_08015AC4 sub_08013804 sub_0802C800 sub_0803A544 sub_0802B6BC gUnknown_03006D14 gUnknown_03000490 gRandom gNewKeys gUnknown_02000010 su
+
+- tool `Bash`: grep -n "struct Struct0201ED90$" -A5 include/types.h; grep -rn "gUnknown_03000520.unk7" src/*.c | head -3; grep -rn "gUnknown_02000010" src/*.c | grep -v "asm("
+
+- tool `Bash`: grep -n "^struct Struct0201ED90" -A6 include/*.h | head -10
+
+- tool `Bash`: for f in sub_08012BE4 sub_08015AC4 sub_08013804 sub_0802C800 sub_0803A544 sub_0802B6BC sub_0803857C; do sed -i "s|^//$f();|void $f(void);|" include/functions.h;
+
+## Claude
+
+Batch 119 committed (195 left). Writing batch 120.
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad && cat > $S/b120.c <<'E' @@ sub_0803857C void sub_0803857
+
+- tool `Bash`: sed -n 4399,4401p src/fs_game.c
+
+- tool `Bash`: sed -n 4397,4398p src/fs_game.c
+
+- tool `Bash`: sed -i 's|^void sub_0804F6EC(struct Entity \*, u32 \*);|void sub_0804F6EC(struct Entity *, const struct XY16 *);|' include/functions.h && sed -i 's|            
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 3 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_0800BE50 sub_08000620 sub_08043614 sub_08060124 sub_08041200 sub_080434D8; do grep -n "$f\b" include/functions.h | head -1; done; grep -rn "filler2
+
+## Claude
+
+Batch 120 committed (192 left). Writing batch 121.
+
+- tool `Bash`: grep -rn "sub_0800BE50(" src/*.c | grep -v "asm(" | head -2; python3 - <<'E' p='include/types.h'; s=open(p).read() a=s.index('struct Struct03006A30'); b=s.index
+
+- tool `Bash`: sed -i 's|^void sub_0800BE50(const void \*);|void sub_0800BE50(u8 *);|' include/functions.h && sed -i 's|sub_0800BE50(this->unk48);|sub_0800BE50((u8 *)this->unk
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 3 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_08036760 sub_08037424 sub_0803C070 sub_0804CB7C; do grep -n "$f\b" include/functions.h | head -1; done
+
+## Claude
+
+Batch 121 committed (189 left). Writing batch 122.
+
+- tool `Bash`: sed -i -e 's|^//sub_08036760();|void sub_08036760(void);|' -e 's|^//sub_08037424();|void sub_08037424(void);|' -e 's|^//sub_0803C070();|u8 sub_0803C070(struct E
+
+- tool `Bash`: python3 - <<'E' s=open('src/fs_game.c').read() i=s.index('void sub_08037424(void)'); e=s.index('\n}\n',i) f=s[i:e].replace("        if (sub_08037B5C(96))\n     
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 3 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: grep -n "struct MapData" -A12 include/types.h | head -16; grep -n "sub_08015DC0" include/functions.h; for f in gUnknown_08429054 gUnknown_08142024 gUnknown_0814
+
+- tool `Bash`: sed -i -e 's|^//sub_0805AED4();|void sub_0805AED4(struct Entity *);|' -e 's|^//sub_08062EA4();|void sub_08062EA4(struct Entity *);|' include/functions.h && sed 
+
+- tool `Bash`: python3 - <<'E' a=open("baserom.gba","rb").read(); b=open("zeldaalttp.gba","rb").read() o=0x0805AED4-0x08000000 for k in range(0,400,2):   if a[o+k:o+k+2]!=b[o+
+
+- tool `Bash`: python3 - <<'E' p='include/types.h'; s=open(p).read() s=s.replace("struct MapData\n{\n    u16 unk0[2];\n    u16 unk4[0x2800];\n    u16 unk5004[0x2800];\n};\n","
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 2 more Four Swords functions  struct MapDataB: the t
+
+- tool `Bash`: for a in 0800402c 080012cc 08008840 0800935c 08003538 08003748 080017e0; do echo "$a: $(arm-none-eabi-nm zeldaalttp.elf | grep -i "^$a " | grep -v ABS | head -2
+
+- tool `Bash`: grep -n "sub_0800402C\|sub_080012CC\|sub_0800935C\|sub_08003748\|sub_080017E0" include/functions.h src/*.c | grep -v "asm(" | head
+
+## Claude
+
+Batch 123 committed (184 left). Now `sub_08043A34`, which needs two ROM-address aliases and a tile-map view.
+
+- tool `Bash`: sed -i '/^gUnknown_080046DC = /a gUnknown_08008840 = 0x08008840;  /* table inside rom1'"'"'s code area, read by sub_08043A34 */\ngUnknown_08003538 = 0x08003538;
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad && python3 - <<'E' s=open('src/fs_game.c').read() i=s.ind
+
+- tool `Bash`: for f in sub_08058BC4 sub_0803D8AC sub_08057070 sub_0805722C gUnknown_08140C34; do grep -n "$f\b" include/*.h src/fs_game.c | head -2; done
+
+## Claude
+
+Batch 124: writing three more (`sub_08058BC4`, `sub_0803D8AC`, `sub_08057070`).
+
+- tool `Bash`: sed -i 's|^bool32 sub_0805722C(struct Entity \*this, u16 a, u16 b)|u8 sub_0805722C(struct Entity *this, u16 a, u16 b)|' src/fs_game.c && sed -i -e 's|^//sub_080
+
+- tool `Bash`: for v in 'd * U8_AT(this, 0x76)' '(s32)U8_AT(this, 0x76) * d'; do python3 - "$v" <<'E' import sys s=open('src/fs_game.c').read() i=s.index('bool32 sub_0803D8AC'
+
+- tool `Bash`: sed -n '/^bool32 sub_0803D8AC/,/^}/p' src/fs_game.c | grep "v = "; awk '/^sub_0803D8AC:/{f=1} f' src/fs_game.s | grep -v "^\s*\.[a-z]\|^\.L[0-9]*:$" | sed -n 60
+
+- tool `Bash`: awk '/^sub_0803D8AC:/{f=1} f' src/fs_game.s | grep -v "^\s*\.[a-z]\|^\.L[0-9]*:$" | sed -n 80,92p | paste -sd';' | sed 's/\t//g'
+
+- tool `Bash`: for v in 'U8_AT(this, 0x76) * d * 256' 'd * U8_AT(this, 0x76) * 256' 'U8_AT(this, 0x76) * d * 0x100'; do python3 - "$v" <<'E' import sys,re s=open('src/fs_game.
+
+- tool `Bash`: sed -i 's|v = (U8_AT(this, 0x76) \* d \* 0x100) / U8_AT(this, 0x77) >> 8;|v = U8_AT(this, 0x76) * d * 256 / U8_AT(this, 0x77) >> 8;|' src/fs_game.c && make -j8 
+
+## Claude
+
+Batch 124 matches (all three). Committing, then retrying `sub_08043A34` with a plain mask.
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 3 more Four Swords functions  S16_AT / U16_AT / U8_A
+
+## Claude
+
+Matches with a plain `& 0x7FF`, so I'm removing the unused `MapTile`/`MapDataC` types.
+
+- tool `Bash`: python3 - <<'E' p='include/types.h'; s=open(p).read() i=s.index('// A map tile entry read as an 11-bit index'); j=s.index('// The first half of MapData as -O0 c
+
+## Claude
+
+Checking whether the `LinkKeys` view can also go (same `& 0x7FF` trick).
+
+- tool `Bash`: cp src/fs_game.c /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/fs_bak.c && sed -i 's|v = gUnknown_0200B1D
+
+- tool `Bash`: python3 - <<'E' p='include/types.h'; s=open(p).read() i=s.index('// A link input ring buffer entry (gUnknown_0200B1D0_k)'); j=s.index('} __attribute__((packed, 
+
+- tool `Bash`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/next.sh 3 | cut -c1-4500
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad && echo sub_0803F284 >> $S/deferred.txt; for f in sub_080
+
+- tool `Bash`: sed -i -e 's|^//sub_0803ACC8();|u8 sub_0803ACC8(struct Entity *, struct Entity *, u8);|' -e 's|^//sub_0804BB58();|void sub_0804BB58(struct Entity *);|' include/
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 2 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_0803C1A4 sub_0804E9DC sub_0802C53C gUnknown_084289A8; do grep -n "$f\b" include/*.h | head -1; done; grep -rn "gUnknown_03006C80.fillerC" src | hea
+
+## Claude
+
+Batch 127 committed (178 left). Writing batch 128.
+
+- tool `Bash`: python3 - <<'E' p='include/types.h'; s=open(p).read() a=s.index('struct Struct03006C80'); b=s.index('};',a) seg=s[a:b].replace("    u8 fillerC[0x10];","    s32 
+
+- tool `Bash`: sed -i 's|^void sub_0803D520(u8, u8, u8);|void sub_0803D520(u8, u16, u8);|' include/functions.h && make -j8 compare 2>&1 | grep -E "^src.*:[0-9]+: |OK|FAIL|rror
+
+- tool `Bash`: awk '/^sub_0803D520:/{f=1} f' src/fs_game.s | grep -v "^\s*\.[a-z]\|^\.L[0-9]*:$" | sed -n 1,75p | paste -sd';' | sed 's/\t//g' | fold -w 3000
+
+- tool `Bash`: python3 - <<'E' s=open('src/fs_game.c').read() s=s.replace("        sub_0802C53C(gUnknown_03006A30[p].unk28, -amt);\n    }\n}","        sub_0802C53C(gUnknown_03
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 3 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_08054AB4 sub_08059060 sub_0803B1F8; do grep -n "$f\b" include/functions.h | head -1; done
+
+## Claude
+
+Batch 128 committed (175 left). Writing batch 129.
+
+- tool `Bash`: sed -i -e 's|^//sub_08054AB4();|void sub_08054AB4(struct Entity *);|' -e 's|^//sub_08059060();|void sub_08059060(struct Entity *);|' -e 's|^//sub_0803B1F8();|u8
+
+- tool `Bash`: python3 - <<'E' a=open("baserom.gba","rb").read(); b=open("zeldaalttp.gba","rb").read() o=0x08054AB4-0x08000000 for k in range(0,400,2):   if a[o+k:o+k+2]!=b[o+
+
+- tool `Bash`: sed -i 's|(v \& 255) \* 16 + gUnknown_0201EFF8|((v \& 255) << 4) + gUnknown_0201EFF8|g' src/fs_game.c && make -j8 compare 2>&1 | grep -E "OK|FAIL"; python3 - <<
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 3 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_08041448 sub_0804159C sub_0805293C sub_08051F94; do grep -n "$f\b" include/functions.h | head -1; done
+
+## Claude
+
+Batch 129 committed (172 left). Writing batch 130.
+
+- tool `Bash`: for f in sub_08041448 sub_0804159C sub_0805293C sub_08051F94; do sed -i "s|^//$f();|void $f(struct Entity *);|" include/functions.h; done S=/tmp/claude-1000/-ho
+
+- tool `Bash`: python3 - <<'E' s=open('src/fs_game.c').read() i=s.index('void sub_0805293C'); e=s.index('\n}\n',i) f=s[i:e].replace("        play_sound(16);\n        DeleteThi
+
+- tool `Bash`: awk '/^sub_0805293C:/{f=1} f' src/fs_game.s | grep -v "^\s*\.[a-z]" | sed -n 1,50p | paste -sd';' | sed 's/\t//g' | fold -w 3000
+
+- tool `Bash`: awk '/^sub_0805293C:/{f=1} f' src/fs_game.s | grep -v "^\s*\.[a-z]" | sed -n 50,62p | paste -sd';' | sed 's/\t//g'
+
+- tool `Bash`: python3 - <<'E' s=open('src/fs_game.c').read() i=s.index('void sub_0805293C'); e=s.index('\n}\n',i) new='''void sub_0805293C(struct Entity *this) {     struct E
+
+## Claude
+
+Matches. Lesson noted: the `beq body; b end` pattern also comes from Thumb's ±256-byte conditional-branch range on a long body, not only from `return`.
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 3 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_08060270 sub_080603C4 sub_08047EA4 sub_0804F458; do grep -n "$f\b" include/functions.h | head -1; done
+
+## Claude
+
+Batch 130 committed (169 left). Writing batch 131.
+
+- tool `Bash`: for f in sub_08060270 sub_080603C4 sub_08047EA4 sub_0804F458; do sed -i "s|^//$f();|void $f(struct Entity *);|" include/functions.h; done; sed -i 's|^#define U8
+
+- tool `Bash`: python3 - <<'E' a=open("baserom.gba","rb").read(); b=open("zeldaalttp.gba","rb").read() o=0x08060270-0x08000000 for k in range(0,400,2):   if a[o+k:o+k+2]!=b[o+
+
+- tool `Bash`: for v in '\&= ~15' '\&= ~0xF'; do python3 - "$v" <<'E' import sys s=open('src/fs_game.c').read() i=s.index('void sub_08060270'); e=s.index('\n}\n',i) f=s[i:e] i
+
+- tool `Bash`: cd /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad && cat > t2.c <<'E' typedef unsigned short u16; typedef 
+
+## Claude
+
+Signed `HALF.HI` on both sides gives the `bic`. Applying.
+
+- tool `Bash`: sed -i -e 's|    this->x.HALF_U.HI \&= ~0xF;|    this->x.HALF.HI = this->x.HALF.HI \& ~15;|' -e 's|    this->y.HALF_U.HI \&= ~0xF;|    this->y.HALF.HI = this->y
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 3 more Four Swords functions  Co-Authored-By: Claude
+

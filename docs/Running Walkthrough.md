@@ -188,6 +188,18 @@
   happens before the store), `sub_08038238` (a CpuFastSet source that is never stored), plus the earlier list.
   fs_game: 240 left in asm (of 915); all code: 6,129 left.
 
+- (2026-11-16, later) Batches 104-131, 74 more fs_game functions. New findings:
+  - `& 0x7FF` on a u16 compiles to `lsl #21; lsr #21`, so the 11-bit reads of the link ring buffer and the
+    map tiles need no bitfield struct (the `LinkKeys` view was dropped again).
+  - A `beq body; b end` pair is also what a long `if` body produces (Thumb conditional branches reach only
+    ±256 bytes), not only `if (...) return;`. Check the body length before reaching for `return`.
+  - Masks: `x.HALF.HI & ~15` (signed field) gives `mov #15; bic`; the unsigned view folds to an `and` with a
+    literal. `x += (rand & 3) - 2` gives the register order `x = x + 254 + ...` doesn't.
+  - `struct MapDataB` (tiles as BitU16A, then one BitU8A per tile at 0x2004) for -O0 writes to the map,
+    `S16_AT/U16_AT/U8_AT/S8_AT` for plain reads at an offset.
+  - `sub_080012A0` and `sub_08008F78` are entry points inside other .inc files; they now have labels.
+  fs_game: 166 left in asm (of 915); all code: 6,055 left.
+
 ## Step 11: recording play sessions (2026-11-15)
 
 - `mgba_run --play DIR` (SDL2): both GBAs side by side, real-time pacing, GBA 1 on WASD (F=A G=B R=L T=R
