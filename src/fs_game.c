@@ -4865,7 +4865,41 @@ void sub_0804DF14(struct Entity *this)
     gUnknown_0813FDA0[this->form](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0804DF3C.inc\"");
+
+void sub_0804DF3C(struct Entity *this)
+{
+    u8 i;
+    u8 n;
+    struct Entity *e;
+    const s16 *p;
+
+    this->unk14 = 1;
+    if (gUnknown_03006C80.unk5 == 0 || (gUnknown_03006C80.unk5 != 0 && (gUnknown_0201F000[0] & 1)))
+    {
+        n = gMainState == 2 ? gUnknown_03006C80.unk0 - 1 : 3;
+        p = gUnknown_0813FD90[n];
+        for (i = 0; i <= n; i++)
+        {
+            e = sub_0804C8A8(4, 1, this->parameter);
+            if (e != NULL)
+            {
+                e->x.HALF_U.HI = this->x.HALF_U.HI + ((const u16 *)p)[i * 2];
+                e->y.HALF_U.HI = this->y.HALF_U.HI + ((const u16 *)p)[i * 2 + 1];
+                sub_08008D90(e);
+            }
+        }
+        if (gUnknown_03006C80.unk2 == 0 && gUnknown_03006C80.unk5 == 0)
+        {
+            e = sub_0804C8A8(55, 0, 0);
+            if (e != NULL)
+                sub_0803D3D0(this, e);
+        }
+        BITU16_AT(&gUnknown_03006C80, 0x80) = this->x.HALF_U.HI;
+        BITU16_AT(&gUnknown_03006C80, 0x82) = this->y.HALF_U.HI;
+        DeleteThisEntity(this);
+    }
+}
+
 
 void sub_0804E0B8(struct Entity *this)
 {
@@ -10634,7 +10668,42 @@ void sub_080664A8(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0806653C.inc\"");
+
+void sub_0806653C(struct Entity *this)
+{
+    u8 v;
+
+    GetNextFrame(this);
+    if ((v = sub_08000580(this)) != 0)
+    {
+        if ((u8)(v & 1))
+            this->unk58 = gUnknown_03006A30[0].unk28;
+        if ((u8)(v & 2))
+            this->unk58 = gUnknown_03006A30[1].unk28;
+        if ((u8)(v & 4))
+            this->unk58 = gUnknown_03006A30[2].unk28;
+        if ((u8)(v & 8))
+            this->unk58 = gUnknown_03006A30[3].unk28;
+        if (!(this->unk54->unk60 & gUnknown_08137B10[this->parameter]))
+        {
+            this->unk54->unk60 = this->unk54->unk60 | gUnknown_08137B10[this->parameter];
+            this->unk1E_0 = 1;
+            sub_08003DFC(24);
+        }
+        else if (this->unk54->unk60 == 0xFFFF)
+        {
+            this->unk14 = 3;
+            this->unk17 = 60;
+            sub_08066808(this, this->unk58);
+        }
+    }
+    else
+    {
+        this->unk54->unk60 &= ~gUnknown_08137B10[this->parameter];
+        this->unk1E_0 = 0;
+    }
+}
+
 
 void sub_080666B8(struct Entity *this)
 {
