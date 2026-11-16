@@ -273,7 +273,31 @@ void sub_0803719C(u8 player)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08037300.inc\"");
+
+void sub_08037300(void)
+{
+    u32 ok;
+    u32 i;
+
+    ok = 1;
+    i = (gUnknown_03000494 - 2) & 15;
+    if (i > 15)
+        while (1)
+            ;
+    if ((u8)(gUnknown_03000FC0.unk3 & 1) && gUnknown_0200B1D0[0][i].v == 0xC000)
+        ok = 0;
+    if ((u8)(gUnknown_03000FC0.unk3 & 2) && gUnknown_0200B1D0[1][i].v == 0xC000)
+        ok = 0;
+    if ((u8)(gUnknown_03000FC0.unk3 & 4) && gUnknown_0200B1D0[2][i].v == 0xC000)
+        ok = 0;
+    if ((u8)(gUnknown_03000FC0.unk3 & 8) && gUnknown_0200B1D0[3][i].v == 0xC000)
+        ok = 0;
+    if (ok)
+        gUnknown_03000FC0.unk8 = 2;
+    else
+        CpuSet(gUnknown_03000FE4, gUnknown_03000FD0, 10);
+}
+
 
 u32 sub_08037414(void)
 {
@@ -1686,7 +1710,23 @@ void sub_0803E048(struct Entity *this)
 asm(".include \"asm/non_matching/fs_game/sub_0803E114.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803E518.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0803F0E4.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_0803F284.inc\"");
+
+void sub_0803F284(void)
+{
+    s32 i;
+
+    for (i = 0; i < gUnknown_03006C80.unk0; i++)
+    {
+        gUnknown_03006A30[i].unk28->y.HALF_U.HI = gUnknown_03006A30[i].unk28->y.HALF_U.HI + gUnknown_03006A30[i].unk3F;
+        if (gUnknown_03006A30[i].unk5 == 3 || gUnknown_03006A30[i].unk5 == 4)
+            sub_0803F3C4(gUnknown_03006A30[i].unk28);
+        if ((u16)(gUnknown_03006A30[i].unk36 & 4))
+            sub_080021EC(gUnknown_03006A30[i].unk28);
+        if (gUnknown_03006A30[i].unk2C != NULL)
+            sub_0803F550(gUnknown_03006A30[i].unk28, gUnknown_03006A30[i].unk2C);
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0803F3C4.inc\"");
 
 void sub_0803F550(struct Entity *a, struct Entity *b)
