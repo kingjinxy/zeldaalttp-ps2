@@ -355,7 +355,25 @@ bool32 sub_08037B5C(u8 a)
     return m == n;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08037C58.inc\"");
+
+bool32 sub_08037C58(u8 a)
+{
+    u8 m;
+    u8 n;
+
+    m = 0;
+    n = gUnknown_03000FC0.unk3 & 15;
+    if ((gUnknown_03000BF0 & 1) && gUnknown_03000FC0.unk38[0].unk0 == a)
+        m |= 1;
+    if ((gUnknown_03000BF0 & 2) && gUnknown_03000FC0.unk38[1].unk0 == a)
+        m |= 2;
+    if ((gUnknown_03000BF0 & 4) && gUnknown_03000FC0.unk38[2].unk0 == a)
+        m |= 4;
+    if ((gUnknown_03000BF0 & 8) && gUnknown_03000FC0.unk38[3].unk0 == a)
+        m |= 8;
+    return m == n && (gUnknown_03000BF0 & 15) == m;
+}
+
 
 bool32 sub_08037D64(u32 a)
 {
@@ -960,7 +978,18 @@ bool32 sub_0803B8D8(struct Entity *a, struct Entity *b, u8 c)
     return TRUE;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0803B99C.inc\"");
+
+u8 sub_0803B99C(struct Entity *this, struct Entity *other, u8 c)
+{
+    this->unk45 = sub_0803A5DC(this, other);
+    this->unk3D = (other->unk46 & 0x80) ? -other->unk46 - 16 : other->unk46 + 16;
+    other->unk45 = sub_0803A5DC(other, this);
+    other->unk3D = (this->unk46 & 0x80) ? -this->unk46 - 16 : this->unk46 + 16;
+    if (other->type == 3)
+        other->unk42 = 1;
+    return 1;
+}
+
 
 bool32 sub_0803BAAC(struct Entity *a, struct Entity *b, u8 c)
 {
@@ -7727,7 +7756,9 @@ void sub_080603C4(struct Entity *this)
     }
 }
 
+
 asm(".include \"asm/non_matching/fs_game/sub_0806041C.inc\"");
+
 
 void sub_08060538(struct Entity *this)
 {
