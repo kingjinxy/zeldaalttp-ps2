@@ -2110,7 +2110,7 @@ void sub_080521A4(struct Entity *, s32, s32);
 //sub_08052318();
 //sub_08052348();
 //sub_08052370();
-//sub_08052494();
+void sub_08052494(struct Entity *);
 //sub_0805251C();
 //sub_080525FC();
 //sub_08052648();

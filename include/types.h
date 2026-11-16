@@ -40,6 +40,11 @@ struct BitU16 {
     u16 v : 16;
 };
 
+struct XY16 {
+    u16 x;
+    u16 y;
+};
+
 // Defined in entity.h; declared here so variables.h and functions.h can use pointers to them
 struct Entity;
 struct Manager;

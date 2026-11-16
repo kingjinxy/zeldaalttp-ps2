@@ -84,6 +84,10 @@ typedef struct Entity {
     /* 0x70 */ union {
         u32 w;
         u8 b;
+        struct {
+            u8 b;
+            u8 unk71 : 8;
+        } s;
     } unk70;
     /* 0x74 */ u8 filler74;
     /* 0x75 */ u8 unk75 : 8;
@@ -91,6 +95,7 @@ typedef struct Entity {
     /* 0x77 */ u8 unk77 : 8;
     /* 0x78 */ union {
         u32 w;
+        u8 b : 8;
         u16 h : 16;  // map tile index for some kinds: (x - scroll x) >> 4 | ((y - scroll y) >> 4) << 6
         u16 *p;
         struct {
@@ -107,6 +112,7 @@ typedef struct Entity {
         u32 w;
         u16 h : 16;
         u16 *p;
+        u8 *pb;
         struct {
             u16 h;
             u16 unk7E : 16;
