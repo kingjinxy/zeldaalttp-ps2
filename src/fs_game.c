@@ -893,8 +893,26 @@ u8 sub_0803AEB4(struct Entity *this, struct Entity *other, u8 c)
     return 1;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0803AFB8.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_0803B0D8.inc\"");
+
+u8 sub_0803AFB8(struct Entity *this, struct Entity *other, u8 c)
+{
+    this->unk42 = other->unk46;
+    this->unk3D = (other->unk46 & 0x80) ? other->unk46 + (s8)other->unk46 / 4 : -other->unk46 - (s8)other->unk46 / 4;
+    other->unk3D = (this->unk46 & 0x80) ? this->unk46 + (s8)this->unk46 / 4 : -this->unk46 - (s8)this->unk46 / 4;
+    sub_0803A788(this, other);
+    return 1;
+}
+
+
+u8 sub_0803B0D8(struct Entity *this, struct Entity *other, u8 c)
+{
+    other->unk42 = this->unk46;
+    other->unk3D = (this->unk46 & 0x80) ? this->unk46 + (s8)this->unk46 / 4 : -this->unk46 - (s8)this->unk46 / 4;
+    this->unk3D = (other->unk46 & 0x80) ? other->unk46 + (s8)other->unk46 / 4 : -other->unk46 - (s8)other->unk46 / 4;
+    sub_0803A788(this, other);
+    return 1;
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0803B1F8.inc\"");
 
 u32 sub_0803B338(struct Entity *a, struct Entity *b, u8 c)
@@ -3177,7 +3195,46 @@ void sub_08049CAC(struct Entity *this)
     sub_08003DFC(157);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08049DA8.inc\"");
+
+void sub_08049DA8(struct Entity *this)
+{
+    struct Entity *e;
+    u16 i;
+    u8 r;
+
+    sub_0803CC20(this);
+    GetNextFrame(this);
+    this->z.HALF_U.HI = this->z.HALF_U.HI + 2;
+    if (this->z.HALF.HI < 0)
+        return;
+    this->z.HALF_U.HI = 0;
+    e = sub_0804C8A8(15, 6, 0);
+    if (e != NULL)
+    {
+        sub_0803D3D0(this, e);
+        if (this->parameter != 0)
+        {
+            e->parameter = 64;
+            play_sound(196);
+        }
+    }
+    if (this->parameter == 0)
+    {
+        r = ((sub_0800099C() & 3) << 1) + 1;
+        for (i = 0; i <= 3; i++)
+        {
+            e = sub_08012494(11);
+            if (e != NULL)
+            {
+                e->form = 1;
+                e->direction = i * 8 + r;
+                sub_0803D3D0(this, e);
+            }
+        }
+    }
+    DeleteThisEntity(this);
+}
+
 
 void sub_08049ED8(struct Entity *this)
 {
