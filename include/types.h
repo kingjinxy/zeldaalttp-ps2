@@ -603,7 +603,7 @@ struct Struct03006C80
     u8 filler48[4];
     u8 unk4C;
     u8 filler4D[2];
-    u8 unk4F;
+    u8 unk4F : 8;
     u8 unk50;
     u8 unk51;
     u8 filler52[2];
@@ -614,7 +614,7 @@ struct Struct03006C80
     u8 unk6C : 8;
     u8 unk6D : 8;
     u8 unk6E : 8;
-    u8 unk6F;
+    u8 unk6F : 8;
     struct Entity *unk70[4];  // indexed by Entity.unk18
     u8 filler80[4];
     u8 unk84[8];  // per player: x, y in 16-pixel tiles
