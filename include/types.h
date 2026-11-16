@@ -648,6 +648,8 @@ struct Struct03000450
     u8 filler0[0x18];
     u16 unk18;  // scroll x? subtracted from entity x before >> 4 (tile)
     u16 unk1A;  // scroll y?
+    u8 filler1C[0xC];
+    u16 unk28;
 };
 
 struct Struct08429004

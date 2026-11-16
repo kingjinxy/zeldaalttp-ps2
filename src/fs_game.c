@@ -1142,7 +1142,23 @@ struct Entity *sub_0804411C(struct Entity *this, u8 subtype, u8 form)
     return e;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08044198.inc\"");
+
+void sub_08044198(struct Entity *this, struct Entity *a, struct Entity *b)
+{
+    if (a != NULL)
+    {
+        sub_08044018(this, a);
+        if (sub_08009394(a, 6, 0) == 0 && a->x.HALF.HI + 6 < gUnknown_03000450.unk28)
+            a->x.HALF_U.HI += 6;
+    }
+    if (b != NULL)
+    {
+        sub_08044018(this, b);
+        if (sub_08009394(b, -6, 0) == 0 && a->x.HALF.HI - 6 >= 0)
+            b->x.HALF_U.HI -= 6;
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_08044240.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08044594.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0804469C.inc\"");
