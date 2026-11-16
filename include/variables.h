@@ -961,7 +961,7 @@ extern u16 gHeldKeys;
 extern struct Struct03000520 gUnknown_03000520;
 extern u8 gUnknown_03000530[0x300];
 //extern gUnknown_0300069C;
-//extern gUnknown_03000830;
+extern u8 gUnknown_03000830;
 extern u32 gUnknown_03000834;
 //extern gUnknown_03000838;
 //extern gUnknown_03000840;
@@ -5392,7 +5392,7 @@ extern void (*const gUnknown_08427BA8[])(void);
 //extern gUnknown_08427BB4;
 extern void (*const gUnknown_08427BCC[])(void);
 extern void (*const gUnknown_08427BFC[])(void);
-//extern gUnknown_08427C0C;
+extern const u8 gUnknown_08427C0C[];
 extern const u32 gUnknown_08427C14[];  // music per area
 extern void (*const gUnknown_08427C28[])(struct Entity *);
 //extern gUnknown_08427C2C;
