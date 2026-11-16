@@ -910,7 +910,22 @@ void sub_0803F550(struct Entity *a, struct Entity *b)
         b->y.WORD++;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0803F594.inc\"");
+
+void sub_0803F594(u8 a, u8 b)
+{
+    if (a == 255)
+    {
+        sub_0800D6A4(0x203);
+    }
+    else
+    {
+        sub_0800D6A4(0x201);
+        gUnknown_0201ED90_fs.unk8 = (u16)(b + 1);
+        gUnknown_0201ED90_fs.unkC = (u16)gUnknown_080046DC[gUnknown_03006C80.unk50 - 1];
+        gUnknown_0201ED90_fs.unk10 = (u16)gUnknown_080046DC[gUnknown_03006C80.unk50];
+    }
+}
+
 
 void sub_0803F628(struct Entity *this)
 {
@@ -1147,7 +1162,26 @@ void sub_08044854(struct Entity *this)
 asm(".include \"asm/non_matching/fs_game/sub_08044870.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08044910.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_080449F4.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_08044AE0.inc\"");
+
+void sub_08044AE0(struct Entity *this)
+{
+    u32 unused;
+
+    GetNextFrame(this);
+    if (--this->unk17 == 0)
+    {
+        this->unk14++;
+        sub_08003870(this, this->unk2A + 2);
+    }
+    else
+    {
+        if (this->speed > 16)
+            this->speed -= 2;
+        if (sub_08009694(this))
+            sub_08044BC4(this);
+    }
+}
+
 
 void sub_08044B78(struct Entity *this)
 {
@@ -3939,7 +3973,25 @@ void sub_080580B8(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_080580E0.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_08058178.inc\"");
+
+void sub_08058178(struct Entity *this)
+{
+    this->unk1C_0 = gUnknown_02016D60_fs.unk2 == this->parameter ? 2 : 0;
+    GetNextFrame(this);
+    if (gUnknown_02016D60_fs.unk8 == 1)
+    {
+        if (gUnknown_02016D60_fs.unk2 == this->parameter)
+        {
+            this->unk14++;
+            this->unk15 = 0;
+        }
+        else
+        {
+            DeleteThisEntity(this);
+        }
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_08058204.inc\"");
 
 void sub_080582F0(struct Entity *this)
@@ -5162,7 +5214,14 @@ asm(".include \"asm/non_matching/fs_game/sub_080637F4.inc\"");
 
 asm(".include \"asm/non_matching/fs_game/sub_08063C5C.inc\"");
 
-asm(".include \"asm/non_matching/fs_game/sub_08063D28.inc\"");
+
+void sub_08063D28(u8 a, u8 b, u8 c)
+{
+    gUnknown_03006A30[a].unkC = 3;
+    gUnknown_03006A30[a].unk38 = b;
+    gUnknown_03006A30[a].unk39 = c;
+}
+
 
 void sub_08063DBC(struct Entity *this)
 {
@@ -5560,7 +5619,21 @@ void sub_0806645C(struct Entity *this)
     sub_08003870(this, 0);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_080664A8.inc\"");
+
+void sub_080664A8(struct Entity *this)
+{
+    if (this->unk17 != 0)
+    {
+        this->unk17--;
+    }
+    else if (!sub_0802C12C(this))
+    {
+        sub_080009F4((void *)(0x06010000 + (this->unk53 + 1) * 0x200), gUnknown_03000030 + 0x42320, 0x100);
+        this->unk14 = 2;
+        this->unk1C_0 = 1;
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0806653C.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_080666B8.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08066764.inc\"");

@@ -67,7 +67,7 @@ typedef struct Entity {
     /* 0x4C */ struct Entity *unk4C;
     /* 0x50 */ u16 unk50 : 16;
     /* 0x52 */ u8 unk52 : 8;
-    /* 0x53 */ u8 filler53;
+    /* 0x53 */ u8 unk53;
     /* 0x54 */ struct Entity* unk54;
     /* 0x58 */ struct Entity* unk58;
     /* 0x5C */ u16 unk5C : 16;

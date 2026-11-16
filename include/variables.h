@@ -899,6 +899,7 @@ extern u8 gUnknown_03000010[];
 // with the .bss section of libgcc.
 //extern u8 *gUnknown_03000030
 #define gUnknown_03000030 (*(const u8 **)0x03000030)
+extern const u32 gUnknown_080046DC[];  // ldscript address
 //extern gUnknown_03000040;
 extern u8 gUnknown_03000050;
 extern u8 gUnknown_030000B8;
