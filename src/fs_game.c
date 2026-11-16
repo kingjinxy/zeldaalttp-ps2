@@ -507,7 +507,43 @@ void sub_08037E0C(void)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08037EEC.inc\"");
+
+void sub_08037EEC(void)
+{
+    u32 zero;
+    struct Entity *e;
+
+    sub_0801239C();
+    sub_080123BC();
+    sub_0802BF60();
+    sub_0802C278();
+    sub_0800D6F4();
+    sub_0800D744();
+    zero = 0;
+    CpuFastSet(&zero, (void *)0x0600C000, 0x01001000);
+    load_palette_from_gfx_group(2);
+    load_palette_from_gfx_group(21);
+    load_gfx_group(27);
+    load_gfx_group(1);
+    *(u16 *)0x05000000 = 0;
+    ((struct BitU16 *)gPaletteBuf2)->v = 0;
+    sub_0800F4C4(0x405, gUnknown_08427BB4);
+    BITU16_AT(&gUnknown_030004A0, 8) = gUnknown_08142374[18];
+    BITU16_AT(&gUnknown_030004A0, 10) = BITU16_AT(&gUnknown_030004A0, 12) = 0;
+    ((struct BitU16 *)&gUnknown_030004A0)->v = 0x1340;
+    BITU16_AT(&gUnknown_030004A0, 20) = gUnknown_08142374[21];
+    BITU16_AT(&gUnknown_030004A0, 22) = BITU16_AT(&gUnknown_030004A0, 24) = 0;
+    e = sub_08063C5C(gLCDRegisterBuffer);
+    e->unk1C_0 = 2;
+    e->unk1F_6 = 0;
+    e->x.HALF_U.HI = 120;
+    e->y.HALF_U.HI = 136;
+    gUnknown_03006A30[gLCDRegisterBuffer].unkC = 7;
+    sub_0800C0B0(0, 8);
+    gUnknown_02016D60_fs.unk4 = 480;
+    gUnknown_03005050++;
+}
+
 
 void sub_08038094(void)
 {
@@ -8347,7 +8383,42 @@ void sub_0805B648(struct Entity *this)
     gUnknown_08140F50[this->unk15 - 5](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0805B678.inc\"");
+
+void sub_0805B678(struct Entity *this)
+{
+    struct Entity *p;
+    u8 v;
+    s16 x;
+    s16 y;
+
+    p = gUnknown_03006A30[this->parameter].unk28;
+    if (this->unk74.b.unk75 == 0)
+    {
+        if (this->form << 1 == p->unk2A)
+        {
+            x = this->x.HALF_U.HI + gUnknown_08140F5C[p->unk2A];
+            y = this->y.HALF_U.HI + gUnknown_08140F5C[p->unk2A + 1];
+            v = sub_080093AC(x, y, p->unk50);
+            if (v == 0 || (u8)(v - 15) > 16)
+            {
+                p->x.HALF_U.HI = x;
+                p->y.HALF_U.HI = y;
+            }
+        }
+        this->unk74.b.unk75 = 1;
+        this->unk18 = 2;
+    }
+    if ((u8)(p->unk2A >> 1) == this->form && p->unk29 != 0)
+    {
+        sub_0805BA68(this);
+        if (this->unk74.b.unk75 == 1)
+        {
+            this->unk74.b.unk75 = 2;
+            sub_08003DFC(164);
+        }
+    }
+}
+
 
 void sub_0805B7FC(struct Entity *this)
 {

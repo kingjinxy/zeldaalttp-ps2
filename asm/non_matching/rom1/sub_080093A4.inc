@@ -4,6 +4,9 @@ sub_080093A4: @ 0x080093A4
 	ldrh r2, [r0, r2]
 	ldrh r1, [r0, #0x36]
 	ldrh r0, [r0, #0x32]
+	.thumb_func
+	.global sub_080093AC
+sub_080093AC: @ entry point: (x, y, layer) without the entity
 _080093AC:
 	ldr r3, _08009510 @ =0x03000468
 	ldrh r3, [r3]
