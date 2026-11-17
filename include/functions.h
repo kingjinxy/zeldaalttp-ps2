@@ -2009,7 +2009,7 @@ void sub_0804B15C(struct Entity *);
 void sub_0804B208(struct Entity *);
 //sub_0804B300();
 void sub_0804B5FC(struct Entity *);
-//sub_0804B708();
+void sub_0804B708(struct Entity *, u8);
 //sub_0804B744();
 void sub_0804B788(struct Entity *);
 void sub_0804B8B0(struct Entity *);

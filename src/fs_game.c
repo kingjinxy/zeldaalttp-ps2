@@ -4797,7 +4797,73 @@ void sub_0804A498(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0804A584.inc\"");
+
+void sub_0804A584(struct Entity *this)
+{
+    struct Entity *e;
+
+    gUnknown_0813F834[this->unk14](this);
+    if (this->parameter != 0)
+    {
+        if ((u8)(this->unk41 & 0x80))
+        {
+            switch ((u8)(this->unk41 & 0x7F))
+            {
+            case 0:
+                if ((u16)(gUnknown_03006A30[this->unk4C->form].unk36 & 0x400) == 0)
+                {
+                    e = sub_0804C8A8(85, 1, 0);
+                    if (e != NULL)
+                    {
+                        e->unk58 = this->unk4C;
+                        gUnknown_03006A30[this->unk4C->form].unk36 = gUnknown_03006A30[this->unk4C->form].unk36 | 0x400;
+                    }
+                }
+                if (this->parameter == 1)
+                    DeleteThisEntity(this);
+                break;
+            case 1:
+                switch (this->parameter)
+                {
+                case 1:
+                    sub_0804B708(this, 3);
+                    DeleteThisEntity(this);
+                    break;
+                case 2:
+                    sub_0804B708(this, 2);
+                    DeleteThisEntity(this);
+                    break;
+                }
+                break;
+            case 4:
+            case 8:
+            case 12:
+                switch (this->parameter)
+                {
+                case 3:
+                    this->unk45 = this->unk45 - 4;
+                    this->unk3D = 16;
+                    if (this->unk70.w != 0 && this->unk45 != 0)
+                        play_sound(45);
+                    break;
+                case 1:
+                    sub_0804B708(this, 1);
+                    DeleteThisEntity(this);
+                    break;
+                case 2:
+                    if (sub_0800099C() & 15)
+                        sub_0804CABC(this, 0);
+                    else
+                        sub_0804CABC(this, 7);
+                    DeleteThisEntity(this);
+                    break;
+                }
+                break;
+            }
+        }
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0804A790.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_0804ABB8.inc\"");
 
