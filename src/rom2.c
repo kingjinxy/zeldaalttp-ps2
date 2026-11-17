@@ -901,7 +901,49 @@ asm(".include \"asm/non_matching/rom2/sub_0800CAD4.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800CBBC.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800CCAC.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800CE74.inc\"");
-asm(".include \"asm/non_matching/rom2/sub_0800D0A8.inc\"");
+
+extern u8 gUnknown_02038000[];
+
+// Rasterises the edge (x0,y0)-(x1,y1) into column `slot` of the 3-per-line scanline table, x clamped to 0..240
+void sub_0800D0A8(s16 x0, s16 y0, s16 x1, s16 y1, s16 slot)
+{
+    u16 *p = (u16 *)gUnknown_02038000;
+    s16 t;
+    s32 step;
+    s32 pos;
+
+    if (y0 < 0 && y1 < 0)
+        return;
+    if (y0 > 159 && y1 > 159)
+        return;
+    if (y0 > y1) {
+        t = y0; y0 = y1; y1 = t;
+        t = x0; x0 = x1; x1 = t;
+    }
+    if (y0 == y1)
+        return;
+    step = ((x1 - x0) << 16) / (y1 - y0);
+    if (y0 < 0) {
+        x0 = ((-y0 * step) >> 16) + x0;
+        y0 = 0;
+    }
+    if (y1 > 159)
+        y1 = 159;
+    pos = x0 << 16;
+    p += y0 * 3 + slot;
+    do {
+        if (x0 < 0)
+            x0 = 0;
+        if (x0 > 240)
+            x0 = 240;
+        *p = x0;
+        pos += step;
+        x0 = pos >> 16;
+        y0++;
+        p += 3;
+    } while (y0 <= y1);
+}
+
 
 void sub_0800D1A0(void)
 {
