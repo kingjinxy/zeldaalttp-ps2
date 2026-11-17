@@ -2626,7 +2626,38 @@ void sub_080437F8(struct Entity *this)
     sub_08003688(this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08043834.inc\"");
+
+void sub_08043834(struct Entity *this)
+{
+    struct Entity *link = gUnknown_03006A30[this->form].unk28;
+
+    sub_0803D3D0(link, this);
+    this->unk1C_0 = 1;
+    this->unk46 = 12;
+    this->unk3C = link->unk3C + 1;
+    this->unk5C = link->unk5C;
+    this->unk48 = gUnknown_0842879C;
+    this->unk40 = 35;
+    this->unk3F = 70;
+    this->unk14++;
+    this->speed = 0x380;
+    this->unk20 = 0;
+    this->unk1C_6 = 3;
+    this->unk1E_0 = 1;
+    this->unk1B = 127;
+    if ((u16)(this->unk50 & 0xC000) == 0x8000)
+        this->parameter = 1;
+    this->unk2A = link->unk2A;
+    this->direction = link->unk2A << 2;
+    this->unk44 = 4;
+    this->unk64 = 60;
+    sub_08003870(this, (this->unk2A >> 1) + 12);
+    sub_080005F0(this);
+    sub_0803CC20(this);
+    sub_08003DFC(69);
+    sub_08043A34(this);
+}
+
 
 
 void sub_08043A34(struct Entity *this)
