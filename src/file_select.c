@@ -637,7 +637,40 @@ asm(".include \"asm/non_matching/file_select/sub_080131C8.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080131FC.inc\"");
 
 asm(".include \"asm/non_matching/file_select/sub_080132B0.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_080133D0.inc\"");
+
+struct Area080132B0 { u8 *unk0; u32 unk4; };
+struct Area080132B0 *sub_080132B0(void);
+void sub_080128EC(u8 *);
+void sub_08015DD8(u16);
+void sub_08015F74(u16);
+void sub_080131FC(const u8 *, u32);
+void sub_0801303C(const u8 *, const u8 *, u8);
+
+void sub_080133D0(void)
+{
+    struct Area080132B0 *s = sub_080132B0();
+    u8 *a = s->unk0;
+    u32 b = s->unk4;
+
+    gUnknown_03006C80.unk2 = a[1] == 4;
+    gUnknown_02016330[0] = *(u32 **)(a + 20);
+    gUnknown_03006C80.unk4C = a[3];
+    sub_080128EC(a);
+    sub_08015DD8(a[1]);
+    sub_08015F74(a[0]);
+    gUnknown_0201EFF8[0][1] = 0;
+    gUnknown_0201EFF8[0][0] = 0;
+    gUnknown_0201EFF8[1][0] = a[4] * 16;
+    gUnknown_0201EFF8[1][1] = a[5] * 16;
+    if (sub_08012F84(0, 0))
+        sub_08013C8C((u16 *)sub_08012F84(0, 0), 0, 0, 0);
+    if (sub_08012F84(0, 1))
+        sub_08013C8C((u16 *)sub_08012F84(0, 1), 0, 0, 0);
+    if (sub_08012F84(0, 3))
+        sub_0801303C((const u8 *)sub_08012F84(0, 3), a, 0);
+    sub_080131FC(a, b);
+}
+
 asm(".include \"asm/non_matching/file_select/sub_08013490.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080136D4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08013754.inc\"");
@@ -835,6 +868,7 @@ void sub_08014658(u16 a, u16 b, u16 c)
 asm(".include \"asm/non_matching/file_select/sub_080146D4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801478C.inc\"");
 
+
 struct GfxRec0801484C { u32 src; u8 *dst; s32 ctrl; };
 asm(".include \"asm/non_matching/file_select/sub_0801484C.inc\"");
 
@@ -969,9 +1003,9 @@ void sub_08015F74(u16 n)
 
 asm(".include \"asm/non_matching/file_select/sub_08015FE4.inc\"");
 
+extern u8 gUnknown_02016470[];
 extern u8 gUnknown_02016D90[];
 extern u8 gUnknown_020031D0[];
-extern u8 gUnknown_02016470[];
 void sub_080159F4(void *, void *);
 
 void sub_08016084(void)
@@ -2812,6 +2846,7 @@ void sub_0802705C(struct Entity *this)
 
 asm(".include \"asm/non_matching/file_select/sub_080270C0.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802715C.inc\"");
+
 
 void sub_0802721C(struct Entity *this)
 {
