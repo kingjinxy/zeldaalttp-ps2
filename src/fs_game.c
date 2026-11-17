@@ -673,7 +673,7 @@ void sub_080383F0(void)
     zero_memory((void *)0x03000040, 0x1C0);
     sub_0803E518();
     for (i = 0; i <= 3; i++)
-        gUnknown_03006A30[i].unk1C = gUnknown_03006C80.unk58[i];
+        gUnknown_03006A30[i].unk1C = gUnknown_03006C80.unk58[i].v;
     load_palette_from_gfx_group(2);
     load_gfx_group(16);
     *(u16 *)0x05000000 = 0;
@@ -1096,7 +1096,7 @@ u8 sub_08039AA0(u8 a0)
 }
 
 
-u8 sub_08039CD4(void)
+u32 sub_08039CD4(void)
 {
     gUnknown_03006C80.unk5 = (u8)(gUnknown_03006C80.unk4 % 3) == 2 ? 129 : 0;
     return gUnknown_03006C80.unk5;
@@ -1113,7 +1113,76 @@ void sub_08039D1C(void)
     while (gUnknown_03006C80.unk1 == old);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08039D64.inc\"");
+
+u32 sub_08039D64(void)
+{
+    u8 i;
+    u32 zero;
+
+    if (gUnknown_03006C80.unk2 != 0)
+    {
+        gUnknown_03006C80.unk5 = 0;
+        if (gUnknown_03006C80.unk4F > 239)
+            return 1;
+        if ((u8)(gUnknown_03006C80.unk4F & 16))
+            BITU8_AT(&gUnknown_03006C80, 4) = 1;
+        if ((u8)(gUnknown_03006C80.unk4F & 32))
+        {
+            for (i = 0; i <= 3; i++)
+            {
+                gUnknown_03006C80.unkC[i] = 0;
+                gUnknown_03006C80.unk68[i].v = 0;
+                gUnknown_03006C80.unk58[i].v = 9;
+                gUnknown_03006C80.unk60[i].v = 40;
+            }
+            gUnknown_03006C80.unk8 = BITU8_AT(&gUnknown_03006C80, 4) = gUnknown_03006C80.unk24 = 0;
+            zero = 0;
+            CpuSet(&zero, gUnknown_03006A30, 0x05000090);
+        }
+        if ((u8)(gUnknown_03006C80.unk4F & 64))
+            BITU8_AT(&gUnknown_03006C80, 4)++;
+    }
+    else
+    {
+        BITU8_AT(&gUnknown_03006C80, 4)++;
+        switch (gUnknown_03006C80.unk3)
+        {
+        case 0:
+            if (gUnknown_03006C80.unk5 != 0)
+                return 1;
+            sub_08039CD4();
+            return 0;
+        case 1:
+            if (gUnknown_03006C80.unk5 != 0)
+                return 1;
+            sub_08039CD4();
+            if (gUnknown_03006C80.unk5 != 0)
+                gUnknown_03006C80.unk1 = 2;
+            else
+                sub_08039D1C();
+            return 0;
+        case 2:
+            if (gUnknown_03006C80.unk5 != 0 && gUnknown_03006C80.unk1 == 2)
+                return 1;
+            sub_08039D1C();
+            if (sub_08039CD4())
+            {
+                gUnknown_03006C80.unk1 |= 0xFF;
+                if (gUnknown_03006C80.unk4 == 11)
+                    gUnknown_03006C80.unk1 = 2;
+                if (gUnknown_03006C80.unk1 == 2)
+                    return 0;
+                sub_08039D1C();
+                while (gUnknown_03006C80.unk1 == 2 || ((gUnknown_03006C80.unk4E >> gUnknown_03006C80.unk1) & 1))
+                    sub_08039D1C();
+                gUnknown_03006C80.unk4E = gUnknown_03006C80.unk4E | (1 << gUnknown_03006C80.unk1);
+            }
+            break;
+        }
+    }
+    return 0;
+}
+
 
 void sub_0803A030(void)
 {
