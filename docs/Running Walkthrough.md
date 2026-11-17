@@ -479,3 +479,32 @@ draft generator for the regular -O0 Four Swords code, to speed up matching decom
 - Deferred, with what was tried (scratchpad notes): sub_0806041C and sub_0803D134 (`x - (s + 16)` folded;
   at -O0 a temporary would need a stack slot the original doesn't have), sub_08013C50, sub_0802614C,
   sub_0802D228, sub_0802D190, sub_0800E63C, and the earlier register-choice ones.
+
+## Step 17: decomp-permuter (2026-11-17)
+
+- Set up `decomp-permuter` (simonlindholm, MIT, from GitHub; it bundles its own pycparser fork and only
+  needs `toml`, also cloned from GitHub into `reference/`). `tools/permuter_setup.py FUNC draft.c OUTDIR`
+  builds a permuter directory for one function: the file's C with the draft in place of the function's
+  asm include (other asm includes dropped), preprocessed; the original asm assembled alone as the target;
+  a compile script with the file's flags (-O2 or -O0 for fs_game, `-fprologue-bugfix` per the Makefile).
+- 37 more functions matched (5,767 asm files left). The permuter's zero-score sources are rarely plausible
+  C (an extra variable holding a table or a constant, `if (1)`, `r = x != 0`), so they are not committed
+  as they are. They point at the expression that sets the registers, and a plausible form follows:
+  - `u8` casts on a table of `u16` pairs (sub_0803472C), `<< 2` instead of `* 4` (sub_0801DEC0).
+  - The `if`/`else` branches swapped (sub_08016EF0, sub_0801E7A0).
+  - A struct view (`((struct View *)&g)->field`) where the ROM keeps the base address in a register and
+    adds the offset; an array index or a field of the global itself folds base+offset into the pool word
+    (sub_0802C710, sub_0800E63C).
+  - `u32` counters assigned back to a `u8` field (sub_0801E7A0).
+- Other forms: `b = ...` inside the first expression to order loads (sub_080260E4), separate statements
+  for two stores of one constant (sub_0803008C), `if (a != X && ...) {...; return 16;} return 0;`
+  (sub_080269F8), and an ldscript-alias prototype for a wider argument (`sub_08012F84_u32`, sub_08026ACC).
+- Prototype and struct fixes: `sub_08009664` returns u16, `sub_0800EB50` takes a u32, `sub_08013C8C` takes
+  a `u16 *`, the 4th argument of `sub_08013C8C` from sub_0803472C is `unk52`; Struct0202A5E0 (`gTextbox`)
+  `unk2_6`, `unk10C`, `unk10D`; Struct03000450 `unk2A`; Struct03006C80 `unk49`, `unk4B`; Struct0202A770
+  `unk58` (a 12-byte record, copied to `unk5C`); Struct0202A580 `unk8` is a u16; the link state
+  `gUnknown_02030790` (rom2.c) with its packet pointers.
+- Process: one commit was made after a failed compare because `| tail -1` hid make's status; the gate is
+  `grep -q "zeldaalttp.gba: OK"` again and the commit was amended. The scratchpad `unplace.py` once
+  deleted asm include lines while removing a draft's declarations; the compare caught it before a commit.
+- Deferred with permuter scores in the scratchpad notes: ~30 functions, mostly register choice.
