@@ -703,7 +703,23 @@ asm(".include \"asm/non_matching/file_select/sub_080141E8.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801424C.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080142F4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08014474.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_080144A0.inc\"");
+
+// Point the two text layers at BG2 and BG1, clear the 8 text slots, enable BG1+BG2
+void sub_080144A0(void)
+{
+    struct Struct02002440 *p;
+    u16 i;
+
+    gUnknown_0201F020 = (struct UnknownStruct3 *)&gUnknown_030004A0.bgConfig[2];
+    ((struct BGConfig *)gUnknown_0201F020)->bgcnt = gUnknown_08142374[16];
+    *(struct BGConfig **)&gUnknown_0200B320 = &gUnknown_030004A0.bgConfig[1];
+    (*(struct BGConfig **)&gUnknown_0200B320)->bgcnt = gUnknown_08142374[17];
+    p = gUnknown_02002440;
+    for (i = 0; i < 8; i++, p++)
+        p->unk0 = NULL;
+    gUnknown_030004A0.dispCnt |= 0x600;
+}
+
 asm(".include \"asm/non_matching/file_select/sub_080144F0.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080145B4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080145D8.inc\"");
