@@ -23,7 +23,7 @@ _0800F248:
 	.byte 0x00
 	.byte 0x00
 _0800F254:
-	.4byte 0x0800F258
+	.4byte _0800F254+0x4
 	.4byte _0800F2A6
 	.4byte _0800F3F4
 	.4byte _0800F2B4

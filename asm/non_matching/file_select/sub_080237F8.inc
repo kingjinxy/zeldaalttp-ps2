@@ -31,7 +31,7 @@ sub_080237F8: @ 0x080237F8
 	add r0, r5, #0
 	mov r1, #64
 	mov r2, r9
-	bl 0x08002E70
+	bl sub_08002E70
 	lsl r4, r4, #16
 	asr r4, r4, #16
 	ldrh r2, [r5, #50]
@@ -68,7 +68,7 @@ _0802386E:
 	asr r1, r1, #8
 	add r0, r6, #0
 	mov r2, r9
-	bl 0x08002E70
+	bl sub_08002E70
 	add r0, r6, #0
 	bl sub_080239C0
 	add r0, r6, #0
@@ -93,7 +93,7 @@ _080238A6:
 	mov r0, #8
 	strb r0, [r6, #24]
 	mov r0, #139
-	bl 0x08003DFC
+	bl sub_08003DFC
 	b _080239B2
 _080238B2:
 	ldr r0, _080238D8  @ =gUnknown_0813BE56
@@ -156,7 +156,7 @@ _08023906:
 	add r0, r0, r3
 	strh r0, [r6, #50]
 	mov r0, #18
-	bl 0x08003DFC
+	bl sub_08003DFC
 	mov r0, #15
 	mov r1, #3
 	mov r2, #32
@@ -177,7 +177,7 @@ _08023906:
 	bl sub_0803D4A4
 _08023950:
 	ldr r4, _080239A8  @ =gUnknown_0813BE58
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #7
 	and r1, r1, r0
 	add r1, r1, r4

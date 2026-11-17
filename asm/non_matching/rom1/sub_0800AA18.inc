@@ -9,8 +9,8 @@ sub_0800AA18: @ 0X0800AA18
 	.byte 0x47
 	.byte 0x00
 	.byte 0x00
-	.4byte 0x08012541
-	.4byte 0x08003b54
+	.4byte DeleteThisEntity
+	.4byte FrameNeedsUpdate+0x2d0
 	.4byte 0x0800a500
 	.byte 0x00
 	.byte 0x01

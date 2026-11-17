@@ -13,7 +13,7 @@ sub_08033A5C: @ 0x08033A5C
 	mov r0, #2
 	strb r0, [r3, #20]
 	add r0, r3, #0
-	bl 0x08003BCC
+	bl sub_08003BCC
 	ldr r2, _08033A88  @ =gUnknown_0201F000
 	ldr r0, [r2]
 	mov r1, #32

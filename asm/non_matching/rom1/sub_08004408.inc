@@ -4,7 +4,7 @@ sub_08004408: @ 0X08004408
 	orrs r2, r2
 	bne.n _0800441A
 	push {r0, r1}
-	bl 0x80152f4
+	bl sub_080152F4
 	cmp r0, #2
 	pop {r0, r1}
 	bne.n _0800441A
@@ -22,12 +22,12 @@ _0800441E:
 	orrs r2, r4
 	strb r2, [r0, r3]
 	movs r1, #2
-	bl 0x8002e50
-	bl 0x8001510
-	bl 0x800127c
-	bl 0x8007364
-	bl 0x8001328
-	bl 0x8001d5c
+	bl sub_08002E50
+	bl sub_08001510
+	bl sub_0800127C
+	bl sub_08007364
+	bl sub_08001328
+	bl sub_08001D5C
 	ldrb r2, [r1, #15]
 	movs r3, #64
 	tst r2, r3
@@ -38,11 +38,11 @@ _0800441E:
 	ldrb r3, [r1, #10]
 	orrs r2, r3
 	bne.n _08004460
-	bl 0x80015bc
+	bl sub_080015BC
 _08004460:
-	bl 0x8001818
-	bl 0x80052a8
-	bl 0x8001d5c
+	bl sub_08001818
+	bl sub_080052A8
+	bl sub_08001D5C
 	movs r3, #2
 	ldrsb r2, [r1, r3]
 	orrs r2, r2
@@ -56,20 +56,20 @@ _08004460:
 	beq.n _0800448A
 	eors r2, r2
 	str r2, [r0, #12]
-	bl 0x8001f70
+	bl sub_08001F70
 _0800448A:
-	bl 0x8002294
+	bl sub_08002294
 	movs r2, #41
 	ldrb r2, [r0, r2]
 	lsrs r2, r2, #2
 	bcs.n _080044A6
-	bl 0x8001d5c
+	bl sub_08001D5C
 	ldrb r1, [r1, #4]
 	orrs r1, r1
 	bne.n _080044A6
 _080044A0:
 	ldrb r1, [r0, #27]
-	bl 0x80037ec
+	bl sub_080037EC
 _080044A6:
 	pop {pc}
 _080044A8:
@@ -127,7 +127,7 @@ _080044FA:
 	bcc.n _08004516
 	push {r0, r1, r2, r3}
 	movs r0, #105
-	bl 0x8003dfc
+	bl sub_08003DFC
 	pop {r0, r1, r2, r3}
 	movs r4, #240
 	b.n _08004518
@@ -142,9 +142,9 @@ _0800451C:
 	beq.n _08004530
 	ldr r2, [pc, #364]
 	str r2, [r0, #12]
-	bl 0x8001d00
+	bl sub_08001CD8+0x28
 	movs r2, #104
-	bl 0x80031ac
+	bl sub_080031AC
 _08004530:
 	movs r2, #43
 	.syntax unified

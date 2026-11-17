@@ -13,7 +13,7 @@ sub_08007A38: @ 0X08007A38
 	subs r1, #4
 	ldrh r0, [r0, #50]
 	ldr r2, [pc, #96]
-	bl 0x8009310
+	bl sub_08009310
 	adds r1, r0, #0
 	pop {r0}
 	movs r2, #205
@@ -36,7 +36,7 @@ sub_08007A38: @ 0X08007A38
 	movs r3, #64
 	orrs r2, r3
 	strb r2, [r0, #29]
-	bl 0x8001d5c
+	bl sub_08001D5C
 	ldrb r2, [r1, #2]
 	movs r3, #8
 	orrs r2, r3
@@ -44,7 +44,7 @@ sub_08007A38: @ 0X08007A38
 	ldrb r1, [r0, #10]
 	movs r0, #78
 	eors r2, r2
-	bl 0x804c8a8
+	bl sub_0804C8A8
 	adds r2, r0, #0
 	pop {r0}
 	orrs r2, r2

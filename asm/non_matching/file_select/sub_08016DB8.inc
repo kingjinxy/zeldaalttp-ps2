@@ -2,11 +2,11 @@
 sub_08016DB8: @ 0x08016DB8
 	push {r4,lr}
 	add r4, r0, #0
-	bl 0x0800963C
+	bl sub_0800963C
 	mov r1, #128
 	lsl r1, r1, #6
 	add r0, r4, #0
-	bl 0x08003594
+	bl sub_08003594
 	cmp r0, #0
 	bne _08016DF2
 	mov r0, #5
@@ -25,7 +25,7 @@ sub_08016DB8: @ 0x08016DB8
 	strb r0, [r2]
 	add r0, r4, #0
 	mov r1, #4
-	bl 0x08003870
+	bl sub_08003870
 _08016DF2:
 	pop {r4}
 	pop {r0}

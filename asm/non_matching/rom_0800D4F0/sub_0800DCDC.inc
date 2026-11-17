@@ -18,7 +18,7 @@ _0800DCF0:
 	.byte 0x00
 	.byte 0x00
 _0800DCFC:
-	.4byte 0x0800DD00
+	.4byte _0800DCFC+0x4
 	.4byte _0800DD30
 	.4byte _0800DECE
 	.4byte _0800DDD0

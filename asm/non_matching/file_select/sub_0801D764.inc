@@ -44,7 +44,7 @@ _0801D794:
 	.byte 0x00
 	.byte 0x00
 _0801D7B4:
-	.4byte 0x0801D7B8
+	.4byte _0801D7B4+0x4
 	.4byte _0801D7E4
 	.4byte _0801D7D8
 	.4byte _0801D7FC

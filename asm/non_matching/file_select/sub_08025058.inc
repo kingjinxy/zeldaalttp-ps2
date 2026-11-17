@@ -13,11 +13,11 @@ sub_08025058: @ 0x08025058
 	sub r5, r0, #3
 	mov r0, #31
 	and r5, r5, r0
-	bl 0x0800099C
+	bl sub_0800099C
 	add r4, r0, #0
 	mov r0, #3
 	and r4, r4, r0
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #12
 	and r1, r1, r0
 	ldr r0, _080250D8  @ =gUnknown_0813C144

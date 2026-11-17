@@ -21,7 +21,7 @@ sub_08019E90: @ 0x08019E90
 	strh r0, [r1]
 _08019EB6:
 	add r0, r2, #0
-	bl 0x08003828
+	bl GetNextFrame
 	pop {r0}
 	bx r0
 _08019EC0:

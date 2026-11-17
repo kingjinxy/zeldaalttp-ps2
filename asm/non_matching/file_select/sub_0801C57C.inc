@@ -31,7 +31,7 @@ sub_0801C57C: @ 0x0801C57C
 	strb r0, [r1]
 	add r0, r4, #0
 	mov r1, #1
-	bl 0x08003870
+	bl sub_08003870
 	b _0801C5E8
 _0801C5C0:
 	.4byte gUnknown_0813A724
@@ -52,11 +52,11 @@ _0801C5C4:
 	mov r0, #32
 	strb r0, [r1]
 	mov r0, #96
-	bl 0x08003DFC
+	bl sub_08003DFC
 _0801C5E8:
 	ldr r1, _0801C5F8  @ =gUnknown_0813A620
 	add r0, r4, #0
-	bl 0x080098A0
+	bl sub_080098A0
 	pop {r4}
 	pop {r0}
 	bx r0

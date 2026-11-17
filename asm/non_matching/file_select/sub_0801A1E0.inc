@@ -19,7 +19,7 @@ sub_0801A1E0: @ 0x0801A1E0
 _0801A202:
 	add r0, r4, #0
 	mov r1, #4
-	bl 0x08003870
+	bl sub_08003870
 	pop {r4}
 	pop {r0}
 	bx r0

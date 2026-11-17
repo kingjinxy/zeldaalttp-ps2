@@ -6,7 +6,7 @@ sub_08008DFC: @ 0X08008DFC
 	ldrh r0, [r4, #50]
 	ldrh r1, [r4, #54]
 	ldr r2, [pc, #160]
-	bl 0x8009364
+	bl sub_0800935C+0x8
 	ldr r1, [pc, #196]
 _08008E0C:
 	adds r1, #6

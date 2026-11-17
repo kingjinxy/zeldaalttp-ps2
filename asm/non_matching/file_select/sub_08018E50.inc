@@ -82,7 +82,7 @@ sub_08018E50: @ 0x08018E50
 	strb r0, [r7, #20]
 	add r0, r7, #0
 	mov r1, #3
-	bl 0x08003870
+	bl sub_08003870
 _08018F08:
 	pop {r3,r4}
 	mov r8, r3

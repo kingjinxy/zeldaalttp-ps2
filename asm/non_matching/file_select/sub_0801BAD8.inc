@@ -6,7 +6,7 @@ sub_0801BAD8: @ 0x0801BAD8
 	cmp r0, #0
 	bne _0801BB04
 	ldr r4, _0801BB10  @ =gUnknown_03006A30
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r1, _0801BB14  @ =gUnknown_03006C80
 	ldrb r1, [r1]
 	bl __umodsi3

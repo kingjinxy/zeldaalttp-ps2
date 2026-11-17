@@ -76,7 +76,7 @@ _0812A768:
 _0812A76C:
 	.4byte 0x04000060
 _0812A770:
-	.4byte 0x0812CC58
+	.4byte sub_0812CC58_addr
 _0812A774:
 	.4byte gUnknown_03001400
 _0812A778:
@@ -84,11 +84,11 @@ _0812A778:
 _0812A77C:
 	.4byte gUnknown_030003D4
 _0812A780:
-	.4byte 0x0812CD78
+	.4byte sub_0812CC58_addr+0x120
 _0812A784:
 	.4byte gUnknown_030003D8
 _0812A788:
-	.4byte 0x0812CE70
+	.4byte sub_0812CC58_addr+0x218
 _0812A78C:
 	.4byte gUnknown_03000C1C
 _0812A790:

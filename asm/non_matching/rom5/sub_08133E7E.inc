@@ -14,6 +14,6 @@ _08133E8E:
 _08133E90:
 	pop {r0}
 	bx lr
-	.4byte 0x083c2654
+	.4byte gUnknown_083C23D4+0x280
 	.syntax divided
 	.thumb

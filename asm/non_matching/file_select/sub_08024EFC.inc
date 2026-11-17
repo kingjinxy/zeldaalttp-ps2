@@ -30,7 +30,7 @@ sub_08024EFC: @ 0x08024EFC
 	add r1, r4, #0
 	bl sub_0803D4A4
 	mov r0, #165
-	bl 0x08003DFC
+	bl sub_08003DFC
 _08024F40:
 	pop {r4,r5}
 	pop {r0}

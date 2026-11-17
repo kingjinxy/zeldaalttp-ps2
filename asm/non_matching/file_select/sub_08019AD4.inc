@@ -38,7 +38,7 @@ _08019B08:
 _08019B16:
 	bl sub_0803DF84
 	add r0, r5, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r0, r5, #0
 	add r0, r0, #41
 	ldrb r1, [r0]

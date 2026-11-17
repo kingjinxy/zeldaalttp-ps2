@@ -41,7 +41,7 @@ sub_0802A224: @ 0x0802A224
 	str r1, [r2]
 	add r0, r4, #0
 	mov r1, #23
-	bl 0x08003E10
+	bl sub_08003E10
 _0802A27C:
 	pop {r4}
 	pop {r0}

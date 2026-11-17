@@ -19,7 +19,7 @@ _08024738:
 	add r1, r0, #0
 	str r1, [r4, #100]
 	add r0, r4, #0
-	bl 0x08009EA4
+	bl sub_08009EA4
 	add r1, r4, #0
 	add r1, r1, #43
 	strb r0, [r1]
@@ -33,7 +33,7 @@ _08024738:
 	strb r1, [r0]
 	add r1, r1, #20
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 _08024770:
 	pop {r4}
 	pop {r0}

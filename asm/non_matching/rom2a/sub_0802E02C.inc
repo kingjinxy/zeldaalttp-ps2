@@ -6,9 +6,9 @@ sub_0802E02C: @ 0x0802E02C
 	mov r5, r8
 	push {r5-r7}
 	ldr r6, _0802E058  @ =gUnknown_02016D78
-	bl 0x08137AFC
+	bl sub_08137AFC
 	bl sub_0802DFD0
-	bl 0x08000BAC
+	bl sub_08000BAC
 	ldr r3, _0802E05C  @ =gSubState
 	ldrb r0, [r3]
 	cmp r0, #1

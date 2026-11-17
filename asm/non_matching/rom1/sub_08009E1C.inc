@@ -3,9 +3,9 @@
 sub_08009E1C: @ 0X08009E1C
 	push {r4, lr}
 	adds r4, r2, #0
-	bl 0x800932c
+	bl sub_0800932C
 	ldr r1, [pc, #212]
-	bl 0x80012d8
+	bl sub_080012D8
 	beq.n _08009E3E
 	ldr r2, [pc, #208]
 	lsls r3, r3, #3

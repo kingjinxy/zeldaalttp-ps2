@@ -5,7 +5,7 @@ sub_08008AD0: @ 0X08008AD0
 	ldrb r2, [r0, #11]
 	orrs r2, r2
 	bne.n _08008ADC
-	bl 0x800402c
+	bl sub_0800402C
 _08008ADC:
 	ldr r1, [pc, #76]
 	movs r4, #43
@@ -16,10 +16,10 @@ _08008ADC:
 	adds r4, #1
 	ldrsb r3, [r1, r4]
 	movs r1, #2
-	bl 0x8001b54
+	bl sub_08001B54
 	pop {pc}
 	.4byte 0x03000c00
 	.4byte 0x080088b4
-	.4byte 0x08008881
+	.4byte sub_08008880
 	.syntax unified
 	.thumb

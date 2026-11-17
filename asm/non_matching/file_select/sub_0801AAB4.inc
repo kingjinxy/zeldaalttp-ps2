@@ -48,7 +48,7 @@ sub_0801AAB4: @ 0x0801AAB4
 	mov r0, #15
 	strb r0, [r1]
 	mov r0, #4
-	bl 0x08003DFC
+	bl sub_08003DFC
 	b _0801AB40
 _0801AB1A:
 	mov r1, #50
@@ -68,11 +68,11 @@ _0801AB1A:
 	mov r0, #15
 	strb r0, [r1]
 	mov r0, #4
-	bl 0x08003DFC
+	bl sub_08003DFC
 _0801AB40:
 	ldr r1, _0801AB50  @ =gUnknown_08139EF4
 	add r0, r4, #0
-	bl 0x080098A0
+	bl sub_080098A0
 	pop {r4}
 	pop {r0}
 	bx r0

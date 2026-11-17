@@ -30,7 +30,7 @@ _080170B0:
 	ldrb r0, [r4, #10]
 	cmp r0, #3
 	bne _080170C2
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #127
 	and r0, r0, r1
 	add r0, r0, #64
@@ -47,7 +47,7 @@ _080170C2:
 	strb r0, [r1]
 	add r0, r4, #0
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 	add r0, r4, #0
 	bl sub_0801740C
 	pop {r4}

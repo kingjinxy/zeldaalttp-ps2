@@ -3,7 +3,7 @@ sub_080209A0: @ 0x080209A0
 	push {lr}
 	mov r1, #104
 	mov r2, #64
-	bl 0x08009E6C
+	bl sub_08009E6C
 	add r3, r0, #0
 	cmp r3, #0
 	beq _080209D4

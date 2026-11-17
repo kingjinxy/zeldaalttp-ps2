@@ -2,7 +2,7 @@
 sub_0801FC38: @ 0x0801FC38
 	push {r4,lr}
 	add r4, r0, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r0, r4, #0
 	add r0, r0, #41
 	ldrb r1, [r0]
@@ -11,7 +11,7 @@ sub_0801FC38: @ 0x0801FC38
 	cmp r0, #0
 	beq _0801FC5C
 	add r0, r4, #0
-	bl 0x0800963C
+	bl sub_0800963C
 	add r0, r4, #0
 	bl sub_0801FE00
 	b _0801FC6A

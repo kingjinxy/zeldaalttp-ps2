@@ -20,7 +20,7 @@ sub_08011E9C: @ 0x08011E9C
 	strh r0, [r4, #50]
 	add r0, r4, #0
 	mov r1, #2
-	bl 0x08003870
+	bl sub_08003870
 _08011EC8:
 	ldr r0, _08011EE4  @ =gGameLanguage
 	ldrb r1, [r0]
@@ -31,7 +31,7 @@ _08011EC8:
 	sub r0, r0, #2
 	strh r0, [r4, #54]
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	pop {r4}
 	pop {r0}
 	bx r0

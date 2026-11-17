@@ -27,7 +27,7 @@ sub_0801CE6C: @ 0x0801CE6C
 	strb r0, [r1]
 	add r0, r4, #0
 	mov r1, #2
-	bl 0x08003870
+	bl sub_08003870
 _0801CEA6:
 	add r0, r4, #0
 	add r0, r0, #114
@@ -72,7 +72,7 @@ _0801CEC4:
 	strb r0, [r1]
 	add r0, r4, #0
 	mov r1, #2
-	bl 0x08003870
+	bl sub_08003870
 _0801CF00:
 	ldrb r0, [r4, #20]
 	cmp r0, #6
@@ -98,7 +98,7 @@ _0801CF0E:
 _0801CF26:
 	ldr r1, _0801CF34  @ =gUnknown_0813A780
 	add r0, r4, #0
-	bl 0x080098A0
+	bl sub_080098A0
 	pop {r4-r6}
 	pop {r0}
 	bx r0

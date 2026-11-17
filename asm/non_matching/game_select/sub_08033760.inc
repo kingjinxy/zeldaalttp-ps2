@@ -4,7 +4,7 @@ sub_08033760: @ 0x08033760
 	add r4, r0, #0
 	mov r1, #176
 	lsl r1, r1, #5
-	bl 0x08003F1C
+	bl sub_08003F1C
 	lsl r0, r0, #24
 	cmp r0, #0
 	bne _08033776

@@ -1,8 +1,8 @@
 	.syntax unified
 	THUMB_FUNC_START sub_08008240
 sub_08008240: @ 0X08008240
-	bl 0x8007608
-	bl 0x80075dc
+	bl sub_08007608
+	bl sub_080075DC
 	pop {pc}
 	.byte 0x00
 	.byte 0x00

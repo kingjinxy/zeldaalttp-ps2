@@ -190,7 +190,7 @@ _08012234:
 _08012236:
 	add r0, r6, #0
 	add r1, r3, #0
-	bl 0x08003870
+	bl sub_08003870
 	ldr r0, _080122B8  @ =gUnknown_030004A0
 	ldrh r0, [r0, #24]
 	neg r0, r0
@@ -248,7 +248,7 @@ _08012248:
 	strh r0, [r4, #54]
 _080122AA:
 	add r0, r6, #0
-	bl 0x08003828
+	bl GetNextFrame
 	pop {r4-r7}
 	pop {r0}
 	bx r0

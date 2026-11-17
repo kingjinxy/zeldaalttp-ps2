@@ -21,7 +21,7 @@ sub_08024418: @ 0x08024418
 	b _0802446C
 _08024442:
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r2, r4, #0
 	add r2, r2, #41
 	ldrb r1, [r2]

@@ -29,7 +29,7 @@ _08026418:
 	ldrb r0, [r0]
 	cmp r0, #0
 	beq _0802646A
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r2, [r4, #88]
 	add r2, r2, #62
 	ldr r3, _08026454  @ =gUnknown_0813C694
@@ -107,7 +107,7 @@ _080264AC:
 	add r0, r0, #1
 	str r0, [r4, #52]
 	ldr r0, [r4, #88]
-	bl 0x080074C0
+	bl sub_080074C0
 	ldr r2, _080264DC  @ =gUnknown_03006A30
 	ldr r0, [r4, #88]
 	ldrb r0, [r0, #10]

@@ -17,7 +17,7 @@ sub_0801B8F4: @ 0x0801B8F4
 	orr r4, r4, r0
 	lsl r4, r4, #16
 	lsr r4, r4, #16
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r2, _0801B98C  @ =gUnknown_0813A0DC
 	mov r1, #31
 	and r1, r1, r0
@@ -30,14 +30,14 @@ sub_0801B8F4: @ 0x0801B8F4
 	mov r1, #128
 	lsl r1, r1, #7
 	add r0, r4, #0
-	bl 0x080093C8
+	bl sub_080093C8
 	lsl r0, r0, #24
 	cmp r0, #0
 	bne _0801B9CA
 	mov r1, #128
 	lsl r1, r1, #8
 	add r0, r4, #0
-	bl 0x080093C8
+	bl sub_080093C8
 	lsl r0, r0, #24
 	cmp r0, #0
 	bne _0801B9CA

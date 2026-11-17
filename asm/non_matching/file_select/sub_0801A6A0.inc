@@ -2,7 +2,7 @@
 sub_0801A6A0: @ 0x0801A6A0
 	push {r4-r6,lr}
 	add r4, r0, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r5, r4, #0
 	add r5, r5, #41
 	ldrb r1, [r5]
@@ -10,7 +10,7 @@ sub_0801A6A0: @ 0x0801A6A0
 	cmp r6, #1
 	bne _0801A6F2
 	add r0, r4, #0
-	bl 0x080093A4
+	bl sub_080093A4
 	lsl r0, r0, #24
 	lsr r0, r0, #24
 	cmp r0, #15
@@ -48,7 +48,7 @@ _0801A6F2:
 	strb r0, [r4, #20]
 	add r0, r4, #0
 	mov r1, #4
-	bl 0x08003870
+	bl sub_08003870
 _0801A706:
 	pop {r4-r6}
 	pop {r0}

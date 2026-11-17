@@ -47,11 +47,11 @@ sub_080152F4: @ 0x080152F4
 	ldr r0, [sp]
 	ldrh r1, [r0]
 	mov r0, r8
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r4, r0, #16
 	add r0, r4, #0
-	bl 0x080094BC
+	bl sub_080094BC
 	lsl r0, r0, #16
 	lsr r1, r0, #16
 	cmp r1, #58
@@ -135,10 +135,10 @@ _080153CC:
 	lsr r0, r0, #16
 	ldr r2, [sp]
 	ldrh r1, [r2]
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
-	bl 0x080094BC
+	bl sub_080094BC
 	lsl r0, r0, #16
 	lsr r1, r0, #16
 	sub r0, r4, #1
@@ -354,10 +354,10 @@ _08015564:
 	ldr r0, [sp]
 	ldrh r1, [r0]
 	add r0, r4, #0
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
-	bl 0x080094BC
+	bl sub_080094BC
 	lsl r0, r0, #16
 	lsr r1, r0, #16
 	ldr r2, _08015600  @ =0xFFB90000
@@ -432,10 +432,10 @@ _0801560C:
 	add r0, r0, #80
 	ldrh r1, [r0]
 	add r0, r4, #0
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
-	bl 0x080094BC
+	bl sub_080094BC
 	lsl r0, r0, #16
 	lsr r1, r0, #16
 	ldr r2, _0801569C  @ =0xFFB90000

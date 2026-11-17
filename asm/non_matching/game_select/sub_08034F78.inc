@@ -37,7 +37,7 @@ sub_08034F78: @ 0x08034F78
 	ldr r1, [r1]
 	ldr r2, _08034FDC  @ =0x000EB8CC
 	add r1, r1, r2
-	bl 0x080009F0
+	bl sub_080009F0
 	add r0, r4, #0
 	mov r1, #1
 	bl sub_08003870

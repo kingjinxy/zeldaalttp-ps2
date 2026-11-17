@@ -2,14 +2,14 @@
 sub_080169F8: @ 0x080169F8
 	push {r4,lr}
 	add r4, r0, #0
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r2, _08016A30  @ =gUnknown_08139138
 	mov r1, #3
 	and r1, r1, r0
 	add r1, r1, r2
 	ldrb r0, [r1]
 	strb r0, [r4, #23]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #24
 	and r0, r0, r1
 	add r1, r4, #0
@@ -20,7 +20,7 @@ sub_080169F8: @ 0x080169F8
 	strb r0, [r1]
 	ldrb r1, [r1]
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 	pop {r4}
 	pop {r0}
 	bx r0

@@ -18,11 +18,11 @@ _08022D90:
 	ldrh r0, [r4, #54]
 	sub r0, r0, #16
 	strh r0, [r4, #54]
-	bl 0x0800099C
+	bl sub_0800099C
 	and r0, r0, r6
 	lsl r0, r0, #8
 	str r0, [r4, #12]
-	bl 0x0800099C
+	bl sub_0800099C
 	and r0, r0, r6
 	add r1, r4, #0
 	add r1, r1, #43

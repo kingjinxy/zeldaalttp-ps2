@@ -60,7 +60,7 @@ _0802AC28:
 	lsl r0, r0, #8
 	str r0, [r3, #16]
 	mov r0, #12
-	bl 0x08003DFC
+	bl sub_08003DFC
 _0802AC50:
 	pop {r4}
 	pop {r0}

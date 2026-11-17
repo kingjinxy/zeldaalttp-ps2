@@ -3,7 +3,7 @@ sub_0802043C: @ 0x0802043C
 	push {r4,lr}
 	add r4, r0, #0
 	ldr r1, [r4, #100]
-	bl 0x08009EA4
+	bl sub_08009EA4
 	ldr r3, _08020474  @ =gUnknown_0813B5FC
 	ldrb r2, [r4, #23]
 	add r1, r2, #1
@@ -22,7 +22,7 @@ sub_0802043C: @ 0x0802043C
 	lsl r0, r0, #9
 	str r0, [r4, #16]
 	mov r0, #49
-	bl 0x08003DFC
+	bl sub_08003DFC
 	pop {r4}
 	pop {r0}
 	bx r0

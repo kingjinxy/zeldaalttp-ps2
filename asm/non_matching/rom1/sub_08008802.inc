@@ -8,7 +8,7 @@ sub_08008802: @ 0X08008802
 	bne.n _08008836
 	movs r2, #1
 	strb r2, [r0, #4]
-	bl 0x8007644
+	bl sub_08007638+0xc
 	pop {pc}
 	.byte 0x00
 	.byte 0x00
@@ -43,7 +43,7 @@ sub_08008802: @ 0X08008802
 	.byte 0x8b
 	.byte 0x54
 _08008836:
-	bl 0x800750c
+	bl sub_0800750C
 	pop {pc}
 	.byte 0xe4
 	.byte 0x87

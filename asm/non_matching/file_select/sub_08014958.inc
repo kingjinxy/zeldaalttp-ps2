@@ -57,7 +57,7 @@ _080149BA:
 	ldr r4, [sp]
 	add r4, r4, #80
 	ldrh r1, [r4]
-	bl 0x080094CC
+	bl sub_080094CC
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	ldr r6, _08014A78  @ =0x00000141
@@ -66,7 +66,7 @@ _080149BA:
 	sub r5, r5, #2
 	ldrh r0, [r5]
 	ldrh r1, [r4]
-	bl 0x080094CC
+	bl sub_080094CC
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, r6
@@ -74,7 +74,7 @@ _080149BA:
 	sub r5, r5, #2
 	ldrh r0, [r5]
 	ldrh r1, [r4]
-	bl 0x080094CC
+	bl sub_080094CC
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, r6
@@ -86,7 +86,7 @@ _080149F6:
 	sub r5, r5, #128
 	ldrh r0, [r5]
 	ldrh r1, [r4]
-	bl 0x080094CC
+	bl sub_080094CC
 	lsl r0, r0, #16
 	lsr r6, r0, #16
 	ldr r0, _08014A7C  @ =0x00000145
@@ -97,7 +97,7 @@ _080149F6:
 	sub r5, r5, #128
 	ldrh r0, [r5]
 	ldrh r1, [r4]
-	bl 0x080094CC
+	bl sub_080094CC
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, r6
@@ -113,7 +113,7 @@ _08014A2A:
 	lsr r7, r0, #16
 	add r0, r7, #0
 	ldr r1, [sp, #8]
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	ldr r3, _08014A80  @ =0xFEC60000
 	add r0, r0, r3
@@ -161,7 +161,7 @@ _08014A88:
 	ldr r4, [sp]
 	add r4, r4, #80
 	ldrh r1, [r4]
-	bl 0x080094CC
+	bl sub_080094CC
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	ldr r6, _08014B50  @ =0x00000141
@@ -170,7 +170,7 @@ _08014A88:
 	add r5, r5, #128
 	ldrh r0, [r5]
 	ldrh r1, [r4]
-	bl 0x080094CC
+	bl sub_080094CC
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, r6
@@ -178,7 +178,7 @@ _08014A88:
 	add r5, r5, #128
 	ldrh r0, [r5]
 	ldrh r1, [r4]
-	bl 0x080094CC
+	bl sub_080094CC
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, r6
@@ -190,7 +190,7 @@ _08014AC4:
 	sub r5, r5, #128
 	ldrh r0, [r5]
 	ldrh r1, [r4]
-	bl 0x080094CC
+	bl sub_080094CC
 	lsl r0, r0, #16
 	lsr r6, r0, #16
 	ldr r0, _08014B54  @ =0x00000145
@@ -201,7 +201,7 @@ _08014AC4:
 	sub r5, r5, #128
 	ldrh r0, [r5]
 	ldrh r1, [r4]
-	bl 0x080094CC
+	bl sub_080094CC
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, r6
@@ -217,7 +217,7 @@ _08014AF8:
 	lsr r7, r0, #16
 	add r0, r7, #0
 	ldr r1, [sp, #8]
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r1, r0, #16
 	mov r0, #159
@@ -268,7 +268,7 @@ _08014B5C:
 	ldr r4, [sp]
 	add r4, r4, #80
 	ldrh r1, [r4]
-	bl 0x080094CC
+	bl sub_080094CC
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	mov r6, #160
@@ -278,7 +278,7 @@ _08014B5C:
 	add r5, r5, #2
 	ldrh r0, [r5]
 	ldrh r1, [r4]
-	bl 0x080094CC
+	bl sub_080094CC
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, r6
@@ -286,7 +286,7 @@ _08014B5C:
 	add r5, r5, #2
 	ldrh r0, [r5]
 	ldrh r1, [r4]
-	bl 0x080094CC
+	bl sub_080094CC
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, r6
@@ -298,7 +298,7 @@ _08014B9A:
 	sub r5, r5, #2
 	ldrh r0, [r5]
 	ldrh r1, [r4]
-	bl 0x080094CC
+	bl sub_080094CC
 	lsl r0, r0, #16
 	lsr r6, r0, #16
 	ldr r0, _08014C2C  @ =0x00000143
@@ -309,7 +309,7 @@ _08014B9A:
 	sub r5, r5, #2
 	ldrh r0, [r5]
 	ldrh r1, [r4]
-	bl 0x080094CC
+	bl sub_080094CC
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, r6
@@ -325,7 +325,7 @@ _08014BCE:
 	lsr r7, r0, #16
 	add r0, r7, #0
 	ldr r1, [sp, #8]
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r1, r0, #16
 	mov r0, #158
@@ -378,7 +378,7 @@ _08014C34:
 	ldr r4, [sp]
 	add r4, r4, #80
 	ldrh r1, [r4]
-	bl 0x080094CC
+	bl sub_080094CC
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	mov r6, #160
@@ -388,7 +388,7 @@ _08014C34:
 	sub r5, r5, #128
 	ldrh r0, [r5]
 	ldrh r1, [r4]
-	bl 0x080094CC
+	bl sub_080094CC
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, r6
@@ -396,7 +396,7 @@ _08014C34:
 	sub r5, r5, #128
 	ldrh r0, [r5]
 	ldrh r1, [r4]
-	bl 0x080094CC
+	bl sub_080094CC
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, r6
@@ -408,7 +408,7 @@ _08014C72:
 	sub r5, r5, #2
 	ldrh r0, [r5]
 	ldrh r1, [r4]
-	bl 0x080094CC
+	bl sub_080094CC
 	lsl r0, r0, #16
 	lsr r6, r0, #16
 	ldr r0, _08014D44  @ =0x00000143
@@ -419,7 +419,7 @@ _08014C72:
 	sub r5, r5, #2
 	ldrh r0, [r5]
 	ldrh r1, [r4]
-	bl 0x080094CC
+	bl sub_080094CC
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, r6
@@ -435,7 +435,7 @@ _08014CA6:
 	lsr r7, r0, #16
 	add r0, r7, #0
 	ldr r1, [sp, #8]
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r1, r0, #16
 	ldr r0, _08014D48  @ =0x0000013D
@@ -581,7 +581,7 @@ _08014D6E:
 	strh r2, [r0]
 	add r0, r7, #0
 	ldr r1, [sp, #8]
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	str r0, [r5, #96]

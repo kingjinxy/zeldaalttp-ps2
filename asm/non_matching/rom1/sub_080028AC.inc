@@ -2,7 +2,7 @@
 	THUMB_FUNC_START sub_080028AC
 sub_080028AC: @ 0X080028AC
 	push {lr}
-	bl 0x8003010
+	bl sub_08003010
 	pop {r2}
 	pop {r0, r1}
 	mov pc, r2

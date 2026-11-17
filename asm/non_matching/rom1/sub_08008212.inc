@@ -1,7 +1,7 @@
 	.syntax unified
 	THUMB_FUNC_START_NOALIGN sub_08008212
 sub_08008212: @ 0X08008212
-	bl 0x800772c
+	bl sub_0800772C
 	ldrb r1, [r0, #14]
 	movs r2, #128
 	tst r2, r1

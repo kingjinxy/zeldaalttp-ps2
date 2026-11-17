@@ -59,8 +59,8 @@ _08030638:
 	bl set_main_state
 _0803063E:
 	bl sub_08030654
-	bl 0x08137AFC
-	bl 0x08000BAC
+	bl sub_08137AFC
+	bl sub_08000BAC
 	bl sub_08037574
 _0803064E:
 	pop {r4-r6}

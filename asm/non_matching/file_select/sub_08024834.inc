@@ -24,7 +24,7 @@ _08024860:
 	and r0, r0, r1
 	strh r0, [r2]
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r1, r4, #0
 	add r1, r1, #41
 	ldrb r2, [r1]

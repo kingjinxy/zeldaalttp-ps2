@@ -3,7 +3,7 @@ sub_0801A868: @ 0x0801A868
 	push {r4,lr}
 	add r4, r0, #0
 	ldr r1, [r4, #100]
-	bl 0x08009EA4
+	bl sub_08009EA4
 	lsl r0, r0, #24
 	lsr r2, r0, #24
 	ldr r1, _0801A8B4  @ =gUnknown_08139D54
@@ -45,7 +45,7 @@ _0801A8B8:
 	mov r2, #0
 	b _0801A8F4
 _0801A8C0:
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #16
 	and r0, r0, r1
 	lsl r0, r0, #24
@@ -67,7 +67,7 @@ _0801A8E0:
 	mov r2, #24
 	b _0801A8F4
 _0801A8E8:
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #16
 	and r0, r0, r1
 	add r0, r0, #8

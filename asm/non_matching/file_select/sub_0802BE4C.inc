@@ -45,7 +45,7 @@ _0802BE6C:
 	lsl r0, r0, #3
 	strh r0, [r1]
 	add r0, r2, #0
-	bl 0x08008D90
+	bl sub_08008D90
 _0802BEAA:
 	add r0, r6, #1
 	lsl r0, r0, #16
@@ -98,7 +98,7 @@ _0802BEDC:
 	lsl r0, r0, #3
 	strh r0, [r1]
 	add r0, r2, #0
-	bl 0x08008D90
+	bl sub_08008D90
 _0802BF12:
 	add r0, r6, #1
 	lsl r0, r0, #16

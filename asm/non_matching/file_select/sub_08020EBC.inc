@@ -73,7 +73,7 @@ _08020F2C:
 	add r1, r4, #0
 	bl sub_0803D770
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	pop {r4-r6}
 	pop {r0}
 	bx r0

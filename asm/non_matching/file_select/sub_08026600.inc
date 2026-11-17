@@ -33,7 +33,7 @@ _08026618:
 	and r0, r0, r1
 	strh r0, [r2]
 	add r0, r4, #0
-	bl 0x08008DD8
+	bl sub_08008DD8
 	ldr r0, [r4, #84]
 	cmp r0, #0
 	beq _0802664E

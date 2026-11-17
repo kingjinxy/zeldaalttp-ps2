@@ -3,7 +3,7 @@ sub_080188E0: @ 0x080188E0
 	push {r4,r5,lr}
 	add r4, r0, #0
 	mov r1, #14
-	bl 0x0800997C
+	bl sub_0800997C
 	lsl r0, r0, #24
 	lsr r1, r0, #24
 	mov r0, #128

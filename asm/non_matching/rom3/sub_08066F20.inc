@@ -1,11 +1,11 @@
 	THUMB_FUNC_START sub_08066F20
 sub_08066F20: @ 0x08066F20
 	push {r4,lr}
-	bl 0x0800099C
+	bl sub_0800099C
 	add r4, r0, #0
 	mov r0, #255
 	and r4, r4, r0
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #1
 	and r1, r1, r0
 	cmp r1, #0

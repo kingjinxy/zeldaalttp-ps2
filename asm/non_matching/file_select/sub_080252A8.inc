@@ -13,7 +13,7 @@ sub_080252A8: @ 0x080252A8
 	strb r0, [r4, #20]
 _080252BE:
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r2, r4, #0
 	add r2, r2, #41
 	ldrb r1, [r2]
@@ -36,7 +36,7 @@ _080252E8:
 	add r0, r4, #0
 	bl sub_0803CC20
 	add r0, r4, #0
-	bl 0x08008E50
+	bl sub_08008E50
 	pop {r4}
 	pop {r0}
 	bx r0

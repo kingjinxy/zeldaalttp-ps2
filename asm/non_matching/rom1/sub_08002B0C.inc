@@ -10,9 +10,9 @@ sub_08002B0C: @ 0X08002B0C
 _08002B1A:
 	push {r0, r1}
 	ldr r1, [pc, #44]
-	bl 0x802c3f0
+	bl sub_0802C3F0
 	movs r0, #195
-	bl 0x8003dfc
+	bl sub_08003DFC
 	pop {r0, r1}
 	movs r3, #20
 	movs r4, #4

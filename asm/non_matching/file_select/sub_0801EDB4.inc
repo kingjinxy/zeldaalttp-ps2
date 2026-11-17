@@ -40,13 +40,13 @@ sub_0801EDB4: @ 0x0801EDB4
 	ldrh r1, [r4]
 	add r0, r5, #0
 	mov r2, #9
-	bl 0x08009E1C
+	bl sub_08009E1C
 	lsl r0, r0, #24
 	cmp r0, #0
 	bne _0801EE28
 	ldrh r1, [r4]
 	add r0, r5, #0
-	bl 0x080093C8
+	bl sub_080093C8
 	lsl r0, r0, #24
 	cmp r0, #0
 	beq _0801EE28

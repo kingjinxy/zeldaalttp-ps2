@@ -20,7 +20,7 @@ sub_080178B8: @ 0x080178B8
 	strb r0, [r2, #28]
 	add r0, r2, #0
 	mov r1, #5
-	bl 0x08003870
+	bl sub_08003870
 _080178E4:
 	pop {r0}
 	bx r0

@@ -4,11 +4,11 @@ sub_0802292C: @ 0x0802292C
 	mov r7, r8
 	push {r7}
 	add r7, r0, #0
-	bl 0x0800099C
+	bl sub_0800099C
 	add r6, r0, #0
 	mov r0, #3
 	and r6, r6, r0
-	bl 0x0800099C
+	bl sub_0800099C
 	add r5, r0, #0
 	mov r0, #1
 	and r5, r5, r0

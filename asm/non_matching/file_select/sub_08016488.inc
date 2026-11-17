@@ -41,7 +41,7 @@ _080164CE:
 	mov r0, #0
 	strb r0, [r1]
 	add r0, r6, #0
-	bl 0x08003828
+	bl GetNextFrame
 	ldrb r0, [r6, #23]
 	sub r0, r0, #1
 	strb r0, [r6, #23]
@@ -63,7 +63,7 @@ _080164F6:
 	add r1, r4, #0
 	mov r2, #48
 	mov r3, #48
-	bl 0x0800390C
+	bl sub_0800390C
 	lsl r0, r0, #24
 	cmp r0, #0
 	beq _08016520
@@ -101,7 +101,7 @@ _08016530:
 	add r0, r6, #0
 	mov r2, #48
 	mov r3, #48
-	bl 0x0800390C
+	bl sub_0800390C
 	lsl r0, r0, #24
 	cmp r0, #0
 	bne _08016624
@@ -171,7 +171,7 @@ _080165B0:
 	mov r1, r8
 	mov r2, #2
 	mov r3, #2
-	bl 0x0800390C
+	bl sub_0800390C
 	lsl r0, r0, #24
 	cmp r0, #0
 	beq _080165EA
@@ -187,7 +187,7 @@ _080165EA:
 	mov r1, #128
 	lsl r1, r1, #6
 	add r0, r6, #0
-	bl 0x08003594
+	bl sub_08003594
 	cmp r0, #0
 	beq _080165FA
 	b _0801676C
@@ -201,7 +201,7 @@ _080165FA:
 	mov r0, #192
 	lsl r0, r0, #1
 	str r0, [r6, #12]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #159
 	and r0, r0, r1
 	b _080166E8
@@ -228,7 +228,7 @@ _08016624:
 	lsr r1, r1, #1
 	add r1, r1, #9
 	add r0, r6, #0
-	bl 0x08003870
+	bl sub_08003870
 	mov r0, #192
 	lsl r0, r0, #2
 	str r0, [r6, #12]
@@ -262,7 +262,7 @@ _0801666C:
 	lsr r1, r1, #1
 	add r1, r1, #9
 	add r0, r6, #0
-	bl 0x08003870
+	bl sub_08003870
 	mov r0, #192
 	lsl r0, r0, #2
 	str r0, [r6, #12]
@@ -278,7 +278,7 @@ _0801666C:
 	orr r0, r0, r7
 	strb r0, [r1]
 	mov r0, #81
-	bl 0x08003DFC
+	bl sub_08003DFC
 	b _08016526
 _080166B4:
 	add r0, r6, #0
@@ -320,11 +320,11 @@ _080166EE:
 	lsr r1, r1, #1
 	add r1, r1, #9
 	add r0, r6, #0
-	bl 0x08003870
+	bl sub_08003870
 	b _0801676C
 _08016706:
 	add r0, r6, #0
-	bl 0x08008D90
+	bl sub_08008D90
 	ldr r2, _08016750  @ =gUnknown_03006A30
 	ldrb r1, [r6, #10]
 	lsl r0, r1, #3
@@ -389,7 +389,7 @@ _0801676C:
 	add r0, r6, #0
 	bl DeleteThisEntity
 	add r0, r6, #0
-	bl 0x08000620
+	bl sub_08000620
 _0801678C:
 	pop {r3}
 	mov r8, r3

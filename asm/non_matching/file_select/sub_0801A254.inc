@@ -17,7 +17,7 @@ sub_0801A254: @ 0x0801A254
 	mov r1, #192
 	lsl r1, r1, #5
 	add r0, r5, #0
-	bl 0x08003594
+	bl sub_08003594
 	ldr r1, _0801A2AC  @ =gUnknown_08139B44
 	add r0, r5, #0
 	add r0, r0, #124
@@ -80,7 +80,7 @@ _0801A2B0:
 	strb r0, [r2]
 	add r0, r5, #0
 	mov r1, #2
-	bl 0x08003870
+	bl sub_08003870
 	b _0801A3F8
 _0801A2F6:
 	ldr r2, [r5, #56]
@@ -216,7 +216,7 @@ _0801A3F6:
 	strb r0, [r3]
 _0801A3F8:
 	add r0, r5, #0
-	bl 0x08003828
+	bl GetNextFrame
 	pop {r3}
 	mov r8, r3
 	pop {r4-r7}

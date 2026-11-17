@@ -20,7 +20,7 @@ sub_08010E90: @ 0x08010E90
 	mov r2, #160
 	lsl r2, r2, #3
 	add r1, r4, #0
-	bl 0x080009F4
+	bl sub_080009F4
 	mov r0, r8
 	bl sub_080111F8
 	lsl r0, r0, #24

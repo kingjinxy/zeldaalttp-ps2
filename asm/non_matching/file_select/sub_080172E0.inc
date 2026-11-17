@@ -22,7 +22,7 @@ sub_080172E0: @ 0x080172E0
 	strb r0, [r1]
 	add r0, r4, #0
 	mov r1, #12
-	bl 0x08003870
+	bl sub_08003870
 	b _0801733C
 _08017312:
 	ldrb r0, [r4, #23]
@@ -31,7 +31,7 @@ _08017312:
 	lsl r0, r0, #24
 	cmp r0, #0
 	bne _08017330
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #28
 	and r0, r0, r1
 	add r0, r0, #30
@@ -40,9 +40,9 @@ _08017312:
 	bl sub_0801740C
 _08017330:
 	add r0, r4, #0
-	bl 0x0800963C
+	bl sub_0800963C
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 _0801733C:
 	pop {r4}
 	pop {r0}

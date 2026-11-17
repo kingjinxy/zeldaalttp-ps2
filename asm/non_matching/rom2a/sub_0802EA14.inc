@@ -8,8 +8,8 @@ sub_0802EA14: @ 0x0802EA14
 	add r0, r0, r1
 	ldr r0, [r0]
 	bl _call_via_r0
-	bl 0x08137AFC
-	bl 0x08000BAC
+	bl sub_08137AFC
+	bl sub_08000BAC
 	bl sub_0802BFC4
 	bl sub_0802E9B8
 	ldr r0, _0802EA80  @ =gNewKeys

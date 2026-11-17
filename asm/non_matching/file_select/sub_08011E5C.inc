@@ -20,12 +20,12 @@ sub_08011E5C: @ 0x08011E5C
 	strb r1, [r4, #31]
 	add r0, r4, #0
 	mov r1, #2
-	bl 0x08003870
+	bl sub_08003870
 	ldr r0, _08011E98  @ =gUnknown_02016D60
 	str r4, [r0, #8]
 _08011E8C:
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	pop {r4}
 	pop {r0}
 	bx r0

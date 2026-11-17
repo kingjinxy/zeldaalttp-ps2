@@ -88,7 +88,7 @@ _0802CCBC:
 	ldr r0, [r0]
 	mov pc, r0
 _0802CCCC:
-	.4byte 0x0802CCD0
+	.4byte _0802CCCC+0x4
 	.4byte _0802CD0E
 	.4byte _0802CD06
 	.4byte _0802CD06

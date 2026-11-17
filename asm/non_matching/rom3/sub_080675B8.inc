@@ -24,7 +24,7 @@ sub_080675B8: @ 0x080675B8
 	mov r2, #128
 	lsl r2, r2, #7
 	mov r8, r2
-	bl 0x08008F78
+	bl sub_08008F78
 	ldrh r1, [r6, #4]
 	ldrh r0, [r4, #4]
 	add r1, r1, r0
@@ -37,7 +37,7 @@ sub_080675B8: @ 0x080675B8
 	orr r1, r1, r0
 	add r0, r5, #0
 	mov r2, r8
-	bl 0x08008F78
+	bl sub_08008F78
 	pop {r3}
 	mov r8, r3
 	pop {r4-r6}

@@ -94,7 +94,7 @@ sub_0801AB54: @ 0x0801AB54
 	add r0, r0, #118
 	strh r4, [r0]
 	add r0, r7, #0
-	bl 0x08008D90
+	bl sub_08008D90
 	ldr r1, _0801AC48  @ =gUnknown_08427658
 	ldr r0, _0801AC4C  @ =gUnknown_03006C80
 	ldrb r0, [r0, #1]

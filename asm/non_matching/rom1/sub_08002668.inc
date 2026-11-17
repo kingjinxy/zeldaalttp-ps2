@@ -15,11 +15,11 @@ sub_08002668: @ 0X08002668
 	ldr r0, [pc, #856]
 	ldrh r1, [r1, #34]
 	lsrs r1, r1, #1
-	bl 0x8014658
+	bl sub_08014658
 	movs r0, #15
 	eors r1, r1
 	movs r2, #64
-	bl 0x804c8a8
+	bl sub_0804C8A8
 	orrs r0, r0
 	beq.n _080026B8
 	adds r2, r0, #0
@@ -35,7 +35,7 @@ sub_08002668: @ 0X08002668
 	adds r3, #8
 	strh r3, [r2, #54]
 	movs r2, #44
-	bl 0x80031ac
+	bl sub_080031AC
 	pop {pc}
 _080026B8:
 	pop {r0, r1}

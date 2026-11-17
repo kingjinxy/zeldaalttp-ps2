@@ -28,7 +28,7 @@ _0802BD6C:
 _0802BD88:
 	.4byte gUnknown_0202A788
 _0802BD8C:
-	.4byte 0x0802BD90
+	.4byte _0802BD8C+0x4
 	.4byte _0802BDB0
 	.4byte _0802BDB0
 	.4byte _0802BDB0

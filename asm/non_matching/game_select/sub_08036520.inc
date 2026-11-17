@@ -24,7 +24,7 @@ sub_08036520: @ 0x08036520
 	strb r1, [r5, #31]
 	strb r3, [r5, #23]
 	add r0, r5, #0
-	bl 0x08003B94
+	bl sub_08003B94
 	ldr r0, _08036584  @ =gUnknown_03000488
 	mov r1, #128
 	lsl r1, r1, #2
@@ -41,7 +41,7 @@ sub_08036520: @ 0x08036520
 	add r0, r5, #0
 	mov r1, #0
 	mov r2, #3
-	bl 0x08003840
+	bl sub_08003840
 	mov r0, #25
 	bl play_sound
 	b _08036590

@@ -8,7 +8,7 @@ sub_080170EC: @ 0x080170EC
 	lsl r0, r0, #24
 	cmp r0, #0
 	bne _0801710E
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #28
 	and r0, r0, r1
 	add r0, r0, #30
@@ -17,9 +17,9 @@ sub_080170EC: @ 0x080170EC
 	bl sub_0801740C
 _0801710E:
 	add r0, r4, #0
-	bl 0x0800963C
+	bl sub_0800963C
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	pop {r4}
 	pop {r0}
 	bx r0

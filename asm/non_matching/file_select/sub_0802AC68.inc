@@ -2,13 +2,13 @@
 sub_0802AC68: @ 0x0802AC68
 	push {r4,lr}
 	add r4, r0, #0
-	bl 0x08009664
+	bl sub_08009664
 	add r0, r4, #0
-	bl 0x08008E50
+	bl sub_08008E50
 	mov r1, #128
 	lsl r1, r1, #5
 	add r0, r4, #0
-	bl 0x08003594
+	bl sub_08003594
 	cmp r0, #0
 	bne _0802AC9E
 	mov r0, #4

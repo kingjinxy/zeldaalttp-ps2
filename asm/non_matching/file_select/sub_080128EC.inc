@@ -50,7 +50,7 @@ _0801293C:
 	add r5, r0, #0
 	ldrb r4, [r5]
 	add r5, r5, #1
-	bl 0x0800099C
+	bl sub_0800099C
 	add r1, r4, #0
 	bl __umodsi3
 	add r4, r0, #0
@@ -79,7 +79,7 @@ _08012964:
 	mov r5, sp
 	add r5, r5, #6
 _08012980:
-	bl 0x0800099C
+	bl sub_0800099C
 	add r1, r6, #0
 	bl __umodsi3
 	ldrb r4, [r5]

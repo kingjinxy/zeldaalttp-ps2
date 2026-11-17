@@ -469,7 +469,7 @@ _08041AEE:
 	ldr r2, [r1]
 	add r0, r2, #0
 	mov r1, #2
-	bl 0x08003E10
+	bl sub_08003E10
 	ldr r0, [r7]
 	ldr r2, [r7, #4]
 	add r1, r2, #0
@@ -522,7 +522,7 @@ _08041B64:
 	str r0, [r1]
 	ldr r1, [r7, #4]
 	ldr r0, [r7]
-	bl 0x0800238C
+	bl sub_0800238C
 	ldr r0, [r7]
 	add r1, r0, #0
 	add r0, r0, #68

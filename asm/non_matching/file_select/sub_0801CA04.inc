@@ -57,7 +57,7 @@ _0801CA40:
 	strb r3, [r0]
 	mov r0, r12
 	mov r1, #7
-	bl 0x08003870
+	bl sub_08003870
 	mov r0, #0
 	b _0801CAB2
 	.byte 0x00

@@ -21,7 +21,7 @@ sub_080210F0: @ 0x080210F0
 	add r5, r5, #80
 	ldrh r1, [r5]
 	add r0, r6, #0
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	mov r1, #156
 	lsl r1, r1, #17

@@ -13,7 +13,7 @@ sub_0801B620: @ 0x0801B620
 _0801B634:
 	ldr r1, _0801B640  @ =gUnknown_0813A0A4
 	add r0, r2, #0
-	bl 0x08009924
+	bl sub_08009924
 	pop {r0}
 	bx r0
 _0801B640:

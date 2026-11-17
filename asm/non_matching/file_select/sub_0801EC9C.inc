@@ -34,7 +34,7 @@ sub_0801EC9C: @ 0x0801EC9C
 	strb r1, [r0]
 	add r1, r1, #8
 	mov r0, r12
-	bl 0x08003870
+	bl sub_08003870
 	pop {r0}
 	bx r0
 	THUMB_FUNC_END sub_0801EC9C

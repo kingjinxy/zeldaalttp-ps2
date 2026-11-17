@@ -57,7 +57,7 @@ _080288C6:
 	str r0, [r4, #96]
 	ldrb r1, [r5]
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 	ldr r1, _080288F4  @ =gUnknown_0813D008
 	ldr r0, _080288F8  @ =gUnknown_03006C80
 	ldrb r0, [r0, #1]

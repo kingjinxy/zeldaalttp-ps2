@@ -36,7 +36,7 @@ _08028700:
 	add r0, r0, #2
 	ldrh r2, [r0]
 	add r0, r4, #0
-	bl 0x08009E6C
+	bl sub_08009E6C
 	cmp r0, #0
 	beq _08028722
 _08028714:

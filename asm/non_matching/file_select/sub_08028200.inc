@@ -56,14 +56,14 @@ _0802825C:
 	beq _0802827C
 	ldr r5, _080282F4  @ =gUnknown_03006A30
 	ldr r0, [r5, #40]
-	bl 0x08003FB0
+	bl sub_08003FB0
 	lsl r0, r0, #24
 	cmp r0, #0
 	beq _0802827C
 	ldr r0, [r5, #40]
 	add r1, r4, #0
 	mov r2, #0
-	bl 0x08002E70
+	bl sub_08002E70
 _0802827C:
 	mov r0, #2
 	and r0, r0, r7
@@ -73,14 +73,14 @@ _0802827C:
 	add r5, r0, #0
 	add r5, r5, #184
 	ldr r0, [r5]
-	bl 0x08003FB0
+	bl sub_08003FB0
 	lsl r0, r0, #24
 	cmp r0, #0
 	beq _080282A0
 	ldr r0, [r5]
 	add r1, r4, #0
 	mov r2, #0
-	bl 0x08002E70
+	bl sub_08002E70
 _080282A0:
 	mov r0, #4
 	and r0, r0, r7
@@ -91,14 +91,14 @@ _080282A0:
 	lsl r2, r2, #1
 	add r5, r0, r2
 	ldr r0, [r5]
-	bl 0x08003FB0
+	bl sub_08003FB0
 	lsl r0, r0, #24
 	cmp r0, #0
 	beq _080282C6
 	ldr r0, [r5]
 	add r1, r4, #0
 	mov r2, #0
-	bl 0x08002E70
+	bl sub_08002E70
 _080282C6:
 	mov r0, #8
 	and r7, r7, r0
@@ -111,7 +111,7 @@ _080282D0:
 	lsl r1, r1, #1
 	add r5, r0, r1
 	ldr r0, [r5]
-	bl 0x08003FB0
+	bl sub_08003FB0
 	lsl r0, r0, #24
 	cmp r0, #0
 	bne _080282E6
@@ -120,7 +120,7 @@ _080282E6:
 	ldr r0, [r5]
 	add r1, r4, #0
 	mov r2, #0
-	bl 0x08002E70
+	bl sub_08002E70
 	b _080284FA
 	.byte 0x00
 	.byte 0x00
@@ -144,14 +144,14 @@ _08028310:
 	beq _0802832E
 	ldr r5, _080283A4  @ =gUnknown_03006A30
 	ldr r0, [r5, #40]
-	bl 0x08003FB0
+	bl sub_08003FB0
 	lsl r0, r0, #24
 	cmp r0, #0
 	beq _0802832E
 	ldr r0, [r5, #40]
 	add r1, r4, #0
 	mov r2, #8
-	bl 0x08002E70
+	bl sub_08002E70
 _0802832E:
 	mov r0, #2
 	and r0, r0, r7
@@ -161,14 +161,14 @@ _0802832E:
 	add r5, r0, #0
 	add r5, r5, #184
 	ldr r0, [r5]
-	bl 0x08003FB0
+	bl sub_08003FB0
 	lsl r0, r0, #24
 	cmp r0, #0
 	beq _08028352
 	ldr r0, [r5]
 	add r1, r4, #0
 	mov r2, #8
-	bl 0x08002E70
+	bl sub_08002E70
 _08028352:
 	mov r0, #4
 	and r0, r0, r7
@@ -179,14 +179,14 @@ _08028352:
 	lsl r1, r1, #1
 	add r5, r0, r1
 	ldr r0, [r5]
-	bl 0x08003FB0
+	bl sub_08003FB0
 	lsl r0, r0, #24
 	cmp r0, #0
 	beq _08028378
 	ldr r0, [r5]
 	add r1, r4, #0
 	mov r2, #8
-	bl 0x08002E70
+	bl sub_08002E70
 _08028378:
 	mov r0, #8
 	and r7, r7, r0
@@ -199,7 +199,7 @@ _08028382:
 	lsl r2, r2, #1
 	add r5, r0, r2
 	ldr r0, [r5]
-	bl 0x08003FB0
+	bl sub_08003FB0
 	lsl r0, r0, #24
 	cmp r0, #0
 	bne _08028398
@@ -208,7 +208,7 @@ _08028398:
 	ldr r0, [r5]
 	add r1, r4, #0
 	mov r2, #8
-	bl 0x08002E70
+	bl sub_08002E70
 	b _080284FA
 _080283A4:
 	.4byte gUnknown_03006A30
@@ -230,14 +230,14 @@ _080283BE:
 	beq _080283DE
 	ldr r5, _08028450  @ =gUnknown_03006A30
 	ldr r0, [r5, #40]
-	bl 0x08003FB0
+	bl sub_08003FB0
 	lsl r0, r0, #24
 	cmp r0, #0
 	beq _080283DE
 	ldr r0, [r5, #40]
 	add r1, r4, #0
 	mov r2, #16
-	bl 0x08002E70
+	bl sub_08002E70
 _080283DE:
 	mov r0, #2
 	and r0, r0, r7
@@ -247,14 +247,14 @@ _080283DE:
 	add r5, r0, #0
 	add r5, r5, #184
 	ldr r0, [r5]
-	bl 0x08003FB0
+	bl sub_08003FB0
 	lsl r0, r0, #24
 	cmp r0, #0
 	beq _08028402
 	ldr r0, [r5]
 	add r1, r4, #0
 	mov r2, #16
-	bl 0x08002E70
+	bl sub_08002E70
 _08028402:
 	mov r0, #4
 	and r0, r0, r7
@@ -265,14 +265,14 @@ _08028402:
 	lsl r1, r1, #1
 	add r5, r0, r1
 	ldr r0, [r5]
-	bl 0x08003FB0
+	bl sub_08003FB0
 	lsl r0, r0, #24
 	cmp r0, #0
 	beq _08028428
 	ldr r0, [r5]
 	add r1, r4, #0
 	mov r2, #16
-	bl 0x08002E70
+	bl sub_08002E70
 _08028428:
 	mov r0, #8
 	and r7, r7, r0
@@ -283,14 +283,14 @@ _08028428:
 	lsl r2, r2, #1
 	add r5, r0, r2
 	ldr r0, [r5]
-	bl 0x08003FB0
+	bl sub_08003FB0
 	lsl r0, r0, #24
 	cmp r0, #0
 	beq _080284FA
 	ldr r0, [r5]
 	add r1, r4, #0
 	mov r2, #16
-	bl 0x08002E70
+	bl sub_08002E70
 	b _080284FA
 _08028450:
 	.4byte gUnknown_03006A30
@@ -311,14 +311,14 @@ _08028454:
 	beq _0802848A
 	ldr r5, _08028504  @ =gUnknown_03006A30
 	ldr r0, [r5, #40]
-	bl 0x08003FB0
+	bl sub_08003FB0
 	lsl r0, r0, #24
 	cmp r0, #0
 	beq _0802848A
 	ldr r0, [r5, #40]
 	add r1, r4, #0
 	mov r2, #24
-	bl 0x08002E70
+	bl sub_08002E70
 _0802848A:
 	mov r0, #2
 	and r0, r0, r7
@@ -328,14 +328,14 @@ _0802848A:
 	add r5, r0, #0
 	add r5, r5, #184
 	ldr r0, [r5]
-	bl 0x08003FB0
+	bl sub_08003FB0
 	lsl r0, r0, #24
 	cmp r0, #0
 	beq _080284AE
 	ldr r0, [r5]
 	add r1, r4, #0
 	mov r2, #24
-	bl 0x08002E70
+	bl sub_08002E70
 _080284AE:
 	mov r0, #4
 	and r0, r0, r7
@@ -346,14 +346,14 @@ _080284AE:
 	lsl r2, r2, #1
 	add r5, r0, r2
 	ldr r0, [r5]
-	bl 0x08003FB0
+	bl sub_08003FB0
 	lsl r0, r0, #24
 	cmp r0, #0
 	beq _080284D4
 	ldr r0, [r5]
 	add r1, r4, #0
 	mov r2, #24
-	bl 0x08002E70
+	bl sub_08002E70
 _080284D4:
 	mov r0, #8
 	and r7, r7, r0
@@ -364,14 +364,14 @@ _080284D4:
 	lsl r1, r1, #1
 	add r5, r0, r1
 	ldr r0, [r5]
-	bl 0x08003FB0
+	bl sub_08003FB0
 	lsl r0, r0, #24
 	cmp r0, #0
 	beq _080284FA
 	ldr r0, [r5]
 	add r1, r4, #0
 	mov r2, #24
-	bl 0x08002E70
+	bl sub_08002E70
 _080284FA:
 	pop {r3}
 	mov r8, r3

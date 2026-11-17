@@ -2,9 +2,9 @@
 sub_08018838: @ 0x08018838
 	push {r4,lr}
 	add r4, r0, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r0, r4, #0
-	bl 0x08009664
+	bl sub_08009664
 	ldrh r0, [r4, #44]
 	cmp r0, #0
 	beq _08018868

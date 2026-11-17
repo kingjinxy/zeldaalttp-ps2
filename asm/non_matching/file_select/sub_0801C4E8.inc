@@ -14,7 +14,7 @@ sub_0801C4E8: @ 0x0801C4E8
 	orr r4, r4, r0
 	add r0, r5, #0
 	mov r1, #12
-	bl 0x0800997C
+	bl sub_0800997C
 	lsl r0, r0, #24
 	lsr r0, r0, #24
 	cmp r4, r0
@@ -22,7 +22,7 @@ sub_0801C4E8: @ 0x0801C4E8
 	add r0, r5, #0
 	mov r1, #56
 	mov r2, #56
-	bl 0x08009E6C
+	bl sub_08009E6C
 	cmp r0, #0
 	beq _0801C524
 	str r0, [r5, #100]
@@ -42,7 +42,7 @@ _0801C528:
 	add r0, r0, r1
 	ldrb r1, [r0]
 	add r0, r5, #0
-	bl 0x08003870
+	bl sub_08003870
 	mov r0, #0
 	b _0801C54E
 _0801C544:

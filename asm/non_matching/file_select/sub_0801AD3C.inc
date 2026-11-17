@@ -4,7 +4,7 @@ sub_0801AD3C: @ 0x0801AD3C
 	mov r7, r8
 	push {r7}
 	add r4, r0, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r0, r4, #0
 	add r0, r0, #41
 	ldrb r1, [r0]
@@ -25,7 +25,7 @@ _0801AD66:
 	add r0, r0, #42
 	ldrb r1, [r0]
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 	add r0, r4, #0
 	add r0, r0, #113
 	ldrb r1, [r0]
@@ -94,12 +94,12 @@ _0801ADBC:
 	add r3, r3, #118
 	mov r5, #0
 	ldrsh r3, [r3, r5]
-	bl 0x08003F54
+	bl sub_08003F54
 	b _0801AE04
 _0801ADFC:
 	ldr r1, [r4, #88]
 	add r0, r4, #0
-	bl 0x08009EA4
+	bl sub_08009EA4
 _0801AE04:
 	lsl r0, r0, #24
 	lsr r1, r0, #24
@@ -130,7 +130,7 @@ _0801AE24:
 	strh r1, [r4, #48]
 	strh r1, [r4, #52]
 	mov r0, #93
-	bl 0x08003DFC
+	bl sub_08003DFC
 	b _0801AE96
 _0801AE3C:
 	mov r0, #128
@@ -144,7 +144,7 @@ _0801AE3C:
 	lsl r1, r1, #24
 	lsr r1, r1, #24
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 _0801AE56:
 	add r0, r4, #0
 	add r0, r0, #112
@@ -157,13 +157,13 @@ _0801AE66:
 	mov r1, #224
 	lsl r1, r1, #5
 	add r0, r4, #0
-	bl 0x08003594
+	bl sub_08003594
 	cmp r0, #0
 	bne _0801AE96
 	add r0, r4, #0
 	bl sub_0801B024
 	mov r0, #94
-	bl 0x08003DFC
+	bl sub_08003DFC
 	b _0801AE96
 _0801AE82:
 	mov r1, #0

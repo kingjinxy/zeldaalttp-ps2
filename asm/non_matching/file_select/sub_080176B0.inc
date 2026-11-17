@@ -16,7 +16,7 @@ sub_080176B0: @ 0x080176B0
 _080176CA:
 	ldr r1, _080176D8  @ =gUnknown_0813959C
 	add r0, r2, #0
-	bl 0x080098A0
+	bl sub_080098A0
 _080176D2:
 	pop {r0}
 	bx r0

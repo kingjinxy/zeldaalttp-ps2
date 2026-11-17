@@ -11,7 +11,7 @@ sub_08024304: @ 0x08024304
 _08024314:
 	mov r0, #9
 	strb r0, [r4, #20]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #63
 	and r0, r0, r1
 	add r0, r0, #180
@@ -36,7 +36,7 @@ _0802433C:
 	add r1, r0, #0
 	str r1, [r4, #100]
 	add r0, r4, #0
-	bl 0x08009EA4
+	bl sub_08009EA4
 	add r1, r4, #0
 	add r1, r1, #43
 	strb r0, [r1]
@@ -50,7 +50,7 @@ _0802433C:
 	strb r1, [r0]
 	add r1, r1, #20
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 _0802436A:
 	pop {r4}
 	pop {r0}

@@ -2,7 +2,7 @@
 	THUMB_FUNC_START sub_08001D1C
 sub_08001D1C: @ 0X08001D1C
 	push {r1, lr}
-	bl 0x8002350
+	bl sub_08002350
 	bne.n _08001D58
 	cmp r3, #144
 	beq.n _08001D58
@@ -18,7 +18,7 @@ sub_08001D1C: @ 0X08001D1C
 	ldrb r1, [r0, #10]
 	movs r0, #78
 	eors r2, r2
-	bl 0x804c8a8
+	bl sub_0804C8A8
 	adds r2, r0, #0
 	pop {r0}
 	orrs r2, r2

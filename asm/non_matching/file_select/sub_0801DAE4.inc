@@ -83,7 +83,7 @@ _0801DB0A:
 	strb r0, [r2]
 	ldrb r1, [r2]
 	add r0, r3, #0
-	bl 0x08003870
+	bl sub_08003870
 	pop {r0}
 	bx r0
 _0801DB8C:

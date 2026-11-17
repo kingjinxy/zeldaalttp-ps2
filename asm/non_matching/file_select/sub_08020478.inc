@@ -50,7 +50,7 @@ sub_08020478: @ 0x08020478
 	lsl r0, r0, #2
 	strh r0, [r1]
 	add r0, r2, #0
-	bl 0x08008D90
+	bl sub_08008D90
 _080204E2:
 	pop {r4}
 	pop {r0}

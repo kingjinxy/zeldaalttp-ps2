@@ -101,7 +101,7 @@ sub_0801D8D4: @ 0x0801D8D4
 	strb r0, [r1]
 	ldr r0, _0801D9E4  @ =gUnknown_0813AAB4
 	str r0, [r6, #72]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #31
 	and r0, r0, r1
 	add r1, r6, #0
@@ -117,7 +117,7 @@ sub_0801D8D4: @ 0x0801D8D4
 	strb r0, [r1]
 	ldrb r1, [r1]
 	add r0, r6, #0
-	bl 0x08003870
+	bl sub_08003870
 _0801D9D6:
 	pop {r3-r5}
 	mov r8, r3

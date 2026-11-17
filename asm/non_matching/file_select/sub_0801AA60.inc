@@ -4,7 +4,7 @@ sub_0801AA60: @ 0x0801AA60
 	add r4, r0, #0
 	mov r0, #1
 	strb r0, [r4, #20]
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r2, _0801AA88  @ =gUnknown_08139E90
 	mov r1, #3
 	and r1, r1, r0
@@ -13,7 +13,7 @@ sub_0801AA60: @ 0x0801AA60
 	strb r0, [r4, #23]
 	add r0, r4, #0
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 	pop {r4}
 	pop {r0}
 	bx r0

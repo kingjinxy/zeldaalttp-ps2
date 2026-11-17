@@ -16,7 +16,7 @@ sub_0812BA6C: @ 0x0812BA6C
 	.byte 0x00
 	.byte 0x00
 _0812BA88:
-	.4byte 0x0812BA8C
+	.4byte _0812BA88+0x4
 	.4byte _0812BAA0
 	.4byte _0812BABC
 	.4byte _0812BACC

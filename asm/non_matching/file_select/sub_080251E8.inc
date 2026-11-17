@@ -4,11 +4,11 @@ sub_080251E8: @ 0x080251E8
 	add r4, r0, #0
 	bl sub_0803CC20
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	mov r1, #192
 	lsl r1, r1, #5
 	add r0, r4, #0
-	bl 0x08003594
+	bl sub_08003594
 	cmp r0, #0
 	bne _0802520A
 	add r0, r4, #0

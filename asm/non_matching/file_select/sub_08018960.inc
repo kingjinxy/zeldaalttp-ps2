@@ -3,7 +3,7 @@ sub_08018960: @ 0x08018960
 	push {r4,r5,lr}
 	add r4, r0, #0
 	mov r5, #0
-	bl 0x0800963C
+	bl sub_0800963C
 	lsl r0, r0, #16
 	cmp r0, #0
 	beq _080189D0

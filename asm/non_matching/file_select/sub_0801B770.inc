@@ -19,7 +19,7 @@ sub_0801B770: @ 0x0801B770
 	ldrh r0, [r0]
 	strh r0, [r4, #54]
 	add r0, r4, #0
-	bl 0x08008D90
+	bl sub_08008D90
 _0801B79C:
 	pop {r4}
 	pop {r0}

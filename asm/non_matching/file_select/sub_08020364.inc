@@ -19,13 +19,13 @@ sub_08020364: @ 0x08020364
 	b _080203AC
 _0802038C:
 	add r0, r4, #0
-	bl 0x08009664
+	bl sub_08009664
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	mov r1, #192
 	lsl r1, r1, #5
 	add r0, r4, #0
-	bl 0x08003594
+	bl sub_08003594
 	cmp r0, #0
 	bne _080203AC
 	add r0, r4, #0

@@ -19,7 +19,7 @@ _08032B8C:
 _08032B98:
 	.4byte gUnknown_02016D60
 _08032B9C:
-	.4byte 0x08032BA0
+	.4byte _08032B9C+0x4
 	.4byte _08032BC4
 	.4byte _08032BEC
 	.4byte _08032C14

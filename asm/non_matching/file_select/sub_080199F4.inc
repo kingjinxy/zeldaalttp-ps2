@@ -30,13 +30,13 @@ sub_080199F4: @ 0x080199F4
 	add r0, r0, #125
 	strb r1, [r0]
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 	mov r0, #128
-	bl 0x08003DFC
+	bl sub_08003DFC
 _08019A3A:
 	ldr r1, _08019A48  @ =gUnknown_08139AC0
 	add r0, r4, #0
-	bl 0x080098A0
+	bl sub_080098A0
 	pop {r4}
 	pop {r0}
 	bx r0

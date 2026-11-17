@@ -11,7 +11,7 @@ sub_0801D380: @ 0x0801D380
 	add r0, r4, #0
 	add r0, r0, #43
 	strb r1, [r0]
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r1, _0801D3BC  @ =gUnknown_0813A7EE
 	and r0, r0, r5
 	add r0, r0, r1
@@ -23,7 +23,7 @@ sub_0801D380: @ 0x0801D380
 	strb r0, [r1]
 	add r0, r4, #0
 	mov r1, #2
-	bl 0x08003870
+	bl sub_08003870
 	pop {r4,r5}
 	pop {r0}
 	bx r0

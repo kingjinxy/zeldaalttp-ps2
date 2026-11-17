@@ -3,7 +3,7 @@ sub_08066D28: @ 0x08066D28
 	push {r4,lr}
 	lsl r0, r0, #24
 	lsr r4, r0, #24
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #3
 	bl __umodsi3
 	cmp r0, #1
@@ -48,7 +48,7 @@ _08066D78:
 	add r1, r4, #0
 	bl sub_0801386C
 _08066D88:
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #1
 	and r1, r1, r0
 	cmp r1, #0

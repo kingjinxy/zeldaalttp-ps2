@@ -37,7 +37,7 @@ sub_08025144: @ 0x08025144
 	ldrb r1, [r0]
 	lsr r1, r1, #4
 	add r0, r3, #0
-	bl 0x08003870
+	bl sub_08003870
 	pop {r0}
 	bx r0
 	.byte 0x00

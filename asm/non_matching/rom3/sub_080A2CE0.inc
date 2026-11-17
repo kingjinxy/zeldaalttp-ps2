@@ -74,7 +74,7 @@ _080A2D60:
 _080A2D64:
 	.4byte gUnknown_0817276C
 _080A2D68:
-	.4byte 0x080A2D6C
+	.4byte _080A2D68+0x4
 	.4byte _080A2F16
 	.4byte _080A2F00
 	.4byte _080A2F00

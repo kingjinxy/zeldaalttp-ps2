@@ -46,10 +46,10 @@ sub_080156BC: @ 0x080156BC
 	add r5, r6, #0
 	ldrh r1, [r7]
 	add r0, r6, #0
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
-	bl 0x080094BC
+	bl sub_080094BC
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, #38

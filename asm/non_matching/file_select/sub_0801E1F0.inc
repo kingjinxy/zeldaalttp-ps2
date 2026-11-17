@@ -2,7 +2,7 @@
 sub_0801E1F0: @ 0x0801E1F0
 	push {r4-r6,lr}
 	add r4, r0, #0
-	bl 0x08003828
+	bl GetNextFrame
 	ldr r0, [r4, #88]
 	add r1, r4, #0
 	add r1, r1, #41
@@ -41,7 +41,7 @@ _0801E22E:
 	cmp r0, #0
 	beq _0801E254
 	add r0, r4, #0
-	bl 0x080098CC
+	bl sub_080098CC
 	b _0801E35A
 	.byte 0x00
 	.byte 0x00
@@ -145,8 +145,8 @@ _0801E2E4:
 	orr r0, r0, r1
 	strh r0, [r2]
 	add r0, r4, #0
-	bl 0x08008DD8
-	bl 0x0800099C
+	bl sub_08008DD8
+	bl sub_0800099C
 	mov r1, #31
 	and r0, r0, r1
 	add r2, r4, #0
@@ -164,7 +164,7 @@ _0801E2E4:
 	beq _0801E340
 	ldrb r1, [r1]
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 	b _0801E35A
 	.byte 0x00
 	.byte 0x00
@@ -182,7 +182,7 @@ _0801E340:
 	lsr r1, r1, #4
 	add r1, r1, #4
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 _0801E35A:
 	pop {r4-r6}
 	pop {r0}

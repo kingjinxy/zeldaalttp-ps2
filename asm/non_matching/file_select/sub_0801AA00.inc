@@ -9,21 +9,21 @@ sub_0801AA00: @ 0x0801AA00
 	cmp r0, #0
 	bne _0801AA16
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 _0801AA16:
 	add r0, r4, #0
-	bl 0x0800963C
+	bl sub_0800963C
 	mov r1, #144
 	lsl r1, r1, #5
 	add r0, r4, #0
-	bl 0x08003594
+	bl sub_08003594
 	cmp r0, #0
 	bne _0801AA36
 	mov r0, #5
 	strb r0, [r4, #20]
 	add r0, r4, #0
 	mov r1, #4
-	bl 0x08003870
+	bl sub_08003870
 _0801AA36:
 	pop {r4}
 	pop {r0}

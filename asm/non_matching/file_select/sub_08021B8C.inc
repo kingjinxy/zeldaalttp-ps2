@@ -4,7 +4,7 @@ sub_08021B8C: @ 0x08021B8C
 	add r4, r0, #0
 	bl sub_08022D50
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r0, r4, #0
 	add r0, r0, #41
 	ldrb r1, [r0]

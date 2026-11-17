@@ -11,7 +11,7 @@ sub_0801F48C: @ 0x0801F48C
 	add r0, r4, #0
 	bl _call_via_r1
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	ldr r0, [r4, #40]
 	ldr r1, _0801F4D4  @ =0x00FF8000
 	and r0, r0, r1
@@ -25,7 +25,7 @@ sub_0801F48C: @ 0x0801F48C
 	strb r0, [r1]
 	add r0, r4, #0
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 _0801F4C8:
 	pop {r4}
 	pop {r0}

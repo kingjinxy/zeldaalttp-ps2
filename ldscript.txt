@@ -50,7 +50,9 @@ SECTIONS
 		asm/thumb_interwork_veneers.o(.text);
 	} = 0
 
-	.rodata :
+	/* fixed address: data blobs hold absolute ROM pointers, so NONMATCHING builds (code of another size)
+	   keep the data where it was; the linker reports an overlap if the code grows past it */
+	.rodata 0x08137B04 :
 	ALIGN(4)
 	{
 		data/data.o(.rodata);

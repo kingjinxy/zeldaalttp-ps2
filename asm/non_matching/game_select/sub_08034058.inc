@@ -30,7 +30,7 @@ _0803407E:
 	sub r3, r3, #32
 	lsl r3, r3, #16
 	asr r3, r3, #16
-	bl 0x08003F54
+	bl sub_08003F54
 	add r1, r4, #0
 	add r1, r1, #43
 	strb r0, [r1]

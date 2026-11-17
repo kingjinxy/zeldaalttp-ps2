@@ -17,9 +17,9 @@ sub_08019398: @ 0x08019398
 	str r0, [r4, #72]
 	strb r1, [r3]
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 	add r0, r4, #0
-	bl 0x08003BCC
+	bl sub_08003BCC
 	ldr r3, [r4, #120]
 	ldrb r2, [r3, #28]
 	mov r1, #4
@@ -40,7 +40,7 @@ _080193DA:
 	bne _080193F8
 	mov r0, #30
 	strb r0, [r4, #23]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #31
 	and r0, r0, r1
 	add r1, r4, #0
@@ -48,9 +48,9 @@ _080193DA:
 	strb r0, [r1]
 _080193F8:
 	add r0, r4, #0
-	bl 0x0800963C
+	bl sub_0800963C
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	pop {r4}
 	pop {r0}
 	bx r0

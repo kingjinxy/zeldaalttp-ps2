@@ -6,10 +6,10 @@ sub_0802B590: @ 0x0802B590
 	mov r0, #0
 	str r0, [r1, #88]
 	ldr r0, [r4, #84]
-	bl 0x08003E24
+	bl sub_08003E24
 	add r0, r4, #0
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 	ldrb r0, [r4, #21]
 	add r0, r0, #1
 	strb r0, [r4, #21]

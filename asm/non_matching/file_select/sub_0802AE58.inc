@@ -32,7 +32,7 @@ sub_0802AE58: @ 0x0802AE58
 	mov r4, #0
 	mov r0, #85
 	strh r0, [r1]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #7
 	and r0, r0, r1
 	mov r1, #240
@@ -54,7 +54,7 @@ sub_0802AE58: @ 0x0802AE58
 	strb r4, [r5, #11]
 	ldrb r1, [r5, #10]
 	add r0, r5, #0
-	bl 0x08003870
+	bl sub_08003870
 	pop {r4,r5}
 	pop {r0}
 	bx r0

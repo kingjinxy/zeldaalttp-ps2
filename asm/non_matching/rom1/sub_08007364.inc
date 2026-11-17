@@ -26,7 +26,7 @@ sub_08007364: @ 0X08007364
 	tst r2, r3
 	beq.n _080073F0
 	movs r2, #64
-	bl 0x80031ac
+	bl sub_080031AC
 	b.n _080073F0
 _0800739C:
 	ldrb r3, [r1, #26]
@@ -83,7 +83,7 @@ _080073FC:
 	beq.n _0800740C
 	push {r0, r1}
 	subs r1, #1
-	bl 0x8007f10
+	bl sub_08007F10
 	pop {r0, r1}
 _0800740C:
 	adds r0, #28

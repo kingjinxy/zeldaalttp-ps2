@@ -109,8 +109,8 @@ _080304CC:
 	bl sub_08030314
 _080304DE:
 	bl sub_08030654
-	bl 0x08137AFC
-	bl 0x08000BAC
+	bl sub_08137AFC
+	bl sub_08000BAC
 	pop {r4,r5}
 	pop {r0}
 	bx r0

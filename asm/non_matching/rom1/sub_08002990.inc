@@ -15,7 +15,7 @@ sub_08002990: @ 0X08002990
 _080029A6:
 	push {r1}
 	movs r2, #103
-	bl 0x80031ac
+	bl sub_080031AC
 	pop {r1}
 _080029B0:
 	movs r3, #38
@@ -37,7 +37,7 @@ _080029C2:
 	.4byte 0x0000f3fb
 	.4byte 0x00000133
 	.4byte 0x00000176
-	.4byte 0x08001661
+	.4byte sub_08001660
 	.4byte 0x00000158
 	.4byte 0x00003fff
 	.4byte 0x00008000
@@ -45,7 +45,7 @@ _080029C2:
 	.4byte 0x0000c000
 	.4byte 0x00006600
 	.4byte 0x0000ffbf
-	.4byte 0x08001291
+	.4byte sub_08001290
 	.4byte 0x00000180
 	.4byte 0x03000e20
 	.4byte 0x03000bd0

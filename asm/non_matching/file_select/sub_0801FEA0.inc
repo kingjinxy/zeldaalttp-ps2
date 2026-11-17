@@ -25,7 +25,7 @@ sub_0801FEA0: @ 0x0801FEA0
 	strb r0, [r2]
 	ldrb r1, [r2]
 	add r0, r3, #0
-	bl 0x08003870
+	bl sub_08003870
 _0801FED6:
 	pop {r0}
 	bx r0

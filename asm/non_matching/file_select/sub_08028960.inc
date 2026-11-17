@@ -44,7 +44,7 @@ sub_08028960: @ 0x08028960
 	orr r1, r1, r0
 	str r1, [r2]
 	mov r0, #23
-	bl 0x08003DFC
+	bl sub_08003DFC
 _080289BC:
 	pop {r0}
 	bx r0

@@ -467,7 +467,7 @@ _0804FF48:
 	.4byte 0x00000141
 _0804FF4C:
 	ldr r0, [r7]
-	bl 0x08003B64
+	bl sub_08003B64
 	lsl r1, r0, #24
 	lsr r0, r1, #24
 	cmp r0, #0

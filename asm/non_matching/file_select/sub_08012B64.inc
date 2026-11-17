@@ -26,7 +26,7 @@ _08012B88:
 	add r3, r3, #4
 	cmp r4, #31
 	bls _08012B74
-	bl 0x0800099C
+	bl sub_0800099C
 	add r1, r5, #0
 	bl __umodsi3
 	add r5, r0, #0

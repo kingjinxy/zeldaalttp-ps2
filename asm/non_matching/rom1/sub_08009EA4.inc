@@ -31,7 +31,7 @@ sub_08009EA4: @ 0X08009EA4
 	bcc.n _08009EE4
 _08009EDC:
 	push {lr}
-	bl 0x803cecc
+	bl sub_0803CECC
 	pop {pc}
 _08009EE4:
 	movs r2, #43
@@ -48,10 +48,10 @@ _08009EE4:
 	.byte 0x00
 	.byte 0x03
 	.4byte 0x03000e20
-	.4byte 0x08003b54
+	.4byte FrameNeedsUpdate+0x2d0
 	.4byte 0x08002b50
 	.4byte 0x08002cc4
-	.4byte 0x08009e68
+	.4byte sub_08008FA4+0xec4
 	.4byte 0x00001800
 	.byte 0x20
 	.byte 0x0e

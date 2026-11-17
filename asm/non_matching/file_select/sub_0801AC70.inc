@@ -48,7 +48,7 @@ sub_0801AC70: @ 0x0801AC70
 	strb r0, [r4, #28]
 	add r0, r4, #0
 	mov r1, #10
-	bl 0x08003870
+	bl sub_08003870
 _0801ACD8:
 	pop {r4-r7}
 	pop {r0}

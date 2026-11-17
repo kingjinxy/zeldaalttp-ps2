@@ -4,13 +4,13 @@ sub_0800AF98: @ 0X0800AF98
 	adds r1, #1
 	strb r1, [r4, #28]
 	movs r0, #80
-	bl 0x8003dfc
+	bl sub_08003DFC
 	movs r2, #84
 	ldr r0, [r4, r2]
 	adds r1, r4, #0
-	bl 0x803d440
+	bl sub_0803D440
 	adds r0, r4, #0
-	bl 0x8003828
+	bl GetNextFrame
 	movs r1, #41
 	ldrb r0, [r4, r1]
 	cmp r0, #1
@@ -19,7 +19,7 @@ sub_0800AF98: @ 0X0800AF98
 	eors r0, r0
 	strb r0, [r4, r1]
 	movs r0, #9
-	bl 0x8003dfc
+	bl sub_08003DFC
 	pop {r0}
 _0800AFC8:
 	cmp r0, #128
@@ -40,9 +40,9 @@ _0800AFC8:
 _0800AFE6:
 	movs r2, #84
 	ldr r0, [r4, r2]
-	bl 0x802c7a8
+	bl sub_0802C7A8
 	adds r0, r4, #0
-	bl 0x8012540
+	bl DeleteThisEntity
 _0800AFF4:
 	pop {r3, r4}
 	bx r3

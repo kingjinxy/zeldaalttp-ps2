@@ -4,7 +4,7 @@ sub_08066FF0: @ 0x08066FF0
 	lsl r0, r0, #24
 	lsr r4, r0, #24
 	add r5, r4, #0
-	bl 0x0800099C
+	bl sub_0800099C
 	add r1, r0, #0
 	mov r0, #255
 	and r1, r1, r0

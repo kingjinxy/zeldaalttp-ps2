@@ -11,9 +11,9 @@ sub_08028BE8: @ 0x08028BE8
 	add r7, r0, #0
 	cmp r7, #0
 	beq _08028C46
-	bl 0x0800099C
+	bl sub_0800099C
 	add r6, r0, #0
-	bl 0x0800099C
+	bl sub_0800099C
 	add r5, r0, #0
 	ldr r0, _08028C50  @ =gUnknown_0813D0D4
 	mov r2, r8
@@ -31,7 +31,7 @@ sub_08028BE8: @ 0x08028BE8
 	add r4, r4, r5
 	sub r4, r4, #4
 	lsl r4, r4, #16
-	bl 0x0800099C
+	bl sub_0800099C
 	add r3, r0, #0
 	mov r0, #31
 	and r3, r3, r0

@@ -4,7 +4,7 @@ sub_0801FD84: @ 0x0801FD84
 	add r4, r0, #0
 	ldr r2, [r4, #100]
 	mov r1, #12
-	bl 0x08009998
+	bl sub_08009998
 	lsl r0, r0, #24
 	lsr r0, r0, #24
 	mov r1, #128

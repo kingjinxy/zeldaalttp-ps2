@@ -63,7 +63,7 @@ _080265E0:
 _080265EE:
 	ldrb r1, [r0]
 	mov r0, r12
-	bl 0x08003870
+	bl sub_08003870
 	pop {r4}
 	pop {r0}
 	bx r0

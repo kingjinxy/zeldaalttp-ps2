@@ -12,7 +12,7 @@ sub_0801BF90: @ 0x0801BF90
 	strb r0, [r4, #23]
 	add r0, r4, #0
 	mov r1, #92
-	bl 0x08003E10
+	bl sub_08003E10
 _0801BFAE:
 	pop {r4}
 	pop {r0}

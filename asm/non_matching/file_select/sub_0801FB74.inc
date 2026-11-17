@@ -45,7 +45,7 @@ _0801FBC2:
 	strb r1, [r0]
 	ldr r1, [r4, #100]
 	add r0, r4, #0
-	bl 0x08009EA4
+	bl sub_08009EA4
 	add r1, r4, #0
 	add r1, r1, #43
 	strb r0, [r1]
@@ -53,9 +53,9 @@ _0801FBC2:
 	mov r1, #8
 	bl sub_0801FCC4
 	add r0, r4, #0
-	bl 0x0800963C
+	bl sub_0800963C
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	ldrb r0, [r4, #23]
 	sub r0, r0, #1
 	strb r0, [r4, #23]

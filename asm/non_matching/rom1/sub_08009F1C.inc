@@ -11,7 +11,7 @@ sub_08009F1C: @ 0X08009F1C
 	ldrh r1, [r1, #0]
 	cmp r1, #0
 	bne.n _08009F64
-	bl 0x8003130
+	bl sub_08003130
 _08009F34:
 	adds r0, r4, #0
 	ldrb r1, [r0, #9]
@@ -22,11 +22,11 @@ _08009F34:
 	mov lr, r2
 	bx r1
 _08009F44:
-	bl 0x8049708
+	bl sub_08049708
 	cmp r0, #0
 	beq.n _08009F34
 	adds r0, r4, #0
-	bl 0x8012540
+	bl DeleteThisEntity
 	pop {r3, r4}
 	bx r3
 	.byte 0x00

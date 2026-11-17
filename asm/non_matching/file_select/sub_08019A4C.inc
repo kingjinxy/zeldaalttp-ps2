@@ -55,7 +55,7 @@ sub_08019A4C: @ 0x08019A4C
 	str r0, [r4, #100]
 	add r0, r4, #0
 	mov r1, #5
-	bl 0x08003870
+	bl sub_08003870
 	bl sub_0803DF84
 	pop {r4}
 	pop {r0}

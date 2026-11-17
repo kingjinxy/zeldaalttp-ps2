@@ -40,7 +40,7 @@ _081346D2:
 	pop {r0}
 	bx r0
 _081346D8:
-	.4byte 0x08133A59
+	.4byte sub_08133A58
 _081346DC:
 	.4byte gUnknown_03006D18
 _081346E0:

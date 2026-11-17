@@ -2,13 +2,13 @@
 sub_08017120: @ 0x08017120
 	push {r4,lr}
 	add r4, r0, #0
-	bl 0x08009664
+	bl sub_08009664
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	mov r1, #136
 	lsl r1, r1, #5
 	add r0, r4, #0
-	bl 0x08003594
+	bl sub_08003594
 	cmp r0, #0
 	bne _08017154
 	ldrb r0, [r4, #20]
@@ -21,7 +21,7 @@ sub_08017120: @ 0x08017120
 	lsl r1, r1, #24
 	lsr r1, r1, #24
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 _08017154:
 	pop {r4}
 	pop {r0}

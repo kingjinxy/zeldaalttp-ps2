@@ -3,7 +3,7 @@ sub_080668F4: @ 0x080668F4
 	push {r4,lr}
 	lsl r0, r0, #24
 	lsr r4, r0, #24
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #1
 	and r1, r1, r0
 	cmp r1, #0
@@ -23,7 +23,7 @@ _08066918:
 	add r3, r4, #0
 	bl sub_08013C8C
 _08066924:
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #1
 	and r1, r1, r0
 	cmp r1, #0
@@ -47,7 +47,7 @@ _08066948:
 	add r3, r4, #0
 	bl sub_08013C8C
 _08066954:
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #1
 	and r1, r1, r0
 	cmp r1, #0
@@ -71,7 +71,7 @@ _08066978:
 	add r3, r4, #0
 	bl sub_08013C8C
 _08066984:
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #1
 	and r1, r1, r0
 	cmp r1, #0

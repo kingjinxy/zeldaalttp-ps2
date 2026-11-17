@@ -28,9 +28,9 @@ sub_080240C8: @ 0x080240C8
 	strb r1, [r0]
 	add r1, r1, #20
 	add r0, r7, #0
-	bl 0x08003870
+	bl sub_08003870
 	mov r0, #158
-	bl 0x08003DFC
+	bl sub_08003DFC
 _0802410A:
 	ldr r0, [r7, #84]
 	ldr r6, _08024168  @ =gUnknown_0813E4CC

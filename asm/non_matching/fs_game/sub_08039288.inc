@@ -171,7 +171,7 @@ _08039376:
 	add r2, r1, #0
 	strb r2, [r0]
 _080393D4:
-	bl 0x08137AFC
+	bl sub_08137AFC
 	bl sub_08015D9C
 	bl sub_08015C64
 	bl sub_08008ED8
@@ -390,7 +390,7 @@ _080395A0:
 _080395A4:
 	.4byte 0x800B01A0
 _080395A8:
-	bl 0x08137AFC
+	bl sub_08137AFC
 	bl sub_08000BAC
 	bl sub_0802BFC4
 	ldr r0, _080395C0  @ =gUnknown_03000520

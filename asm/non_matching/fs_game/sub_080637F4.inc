@@ -353,7 +353,7 @@ _08063A28:
 	ldr r1, [r0, #88]
 	add r0, r1, #0
 	mov r1, #195
-	bl 0x08003E10
+	bl sub_08003E10
 _08063AB2:
 	ldr r0, _08063B30  @ =gUnknown_03006A30
 	ldr r1, [r7]
@@ -377,7 +377,7 @@ _08063AB2:
 	b _08063C4E
 _08063ADA:
 	ldr r0, [r7]
-	bl 0x08003828
+	bl GetNextFrame
 	ldr r0, [r7]
 	ldrb r1, [r0, #10]
 	mov r2, #128
@@ -424,7 +424,7 @@ _08063B26:
 _08063B30:
 	.4byte gUnknown_03006A30
 _08063B34:
-	.4byte 0x08063B38
+	.4byte _08063B34+0x4
 	.4byte _08063BC8
 	.4byte _08063C4C
 	.4byte _08063C4C

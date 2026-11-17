@@ -46,11 +46,11 @@ _0801A476:
 	add r1, r1, #43
 	strb r0, [r1]
 	mov r0, #48
-	bl 0x08003DFC
+	bl sub_08003DFC
 _0801A48A:
 	ldr r1, _0801A498  @ =gUnknown_08139D1C
 	add r0, r4, #0
-	bl 0x080098A0
+	bl sub_080098A0
 	pop {r4}
 	pop {r0}
 	bx r0

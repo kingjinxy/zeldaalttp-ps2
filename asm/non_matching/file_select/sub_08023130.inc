@@ -10,7 +10,7 @@ sub_08023130: @ 0x08023130
 	add r0, r4, #0
 	bl _call_via_r1
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r2, r4, #0
 	add r2, r2, #41
 	ldrb r1, [r2]
@@ -20,7 +20,7 @@ sub_08023130: @ 0x08023130
 	beq _0802316E
 	mov r0, #0
 	strb r0, [r2]
-	bl 0x0800099C
+	bl sub_0800099C
 	add r2, r4, #0
 	add r2, r2, #40
 	mov r1, #56

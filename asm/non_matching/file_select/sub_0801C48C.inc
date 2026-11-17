@@ -2,9 +2,9 @@
 sub_0801C48C: @ 0x0801C48C
 	push {r4,lr}
 	add r4, r0, #0
-	bl 0x08003834
+	bl Advance4Frames
 	add r0, r4, #0
-	bl 0x0800963C
+	bl sub_0800963C
 	lsl r0, r0, #16
 	cmp r0, #0
 	bne _0801C4BE

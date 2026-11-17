@@ -113,7 +113,7 @@ _08036084:
 	.4byte gUnknown_03000488
 _08036088:
 	add r0, r4, #0
-	bl 0x08003BCC
+	bl sub_08003BCC
 	add r0, r4, #0
 	bl DeleteThisEntity
 _08036094:

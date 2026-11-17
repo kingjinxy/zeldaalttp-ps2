@@ -16,7 +16,7 @@ sub_08017DFC: @ 0x08017DFC
 	add r0, r5, #0
 	mov r1, #2
 	add r2, r4, #0
-	bl 0x080092F8
+	bl sub_080092F8
 	lsl r0, r0, #16
 	lsr r6, r0, #16
 	mov r1, #2
@@ -32,7 +32,7 @@ _08017E2E:
 	add r0, r5, #0
 	mov r1, #2
 	mov r2, #6
-	bl 0x080092F8
+	bl sub_080092F8
 	lsl r0, r0, #16
 	lsr r6, r0, #16
 	mov r1, #2
@@ -40,7 +40,7 @@ _08017E2E:
 	add r0, r5, #0
 	mov r2, #6
 _08017E4C:
-	bl 0x080092F8
+	bl sub_080092F8
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	mov r1, #135
@@ -59,14 +59,14 @@ _08017E60:
 	add r0, r5, #0
 	mov r1, #8
 	mov r2, #2
-	bl 0x080092F8
+	bl sub_080092F8
 	lsl r0, r0, #16
 	lsr r6, r0, #16
 	mov r2, #2
 	neg r2, r2
 	add r0, r5, #0
 	mov r1, #8
-	bl 0x080092F8
+	bl sub_080092F8
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	mov r1, #135
@@ -90,14 +90,14 @@ _08017E9E:
 	add r0, r5, #0
 	add r1, r4, #0
 	mov r2, #2
-	bl 0x080092F8
+	bl sub_080092F8
 	lsl r0, r0, #16
 	lsr r6, r0, #16
 	mov r2, #2
 	neg r2, r2
 	add r0, r5, #0
 	add r1, r4, #0
-	bl 0x080092F8
+	bl sub_080092F8
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	mov r1, #135

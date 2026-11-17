@@ -16,10 +16,10 @@ sub_08024D10: @ 0x08024D10
 	strb r0, [r1]
 	add r0, r4, #0
 	mov r1, #6
-	bl 0x08003870
+	bl sub_08003870
 	ldr r0, [r4, #112]
 	mov r1, #7
-	bl 0x08003870
+	bl sub_08003870
 	pop {r4}
 	pop {r0}
 	bx r0

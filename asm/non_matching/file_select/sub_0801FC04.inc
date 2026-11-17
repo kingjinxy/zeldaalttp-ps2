@@ -8,9 +8,9 @@ sub_0801FC04: @ 0x0801FC04
 	eor r2, r2, r0
 	add r0, r4, #0
 	mov r1, #64
-	bl 0x08002E70
+	bl sub_08002E70
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r0, r4, #0
 	add r0, r0, #41
 	ldrb r1, [r0]

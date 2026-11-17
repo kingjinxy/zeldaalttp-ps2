@@ -10,7 +10,7 @@ sub_08005454: @ 0X08005454
 	str r2, [r0, #12]
 	ldr r3, [pc, #236]
 	str r3, [r0, #16]
-	bl 0x8001274
+	bl sub_08001274
 	movs r3, #56
 	ldrb r2, [r1, r3]
 	strb r2, [r0, #23]
@@ -20,10 +20,10 @@ sub_08005454: @ 0X08005454
 	strb r2, [r0, #27]
 	push {r0}
 	movs r2, #82
-	bl 0x80031b8
+	bl sub_080031B8
 	movs r0, #16
 	movs r1, #0
-	bl 0x80161f8
+	bl sub_080161F8
 	pop {r0}
 	movs r1, #42
 	ldrb r2, [r0, r1]
@@ -40,12 +40,12 @@ _0800549A:
 	movs r4, #1
 	ldrsb r3, [r1, r4]
 	movs r1, #10
-	bl 0x8001b54
+	bl sub_08001B54
 	pop {r1, r2}
 	adds r1, #2
 	subs r2, #1
 	bne.n _0800549A
-	bl 0x80076c4
+	bl sub_080076C4
 	pop {pc}
 	.byte 0xfe
 	.byte 0xf7

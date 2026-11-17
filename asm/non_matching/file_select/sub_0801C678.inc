@@ -4,14 +4,14 @@ sub_0801C678: @ 0x0801C678
 	add r4, r0, #0
 	mov r1, #192
 	lsl r1, r1, #5
-	bl 0x08003594
+	bl sub_08003594
 	add r5, r0, #0
 	cmp r5, #0
 	bne _0801C74C
 	add r0, r4, #0
 	mov r1, #56
 	mov r2, #56
-	bl 0x08009E6C
+	bl sub_08009E6C
 	add r3, r0, #0
 	cmp r3, #0
 	beq _0801C6C0
@@ -93,7 +93,7 @@ _0801C720:
 	bne _0801C740
 	mov r0, #30
 	strb r0, [r4, #23]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #24
 	and r0, r0, r1
 	add r0, r0, #4
@@ -102,9 +102,9 @@ _0801C720:
 	strb r0, [r1]
 _0801C740:
 	add r0, r4, #0
-	bl 0x0800963C
+	bl sub_0800963C
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 _0801C74C:
 	pop {r4-r6}
 	pop {r0}

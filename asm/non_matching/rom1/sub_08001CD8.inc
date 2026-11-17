@@ -18,7 +18,7 @@ sub_08001CD8: @ 0X08001CD8
 	lsls r2, r7, #27
 	lsls r2, r7, #3
 	.4byte 0xb500fafa
-	bl 0x8001d5c
+	bl sub_08001D5C
 	ldrb r3, [r1, #13]
 	movs r2, #128
 	tst r2, r3

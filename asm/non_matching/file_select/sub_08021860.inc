@@ -3,7 +3,7 @@ sub_08021860: @ 0x08021860
 	push {r4,r5,lr}
 	sub sp, sp, #128
 	add r5, r0, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r0, r5, #0
 	add r0, r0, #41
 	ldrb r0, [r0]
@@ -11,7 +11,7 @@ sub_08021860: @ 0x08021860
 	beq _08021926
 	mov r0, #4
 	strb r0, [r5, #20]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #1
 	and r0, r0, r1
 	strb r0, [r5, #11]
@@ -37,7 +37,7 @@ _08021892:
 	lsl r0, r0, #2
 	add r0, r0, r1
 	ldr r4, [r0]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #3
 	and r1, r1, r0
 	add r4, r4, r1
@@ -58,7 +58,7 @@ _08021892:
 	lsl r1, r1, #24
 	lsr r1, r1, #24
 	add r0, r5, #0
-	bl 0x08003870
+	bl sub_08003870
 	ldrb r0, [r5, #10]
 	cmp r0, #2
 	bne _0802190C
@@ -87,7 +87,7 @@ _08021908:
 _0802190C:
 	cmp r0, #3
 	bne _08021920
-	bl 0x08003170
+	bl sub_08003170
 	add r1, r5, #0
 	add r1, r1, #120
 	strb r0, [r1]

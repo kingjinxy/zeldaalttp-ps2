@@ -8,6 +8,6 @@ sub_080092F8: @ 0X080092F8
 	movs r2, #80
 	ldrh r2, [r0, r2]
 	adds r0, r3, #0
-	b.n 0x8009310
+	b.n sub_08009310
 	.syntax unified
 	.thumb

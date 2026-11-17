@@ -66,7 +66,7 @@ _0802FE48:
 	add r1, r0, #0
 	mov r0, #15
 	and r0, r0, r1
-	bl 0x08000A40
+	bl sub_08000A40
 	ldr r1, _0802FEC4  @ =gUnknown_03006C80
 	strb r0, [r1]
 	bl sub_08036760

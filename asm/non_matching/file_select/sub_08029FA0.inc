@@ -17,7 +17,7 @@ sub_08029FA0: @ 0x08029FA0
 	mov r0, #0
 	strb r0, [r1]
 	mov r0, #163
-	bl 0x08003DFC
+	bl sub_08003DFC
 _08029FC6:
 	ldr r0, [r4, #116]
 	sub r0, r0, #1
@@ -37,7 +37,7 @@ _08029FC6:
 	strb r0, [r4, #28]
 	add r0, r4, #0
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 	add r0, r4, #0
 	bl sub_0802A028
 	mov r1, #50
@@ -47,7 +47,7 @@ _08029FC6:
 	mov r3, #252
 	lsl r3, r3, #1
 	add r2, r3, #0
-	bl 0x08003F54
+	bl sub_08003F54
 	add r1, r4, #0
 	add r1, r1, #43
 	strb r0, [r1]

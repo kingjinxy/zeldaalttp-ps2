@@ -75,7 +75,7 @@ _0802B4AC:
 	str r0, [r4, #88]
 	str r4, [r0, #84]
 	add r0, r4, #0
-	bl 0x08003E44
+	bl sub_08003E44
 _0802B50C:
 	ldr r2, _0802B52C  @ =gUnknown_03006A30
 	ldrb r1, [r6]
@@ -106,10 +106,10 @@ _0802B534:
 	b _0802B546
 _0802B540:
 	add r0, r4, #0
-	bl 0x080077D0
+	bl sub_080077D0
 _0802B546:
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r0, r4, #0
 	add r0, r0, #41
 	ldrb r1, [r0]
@@ -119,8 +119,8 @@ _0802B546:
 	beq _0802B572
 	add r0, r4, #0
 	mov r1, #1
-	bl 0x08003870
-	bl 0x0800099C
+	bl sub_08003870
+	bl sub_0800099C
 	mov r1, #240
 	and r0, r0, r1
 	add r0, r0, #1

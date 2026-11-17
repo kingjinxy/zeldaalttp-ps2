@@ -88,7 +88,7 @@ _08029F64:
 _08029F84:
 	.4byte gUnknown_0813D44A
 _08029F88:
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #7
 	and r0, r0, r1
 	add r0, r0, #1

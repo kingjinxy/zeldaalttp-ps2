@@ -4,7 +4,7 @@ sub_08034C28: @ 0x08034C28
 	add r4, r0, #0
 	mov r1, #144
 	lsl r1, r1, #6
-	bl 0x08003594
+	bl sub_08003594
 	cmp r0, #0
 	bne _08034C3E
 	ldr r1, [r4, #96]

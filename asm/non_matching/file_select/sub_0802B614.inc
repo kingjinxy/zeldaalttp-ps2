@@ -7,7 +7,7 @@ sub_0802B614: @ 0x0802B614
 	bl sub_0803D3D0
 	add r0, r4, #0
 	mov r1, #1
-	bl 0x08003870
+	bl sub_08003870
 	ldr r0, _0802B690  @ =gUnknown_03000948
 	ldrh r0, [r0]
 	mov r1, #1
@@ -39,7 +39,7 @@ sub_0802B614: @ 0x0802B614
 	ldr r3, [r0, #124]
 	orr r1, r1, r3
 	str r1, [r2]
-	bl 0x08003E44
+	bl sub_08003E44
 	ldrb r1, [r4, #28]
 	add r0, r5, #0
 	and r0, r0, r1
@@ -53,7 +53,7 @@ sub_0802B614: @ 0x0802B614
 	mov r0, #15
 	strb r0, [r4, #23]
 	mov r0, #99
-	bl 0x08003DFC
+	bl sub_08003DFC
 _0802B688:
 	pop {r4,r5}
 	pop {r0}

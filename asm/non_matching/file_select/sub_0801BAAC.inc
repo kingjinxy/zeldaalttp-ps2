@@ -18,7 +18,7 @@ sub_0801BAAC: @ 0x0801BAAC
 	add r0, r0, #2
 	strh r1, [r0]
 	mov r0, #92
-	bl 0x08003DFC
+	bl sub_08003DFC
 	pop {r0}
 	bx r0
 	THUMB_FUNC_END sub_0801BAAC

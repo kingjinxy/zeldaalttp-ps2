@@ -19,7 +19,7 @@ sub_0812C99C: @ 0x0812C99C
 _0812C9BC:
 	.4byte gUnknown_03001C88
 _0812C9C0:
-	.4byte 0x0812C9C4
+	.4byte _0812C9C0+0x4
 	.4byte _0812C9E0
 	.4byte _0812C9EA
 	.4byte _0812CA00

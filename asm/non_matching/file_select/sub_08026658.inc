@@ -2,7 +2,7 @@
 sub_08026658: @ 0x08026658
 	push {r4,lr}
 	add r4, r0, #0
-	bl 0x08009FDC
+	bl sub_08009FDC
 	lsl r0, r0, #16
 	lsr r1, r0, #16
 	cmp r1, #0
@@ -20,11 +20,11 @@ sub_08026658: @ 0x08026658
 	lsl r1, r1, #24
 	lsr r1, r1, #24
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 	b _0802668E
 _08026688:
 	add r0, r4, #0
-	bl 0x08008E50
+	bl sub_08008E50
 _0802668E:
 	pop {r4}
 	pop {r0}

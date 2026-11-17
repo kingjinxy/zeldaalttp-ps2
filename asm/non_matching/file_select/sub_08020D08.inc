@@ -57,9 +57,9 @@ _08020D6C:
 	bl sub_08021350
 	add r0, r4, #0
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 	add r0, r4, #0
-	bl 0x08003B94
+	bl sub_08003B94
 	add r1, r4, #0
 	add r1, r1, #112
 	mov r3, #0

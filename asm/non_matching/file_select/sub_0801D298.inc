@@ -12,7 +12,7 @@ sub_0801D298: @ 0x0801D298
 	cmp r0, #0
 	beq _0801D2B6
 	add r0, r1, #0
-	bl 0x080077D0
+	bl sub_080077D0
 	b _0801D2BC
 _0801D2B6:
 	add r0, r1, #0

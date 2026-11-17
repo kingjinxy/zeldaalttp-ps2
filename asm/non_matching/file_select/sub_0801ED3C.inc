@@ -29,7 +29,7 @@ _0801ED6C:
 	add r0, r0, #80
 	ldrh r1, [r0]
 	add r0, r5, #0
-	bl 0x080093C8
+	bl sub_080093C8
 	lsl r0, r0, #24
 	cmp r0, #0
 	beq _0801ED8C

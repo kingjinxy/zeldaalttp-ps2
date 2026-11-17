@@ -2,7 +2,7 @@
 sub_0801EA88: @ 0x0801EA88
 	push {r4-r6,lr}
 	add r5, r0, #0
-	bl 0x08009664
+	bl sub_08009664
 	lsl r0, r0, #16
 	cmp r0, #0
 	bne _0801EABA
@@ -25,7 +25,7 @@ sub_0801EA88: @ 0x0801EA88
 	b _0801EB2C
 _0801EABA:
 	add r0, r5, #0
-	bl 0x08003828
+	bl GetNextFrame
 	ldr r4, _0801EB34  @ =gUnknown_0813AEF8
 	add r6, r5, #0
 	add r6, r6, #42
@@ -48,7 +48,7 @@ _0801EABA:
 	lsr r3, r3, #16
 	add r0, r5, #0
 	mov r1, #9
-	bl 0x080017EC
+	bl sub_080017EC
 	ldrb r1, [r6]
 	lsl r1, r1, #2
 	add r0, r1, #2
@@ -69,7 +69,7 @@ _0801EABA:
 	lsr r3, r3, #16
 	add r0, r5, #0
 	mov r1, #9
-	bl 0x080017EC
+	bl sub_080017EC
 	add r0, r5, #0
 	bl sub_0801EDB4
 	lsl r0, r0, #24

@@ -23,7 +23,7 @@ sub_080242C8: @ 0x080242C8
 	orr r0, r0, r1
 	strb r0, [r2]
 	mov r0, #158
-	bl 0x08003DFC
+	bl sub_08003DFC
 _080242FA:
 	pop {r0}
 	bx r0

@@ -2,7 +2,7 @@
 	THUMB_FUNC_START sub_08009F6C
 sub_08009F6C: @ 0X08009F6C
 	push {r0, r1, lr}
-	bl 0x800303c
+	bl sub_0800303C
 	pop {r0, r2}
 	ldrh r2, [r0, #50]
 	ldr r3, [pc, #436]

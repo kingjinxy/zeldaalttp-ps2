@@ -89,7 +89,7 @@ _08020A92:
 	lsr r0, r0, #16
 	add r4, r4, #80
 	ldrh r1, [r4]
-	bl 0x080093C8
+	bl sub_080093C8
 	lsl r0, r0, #24
 	cmp r0, #0
 	bne _08020AD8
@@ -104,7 +104,7 @@ _08020A92:
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	ldrh r1, [r4]
-	bl 0x080093C8
+	bl sub_080093C8
 	lsl r0, r0, #24
 	cmp r0, #0
 	beq _08020AE0

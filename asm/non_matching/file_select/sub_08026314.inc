@@ -53,7 +53,7 @@ sub_08026314: @ 0x08026314
 	str r0, [r3, #72]
 	ldrb r1, [r2]
 	add r0, r3, #0
-	bl 0x08003870
+	bl sub_08003870
 	pop {r4}
 	pop {r0}
 	bx r0

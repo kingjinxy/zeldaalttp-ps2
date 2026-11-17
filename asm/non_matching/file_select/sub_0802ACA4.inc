@@ -34,7 +34,7 @@ _0802ACDC:
 	mov r8, r0
 	add r0, r6, #0
 	mov r1, #107
-	bl 0x08003E10
+	bl sub_08003E10
 	b _0802ADC8
 _0802ACEC:
 	.4byte gUnknown_0813D52A
@@ -71,7 +71,7 @@ _0802AD2A:
 	mov r8, r1
 	add r0, r6, #0
 	mov r1, #108
-	bl 0x08003E10
+	bl sub_08003E10
 	b _0802ADC8
 	.byte 0x00
 	.byte 0x00
@@ -140,7 +140,7 @@ _0802ADBA:
 	mov r8, r0
 	add r0, r6, #0
 	mov r1, #109
-	bl 0x08003E10
+	bl sub_08003E10
 _0802ADC8:
 	lsl r0, r5, #16
 	cmp r0, #0
@@ -149,7 +149,7 @@ _0802ADC8:
 	mov r9, r1
 	mov r7, #31
 _0802ADD4:
-	bl 0x0800099C
+	bl sub_0800099C
 	and r0, r0, r7
 	lsl r0, r0, #1
 	add r0, r0, r9
@@ -161,7 +161,7 @@ _0802ADD4:
 	lsl r5, r5, #16
 	cmp r4, #0
 	beq _0802AE18
-	bl 0x0800099C
+	bl sub_0800099C
 	and r0, r0, r7
 	mov r1, #128
 	add r2, r4, #0

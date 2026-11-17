@@ -62,7 +62,7 @@ sub_08028610: @ 0x08028610
 	mov r0, #1
 	strh r0, [r1]
 	add r0, r7, #0
-	bl 0x08008D90
+	bl sub_08008D90
 	pop {r3}
 	mov r8, r3
 	pop {r4-r7}

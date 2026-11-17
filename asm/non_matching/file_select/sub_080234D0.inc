@@ -69,9 +69,9 @@ _08023528:
 	strb r0, [r5]
 	ldr r0, [r4, #84]
 	mov r1, #28
-	bl 0x08003870
+	bl sub_08003870
 	mov r0, #164
-	bl 0x08003DFC
+	bl sub_08003DFC
 	b _0802357C
 _08023568:
 	.4byte gUnknown_03006A30
@@ -86,7 +86,7 @@ _08023570:
 	strb r0, [r1]
 _0802357C:
 	add r0, r4, #0
-	bl 0x08003C10
+	bl sub_08003C10
 	pop {r4-r6}
 	pop {r0}
 	bx r0

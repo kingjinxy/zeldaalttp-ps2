@@ -8,7 +8,7 @@ sub_0801D20C: @ 0x0801D20C
 	lsl r0, r0, #24
 	cmp r0, #0
 	bne _0801D22C
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #24
 	and r0, r0, r1
 	add r0, r0, #4
@@ -17,9 +17,9 @@ sub_0801D20C: @ 0x0801D20C
 	strb r0, [r1]
 _0801D22C:
 	add r0, r4, #0
-	bl 0x0800964C
+	bl sub_0800964C
 	add r0, r4, #0
-	bl 0x08003834
+	bl Advance4Frames
 	pop {r4}
 	pop {r0}
 	bx r0

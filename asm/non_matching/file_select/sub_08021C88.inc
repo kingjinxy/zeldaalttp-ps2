@@ -4,7 +4,7 @@ sub_08021C88: @ 0x08021C88
 	add r5, r0, #0
 	mov r1, #128
 	lsl r1, r1, #6
-	bl 0x08003594
+	bl sub_08003594
 	add r0, r5, #0
 	add r0, r0, #65
 	ldrb r1, [r0]
@@ -27,7 +27,7 @@ _08021CA4:
 	ldr r0, [r0]
 	mov pc, r0
 _08021CBC:
-	.4byte 0x08021CC0
+	.4byte _08021CBC+0x4
 	.4byte _08021D38
 	.4byte _08021D56
 	.4byte _08021D56

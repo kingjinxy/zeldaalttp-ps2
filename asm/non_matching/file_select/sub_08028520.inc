@@ -10,7 +10,7 @@ sub_08028520: @ 0x08028520
 	cmp r0, #0
 	bne _08028538
 	add r0, r4, #0
-	bl 0x08008D90
+	bl sub_08008D90
 _08028538:
 	ldrb r0, [r4, #20]
 	add r0, r0, #1
@@ -50,11 +50,11 @@ _08028538:
 	strh r0, [r1]
 	add r0, r4, #0
 	mov r1, #1
-	bl 0x08003870
+	bl sub_08003870
 	add r0, r4, #0
-	bl 0x080005F0
+	bl sub_080005F0
 	mov r0, #3
-	bl 0x08003DFC
+	bl sub_08003DFC
 	pop {r4}
 	pop {r0}
 	bx r0

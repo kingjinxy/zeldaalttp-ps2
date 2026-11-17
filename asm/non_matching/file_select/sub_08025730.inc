@@ -3,7 +3,7 @@ sub_08025730: @ 0x08025730
 	push {r4,r5,lr}
 	add r4, r0, #0
 	ldr r5, _08025750  @ =gUnknown_0813C420
-	bl 0x08002E18
+	bl sub_08002E18
 	lsl r0, r0, #24
 	lsr r0, r0, #22
 	add r0, r0, r5

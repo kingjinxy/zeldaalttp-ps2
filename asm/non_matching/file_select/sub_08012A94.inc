@@ -18,7 +18,7 @@ sub_08012A94: @ 0x08012A94
 	bhi _08012AD8
 	mov r4, #128
 	lsl r4, r4, #7
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #255
 	and r1, r1, r0
 	mov r0, #177
@@ -29,7 +29,7 @@ _08012AC8:
 	add r2, r0, #0
 	add r1, r5, #0
 	add r2, r4, #0
-	bl 0x08008F78
+	bl sub_08008F78
 	b _08012AFE
 _08012AD4:
 	.4byte gUnknown_03006C80
@@ -41,7 +41,7 @@ _08012AD8:
 _08012AE0:
 	mov r4, #128
 	lsl r4, r4, #8
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #255
 	and r1, r1, r0
 	mov r0, #191
@@ -52,7 +52,7 @@ _08012AF4:
 	add r2, r0, #0
 	add r1, r6, #0
 	add r2, r4, #0
-	bl 0x08008F78
+	bl sub_08008F78
 _08012AFE:
 	pop {r4-r6}
 	pop {r0}

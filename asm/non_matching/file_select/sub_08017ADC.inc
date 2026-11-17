@@ -4,7 +4,7 @@ sub_08017ADC: @ 0x08017ADC
 	add r4, r0, #0
 	bl sub_08017DFC
 	add r0, r4, #0
-	bl 0x08009624
+	bl sub_08009624
 	pop {r4}
 	pop {r0}
 	bx r0

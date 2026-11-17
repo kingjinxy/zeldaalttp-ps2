@@ -29,7 +29,7 @@ sub_0801EB38: @ 0x0801EB38
 	lsr r3, r3, #16
 	add r0, r5, #0
 	mov r1, #9
-	bl 0x080017EC
+	bl sub_080017EC
 	ldrb r1, [r6]
 	lsl r1, r1, #2
 	add r0, r1, #2
@@ -50,13 +50,13 @@ sub_0801EB38: @ 0x0801EB38
 	lsr r3, r3, #16
 	add r0, r5, #0
 	mov r1, #9
-	bl 0x080017EC
+	bl sub_080017EC
 _0801EBA2:
 	ldr r0, [r5, #12]
 	cmp r0, #0
 	ble _0801EBBC
 	add r0, r5, #0
-	bl 0x08009664
+	bl sub_08009664
 	add r0, r5, #0
 	bl sub_0801EE30
 	b _0801EBC4

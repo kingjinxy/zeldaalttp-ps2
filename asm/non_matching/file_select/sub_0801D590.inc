@@ -16,7 +16,7 @@ sub_0801D590: @ 0x0801D590
 	asr r0, r0, #24
 	strh r0, [r4, #58]
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	ldr r1, _0801D5D4  @ =gUnknown_0813A898
 	ldrb r0, [r4, #21]
 	lsl r0, r0, #2

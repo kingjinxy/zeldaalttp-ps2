@@ -30,7 +30,7 @@ _08021604:
 	strb r0, [r5, #28]
 	add r0, r5, #0
 	mov r1, #6
-	bl 0x08003870
+	bl sub_08003870
 	ldr r0, _08021684  @ =gUnknown_03006C80
 	ldrb r1, [r0]
 	lsl r0, r1, #1

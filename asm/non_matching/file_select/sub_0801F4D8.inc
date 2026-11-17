@@ -44,13 +44,13 @@ _0801F51C:
 	strb r0, [r1]
 	ldrb r1, [r1]
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 	mov r0, #91
-	bl 0x08003DFC
+	bl sub_08003DFC
 _0801F538:
 	ldr r1, _0801F548  @ =gUnknown_0813B108
 	add r0, r4, #0
-	bl 0x080098A0
+	bl sub_080098A0
 	pop {r4}
 	pop {r0}
 	bx r0

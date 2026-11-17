@@ -1,7 +1,7 @@
 	.syntax unified
 	THUMB_FUNC_START_NOALIGN sub_08008376
 sub_08008376: @ 0X08008376
-	bl 0x800750c
+	bl sub_0800750C
 	pop {pc}
 	.byte 0x8a
 	.byte 0x78

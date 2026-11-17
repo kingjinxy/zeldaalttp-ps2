@@ -3,7 +3,7 @@ sub_0801E868: @ 0x0801E868
 	push {r4,lr}
 	add r4, r0, #0
 	mov r1, #12
-	bl 0x0800997C
+	bl sub_0800997C
 	lsl r1, r0, #24
 	lsr r2, r1, #24
 	mov r1, #128
@@ -21,7 +21,7 @@ sub_0801E868: @ 0x0801E868
 	strb r0, [r1]
 	add r0, r4, #0
 	mov r1, #1
-	bl 0x08003870
+	bl sub_08003870
 _0801E898:
 	pop {r4}
 	pop {r0}

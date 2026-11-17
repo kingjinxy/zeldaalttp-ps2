@@ -2,7 +2,7 @@
 	THUMB_FUNC_START sub_08005C7C
 sub_08005C7C: @ 0X08005C7C
 	push {lr}
-	bl 0x8001d5c
+	bl sub_08001D5C
 	ldrb r2, [r1, #26]
 	orrs r2, r2
 	bne.n _08005CC6
@@ -53,7 +53,7 @@ _08005CC6:
 	bne.n _08005CEA
 	push {r1}
 	ldrb r1, [r0, #27]
-	bl 0x80037ec
+	bl sub_080037EC
 	pop {r1}
 	ldrb r3, [r1, #0]
 _08005CEA:

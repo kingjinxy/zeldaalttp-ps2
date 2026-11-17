@@ -168,8 +168,8 @@ _0802E498:
 _0802E4A2:
 	strb r0, [r5]
 _0802E4A4:
-	bl 0x08137AFC
-	bl 0x08000BAC
+	bl sub_08137AFC
+	bl sub_08000BAC
 _0802E4AC:
 	add sp, sp, #4
 	pop {r4,r5}

@@ -20,7 +20,7 @@ _0801EE88:
 	mov r0, #0
 	b _0801F090
 _0801EE8C:
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r1, _0801EF5C  @ =gUnknown_03006C80
 	ldrb r1, [r1]
 	bl __umodsi3
@@ -221,7 +221,7 @@ _0801EFD2:
 	lsl r1, r1, #24
 	lsr r1, r1, #24
 	add r0, r6, #0
-	bl 0x08003870
+	bl sub_08003870
 	mov r0, #32
 	bl sub_08012468
 	add r1, r0, #0

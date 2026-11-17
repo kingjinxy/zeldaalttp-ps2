@@ -2,8 +2,8 @@
 	THUMB_FUNC_START sub_08005730
 sub_08005730: @ 0X08005730
 	push {lr}
-	bl 0x800127c
-	bl 0x8001f5c
+	bl sub_0800127C
+	bl sub_08001F38+0x24
 	ldrb r2, [r0, #21]
 	lsls r2, r2, #2
 	ldr r3, [pc, #260]
@@ -15,17 +15,17 @@ sub_08005730: @ 0X08005730
 _08005750:
 	movs r1, #128
 	str r1, [r0, #12]
-	bl 0x8001274
-	bl 0x8001d5c
+	bl sub_08001274
+	bl sub_08001D5C
 _0800575C:
-	bl 0x8001d5c
+	bl sub_08001D5C
 	movs r2, #52
 	eors r3, r3
 	strb r3, [r1, r2]
-	bl 0x8002294
+	bl sub_08002294
 	ldrb r1, [r0, #27]
-	bl 0x80037ec
-	bl 0x8001d5c
+	bl sub_080037EC
+	bl sub_08001D5C
 	ldrh r2, [r1, #54]
 	movs r3, #1
 	orrs r2, r3
@@ -39,7 +39,7 @@ _0800575C:
 	strb r3, [r1, #6]
 	orrs r2, r2
 	bne.n _08005792
-	bl 0x8001274
+	bl sub_08001274
 _08005792:
 	pop {pc}
 _08005794:
@@ -49,7 +49,7 @@ _08005794:
 	ldr r3, [pc, #164]
 	ands r2, r3
 	strh r2, [r1, #54]
-	bl 0x80012b4
+	bl sub_080012B4
 	pop {pc}
 	.byte 0x00
 	.byte 0x00

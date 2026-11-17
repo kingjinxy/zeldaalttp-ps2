@@ -59,7 +59,7 @@ sub_08029954: @ 0x08029954
 	bl sub_08014658
 	add r0, r6, #0
 	mov r1, #23
-	bl 0x08003E10
+	bl sub_08003E10
 	add r0, r6, #0
 	bl DeleteThisEntity
 _080299DC:

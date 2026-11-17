@@ -17,7 +17,7 @@ _080131E0:
 	lsl r0, r0, #3
 	ldr r1, _080131F8  @ =gUnknown_0842AD28
 	add r4, r0, r1
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #7
 	and r1, r1, r0
 	add r1, r4, r1

@@ -12,7 +12,7 @@ _080172AC:
 	mov r1, #160
 	lsl r1, r1, #10
 	add r0, r4, #0
-	bl 0x08003594
+	bl sub_08003594
 	cmp r0, #0
 	bne _080172DA
 	mov r0, #3
@@ -26,9 +26,9 @@ _080172AC:
 	lsl r1, r1, #24
 	lsr r1, r1, #24
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 	mov r0, #94
-	bl 0x08003DFC
+	bl sub_08003DFC
 _080172DA:
 	pop {r4}
 	pop {r0}

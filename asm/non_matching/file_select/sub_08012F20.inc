@@ -31,7 +31,7 @@ _08012F5A:
 	add r0, r0, r1
 	mov r1, #1
 	strb r1, [r0]
-	bl 0x08008ED8
+	bl sub_08008ED8
 	pop {r4}
 	pop {r0}
 	bx r0

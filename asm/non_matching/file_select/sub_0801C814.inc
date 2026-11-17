@@ -17,7 +17,7 @@ sub_0801C814: @ 0x0801C814
 	add r2, r2, #42
 	mov r1, #5
 	strb r1, [r2]
-	bl 0x08003870
+	bl sub_08003870
 	pop {r0}
 	bx r0
 	.byte 0x00

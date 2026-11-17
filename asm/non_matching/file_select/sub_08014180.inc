@@ -4,7 +4,7 @@ sub_08014180: @ 0x08014180
 	add r5, r0, #0
 	lsl r4, r1, #24
 	lsr r4, r4, #24
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r1, _080141A8  @ =gUnknown_03006C80
 	add r1, r1, #84
 	add r4, r4, r1

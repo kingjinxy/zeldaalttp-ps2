@@ -12,7 +12,7 @@ sub_0801833C: @ 0x0801833C
 	strb r0, [r4, #23]
 	ldr r1, [r4, #88]
 	add r0, r4, #0
-	bl 0x08009EA4
+	bl sub_08009EA4
 	add r1, r4, #0
 	add r1, r1, #43
 	strb r0, [r1]
@@ -20,7 +20,7 @@ sub_0801833C: @ 0x0801833C
 	bl sub_080184D8
 _08018364:
 	add r0, r4, #0
-	bl 0x0800963C
+	bl sub_0800963C
 	add r0, r4, #0
 	bl sub_08018514
 	pop {r4}

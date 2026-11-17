@@ -168,7 +168,7 @@ _080B75F2:
 	add r0, r5, #0
 	ldr r1, _080B7698  @ =0x0000FFF9
 	ldr r2, _080B769C  @ =0x0000FFD2
-	bl 0x080B7D48
+	bl sub_080B7D24+0x24
 	sub r0, r5, #1
 	lsl r0, r0, #24
 	lsr r5, r0, #24

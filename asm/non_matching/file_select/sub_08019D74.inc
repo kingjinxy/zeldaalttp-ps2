@@ -25,12 +25,12 @@ sub_08019D74: @ 0x08019D74
 	lsl r1, r1, #24
 	lsr r1, r1, #24
 	add r0, r4, #0
-	bl 0x080040C4
+	bl sub_080040C4
 _08019DAC:
 	add r0, r4, #0
 	bl sub_0801A11C
 	add r0, r4, #0
-	bl 0x08009694
+	bl sub_08009694
 	b _08019DC2
 _08019DBA:
 	mov r0, #7
@@ -39,7 +39,7 @@ _08019DBA:
 	strb r0, [r4, #23]
 _08019DC2:
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	pop {r4}
 	pop {r0}
 	bx r0

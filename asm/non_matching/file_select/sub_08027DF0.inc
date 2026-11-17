@@ -140,7 +140,7 @@ _08027ECC:
 	add r2, r5, #0
 	add r2, r2, #80
 	ldrh r2, [r2]
-	bl 0x080093AC
+	bl sub_080093AC
 	lsl r0, r0, #24
 	lsr r0, r0, #24
 	cmp r0, #15

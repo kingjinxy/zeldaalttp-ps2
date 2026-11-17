@@ -2,7 +2,7 @@
 sub_0801A038: @ 0x0801A038
 	push {r4,lr}
 	add r4, r0, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r1, r4, #0
 	add r1, r1, #112
 	ldrh r0, [r1]
@@ -35,7 +35,7 @@ sub_0801A038: @ 0x0801A038
 	strb r0, [r1]
 	add r0, r4, #0
 	mov r1, #2
-	bl 0x08003870
+	bl sub_08003870
 _0801A084:
 	pop {r4}
 	pop {r0}

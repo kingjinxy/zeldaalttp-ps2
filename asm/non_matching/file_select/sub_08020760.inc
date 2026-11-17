@@ -11,7 +11,7 @@ sub_08020760: @ 0x08020760
 	strb r1, [r0]
 	mov r0, #4
 	strb r0, [r4, #24]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #24
 	and r0, r0, r1
 	add r1, r4, #0
@@ -22,7 +22,7 @@ sub_08020760: @ 0x08020760
 	strb r0, [r1]
 	ldrb r1, [r1]
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 	pop {r4}
 	pop {r0}
 	bx r0

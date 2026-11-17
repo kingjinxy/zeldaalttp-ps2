@@ -19,7 +19,7 @@ _0804C45C:
 	.byte 0x00
 	.byte 0x00
 _0804C468:
-	.4byte 0x0804C46C
+	.4byte _0804C468+0x4
 	.4byte _0804C4A4
 	.4byte _0804C4FE
 	.4byte _0804C512
@@ -196,7 +196,7 @@ _0804C5CA:
 	ldr r1, [r7, #4]
 	add r0, r1, #0
 	mov r1, #74
-	bl 0x08003E10
+	bl sub_08003E10
 	b _0804C800
 _0804C5D6:
 	ldr r0, [r7, #4]
@@ -228,7 +228,7 @@ _0804C5FE:
 	ldr r1, [r7, #4]
 	add r0, r1, #0
 	mov r1, #122
-	bl 0x08003E10
+	bl sub_08003E10
 	ldr r0, _0804C698  @ =gUnknown_03006A30
 	ldr r2, [r7, #4]
 	ldrb r1, [r2, #10]
@@ -308,7 +308,7 @@ _0804C69C:
 	ldr r1, [r7, #4]
 	add r0, r1, #0
 	mov r1, #122
-	bl 0x08003E10
+	bl sub_08003E10
 	ldr r0, _0804C73C  @ =gUnknown_03006A30
 	ldr r2, [r7, #4]
 	ldrb r1, [r2, #10]
@@ -392,7 +392,7 @@ _0804C740:
 	ldr r1, [r7, #4]
 	add r0, r1, #0
 	mov r1, #122
-	bl 0x08003E10
+	bl sub_08003E10
 	ldr r0, _0804C7E0  @ =gUnknown_03006A30
 	ldr r2, [r7, #4]
 	ldrb r1, [r2, #10]

@@ -49,7 +49,7 @@ _0801A838:
 	ldrb r1, [r0]
 	lsr r1, r1, #3
 	add r0, r2, #0
-	bl 0x08003870
+	bl sub_08003870
 _0801A84A:
 	pop {r4}
 	pop {r0}

@@ -2,11 +2,11 @@
 sub_08029C88: @ 0x08029C88
 	push {r4-r6,lr}
 	add r5, r0, #0
-	bl 0x08003828
+	bl GetNextFrame
 	mov r1, #128
 	lsl r1, r1, #6
 	add r0, r5, #0
-	bl 0x08003594
+	bl sub_08003594
 	add r0, r5, #0
 	add r0, r0, #112
 	ldrb r0, [r0]
@@ -83,7 +83,7 @@ _08029D18:
 	.byte 0x00
 	.byte 0x00
 _08029D24:
-	.4byte 0x08029D28
+	.4byte _08029D24+0x4
 	.4byte _08029D84
 	.4byte _08029DB2
 	.4byte _08029DF0
@@ -99,12 +99,12 @@ _08029D3C:
 	beq _08029E14
 	mov r6, #31
 _08029D4C:
-	bl 0x0800099C
+	bl sub_0800099C
 	add r4, r0, #0
 	and r4, r4, r6
 	lsl r4, r4, #4
 	add r4, r4, #118
-	bl 0x0800099C
+	bl sub_0800099C
 	add r2, r0, #0
 	and r2, r2, r6
 	lsl r2, r2, #20
@@ -125,7 +125,7 @@ _08029D4C:
 _08029D80:
 	.4byte gUnknown_03006C80
 _08029D84:
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #31
 	and r0, r0, r1
 	add r1, r5, #0
@@ -148,7 +148,7 @@ _08029D84:
 	b _08029E42
 _08029DB2:
 	ldr r4, _08029DEC  @ =gUnknown_03006A30
-	bl 0x08003170
+	bl sub_08003170
 	lsl r0, r0, #24
 	lsr r0, r0, #24
 	lsl r1, r0, #3
@@ -158,7 +158,7 @@ _08029DB2:
 	add r1, r1, r4
 	ldr r1, [r1]
 	add r0, r5, #0
-	bl 0x08003F4C
+	bl sub_08003F4C
 	add r1, r5, #0
 	add r1, r1, #43
 	strb r0, [r1]
@@ -186,7 +186,7 @@ _08029DF0:
 	strh r0, [r4, #50]
 	ldrh r0, [r5, #54]
 	strh r0, [r4, #54]
-	bl 0x08003170
+	bl sub_08003170
 	strb r0, [r4, #23]
 	str r5, [r4, #84]
 	add r1, r5, #0
@@ -203,7 +203,7 @@ _08029E1C:
 	add r4, r0, #0
 	cmp r4, #0
 	beq _08029E3C
-	bl 0x08003170
+	bl sub_08003170
 	strb r0, [r4, #23]
 	ldrh r0, [r5, #50]
 	strh r0, [r4, #50]

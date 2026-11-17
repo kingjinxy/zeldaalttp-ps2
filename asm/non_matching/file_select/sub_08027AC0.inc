@@ -35,11 +35,11 @@ sub_08027AC0: @ 0x08027AC0
 	strb r0, [r1]
 	ldrb r1, [r1]
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 	add r0, r4, #0
 	bl sub_08027BCC
 	mov r0, #87
-	bl 0x08003DFC
+	bl sub_08003DFC
 _08027B16:
 	pop {r4}
 	pop {r0}

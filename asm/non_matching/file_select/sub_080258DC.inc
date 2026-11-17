@@ -51,7 +51,7 @@ _0802591E:
 	bl sub_0803D4A4
 	ldrb r1, [r5]
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 	b _08025956
 _08025948:
 	.4byte gUnknown_0813C598

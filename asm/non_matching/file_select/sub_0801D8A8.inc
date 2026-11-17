@@ -16,7 +16,7 @@ sub_0801D8A8: @ 0x0801D8A8
 	add r1, r1, #61
 	strb r2, [r1]
 	ldr r1, _0801D8D0  @ =gUnknown_0813A8E8
-	bl 0x080098A0
+	bl sub_080098A0
 	pop {r0}
 	bx r0
 _0801D8D0:

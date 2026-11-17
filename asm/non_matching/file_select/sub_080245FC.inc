@@ -46,7 +46,7 @@ sub_080245FC: @ 0x080245FC
 	ldrb r0, [r1]
 	orr r0, r0, r3
 	strb r0, [r1]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #15
 	and r0, r0, r1
 	add r1, r4, #0

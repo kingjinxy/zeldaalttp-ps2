@@ -39,14 +39,14 @@ _0801FD06:
 	strb r0, [r2]
 	ldrb r1, [r2]
 	add r0, r7, #0
-	bl 0x08003870
+	bl sub_08003870
 	b _0801FD20
 _0801FD14:
 	add r0, r6, r5
 	strb r0, [r2]
 	ldrb r1, [r2]
 	add r0, r7, #0
-	bl 0x08003870
+	bl sub_08003870
 _0801FD20:
 	pop {r4-r7}
 	pop {r0}

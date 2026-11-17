@@ -12,7 +12,7 @@ sub_0801DD28: @ 0x0801DD28
 	bne _0801DD6A
 	mov r0, #2
 	strb r0, [r4, #20]
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r2, _0801DD60  @ =gUnknown_0813AAFC
 	mov r1, #3
 	and r1, r1, r0
@@ -23,12 +23,12 @@ sub_0801DD28: @ 0x0801DD28
 	cmp r1, #0
 	beq _0801DD64
 	add r0, r4, #0
-	bl 0x08009EA4
+	bl sub_08009EA4
 	b _0801DD8A
 _0801DD60:
 	.4byte gUnknown_0813AAFC
 _0801DD64:
-	bl 0x0800099C
+	bl sub_0800099C
 	b _0801DD8C
 _0801DD6A:
 	ldr r0, [r4, #100]
@@ -40,7 +40,7 @@ _0801DD6A:
 	ldrb r2, [r0]
 	add r0, r4, #0
 	add r1, r2, #0
-	bl 0x08009E6C
+	bl sub_08009E6C
 	add r1, r0, #0
 	str r1, [r4, #100]
 	add r0, r4, #0

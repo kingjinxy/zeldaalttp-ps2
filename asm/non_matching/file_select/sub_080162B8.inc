@@ -125,14 +125,14 @@ sub_080162B8: @ 0x080162B8
 	ldr r0, _080163EC  @ =gUnknown_08138C18
 	str r0, [r4, #72]
 	add r0, r4, #0
-	bl 0x080005F0
+	bl sub_080005F0
 	add r1, r4, #0
 	add r1, r1, #46
 	mov r0, #8
 	strb r0, [r1]
 	add r0, r4, #0
 	mov r1, #11
-	bl 0x08003870
+	bl sub_08003870
 	ldrb r0, [r4, #10]
 	lsl r0, r0, #10
 	ldr r2, _080163F0  @ =0x06010200
@@ -143,9 +143,9 @@ sub_080162B8: @ 0x080162B8
 	add r1, r1, r2
 	mov r2, #128
 	lsl r2, r2, #2
-	bl 0x080009F4
+	bl sub_080009F4
 	mov r0, #81
-	bl 0x08003DFC
+	bl sub_08003DFC
 	b _08016420
 	.byte 0x00
 	.byte 0x00
@@ -176,7 +176,7 @@ _080163FC:
 	strb r0, [r2]
 	add r0, r4, #0
 	mov r1, #13
-	bl 0x08003870
+	bl sub_08003870
 _08016420:
 	ldrb r0, [r4, #11]
 	cmp r0, #4

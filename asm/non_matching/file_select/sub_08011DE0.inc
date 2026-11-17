@@ -23,7 +23,7 @@ sub_08011DE0: @ 0x08011DE0
 	strb r1, [r4, #29]
 	add r0, r4, #0
 	mov r1, #1
-	bl 0x08003870
+	bl sub_08003870
 _08011E12:
 	ldr r0, _08011E24  @ =gUnknown_02016D60
 	add r1, r0, #0
@@ -54,7 +54,7 @@ _08011E2A:
 	asr r0, r0, #24
 	strh r0, [r4, #58]
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	pop {r4}
 	pop {r0}
 	bx r0

@@ -8,7 +8,7 @@ sub_08009F58: @ 0X08009F58
 	ands r2, r3
 	strb r2, [r0, r1]
 _08009F64:
-	bl 0x8003688
+	bl sub_08003688
 	pop {r3, r4}
 	bx r3
 	.syntax unified

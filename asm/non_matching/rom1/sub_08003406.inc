@@ -70,8 +70,8 @@ _08003460:
 	lsrs r4, r2, #32
 	movs r3, #8
 	lsrs r4, r2, #32
-	.4byte 0x813f740
-	.4byte 0x813f798
+	.4byte gUnknown_0813F6C8+0x78
+	.4byte gUnknown_0813F74C+0x4c
 	stmia r0!, {r3, r4, r5}
 	lsrs r3, r2, #32
 	ble.n _08003454

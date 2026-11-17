@@ -48,7 +48,7 @@ sub_0801DF90: @ 0x0801DF90
 	strh r0, [r1]
 	add r0, r4, #0
 	mov r1, #6
-	bl 0x08003870
+	bl sub_08003870
 	b _0801E03C
 	.byte 0x00
 	.byte 0x00
@@ -73,7 +73,7 @@ _0801DFFC:
 	orr r0, r0, r1
 	strh r0, [r2]
 	add r0, r4, #0
-	bl 0x08008DD8
+	bl sub_08008DD8
 _0801E024:
 	add r1, r4, #0
 	add r1, r1, #66
@@ -85,11 +85,11 @@ _0801E024:
 	lsr r1, r1, #4
 	add r1, r1, #4
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 _0801E03C:
 	ldr r1, _0801E050  @ =gUnknown_0813AC78
 	add r0, r4, #0
-	bl 0x080098A0
+	bl sub_080098A0
 	pop {r4}
 	pop {r0}
 	bx r0

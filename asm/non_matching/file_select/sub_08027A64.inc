@@ -36,9 +36,9 @@ _08027A8E:
 	strb r0, [r2]
 	ldrb r1, [r2]
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 	mov r0, #87
-	bl 0x08003DFC
+	bl sub_08003DFC
 _08027AB6:
 	pop {r4}
 	pop {r0}

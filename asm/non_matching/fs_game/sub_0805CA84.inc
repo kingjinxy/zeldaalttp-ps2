@@ -79,7 +79,7 @@ _0805CB14:
 	ldr r0, _0805CDA0  @ =gUnknown_03006A30
 	ldr r1, [r0, #40]
 	add r0, r1, #0
-	bl 0x08003FE8
+	bl sub_08003FE8
 	lsl r1, r0, #24
 	lsr r0, r1, #24
 	cmp r0, #0
@@ -143,14 +143,14 @@ _0805CB14:
 	add r2, r3, #0
 	add r3, r3, #43
 	ldrb r2, [r3]
-	bl 0x08002E70
+	bl sub_08002E70
 _0805CBA0:
 	ldr r1, _0805CDA0  @ =gUnknown_03006A30
 	add r0, r1, #0
 	add r1, r1, #184
 	ldr r2, [r1]
 	add r0, r2, #0
-	bl 0x08003FE8
+	bl sub_08003FE8
 	lsl r1, r0, #24
 	lsr r0, r1, #24
 	cmp r0, #0
@@ -219,7 +219,7 @@ _0805CBA0:
 	add r2, r3, #0
 	add r3, r3, #43
 	ldrb r2, [r3]
-	bl 0x08002E70
+	bl sub_08002E70
 _0805CC3A:
 	ldr r1, _0805CDA0  @ =gUnknown_03006A30
 	add r0, r1, #0
@@ -228,7 +228,7 @@ _0805CC3A:
 	add r1, r1, r0
 	ldr r2, [r1]
 	add r0, r2, #0
-	bl 0x08003FE8
+	bl sub_08003FE8
 	lsl r1, r0, #24
 	lsr r0, r1, #24
 	cmp r0, #0
@@ -305,7 +305,7 @@ _0805CC3A:
 	add r2, r3, #0
 	add r3, r3, #43
 	ldrb r2, [r3]
-	bl 0x08002E70
+	bl sub_08002E70
 _0805CCE8:
 	ldr r1, _0805CDA0  @ =gUnknown_03006A30
 	add r0, r1, #0
@@ -314,7 +314,7 @@ _0805CCE8:
 	add r1, r1, r0
 	ldr r2, [r1]
 	add r0, r2, #0
-	bl 0x08003FE8
+	bl sub_08003FE8
 	lsl r1, r0, #24
 	lsr r0, r1, #24
 	cmp r0, #0
@@ -391,7 +391,7 @@ _0805CCE8:
 	add r2, r3, #0
 	add r3, r3, #43
 	ldrb r2, [r3]
-	bl 0x08002E70
+	bl sub_08002E70
 _0805CD96:
 	add sp, sp, #8
 	pop {r7}

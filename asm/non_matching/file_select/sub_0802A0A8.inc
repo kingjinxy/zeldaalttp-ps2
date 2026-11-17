@@ -36,7 +36,7 @@ _0802A0E2:
 	lsl r0, r0, #2
 	add r0, r0, r8
 	ldr r0, [r0]
-	bl 0x08003184
+	bl sub_08003184
 	lsl r0, r0, #24
 	lsr r1, r0, #24
 	add r2, r1, #0

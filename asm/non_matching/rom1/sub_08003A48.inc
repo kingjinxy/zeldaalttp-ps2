@@ -7,7 +7,7 @@ _08003A4A:
 	adds r4, r0, #0
 	movs r0, #15
 	movs r2, #0
-	bl 0x804c8a8
+	bl sub_0804C8A8
 	cmp r0, #0
 	beq.n _08003A9A
 	movs r1, #72
@@ -44,7 +44,7 @@ _08003A4A:
 	strb r3, [r0, r2]
 _08003A9A:
 	adds r0, r4, #0
-	bl 0x8012540
+	bl DeleteThisEntity
 	pop {r4, pc}
 	.byte 0x00
 	.byte 0x00

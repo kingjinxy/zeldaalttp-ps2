@@ -2,7 +2,7 @@
 	THUMB_FUNC_START sub_08008940
 sub_08008940: @ 0X08008940
 	push {r4, lr}
-	bl 0x8001d5c
+	bl sub_08001D5C
 	ldrb r2, [r1, #4]
 	orrs r2, r2
 	beq.n _08008964
@@ -22,10 +22,10 @@ _08008964:
 	eors r2, r2
 	str r2, [r1, #44]
 	push {r0}
-	bl 0x8000620
+	bl sub_08000620
 	pop {r0}
 	push {r0}
-	bl 0x8012540
+	bl DeleteThisEntity
 	pop {r0}
 	pop {r4, pc}
 _0800897A:
@@ -70,8 +70,8 @@ _0800897A:
 	adds r1, #1
 	strb r1, [r0, #20]
 	eors r1, r1
-	bl 0x8003870
-	bl 0x8001d5c
+	bl sub_08003870
+	bl sub_08001D5C
 	eors r2, r2
 	str r2, [r1, #44]
 	pop {r4, pc}
@@ -101,7 +101,7 @@ _080089F4:
 	push {r4, lr}
 	bl sub_08008AD0
 	push {r0}
-	bl 0x803cc20
+	bl sub_0803CC20
 	pop {r0}
 	.syntax unified
 	.thumb

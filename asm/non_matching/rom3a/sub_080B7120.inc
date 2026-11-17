@@ -40,7 +40,7 @@ _080B7166:
 	ldr r1, _080B7180  @ =gUnknown_02006888
 	mov r0, #56
 	strb r0, [r1]
-	bl 0x080B7BC8
+	bl sub_080B7B40+0x88
 	ldr r0, _080B7184  @ =gUnknown_02006885
 	ldrb r0, [r0]
 	cmp r0, #191
@@ -83,7 +83,7 @@ _080B71A0:
 	lsl r3, r3, #4
 	add r4, r5, r3
 	strh r2, [r4]
-	bl 0x080B7C6C
+	bl sub_080B7C50+0x1c
 	mov r2, #1
 	add r6, r5, #0
 	mov r8, r4
@@ -151,7 +151,7 @@ _080B71D0:
 	add r0, r5, #0
 	mov r1, #12
 	ldr r2, _080B72E4  @ =0x0000FFD0
-	bl 0x080B7D48
+	bl sub_080B7D24+0x24
 	sub r4, r4, #1
 	lsl r4, r4, #24
 	lsr r2, r4, #24

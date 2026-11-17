@@ -16,8 +16,8 @@ sub_08024CD0: @ 0x08024CD0
 	strb r0, [r1]
 	ldr r0, [r4, #112]
 	mov r1, #8
-	bl 0x08003870
-	bl 0x0800099C
+	bl sub_08003870
+	bl sub_0800099C
 	ldr r1, [r4, #112]
 	add r1, r1, #40
 	mov r2, #7

@@ -137,7 +137,7 @@ _08022832:
 	add r0, r0, #32
 	strb r1, [r0]
 _08022876:
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #15
 	and r0, r0, r1
 	ldr r4, [r6, #100]
@@ -166,7 +166,7 @@ _08022876:
 	ldrb r0, [r0]
 	orr r2, r2, r0
 	strb r2, [r1, #11]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #3
 	and r0, r0, r1
 	ldr r1, _08022924  @ =gUnknown_03006C80

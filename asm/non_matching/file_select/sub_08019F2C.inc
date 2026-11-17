@@ -23,7 +23,7 @@ sub_08019F2C: @ 0x08019F2C
 	ldrb r0, [r0]
 	cmp r0, #40
 	bls _08019F76
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #7
 	and r1, r1, r0
 	cmp r1, #2
@@ -38,7 +38,7 @@ _08019F6E:
 	bl sub_0801A210
 	b _08019F90
 _08019F76:
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #7
 	and r1, r1, r0
 	cmp r1, #4
@@ -52,7 +52,7 @@ _08019F8A:
 	bl sub_0801A210
 _08019F90:
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	pop {r4}
 	pop {r0}
 	bx r0

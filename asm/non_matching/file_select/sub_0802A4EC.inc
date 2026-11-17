@@ -6,7 +6,7 @@ sub_0802A4EC: @ 0x0802A4EC
 	lsl r0, r0, #24
 	lsr r4, r0, #24
 	add r0, r4, #0
-	bl 0x08000A40
+	bl sub_08000A40
 	lsl r0, r0, #24
 	lsr r3, r0, #24
 	mov r0, #1

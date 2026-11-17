@@ -57,7 +57,7 @@ _0801F784:
 _0801F7CA:
 	ldr r1, _0801F7DC  @ =gUnknown_0813B1CC
 	add r0, r4, #0
-	bl 0x080098A0
+	bl sub_080098A0
 	pop {r4-r6}
 	pop {r0}
 	bx r0

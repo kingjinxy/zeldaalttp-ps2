@@ -6,7 +6,7 @@ sub_0801ECE8: @ 0x0801ECE8
 	mov r1, #192
 	lsl r1, r1, #5
 	add r0, r4, #0
-	bl 0x08003F1C
+	bl sub_08003F1C
 	lsl r0, r0, #24
 	cmp r0, #0
 	bne _0801ED08

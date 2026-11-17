@@ -26,7 +26,7 @@ sub_08034690: @ 0x08034690
 	mov r0, #192
 	strh r0, [r4, #54]
 	add r0, r4, #0
-	bl 0x08003B94
+	bl sub_08003B94
 	add r1, r4, #0
 	add r1, r1, #112
 	mov r0, #128

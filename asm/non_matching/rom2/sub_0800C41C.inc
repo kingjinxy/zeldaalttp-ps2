@@ -88,13 +88,13 @@ _0800C4C8:
 _0800C4CC:
 	.4byte 0x0500006E
 _0800C4D0:
-	.4byte 0x08000318
+	.4byte UpdateAllEntities+0xdc
 _0800C4D4:
 	.4byte gUnknown_02030950
 _0800C4D8:
 	.4byte 0x04000010
 _0800C4DC:
-	.4byte 0x0800C7E9
+	.4byte _0800C4E4+0x305
 _0800C4E0:
 	.4byte gUnknown_02030590
 _0800C4E4:

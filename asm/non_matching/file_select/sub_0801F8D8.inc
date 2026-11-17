@@ -18,7 +18,7 @@ sub_0801F8D8: @ 0x0801F8D8
 	strb r0, [r2]
 	add r0, r4, #0
 	mov r1, #1
-	bl 0x08003870
+	bl sub_08003870
 _0801F900:
 	ldr r0, [r4, #88]
 	add r1, r4, #0
@@ -27,7 +27,7 @@ _0801F900:
 	sub r0, r0, #4
 	strh r0, [r4, #58]
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	ldr r1, [r4, #88]
 	add r0, r1, #0
 	add r0, r0, #114

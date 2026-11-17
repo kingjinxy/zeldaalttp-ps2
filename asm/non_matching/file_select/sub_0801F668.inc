@@ -36,7 +36,7 @@ _0801F694:
 	strb r0, [r1]
 	ldrb r1, [r1]
 	add r0, r3, #0
-	bl 0x08003870
+	bl sub_08003870
 _0801F6B2:
 	pop {r0}
 	bx r0

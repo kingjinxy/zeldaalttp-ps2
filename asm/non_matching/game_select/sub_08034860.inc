@@ -13,7 +13,7 @@ sub_08034860: @ 0x08034860
 	cmp r0, r1
 	bne _0803489C
 	add r0, r4, #0
-	bl 0x080036F8
+	bl sub_080036F8
 	lsl r0, r0, #24
 	cmp r0, #0
 	beq _0803488A

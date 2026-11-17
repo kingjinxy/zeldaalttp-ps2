@@ -17,7 +17,7 @@ sub_0801A49C: @ 0x0801A49C
 	str r0, [r4, #72]
 	add r0, r4, #0
 	mov r1, #4
-	bl 0x08003870
+	bl sub_08003870
 	mov r0, #1
 	strb r0, [r4, #20]
 	add r1, r4, #0

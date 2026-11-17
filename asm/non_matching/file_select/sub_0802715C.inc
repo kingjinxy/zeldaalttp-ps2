@@ -52,7 +52,7 @@ _08027190:
 	strb r0, [r3]
 	add r0, r4, #0
 	mov r1, #1
-	bl 0x08003870
+	bl sub_08003870
 	b _08027212
 _080271C8:
 	.4byte gUnknown_08137B10
@@ -85,12 +85,12 @@ _080271EE:
 	cmp r0, #0
 	beq _08027208
 	mov r0, #18
-	bl 0x08003DFC
+	bl sub_08003DFC
 _08027208:
 	strb r5, [r6]
 	add r1, r5, #1
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 _08027212:
 	pop {r4-r6}
 	pop {r0}

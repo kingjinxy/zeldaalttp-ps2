@@ -24,7 +24,7 @@ sub_0801EBF4: @ 0x0801EBF4
 	lsl r1, r1, #24
 	lsr r1, r1, #24
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 _0801EC28:
 	ldrb r0, [r4, #23]
 	sub r0, r0, #1
@@ -34,7 +34,7 @@ _0801EC30:
 	mov r1, #224
 	lsl r1, r1, #5
 	add r0, r4, #0
-	bl 0x08003594
+	bl sub_08003594
 	cmp r0, #0
 	bne _0801EC4C
 	mov r0, #8

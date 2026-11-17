@@ -15,7 +15,7 @@ sub_08022998: @ 0x08022998
 	add r1, r1, r2
 	ldr r0, [r1]
 	add r1, r4, #0
-	bl 0x08003F4C
+	bl sub_08003F4C
 	add r4, r4, #43
 	strb r0, [r4]
 	pop {r4}

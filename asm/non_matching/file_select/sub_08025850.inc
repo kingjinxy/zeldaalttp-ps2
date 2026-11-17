@@ -14,7 +14,7 @@ sub_08025850: @ 0x08025850
 	and r1, r1, r2
 	strb r1, [r0]
 	mov r0, #23
-	bl 0x08003DFC
+	bl sub_08003DFC
 	pop {r0}
 	bx r0
 	THUMB_FUNC_END sub_08025850

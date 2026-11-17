@@ -23,7 +23,7 @@ _0802258C:
 	b _0802272C
 _08022594:
 	add r0, r5, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r0, r5, #0
 	add r0, r0, #41
 	ldrb r1, [r0]
@@ -82,7 +82,7 @@ _080225F6:
 	mov r1, #128
 	lsl r1, r1, #6
 	add r0, r5, #0
-	bl 0x08003594
+	bl sub_08003594
 	cmp r0, #0
 	beq _08022614
 	b _08022720
@@ -184,7 +184,7 @@ _080226C4:
 	ldrsh r2, [r6, r4]
 	mov r4, #0
 	ldrsh r3, [r3, r4]
-	bl 0x08003F54
+	bl sub_08003F54
 	add r1, r5, #0
 	add r1, r1, #43
 	strb r0, [r1]
@@ -194,7 +194,7 @@ _080226C4:
 	mov r1, #128
 	lsl r1, r1, #5
 	add r0, r5, #0
-	bl 0x08003594
+	bl sub_08003594
 	b _08022720
 _080226F0:
 	add r1, r5, #0

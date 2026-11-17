@@ -7,8 +7,8 @@ sub_08003228: @ 0X08003228
 	lsrs r0, r0, #32
 	ldr r0, [r5, #104]
 	lsrs r0, r0, #32
-	.4byte 0x813ee04
-	.4byte 0x813ef3c
+	.4byte gUnknown_0813EDC0+0x44
+	.4byte gUnknown_0813EE38+0x104
 	str r2, [sp, #416]
 	lsrs r3, r2, #32
 	str r3, [sp, #240]
@@ -22,13 +22,13 @@ _0800324C:
 	ldr r1, [sp, #416]
 	lsrs r2, r0, #1
 _08003250:
-	.4byte 0x813fd60
+	.4byte gUnknown_0813FBC4+0x19c
 	ldrh r0, [r0, #12]
 	lsrs r2, r0, #1
-	.4byte 0x813fe84
-	.4byte 0x813fe84
-	.4byte 0x813fe84
-	.4byte 0x813fc3c
+	.4byte gUnknown_0813FE60+0x24
+	.4byte gUnknown_0813FE60+0x24
+	.4byte gUnknown_0813FE60+0x24
+	.4byte gUnknown_0813FBC4+0x78
 	adds r4, #232
 	lsrs r0, r0, #32
 	add r6, sp, #256
@@ -103,8 +103,8 @@ _080032B0:
 	lsrs r4, r2, #32
 	ldr r4, [sp, #992]
 	lsrs r3, r2, #32
-	.4byte 0x813f6a8
-	.4byte 0x813fca8
+	.4byte gUnknown_0813F654+0x54
+	.4byte gUnknown_0813FBC4+0xe4
 	ldr r6, [sp, #224]
 	lsrs r3, r2, #32
 	bmi.n _08003278

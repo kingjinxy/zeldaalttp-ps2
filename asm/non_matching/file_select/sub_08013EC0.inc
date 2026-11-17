@@ -54,7 +54,7 @@ _08013EF2:
 	add r1, r4, #0
 	bl sub_08012728
 	add r0, r4, #0
-	bl 0x08008D90
+	bl sub_08008D90
 	add r0, r4, #0
 	bl sub_08014474
 	b _08013FF6
@@ -96,7 +96,7 @@ _08013F78:
 	ldrb r0, [r0, #1]
 	add r0, r0, r1
 	ldrb r4, [r0]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #31
 	and r1, r1, r0
 	add r5, r6, #0
@@ -152,7 +152,7 @@ _08013F94:
 	strb r6, [r0]
 _08013FF0:
 	add r0, r4, #0
-	bl 0x08008D90
+	bl sub_08008D90
 _08013FF6:
 	pop {r3}
 	mov r8, r3

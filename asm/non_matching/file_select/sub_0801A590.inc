@@ -2,9 +2,9 @@
 sub_0801A590: @ 0x0801A590
 	push {r4,lr}
 	add r4, r0, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r0, r4, #0
-	bl 0x0800963C
+	bl sub_0800963C
 	ldrb r0, [r4, #24]
 	sub r0, r0, #1
 	strb r0, [r4, #24]
@@ -26,7 +26,7 @@ sub_0801A590: @ 0x0801A590
 	beq _0801A5CE
 	strb r1, [r0]
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 _0801A5CE:
 	add r1, r4, #0
 	add r1, r1, #124

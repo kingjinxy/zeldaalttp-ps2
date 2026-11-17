@@ -8,7 +8,7 @@ sub_080080A0: @ 0X080080A0
 	ands r2, r3
 	beq.n _080080D0
 	ldr r3, [pc, #780]
-	bl 0x8007740
+	bl sub_08007740
 	movs r3, #4
 	strb r3, [r0, #15]
 	movs r2, #128
@@ -17,18 +17,18 @@ sub_080080A0: @ 0X080080A0
 	strb r2, [r0, #9]
 	movs r2, #20
 	strb r2, [r0, #7]
-	bl 0x80075c8
-	bl 0x80075f4
+	bl sub_080075C8
+	bl sub_080075F4
 	movs r2, #142
-	bl 0x80031ac
+	bl sub_080031AC
 _080080D0:
 	pop {pc}
 	.byte 0x00
 	.byte 0x00
 _080080D4:
 	mov r1, sl
-	bl 0x80012a4
-	bl 0x800750c
+	bl sub_080012A4
+	bl sub_0800750C
 	pop {pc}
 	.byte 0x00
 	.byte 0xb5
@@ -202,9 +202,9 @@ _0800818C:
 	ldrb r2, [r2, #10]
 	strb r2, [r1, #11]
 	ldr r3, [pc, #564]
-	bl 0x8007740
-	bl 0x80075c8
-	bl 0x80075f4
+	bl sub_08007740
+	bl sub_080075C8
+	bl sub_080075F4
 	mov r1, sl
 	movs r2, #3
 	strb r2, [r1, #5]
@@ -214,8 +214,8 @@ _0800818C:
 	strb r2, [r0, #15]
 	push {r0}
 	movs r0, #11
-	bl 0x8003dfc
-	bl 0x80123e8
+	bl sub_08003DFC
+	bl sub_080123E8
 	adds r1, r0, #0
 	pop {r0}
 	bne.n _080081C6
@@ -223,7 +223,7 @@ _0800818C:
 _080081C6:
 	push {r0, r1}
 	movs r0, #2
-	bl 0x8012728
+	bl sub_08012728
 	pop {r0, r1}
 	movs r2, #5
 	strb r2, [r1, #9]

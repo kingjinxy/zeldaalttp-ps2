@@ -33,7 +33,7 @@ sub_08035EEC: @ 0x08035EEC
 	mov r1, #0
 	bl sub_08003870
 	add r0, r6, #0
-	bl 0x08003B94
+	bl sub_08003B94
 	ldrb r2, [r6, #29]
 	lsl r0, r2, #30
 	lsr r0, r0, #30

@@ -21,13 +21,13 @@ sub_0801CCB4: @ 0x0801CCB4
 	strb r0, [r4, #23]
 	ldr r1, [r4, #88]
 	add r0, r4, #0
-	bl 0x08009EA4
+	bl sub_08009EA4
 	add r1, r4, #0
 	add r1, r1, #43
 	strb r0, [r1]
 _0801CCE8:
 	add r0, r4, #0
-	bl 0x08009694
+	bl sub_08009694
 	b _0801CCFE
 _0801CCF0:
 	add r0, r4, #0

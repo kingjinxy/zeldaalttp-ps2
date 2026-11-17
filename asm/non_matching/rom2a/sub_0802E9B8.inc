@@ -16,7 +16,7 @@ sub_0802E9B8: @ 0x0802E9B8
 	and r0, r0, r1
 	cmp r0, #0
 	bne _0802E9F6
-	bl 0x0800099C
+	bl sub_0800099C
 	add r1, r0, #0
 	ldr r2, _0802EA10  @ =0x03000030
 	and r1, r1, r4

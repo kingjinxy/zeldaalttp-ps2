@@ -7,7 +7,7 @@ sub_0802B148: @ 0x0802B148
 	cmp r0, #0
 	beq _0802B164
 	ldr r4, _0802B160  @ =gUnknown_0813D5DC
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #15
 	b _0802B16C
 	.byte 0x00
@@ -16,7 +16,7 @@ _0802B160:
 	.4byte gUnknown_0813D5DC
 _0802B164:
 	ldr r4, _0802B194  @ =gUnknown_0813D5DC
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #31
 _0802B16C:
 	and r1, r1, r0
@@ -63,7 +63,7 @@ _0802B198:
 	add r0, r5, #0
 	add r1, r4, #0
 	bl sub_0803D4A4
-	bl 0x0800099C
+	bl sub_0800099C
 	ldrb r2, [r5, #10]
 	mov r1, #2
 	eor r2, r2, r1

@@ -16,7 +16,7 @@ sub_08002A24: @ 0X08002A24
 	movs r0, #15
 	movs r1, #11
 	eors r2, r2
-	bl 0x804c8a8
+	bl sub_0804C8A8
 	adds r2, r0, #0
 	pop {r0, r1}
 	orrs r2, r2

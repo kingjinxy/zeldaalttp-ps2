@@ -95,7 +95,7 @@ sub_08020190: @ 0x08020190
 	add r1, r1, r0
 	strh r1, [r5, #54]
 	add r0, r5, #0
-	bl 0x08008D90
+	bl sub_08008D90
 _08020252:
 	ldrh r0, [r5, #50]
 	add r1, r5, #0
@@ -106,7 +106,7 @@ _08020252:
 	strh r0, [r1]
 	add r0, r5, #0
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 	pop {r4,r5}
 	pop {r0}
 	bx r0

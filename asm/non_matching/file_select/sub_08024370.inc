@@ -48,12 +48,12 @@ _080243B6:
 	bne _08024400
 	ldr r1, [r4, #100]
 	add r0, r4, #0
-	bl 0x08009EA4
+	bl sub_08009EA4
 	add r1, r0, #0
 	lsl r1, r1, #24
 	lsr r1, r1, #24
 	add r0, r4, #0
-	bl 0x080040C4
+	bl sub_080040C4
 	add r0, r4, #0
 	add r0, r0, #43
 	ldrb r0, [r0]
@@ -69,7 +69,7 @@ _080243B6:
 	strb r1, [r0]
 	add r1, r1, #20
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 _08024400:
 	add r0, r4, #0
 	bl sub_0803CC20

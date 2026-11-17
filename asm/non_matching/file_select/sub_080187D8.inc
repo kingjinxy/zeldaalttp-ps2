@@ -12,7 +12,7 @@ sub_080187D8: @ 0x080187D8
 	b _08018830
 _080187EC:
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r0, r4, #0
 	add r0, r0, #41
 	ldrb r0, [r0]
@@ -34,7 +34,7 @@ _080187EC:
 	bl sub_0803CECC
 	b _08018824
 _0801881C:
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #31
 	and r0, r0, r1
 _08018824:

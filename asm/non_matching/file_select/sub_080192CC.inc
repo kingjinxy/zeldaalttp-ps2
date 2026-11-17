@@ -2,13 +2,13 @@
 sub_080192CC: @ 0x080192CC
 	push {r4-r6,lr}
 	add r4, r0, #0
-	bl 0x08003BCC
+	bl sub_08003BCC
 	ldr r0, [r4, #120]
 	bl DeleteThisEntity
 	ldr r0, [r4, #124]
 	bl DeleteThisEntity
 	ldr r6, _0801933C  @ =gUnknown_08139994
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r5, #7
 	and r0, r0, r5
 	add r0, r0, r6
@@ -26,7 +26,7 @@ sub_080192CC: @ 0x080192CC
 	add r0, r4, #0
 	bl sub_0803D3D0
 _0801930A:
-	bl 0x0800099C
+	bl sub_0800099C
 	and r0, r0, r5
 	add r0, r0, r6
 	ldrb r1, [r0]

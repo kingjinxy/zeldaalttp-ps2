@@ -1,9 +1,11 @@
 	.syntax unified
 	THUMB_FUNC_START sub_0812CC58
 sub_0812CC58: @ 0X0812CC58
+	.global sub_0812CC58_addr
+sub_0812CC58_addr:  @ plain label: a data word against the function symbol would get bit 0 set
 	movs r0, r6
 	.4byte 0x407fe92d
-	b.n 0x812d3a2
+	b.n sub_0812D338+0x6a
 	.byte 0xff
 	.byte 0x5c
 	.byte 0xa0

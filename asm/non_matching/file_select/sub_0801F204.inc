@@ -23,7 +23,7 @@ sub_0801F204: @ 0x0801F204
 	add r0, r0, #42
 	ldrb r1, [r0]
 	add r0, r3, #0
-	bl 0x08003870
+	bl sub_08003870
 	b _0801F250
 _0801F238:
 	cmp r0, #90
@@ -37,7 +37,7 @@ _0801F238:
 	strb r1, [r3, #28]
 _0801F24A:
 	add r0, r3, #0
-	bl 0x08003828
+	bl GetNextFrame
 _0801F250:
 	pop {r0}
 	bx r0

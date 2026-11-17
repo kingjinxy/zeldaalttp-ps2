@@ -69,7 +69,7 @@ sub_080181EC: @ 0x080181EC
 	strb r0, [r4, #23]
 	add r0, r4, #0
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 _0801827C:
 	pop {r4}
 	pop {r0}

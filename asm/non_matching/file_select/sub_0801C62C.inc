@@ -32,7 +32,7 @@ sub_0801C62C: @ 0x0801C62C
 	strb r3, [r0]
 	mov r0, r12
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 	pop {r0}
 	bx r0
 _0801C674:

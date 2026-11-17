@@ -24,7 +24,7 @@ _0801F9EC:
 _0801F9FE:
 	ldr r1, _0801FA0C  @ =gUnknown_0813B22C
 	add r0, r4, #0
-	bl 0x080098A0
+	bl sub_080098A0
 	pop {r4}
 	pop {r0}
 	bx r0

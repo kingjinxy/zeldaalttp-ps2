@@ -2,7 +2,7 @@
 sub_0801BBE8: @ 0x0801BBE8
 	push {r4,lr}
 	add r4, r0, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r0, r4, #0
 	bl sub_0801BA38
 	ldrb r0, [r4, #23]

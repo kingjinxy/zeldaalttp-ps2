@@ -13,7 +13,7 @@ sub_0801C4C4: @ 0x0801C4C4
 	add r2, r2, #42
 	strb r1, [r2]
 	add r1, r1, #4
-	bl 0x08003870
+	bl sub_08003870
 	pop {r0}
 	bx r0
 	THUMB_FUNC_END sub_0801C4C4

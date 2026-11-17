@@ -15,7 +15,7 @@ sub_0802F0B8: @ 0x0802F0B8
 _0802F0D0:
 	.4byte gUnknown_02016D60
 _0802F0D4:
-	.4byte 0x0802F0D8
+	.4byte _0802F0D4+0x4
 	.4byte _0802F0EC
 	.4byte _0802F100
 	.4byte _0802F12C

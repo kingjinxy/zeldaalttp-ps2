@@ -6,10 +6,10 @@ sub_0801F6E8: @ 0x0801F6E8
 	cmp r0, #0
 	bne _0801F73C
 	add r0, r5, #0
-	bl 0x080095A4
+	bl sub_080095A4
 	ldr r4, _0801F738  @ =gUnknown_0813B1CC
 	add r0, r5, #0
-	bl 0x080098DC
+	bl sub_080098DC
 	lsl r0, r0, #24
 	lsr r0, r0, #22
 	add r0, r0, r4
@@ -19,9 +19,9 @@ sub_0801F6E8: @ 0x0801F6E8
 	add r0, r5, #0
 	bl sub_0801F970
 	add r0, r5, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r0, r5, #0
-	bl 0x08008D90
+	bl sub_08008D90
 	ldrb r2, [r5, #31]
 	mov r1, #63
 	add r0, r1, #0

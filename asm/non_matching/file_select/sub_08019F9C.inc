@@ -2,7 +2,7 @@
 sub_08019F9C: @ 0x08019F9C
 	push {r4,lr}
 	add r4, r0, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r0, r4, #0
 	add r0, r0, #41
 	ldrb r1, [r0]
@@ -16,7 +16,7 @@ sub_08019F9C: @ 0x08019F9C
 	strb r0, [r4, #23]
 	add r0, r4, #0
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 _08019FC2:
 	pop {r4}
 	pop {r0}

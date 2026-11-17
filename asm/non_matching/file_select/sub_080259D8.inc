@@ -2,11 +2,11 @@
 sub_080259D8: @ 0x080259D8
 	push {r4,lr}
 	add r4, r0, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r0, r4, #0
-	bl 0x08009FB8
+	bl sub_08009FB8
 	add r0, r4, #0
-	bl 0x08008E50
+	bl sub_08008E50
 	ldrb r0, [r4, #10]
 	cmp r0, #3
 	beq _08025A18

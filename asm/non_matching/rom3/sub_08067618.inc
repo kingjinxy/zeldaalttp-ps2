@@ -1,7 +1,7 @@
 	THUMB_FUNC_START sub_08067618
 sub_08067618: @ 0x08067618
 	push {lr}
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #3
 	bl __umodsi3
 	cmp r0, #1
@@ -39,7 +39,7 @@ _08067654:
 	ldr r2, _0806767C  @ =0x00000485
 	bl sub_080675B8
 _08067660:
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #3
 	bl __umodsi3
 	cmp r0, #1
@@ -79,7 +79,7 @@ _080676A0:
 	lsl r2, r2, #3
 	bl sub_080675B8
 _080676AC:
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #3
 	bl __umodsi3
 	cmp r0, #1
@@ -117,7 +117,7 @@ _080676EC:
 	ldr r2, _08067718  @ =0x0000046E
 	bl sub_080675B8
 _080676F6:
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #3
 	bl __umodsi3
 	cmp r0, #1

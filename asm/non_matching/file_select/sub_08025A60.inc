@@ -38,13 +38,13 @@ sub_08025A60: @ 0x08025A60
 	lsl r1, r1, #24
 	lsr r1, r1, #24
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 	ldr r1, _08025AC8  @ =gUnknown_0813C474
 	ldrb r0, [r4, #10]
 	lsl r0, r0, #1
 	add r0, r0, r1
 	ldrh r0, [r0]
-	bl 0x08003DFC
+	bl sub_08003DFC
 	pop {r4,r5}
 	pop {r0}
 	bx r0

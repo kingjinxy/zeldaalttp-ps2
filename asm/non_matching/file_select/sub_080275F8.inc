@@ -10,7 +10,7 @@ sub_080275F8: @ 0x080275F8
 	beq _0802762E
 	ldr r5, _08027624  @ =gUnknown_03006A30
 	ldr r0, [r5, #40]
-	bl 0x08003FB0
+	bl sub_08003FB0
 	lsl r0, r0, #24
 	cmp r0, #0
 	beq _08027628
@@ -36,7 +36,7 @@ _0802762E:
 	add r5, r0, #0
 	add r5, r5, #184
 	ldr r0, [r5]
-	bl 0x08003FB0
+	bl sub_08003FB0
 	lsl r0, r0, #24
 	cmp r0, #0
 	beq _08027658
@@ -61,7 +61,7 @@ _0802765E:
 	lsl r1, r1, #1
 	add r5, r0, r1
 	ldr r0, [r5]
-	bl 0x08003FB0
+	bl sub_08003FB0
 	lsl r0, r0, #24
 	cmp r0, #0
 	beq _0802768C
@@ -88,7 +88,7 @@ _08027692:
 	lsl r1, r1, #1
 	add r5, r0, r1
 	ldr r0, [r5]
-	bl 0x08003FB0
+	bl sub_08003FB0
 	lsl r0, r0, #24
 	cmp r0, #0
 	beq _080276C0

@@ -61,7 +61,7 @@ _08010D6C:
 	ldr r1, [r5, #8]
 	mov r2, #192
 	lsl r2, r2, #1
-	bl 0x080009F4
+	bl sub_080009F4
 	add r0, r5, #0
 	bl sub_0800EEE0
 _08010DA2:

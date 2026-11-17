@@ -2,14 +2,14 @@
 sub_0801FB08: @ 0x0801FB08
 	push {r4,lr}
 	add r4, r0, #0
-	bl 0x08003828
+	bl GetNextFrame
 	ldr r0, [r4, #100]
 	cmp r0, #0
 	bne _0801FB22
 	add r0, r4, #0
 	mov r1, #88
 	mov r2, #88
-	bl 0x08009E6C
+	bl sub_08009E6C
 	str r0, [r4, #100]
 _0801FB22:
 	add r2, r4, #0

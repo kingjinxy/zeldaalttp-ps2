@@ -6,7 +6,7 @@ sub_08002AF8: @ 0X08002AF8
 	movs r1, #11
 	eors r2, r2
 	movs r3, #3
-	bl 0x8001b54
+	bl sub_08001B54
 	pop {r1}
 	movs r0, r0
 	.syntax unified

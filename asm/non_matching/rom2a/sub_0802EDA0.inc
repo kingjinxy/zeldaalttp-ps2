@@ -16,7 +16,7 @@ _0802EDAE:
 _0802EDB8:
 	.4byte gUnknown_02016D60
 _0802EDBC:
-	.4byte 0x0802EDC0
+	.4byte _0802EDBC+0x4
 	.4byte _0802EDF0
 	.4byte _0802EE20
 	.4byte _0802EE90
@@ -62,7 +62,7 @@ _0802EE20:
 	and r0, r0, r1
 	cmp r0, #0
 	bne _0802EE4E
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r1, _0802EE84  @ =gUnknown_0202A7E0
 	ldr r1, [r1, #12]
 	mov r4, #3
@@ -70,7 +70,7 @@ _0802EE20:
 	lsl r0, r0, #1
 	add r1, r1, #42
 	strb r0, [r1]
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r1, _0802EE88  @ =gUnknown_03006A30
 	ldr r1, [r1, #40]
 	and r0, r0, r4
@@ -121,14 +121,14 @@ _0802EE90:
 	and r0, r0, r1
 	cmp r0, #0
 	bne _0802EEC4
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r1, [r4, #12]
 	mov r4, #3
 	and r0, r0, r4
 	lsl r0, r0, #1
 	add r1, r1, #42
 	strb r0, [r1]
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r1, _0802EEE0  @ =gUnknown_03006A30
 	ldr r1, [r1, #40]
 	and r0, r0, r4

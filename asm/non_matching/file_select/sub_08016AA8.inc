@@ -45,7 +45,7 @@ _08016ABA:
 _08016AFC:
 	add r0, r4, #0
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 	b _08016B14
 	.byte 0x00
 	.byte 0x00
@@ -54,7 +54,7 @@ _08016B08:
 _08016B0C:
 	ldr r1, _08016B1C  @ =gUnknown_081391E4
 	add r0, r4, #0
-	bl 0x080098A0
+	bl sub_080098A0
 _08016B14:
 	pop {r4}
 	pop {r0}

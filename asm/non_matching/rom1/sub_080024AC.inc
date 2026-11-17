@@ -12,12 +12,12 @@ sub_080024AC: @ 0X080024AC
 	ldrh r1, [r0, #54]
 	adds r1, #3
 	strh r1, [r0, #54]
-	bl 0x803cd8c
+	bl sub_0803CD8C
 	adds r1, r0, #0
 	movs r0, #128
 	adds r2, r5, #0
-	bl 0x8008f78
-	bl 0x80123e8
+	bl sub_08008F78
+	bl sub_080123E8
 	adds r1, r0, #0
 	orrs r1, r1
 	pop {r0}
@@ -28,7 +28,7 @@ sub_080024AC: @ 0X080024AC
 	strh r2, [r0, #54]
 	movs r0, #5
 	push {r1}
-	bl 0x8012728
+	bl sub_08012728
 	pop {r1}
 	pop {r0}
 	movs r2, #6
@@ -56,10 +56,10 @@ sub_080024AC: @ 0X080024AC
 	adds r2, r1, #0
 	adds r1, r0, #0
 	adds r0, r2, #0
-	bl 0x804c448
+	bl sub_0804C448
 	pop {r0, r1}
 	adds r0, r1, #0
-	bl 0x8008dd8
+	bl sub_08008DD8
 	pop {r0, r1}
 	.syntax unified
 	.thumb

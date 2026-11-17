@@ -24,11 +24,11 @@ _0800AED0:
 	ldrh r1, [r0, r1]
 	lsrs r1, r1, #14
 	bne.n _0800AEDC
-	bl 0x8008d90
+	bl sub_08008D90
 _0800AEDC:
 	adds r0, r4, #0
 	ldrb r1, [r0, #10]
-	bl 0x8003870
+	bl sub_08003870
 	ldrb r1, [r4, #10]
 	lsls r1, r1, #1
 	ldr r0, [pc, #384]
@@ -39,7 +39,7 @@ _0800AEDC:
 	movs r2, #64
 	tst r1, r2
 	bne.n _0800AEFC
-	bl 0x8003dfc
+	bl sub_08003DFC
 _0800AEFC:
 	ldrb r1, [r4, #11]
 	movs r2, #32

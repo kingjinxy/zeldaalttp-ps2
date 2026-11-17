@@ -71,7 +71,7 @@ _0804AC0E:
 	ldrb r1, [r2, #10]
 	cmp r0, r1
 	bne _0804ACBC
-	bl 0x08003170
+	bl sub_08003170
 	add r1, r7, #0
 	add r1, r1, #8
 	strb r0, [r1]
@@ -117,7 +117,7 @@ _0804AC7E:
 	ldr r2, [r1]
 	ldr r0, [r7]
 	add r1, r2, #0
-	bl 0x08003F4C
+	bl sub_08003F4C
 	ldr r1, [r7]
 	add r2, r1, #0
 	add r1, r1, #43
@@ -148,7 +148,7 @@ _0804ACBC:
 	ldr r2, [r1]
 	ldr r0, [r7]
 	add r1, r2, #0
-	bl 0x08003F4C
+	bl sub_08003F4C
 	ldr r1, [r7]
 	add r2, r1, #0
 	add r1, r1, #43
@@ -166,7 +166,7 @@ _0804ACEC:
 _0804ACF0:
 	.4byte gUnknown_03006A30
 _0804ACF4:
-	bl 0x08003170
+	bl sub_08003170
 	add r1, r7, #0
 	add r1, r1, #8
 	strb r0, [r1]
@@ -212,7 +212,7 @@ _0804AD36:
 	ldr r2, [r1]
 	ldr r0, [r7]
 	add r1, r2, #0
-	bl 0x08003F4C
+	bl sub_08003F4C
 	ldr r1, [r7]
 	add r2, r1, #0
 	add r1, r1, #43
@@ -265,7 +265,7 @@ _0804ADAA:
 	ldr r2, [r1, #112]
 	sub r1, r2, #1
 	str r1, [r0, #112]
-	bl 0x08003170
+	bl sub_08003170
 	add r1, r7, #0
 	add r1, r1, #8
 	strb r0, [r1]
@@ -356,7 +356,7 @@ _0804ADF8:
 	ldr r2, [r1]
 	ldr r0, [r7]
 	add r1, r2, #0
-	bl 0x08003F4C
+	bl sub_08003F4C
 	ldr r1, [r7]
 	add r2, r1, #0
 	add r1, r1, #43
@@ -378,7 +378,7 @@ _0804AE90:
 	ldr r0, [r7]
 	ldr r1, [r0, #84]
 	ldr r0, [r7]
-	bl 0x08003F4C
+	bl sub_08003F4C
 	ldr r1, [r7]
 	add r2, r1, #0
 	add r1, r1, #43
@@ -395,7 +395,7 @@ _0804AEB0:
 	ldr r0, [r7]
 	ldr r1, [r0, #84]
 	ldr r0, [r7]
-	bl 0x08003F4C
+	bl sub_08003F4C
 	ldr r1, [r7]
 	add r2, r1, #0
 	add r1, r1, #43
@@ -480,7 +480,7 @@ _0804AF28:
 	ldr r0, [r7]
 	mov r2, #16
 	mov r3, #16
-	bl 0x0800390C
+	bl sub_0800390C
 	lsl r1, r0, #24
 	lsr r0, r1, #24
 	cmp r0, #0
@@ -529,7 +529,7 @@ _0804AF28:
 	b _0804B154
 _0804AFC0:
 	ldr r0, [r7]
-	bl 0x08002E64
+	bl sub_08002E64
 	ldr r0, [r7]
 	ldrh r1, [r0, #44]
 	cmp r1, #0

@@ -62,7 +62,7 @@ sub_08018CB4: @ 0x08018CB4
 	add r1, r5, #0
 	add r1, r1, #43
 	strb r0, [r1]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #3
 	and r0, r0, r1
 	ldrb r1, [r4, #23]

@@ -76,7 +76,7 @@ _0802C478:
 	mov r4, #1
 	add r0, r5, #0
 	mov r1, #7
-	bl 0x08003E10
+	bl sub_08003E10
 	add r0, r7, #0
 	add r0, r0, #36
 	ldrb r0, [r0]

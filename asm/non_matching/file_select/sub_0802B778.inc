@@ -21,7 +21,7 @@ sub_0802B778: @ 0x0802B778
 	ldrb r0, [r0]
 	cmp r0, #4
 	bhi _0802B7F4
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r4, _0802B7EC  @ =gUnknown_03006A30
 	ldr r1, _0802B7F0  @ =gUnknown_03006C80
 	ldrb r1, [r1]

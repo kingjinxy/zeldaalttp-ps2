@@ -2,9 +2,9 @@
 sub_08018514: @ 0x08018514
 	push {r4,lr}
 	add r4, r0, #0
-	bl 0x08003828
+	bl GetNextFrame
 	ldr r0, [r4, #84]
-	bl 0x08003828
+	bl GetNextFrame
 	pop {r4}
 	pop {r0}
 	bx r0

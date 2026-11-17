@@ -11,7 +11,7 @@ sub_0801D864: @ 0x0801D864
 	strh r0, [r1]
 	ldr r1, _0801D88C  @ =gUnknown_0813A8E8
 	add r0, r4, #0
-	bl 0x08009924
+	bl sub_08009924
 	add r0, r4, #0
 	bl sub_0801DC14
 	pop {r4}

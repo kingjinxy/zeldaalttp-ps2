@@ -34,7 +34,7 @@ _080341DA:
 	add r3, r3, #98
 	mov r5, #0
 	ldrsh r3, [r3, r5]
-	bl 0x08003F54
+	bl sub_08003F54
 	add r5, r4, #0
 	add r5, r5, #43
 	strb r0, [r5]

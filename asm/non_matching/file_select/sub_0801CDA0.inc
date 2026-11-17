@@ -10,7 +10,7 @@ sub_0801CDA0: @ 0x0801CDA0
 	add r0, r5, #0
 	bl sub_0803CECC
 	add r4, r0, #0
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r2, _0801CDC0  @ =gUnknown_0813A76D
 	mov r1, #15
 	b _0801CDD6
@@ -21,7 +21,7 @@ _0801CDC4:
 	add r0, r5, #0
 	bl sub_0803CECC
 	add r4, r0, #0
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r2, _0801CDFC  @ =gUnknown_0813A76D
 	mov r1, #3
 _0801CDD6:

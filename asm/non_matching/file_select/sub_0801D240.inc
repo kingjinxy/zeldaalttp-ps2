@@ -37,7 +37,7 @@ sub_0801D240: @ 0x0801D240
 	strb r3, [r4, #26]
 	add r0, r4, #0
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 _0801D292:
 	pop {r4,r5}
 	pop {r0}

@@ -27,7 +27,7 @@ _0801F104:
 	ldrb r0, [r0]
 	strb r0, [r7]
 	add r0, r6, #0
-	bl 0x080096C4
+	bl sub_080096C4
 	str r5, [r6, #12]
 	strb r4, [r7]
 	pop {r4-r7}

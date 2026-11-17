@@ -3,9 +3,9 @@ sub_08024474: @ 0x08024474
 	push {r4,lr}
 	add r4, r0, #0
 	ldr r0, [r4, #112]
-	bl 0x08003828
+	bl GetNextFrame
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r0, r4, #0
 	add r0, r0, #41
 	ldrb r1, [r0]

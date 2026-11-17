@@ -26,7 +26,7 @@ sub_0802A028: @ 0x0802A028
 	lsl r2, r2, #1
 	add r2, r2, r3
 	ldrh r2, [r2]
-	bl 0x080009F4
+	bl sub_080009F4
 _0802A060:
 	mov r0, #192
 	lsl r0, r0, #10

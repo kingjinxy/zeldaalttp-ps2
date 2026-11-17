@@ -108,7 +108,7 @@ _0803E1B6:
 	add r1, r0, r1
 	ldr r2, [r1]
 	add r0, r2, #0
-	bl 0x080074C0
+	bl sub_080074C0
 _0803E1E6:
 	ldr r0, _0803E500  @ =gUnknown_03006A30
 	add r2, r7, #0
@@ -434,7 +434,7 @@ _0803E2D6:
 	add r1, r0, r1
 	ldr r2, [r1]
 	add r0, r2, #0
-	bl 0x08003130
+	bl sub_08003130
 	ldr r0, _0803E500  @ =gUnknown_03006A30
 	add r2, r7, #0
 	ldrb r1, [r2]

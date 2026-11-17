@@ -13,7 +13,7 @@ sub_08001222: @ 0X08001222
 	movs r0, r0
 	movs r0, r0
 	push {r0, lr}
-	bl 0x800d1c0
+	bl sub_0800D1C0
 	pop {r0, pc}
 	.byte 0x00
 	.byte 0xb5

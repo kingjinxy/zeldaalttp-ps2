@@ -16,7 +16,7 @@ sub_08029A70: @ 0x08029A70
 	strb r0, [r4, #28]
 	add r0, r4, #0
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 	add r2, r4, #0
 	add r2, r2, #94
 	ldrb r1, [r2]

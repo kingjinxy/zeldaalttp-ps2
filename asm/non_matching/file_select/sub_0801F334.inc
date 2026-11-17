@@ -2,13 +2,13 @@
 sub_0801F334: @ 0x0801F334
 	push {r4,lr}
 	add r4, r0, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r0, r4, #0
-	bl 0x080096C4
+	bl sub_080096C4
 	mov r1, #192
 	lsl r1, r1, #5
 	add r0, r4, #0
-	bl 0x08003594
+	bl sub_08003594
 	cmp r0, #0
 	bne _0801F37E
 	mov r0, #5
@@ -29,7 +29,7 @@ sub_0801F334: @ 0x0801F334
 	strb r0, [r1]
 	add r0, r4, #0
 	mov r1, #12
-	bl 0x08003870
+	bl sub_08003870
 	add r0, r4, #0
 	bl sub_0804CA4C
 _0801F37E:

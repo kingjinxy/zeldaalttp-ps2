@@ -54,7 +54,7 @@ _08015B22:
 	add r0, r5, #0
 	add r1, r7, #0
 	str r2, [sp, #16]
-	bl 0x0800932C
+	bl sub_0800932C
 	ldrh r1, [r4]
 	lsl r0, r0, #16
 	lsr r0, r0, #16
@@ -131,7 +131,7 @@ _08015B98:
 _08015BBC:
 	add r0, r5, #0
 	add r1, r7, #0
-	bl 0x0800932C
+	bl sub_0800932C
 	ldrh r1, [r4]
 	lsl r0, r0, #16
 	lsr r0, r0, #16

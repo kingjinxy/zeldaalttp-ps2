@@ -18,7 +18,7 @@ sub_080209DC: @ 0x080209DC
 	strb r0, [r1]
 	ldrb r1, [r1]
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 	pop {r4}
 	pop {r0}
 	bx r0

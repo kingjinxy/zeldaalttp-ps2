@@ -9,7 +9,7 @@ sub_08025450: @ 0x08025450
 	ldrb r4, [r0, #8]
 	cmp r4, #1
 	bne _08025486
-	bl 0x08003FB0
+	bl sub_08003FB0
 	lsl r0, r0, #24
 	lsr r1, r0, #24
 	cmp r1, #0
@@ -162,7 +162,7 @@ _08025572:
 	beq _08025588
 	b _08025692
 _08025588:
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #15
 	and r0, r0, r1
 	add r0, r0, #24
@@ -170,7 +170,7 @@ _08025588:
 	ldr r0, [r5, #100]
 	ldrb r5, [r0, #10]
 	ldr r4, _080255BC  @ =gUnknown_084276B8
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #7
 	and r1, r1, r0
 	add r1, r1, r4

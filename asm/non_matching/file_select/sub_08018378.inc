@@ -46,7 +46,7 @@ _080183CC:
 	.4byte gUnknown_03006C80
 _080183D0:
 	add r0, r2, #0
-	bl 0x080074C0
+	bl sub_080074C0
 	ldr r2, _08018444  @ =gUnknown_03006A30
 	ldr r0, [r4, #88]
 	ldrb r0, [r0, #10]

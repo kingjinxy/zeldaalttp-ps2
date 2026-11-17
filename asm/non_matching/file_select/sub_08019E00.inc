@@ -9,12 +9,12 @@ sub_08019E00: @ 0x08019E00
 	mov r3, #252
 	lsl r3, r3, #1
 	add r2, r3, #0
-	bl 0x08003F54
+	bl sub_08003F54
 	add r1, r4, #0
 	add r1, r1, #43
 	strb r0, [r1]
 	add r0, r4, #0
-	bl 0x08009694
+	bl sub_08009694
 	ldr r0, _08019E54  @ =0xFFFFFE09
 	add r1, r0, #0
 	ldrh r2, [r4, #50]
@@ -35,7 +35,7 @@ sub_08019E00: @ 0x08019E00
 	strb r0, [r4, #23]
 _08019E46:
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	pop {r4}
 	pop {r0}
 	bx r0

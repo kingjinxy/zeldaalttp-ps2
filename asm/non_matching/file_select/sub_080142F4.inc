@@ -14,7 +14,7 @@ sub_080142F4: @ 0x080142F4
 	b _08014460
 _0801430C:
 	add r0, r6, #0
-	bl 0x080093A4
+	bl sub_080093A4
 	lsl r0, r0, #24
 	cmp r0, #0
 	beq _0801431A
@@ -24,7 +24,7 @@ _0801431A:
 	bne _08014320
 	b _08014460
 _08014320:
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #255
 	and r1, r1, r0
 	ldr r0, _0801435C  @ =gUnknown_0842AA44
@@ -60,7 +60,7 @@ _08014360:
 _08014364:
 	mov r4, #5
 _08014366:
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r2, _080143A4  @ =gUnknown_0842AA30
 	lsl r1, r5, #2
 	add r1, r1, r2
@@ -133,7 +133,7 @@ _080143F4:
 	ldr r0, _08014410  @ =gUnknown_08429D2C
 	add r0, r7, r0
 	ldrb r4, [r0]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, r8
 	and r0, r0, r1
 	add r2, r5, #0
@@ -153,7 +153,7 @@ _08014414:
 	ldrb r0, [r0]
 	add r0, r0, r1
 	ldrb r4, [r0]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r2, r8
 	and r0, r0, r2
 	add r2, r5, #0
@@ -182,7 +182,7 @@ _08014432:
 	add r1, r1, #80
 	strh r0, [r1]
 	add r0, r4, #0
-	bl 0x08008DD8
+	bl sub_08008DD8
 _08014460:
 	pop {r3}
 	mov r8, r3

@@ -17,7 +17,7 @@ sub_08023E14: @ 0x08023E14
 	sub r1, r1, r2
 	lsl r1, r1, #16
 	asr r1, r1, #16
-	bl 0x080040E0
+	bl sub_080040E0
 	lsl r0, r0, #24
 	lsr r2, r0, #24
 	mov r12, r2

@@ -90,7 +90,7 @@ sub_08068D60: @ 0x08068D60
 	.byte 0x00
 	.byte 0x00
 _08068E1C:
-	.4byte 0x0812CF10
+	.4byte sub_0812CC58_addr+0x2b8
 _08068E20:
 	.4byte gRam
 _08068E24:
@@ -98,7 +98,7 @@ _08068E24:
 _08068E28:
 	.4byte gUnknown_03003E30
 _08068E2C:
-	.4byte 0x08068B7D
+	.4byte sub_08068B7C
 _08068E30:
 	.4byte 0x040000C0
 _08068E34:

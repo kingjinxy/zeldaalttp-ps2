@@ -2,14 +2,14 @@
 	THUMB_FUNC_START sub_0800557C
 sub_0800557C: @ 0X0800557C
 	push {lr}
-	bl 0x8001ec0
+	bl sub_08001EC0
 	bne.n _0800558E
 	ldrb r2, [r0, #11]
-	bl 0x8001d60
+	bl sub_08001D60
 	eors r2, r2
 	strb r2, [r1, #5]
 _0800558E:
-	bl 0x800127c
+	bl sub_0800127C
 	ldr r2, [pc, #660]
 	ldrb r1, [r0, #21]
 	lsls r1, r1, #2

@@ -2,7 +2,7 @@
 sub_08022E0C: @ 0x08022E0C
 	push {r4,lr}
 	add r4, r0, #0
-	bl 0x0800099C
+	bl sub_0800099C
 	strb r0, [r4, #24]
 	add r1, r4, #0
 	add r1, r1, #46
@@ -29,7 +29,7 @@ sub_08022E0C: @ 0x08022E0C
 	bl sub_08023010
 	add r0, r4, #0
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 	mov r2, #1
 	mov r0, #1
 	strb r0, [r4, #20]

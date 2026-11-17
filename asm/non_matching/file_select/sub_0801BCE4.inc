@@ -107,7 +107,7 @@ _0801BD92:
 _0801BDA8:
 	ldr r4, _0801BDD4  @ =gUnknown_0813A1C4
 	str r3, [sp]
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r1, _0801BDD8  @ =gUnknown_03006C80
 	ldrb r1, [r1]
 	sub r1, r1, #1

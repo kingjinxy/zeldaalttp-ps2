@@ -16,7 +16,7 @@ _08002AA0:
 	adds r1, r2, #0
 	adds r1, r1, r3
 	eors r2, r2
-	bl 0x804c8a8
+	bl sub_0804C8A8
 	orrs r0, r0
 	beq.n _08002AF6
 	adds r2, r0, #0
@@ -25,7 +25,7 @@ _08002AA0:
 	adds r3, #3
 	strh r3, [r0, #54]
 	push {r2}
-	bl 0x80037cc
+	bl sub_080037CC
 	pop {r2}
 	ldrh r3, [r0, #50]
 	strh r3, [r2, #50]

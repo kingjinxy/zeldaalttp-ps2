@@ -19,9 +19,9 @@ sub_08025210: @ 0x08025210
 	ldrb r1, [r1]
 	lsr r1, r1, #4
 	add r1, r1, #2
-	bl 0x08003870
+	bl sub_08003870
 	mov r0, #29
-	bl 0x08003DFC
+	bl sub_08003DFC
 	pop {r0}
 	bx r0
 	THUMB_FUNC_END sub_08025210

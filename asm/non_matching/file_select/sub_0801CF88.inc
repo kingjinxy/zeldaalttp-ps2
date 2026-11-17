@@ -14,7 +14,7 @@ _0801CF9C:
 	add r0, r4, #0
 	mov r1, #104
 	mov r2, #72
-	bl 0x08009E6C
+	bl sub_08009E6C
 	cmp r0, #0
 	bne _0801CFEC
 	add r1, r4, #0
@@ -28,7 +28,7 @@ _0801CF9C:
 _0801CFBA:
 	mov r0, #60
 	strb r0, [r1]
-	bl 0x0800099C
+	bl sub_0800099C
 	add r2, r0, #0
 	mov r0, #31
 	and r2, r2, r0
@@ -47,12 +47,12 @@ _0801CFBA:
 	strb r2, [r0]
 	add r0, r4, #0
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 	b _0801D016
 _0801CFEC:
 	add r0, r4, #0
 	mov r1, #14
-	bl 0x0800997C
+	bl sub_0800997C
 	lsl r1, r0, #24
 	lsr r2, r1, #24
 	mov r1, #128

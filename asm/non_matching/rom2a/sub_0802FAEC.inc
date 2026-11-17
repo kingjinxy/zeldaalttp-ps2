@@ -14,8 +14,8 @@ sub_0802FAEC: @ 0x0802FAEC
 	add r0, r0, r1
 	ldr r0, [r0]
 	bl _call_via_r0
-	bl 0x08137AFC
-	bl 0x08000BAC
+	bl sub_08137AFC
+	bl sub_08000BAC
 	pop {r0}
 	bx r0
 	.byte 0x00

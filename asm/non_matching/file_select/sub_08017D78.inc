@@ -16,7 +16,7 @@ sub_08017D78: @ 0x08017D78
 	strb r1, [r2]
 	ldrb r1, [r2]
 	add r0, r3, #0
-	bl 0x08003870
+	bl sub_08003870
 	b _08017DB4
 _08017D9E:
 	add r2, r3, #0
@@ -28,7 +28,7 @@ _08017D9E:
 	strb r1, [r2]
 	ldrb r1, [r2]
 	add r0, r3, #0
-	bl 0x08003870
+	bl sub_08003870
 _08017DB4:
 	pop {r0}
 	bx r0

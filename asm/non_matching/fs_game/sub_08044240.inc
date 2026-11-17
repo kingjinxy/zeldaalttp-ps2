@@ -357,7 +357,7 @@ _080444AC:
 	add r0, r0, #20
 	ldrb r2, [r0]
 	ldr r0, [r7]
-	bl 0x08002E70
+	bl sub_08002E70
 	add r0, r7, #0
 	add r0, r0, #16
 	add r1, r7, #0
@@ -402,7 +402,7 @@ _080444AC:
 	lsr r2, r0, #24
 	ldr r0, [r7]
 	mov r1, #128
-	bl 0x08002E70
+	bl sub_08002E70
 	b _0804456C
 _0804454C:
 	add r0, r7, #0
@@ -419,7 +419,7 @@ _0804454C:
 	lsr r2, r0, #24
 	ldr r0, [r7]
 	mov r1, #128
-	bl 0x08002E70
+	bl sub_08002E70
 _0804456C:
 	add r1, r7, #0
 	add r1, r1, #13

@@ -19,7 +19,7 @@ _08038E54:
 _08038E60:
 	.4byte gSubState
 _08038E64:
-	.4byte 0x08038E68
+	.4byte _08038E64+0x4
 	.4byte _08038E84
 	.4byte _08038EC8
 	.4byte _08038F48
@@ -544,7 +544,7 @@ _08039252:
 	bl sub_0800BFBC
 	b _08039280
 _08039260:
-	bl 0x08137AFC
+	bl sub_08137AFC
 	bl sub_08015D9C
 	bl sub_08015C64
 	bl sub_08008ED8

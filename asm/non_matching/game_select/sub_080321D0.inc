@@ -12,7 +12,7 @@ sub_080321D0: @ 0x080321D0
 	add r0, r0, r1
 	ldr r0, [r0]
 	bl _call_via_r0
-	bl 0x08137AFC
+	bl sub_08137AFC
 	ldrb r0, [r4]
 	cmp r0, #1
 	bhi _08032204

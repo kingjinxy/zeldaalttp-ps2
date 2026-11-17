@@ -3,13 +3,13 @@ sub_0801E3B4: @ 0x0801E3B4
 	push {r4-r7,lr}
 	mov r7, r8
 	push {r7}
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r5, _0801E438  @ =gUnknown_03006C80
 	ldrb r1, [r5]
 	bl __umodsi3
 	lsl r0, r0, #24
 	lsr r4, r0, #24
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #1
 	and r1, r1, r0
 	mov r0, #255

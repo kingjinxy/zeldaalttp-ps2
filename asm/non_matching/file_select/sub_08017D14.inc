@@ -2,9 +2,9 @@
 sub_08017D14: @ 0x08017D14
 	push {r4,lr}
 	add r4, r0, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r0, r4, #0
-	bl 0x0800964C
+	bl sub_0800964C
 	lsl r0, r0, #16
 	cmp r0, #0
 	beq _08017D30
@@ -23,7 +23,7 @@ _08017D30:
 	mov r0, #30
 	strb r0, [r1]
 	mov r0, #83
-	bl 0x08003DFC
+	bl sub_08003DFC
 _08017D4A:
 	pop {r4}
 	pop {r0}

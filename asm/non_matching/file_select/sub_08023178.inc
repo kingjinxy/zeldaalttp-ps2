@@ -32,7 +32,7 @@ sub_08023178: @ 0x08023178
 	strb r1, [r2]
 	add r0, r5, #0
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 	ldr r0, _080231D0  @ =gUnknown_03000450
 	str r5, [r0]
 _080231C4:

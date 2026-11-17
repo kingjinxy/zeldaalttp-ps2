@@ -9,7 +9,7 @@ sub_0800A1A8: @ 0X0800A1A8
 	lsrs r2, r2, #14
 	push {r0}
 	bne.n _0800A1BC
-	bl 0x8008d90
+	bl sub_08008D90
 _0800A1BC:
 	pop {r1}
 	cmp r7, #128
@@ -18,11 +18,11 @@ _0800A1BC:
 	ldr r2, [pc, #484]
 	ldrb r0, [r2, r7]
 _0800A1C8:
-	bl 0x8012728
+	bl sub_08012728
 	movs r0, #1
 	pop {r4, r5, r6, r7, pc}
 _0800A1D0:
-	bl 0x8012540
+	bl DeleteThisEntity
 	movs r0, #0
 	pop {r4, r5, r6, r7, pc}
 	.4byte _0800A1EC+1
@@ -136,7 +136,7 @@ _0800A290:
 	adds r0, r1, #0
 	adds r1, r3, #0
 	adds r2, r4, #0
-	bl 0x8013754
+	bl sub_08013754
 	adds r1, r0, #0
 	pop {r0}
 	beq.n _0800A306

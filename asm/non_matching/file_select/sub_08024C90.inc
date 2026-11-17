@@ -2,7 +2,7 @@
 sub_08024C90: @ 0x08024C90
 	push {r4-r6,lr}
 	add r4, r0, #0
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r6, [r4, #112]
 	ldr r5, _08024CC8  @ =gUnknown_0813C138
 	ldrb r1, [r4, #30]

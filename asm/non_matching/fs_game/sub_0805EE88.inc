@@ -57,7 +57,7 @@ _0805EEF0:
 	bgt _0805EF04
 	cmp r0, #0
 	beq _0805EF16
-	bl 0x0805F928
+	bl _0805F928
 _0805EEFC:
 	.4byte gUnknown_08141778
 _0805EF00:
@@ -69,9 +69,9 @@ _0805EF04:
 _0805EF0A:
 	cmp r0, #3
 	bne _0805EF12
-	bl 0x0805F6A4
+	bl _0805F6A4
 _0805EF12:
-	bl 0x0805F928
+	bl _0805F928
 _0805EF16:
 	add r1, r7, #4
 	ldr r2, [r1]
@@ -375,7 +375,7 @@ _0805F054:
 	lsl r2, r2, #8
 	bl sub_08014658
 _0805F192:
-	bl 0x0805F928
+	bl _0805F928
 	.byte 0x00
 	.byte 0x00
 _0805F198:

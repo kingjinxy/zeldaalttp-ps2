@@ -20,7 +20,7 @@ sub_0801D9E8: @ 0x0801D9E8
 	bne _0801DA20
 	mov r0, #8
 	strb r0, [r4, #24]
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r2, _0801DA80  @ =gUnknown_0813A908
 	mov r1, #1
 	and r1, r1, r0
@@ -48,10 +48,10 @@ _0801DA20:
 	beq _0801DA4C
 	strb r1, [r0]
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 _0801DA4C:
 	add r0, r4, #0
-	bl 0x0800964C
+	bl sub_0800964C
 	lsl r0, r0, #16
 	cmp r0, #0
 	beq _0801DA74
@@ -67,10 +67,10 @@ _0801DA4C:
 	strb r0, [r1]
 	ldrb r1, [r1]
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 _0801DA74:
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	pop {r4,r5}
 	pop {r0}
 	bx r0

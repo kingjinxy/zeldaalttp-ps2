@@ -59,14 +59,14 @@ _08017002:
 	lsl r1, r1, #24
 	lsr r1, r1, #24
 	add r0, r2, #0
-	bl 0x08003870
+	bl sub_08003870
 	mov r0, #49
-	bl 0x08003DFC
+	bl sub_08003DFC
 	b _08017050
 _08017048:
 	ldr r1, _08017054  @ =gUnknown_08139364
 	add r0, r2, #0
-	bl 0x080098A0
+	bl sub_080098A0
 _08017050:
 	pop {r0}
 	bx r0

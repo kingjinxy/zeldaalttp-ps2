@@ -21,7 +21,7 @@ sub_0801679C: @ 0x0801679C
 	asr r0, r0, #16
 	lsl r1, r1, #16
 	asr r1, r1, #16
-	bl 0x080040E0
+	bl sub_080040E0
 	lsl r0, r0, #24
 	lsr r0, r0, #24
 	add r7, r0, #0

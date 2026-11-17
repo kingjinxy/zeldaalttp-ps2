@@ -21,7 +21,7 @@ sub_08019DD0: @ 0x08019DD0
 	strb r0, [r3]
 _08019DF6:
 	add r0, r2, #0
-	bl 0x08003828
+	bl GetNextFrame
 	pop {r0}
 	bx r0
 	THUMB_FUNC_END sub_08019DD0

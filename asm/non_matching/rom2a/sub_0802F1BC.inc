@@ -16,7 +16,7 @@ _0802F1CA:
 _0802F1D4:
 	.4byte gUnknown_02016D60
 _0802F1D8:
-	.4byte 0x0802F1DC
+	.4byte _0802F1D8+0x4
 	.4byte _0802F1F8
 	.4byte _0802F212
 	.4byte _0802F228

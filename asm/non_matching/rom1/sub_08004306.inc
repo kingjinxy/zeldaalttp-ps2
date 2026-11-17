@@ -17,7 +17,7 @@ sub_08004306: @ 0X08004306
 	ldrb r2, [r3, #0]
 	adds r3, #1
 	ldrb r3, [r3, #0]
-	bl 0x8003634
+	bl sub_08003634
 	push {r0}
 	push {r1}
 	pop {r0}
@@ -25,7 +25,7 @@ sub_08004306: @ 0X08004306
 	beq.n _0800436E
 	push {r1}
 	ldrb r2, [r1, #10]
-	bl 0x8001d60
+	bl sub_08001D60
 	ldrb r2, [r1, #15]
 	pop {r1}
 	lsrs r2, r2, #1
@@ -42,22 +42,22 @@ sub_08004306: @ 0X08004306
 	ldrb r2, [r3, #0]
 	adds r3, #1
 	ldrb r3, [r3, #0]
-	bl 0x803cef0
+	bl sub_0803CEF0
 	adds r1, r0, #0
 	pop {r0}
 	movs r2, #43
 	strb r1, [r0, r2]
-	bl 0x8002294
+	bl sub_08002294
 	b.n _0800437C
 _0800436E:
-	bl 0x8001d5c
+	bl sub_08001D5C
 	eors r2, r2
 	ldrb r2, [r1, #15]
 	movs r3, #127
 	ands r2, r3
 	strb r2, [r1, #15]
 _0800437C:
-	bl 0x8001d5c
+	bl sub_08001D5C
 	movs r2, #38
 	ldrb r2, [r1, r2]
 	orrs r2, r2
@@ -94,10 +94,10 @@ _080043BC:
 	adds r2, r2, r3
 	str r2, [r0, #12]
 _080043C0:
-	bl 0x80019fc
-	bl 0x8001ec0
+	bl sub_080019FC
+	bl sub_08001EC0
 	bne.n _080043CE
-	bl 0x80047f4
+	bl sub_080047F4
 _080043CE:
 	movs r2, #0
 	movs r3, #64
@@ -105,8 +105,8 @@ _080043CE:
 	movs r2, #2
 	movs r3, #70
 	strb r2, [r0, r3]
-	bl 0x8001d5c
-	bl 0x800127c
+	bl sub_08001D5C
+	bl sub_0800127C
 	movs r2, #128
 	strb r2, [r1, #6]
 	ldrb r2, [r1, #2]
@@ -116,9 +116,9 @@ _080043CE:
 	ldrb r2, [r0, r2]
 	orrs r2, r2
 	bne.n _08004400
-	bl 0x8001df4
+	bl sub_08001DF4
 	bne.n _08004400
-	bl 0x8001510
+	bl sub_08001510
 	pop {pc}
 _08004400:
 	ldrh r2, [r1, #54]

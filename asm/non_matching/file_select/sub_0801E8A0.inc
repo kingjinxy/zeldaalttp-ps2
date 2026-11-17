@@ -2,9 +2,9 @@
 sub_0801E8A0: @ 0x0801E8A0
 	push {r4,lr}
 	add r4, r0, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r0, r4, #0
-	bl 0x0800963C
+	bl sub_0800963C
 	lsl r0, r0, #16
 	cmp r0, #0
 	beq _0801E8C8
@@ -23,7 +23,7 @@ _0801E8C8:
 	strb r0, [r4, #20]
 	add r0, r4, #0
 	mov r1, #2
-	bl 0x08003870
+	bl sub_08003870
 _0801E8D4:
 	pop {r4}
 	pop {r0}

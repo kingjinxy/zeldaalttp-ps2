@@ -1,7 +1,7 @@
 	THUMB_FUNC_START sub_0802B8D4
 sub_0802B8D4: @ 0x0802B8D4
 	push {r4-r7,lr}
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #3
 	and r1, r1, r0
 	ldr r4, _0802B960  @ =gUnknown_0202A770
@@ -21,13 +21,13 @@ sub_0802B8D4: @ 0x0802B8D4
 	ldrh r0, [r1, #2]
 	lsr r0, r0, #12
 	strb r0, [r4, #1]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #1
 	and r0, r0, r1
 	add r0, r0, #3
 	strb r0, [r4, #7]
 	ldr r5, [r4, #16]
-	bl 0x0800099C
+	bl sub_0800099C
 	add r2, r0, #0
 	mov r0, #28
 	and r2, r2, r0

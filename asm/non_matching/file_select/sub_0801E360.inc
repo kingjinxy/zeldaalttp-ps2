@@ -27,7 +27,7 @@ sub_0801E360: @ 0x0801E360
 	strb r0, [r3]
 	ldrb r1, [r3]
 	add r0, r5, #0
-	bl 0x08003870
+	bl sub_08003870
 	b _0801E3AC
 _0801E39C:
 	mov r0, #1
@@ -36,7 +36,7 @@ _0801E39C:
 	strb r0, [r3]
 	ldrb r1, [r3]
 	add r0, r5, #0
-	bl 0x08003870
+	bl sub_08003870
 _0801E3AC:
 	pop {r4,r5}
 	pop {r0}

@@ -106,7 +106,7 @@ _08007254:
 	push {lr}
 	push {r0, r2, r3}
 	adds r0, r1, #0
-	bl 0x800750c
+	bl sub_0800750C
 	adds r1, r0, #0
 	eors r4, r4
 	mov r0, sl

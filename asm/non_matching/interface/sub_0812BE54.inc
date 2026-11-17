@@ -174,7 +174,7 @@ _0812BF8A:
 	ldr r0, [r0]
 	mov pc, r0
 _0812BF94:
-	.4byte 0x0812BF98
+	.4byte _0812BF94+0x4
 	.4byte _0812C0EE
 	.4byte _0812C10A
 	.4byte _0812C116

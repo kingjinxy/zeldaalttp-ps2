@@ -722,7 +722,7 @@ _08061DA2:
 	add r2, r1, #0
 	strb r2, [r0]
 	mov r0, #151
-	bl 0x08003DFC
+	bl sub_08003DFC
 _08061E40:
 	b _08061EEA
 	.byte 0x00
@@ -809,7 +809,7 @@ _08061E4C:
 	add r2, r1, #0
 	strb r2, [r0]
 	mov r0, #151
-	bl 0x08003DFC
+	bl sub_08003DFC
 _08061EEA:
 	ldr r0, [r7]
 	ldr r1, _08061F9C  @ =gUnknown_08141D64

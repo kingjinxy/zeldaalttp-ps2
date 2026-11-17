@@ -17,7 +17,7 @@ sub_08009E44: @ 0X08009E44
 	strh r2, [r0, #50]
 _08009E60:
 	ldr r1, [pc, #164]
-	bl 0x8003594
+	bl sub_08003594
 	pop {pc}
 	.byte 0xff
 	.byte 0x01

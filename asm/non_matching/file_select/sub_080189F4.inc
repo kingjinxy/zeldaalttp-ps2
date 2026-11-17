@@ -2,7 +2,7 @@
 sub_080189F4: @ 0x080189F4
 	push {r4,lr}
 	add r4, r0, #0
-	bl 0x0800963C
+	bl sub_0800963C
 	lsl r0, r0, #16
 	cmp r0, #0
 	bne _08018A0E

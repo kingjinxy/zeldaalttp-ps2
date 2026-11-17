@@ -7,7 +7,7 @@ sub_0802BAB8: @ 0x0802BAB8
 	bne _0802BAD0
 	add r0, r0, #1
 	strb r0, [r4, #6]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #63
 	and r0, r0, r1
 	strb r0, [r4, #4]

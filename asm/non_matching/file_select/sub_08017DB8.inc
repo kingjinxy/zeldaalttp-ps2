@@ -27,7 +27,7 @@ sub_08017DB8: @ 0x08017DB8
 	mov r1, #2
 	bl sub_08017D78
 	mov r0, #42
-	bl 0x08003DFC
+	bl sub_08003DFC
 	pop {r0}
 	bx r0
 _08017DF8:

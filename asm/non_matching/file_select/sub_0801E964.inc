@@ -16,14 +16,14 @@ sub_0801E964: @ 0x0801E964
 	strb r0, [r1]
 	ldr r0, _0801E9B8  @ =gUnknown_0813AFDC
 	str r0, [r4, #72]
-	bl 0x0800099C
+	bl sub_0800099C
 	add r1, r4, #0
 	add r1, r1, #112
 	strb r0, [r1]
 	add r1, r1, #2
 	mov r0, #255
 	strb r0, [r1]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #24
 	and r0, r0, r1
 	add r1, r4, #0
@@ -34,7 +34,7 @@ sub_0801E964: @ 0x0801E964
 	strb r0, [r1]
 	ldrb r1, [r1]
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 	pop {r4}
 	pop {r0}
 	bx r0

@@ -17,7 +17,7 @@ sub_08033C1C: @ 0x08033C1C
 	mov r0, #90
 	strb r0, [r6, #23]
 	add r0, r6, #0
-	bl 0x08003B94
+	bl sub_08003B94
 	ldrb r2, [r6, #29]
 	lsl r1, r2, #30
 	lsr r1, r1, #30

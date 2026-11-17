@@ -13,7 +13,7 @@ sub_08021A50: @ 0x08021A50
 	bne _08021B12
 _08021A68:
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r2, r4, #0
 	add r2, r2, #112
 	ldrh r0, [r2]
@@ -32,7 +32,7 @@ _08021A7C:
 	mov r1, #128
 	lsl r1, r1, #6
 	add r0, r4, #0
-	bl 0x08003594
+	bl sub_08003594
 	cmp r0, #0
 	bne _08021AAA
 	add r1, r4, #0
@@ -88,7 +88,7 @@ _08021ADE:
 	lsl r1, r1, #25
 	lsr r1, r1, #24
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 	b _08021B0C
 _08021B06:
 	add r0, r4, #0

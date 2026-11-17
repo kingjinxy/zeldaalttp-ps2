@@ -15,8 +15,8 @@ sub_08008422: @ 0X08008422
 	movs r3, #128
 	tst r2, r3
 	bne.n _08008452
-	bl 0x8007638
-	bl 0x80078b0
+	bl sub_08007638
+	bl sub_080078B0
 	mov r1, sl
 	ldrb r3, [r1, #15]
 	movs r2, #1
@@ -24,7 +24,7 @@ sub_08008422: @ 0X08008422
 	strb r2, [r1, #15]
 	pop {pc}
 _08008452:
-	bl 0x800750c
+	bl sub_0800750C
 	pop {pc}
 	.byte 0x00
 	.byte 0xb5

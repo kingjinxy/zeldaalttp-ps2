@@ -13,7 +13,7 @@ sub_0801EA28: @ 0x0801EA28
 _0801EA3E:
 	mov r0, #1
 	strb r0, [r4, #20]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #15
 	and r0, r0, r1
 	add r0, r0, #15

@@ -66,7 +66,7 @@ _08020E7A:
 	strb r1, [r4]
 _08020EA6:
 	add r0, r3, #0
-	bl 0x08003828
+	bl GetNextFrame
 _08020EAC:
 	pop {r4-r6}
 	pop {r0}

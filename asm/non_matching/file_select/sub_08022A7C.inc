@@ -46,12 +46,12 @@ sub_08022A7C: @ 0x08022A7C
 	add r1, r1, r0
 	lsr r1, r1, #24
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 	b _08022AE6
 _08022ADE:
 	add r0, r4, #0
 	mov r1, #2
-	bl 0x08003870
+	bl sub_08003870
 _08022AE6:
 	pop {r4}
 	pop {r0}

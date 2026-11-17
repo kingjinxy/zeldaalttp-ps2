@@ -41,11 +41,11 @@ _0801C190:
 	add r0, r0, r1
 	ldrb r1, [r0]
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 _0801C1BC:
 	ldr r1, _0801C1D0  @ =gUnknown_0813A40C
 	add r0, r4, #0
-	bl 0x080098A0
+	bl sub_080098A0
 	pop {r4}
 	pop {r0}
 	bx r0

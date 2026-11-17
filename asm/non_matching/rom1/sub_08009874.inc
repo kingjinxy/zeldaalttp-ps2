@@ -3,7 +3,7 @@
 sub_08009874: @ 0X08009874
 	push {r4, lr}
 	adds r4, r0, #0
-	bl 0x8003ac0
+	bl sub_08003AC0
 	orrs r0, r0
 	bne.n _0800988E
 	movs r2, #60

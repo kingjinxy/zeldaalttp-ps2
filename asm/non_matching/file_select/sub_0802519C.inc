@@ -2,9 +2,9 @@
 sub_0802519C: @ 0x0802519C
 	push {r4,lr}
 	add r4, r0, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r0, r4, #0
-	bl 0x08009FDC
+	bl sub_08009FDC
 	ldrh r1, [r4, #44]
 	cmp r1, #0
 	beq _080251DA
@@ -21,15 +21,15 @@ _080251C0:
 _080251C4:
 	ldrh r1, [r4, #44]
 	add r0, r4, #0
-	bl 0x080038E8
+	bl sub_080038E8
 	add r0, r4, #0
 	bl sub_08025210
 	add r0, r4, #0
-	bl 0x08008E50
+	bl sub_08008E50
 	b _080251E0
 _080251DA:
 	add r0, r4, #0
-	bl 0x08008E50
+	bl sub_08008E50
 _080251E0:
 	pop {r4}
 	pop {r0}

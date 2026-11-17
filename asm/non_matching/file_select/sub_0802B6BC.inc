@@ -14,7 +14,7 @@ sub_0802B6BC: @ 0x0802B6BC
 	ldrb r0, [r4, #1]
 	cmp r0, #2
 	bne _0802B6F8
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r3, _0802B6F4  @ =gUnknown_084296C0
 	ldrb r1, [r4, #3]
 	add r1, r1, #3
@@ -30,7 +30,7 @@ _0802B6F0:
 _0802B6F4:
 	.4byte gUnknown_084296C0
 _0802B6F8:
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r3, _0802B72C  @ =gUnknown_084296C0
 	ldrb r1, [r4, #6]
 	sub r1, r1, #1

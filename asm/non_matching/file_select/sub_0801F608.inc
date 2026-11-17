@@ -11,17 +11,17 @@ sub_0801F608: @ 0x0801F608
 	bne _0801F62E
 	ldr r1, [r4, #100]
 	add r0, r4, #0
-	bl 0x08009EA4
+	bl sub_08009EA4
 	add r1, r0, #0
 	lsl r1, r1, #24
 	lsr r1, r1, #24
 	add r0, r4, #0
-	bl 0x080040C4
+	bl sub_080040C4
 _0801F62E:
 	add r0, r4, #0
 	bl sub_0801F6BC
 	add r0, r4, #0
-	bl 0x0800963C
+	bl sub_0800963C
 	ldrb r0, [r4, #23]
 	sub r0, r0, #1
 	strb r0, [r4, #23]
@@ -30,7 +30,7 @@ _0801F62E:
 	bne _0801F658
 	mov r0, #1
 	strb r0, [r4, #20]
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r1, _0801F664  @ =gUnknown_0813B134
 	and r0, r0, r5
 	add r0, r0, r1

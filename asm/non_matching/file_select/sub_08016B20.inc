@@ -24,7 +24,7 @@ sub_08016B20: @ 0x08016B20
 	ldrb r0, [r4, #20]
 	add r0, r0, #1
 	strb r0, [r4, #20]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #56
 	and r0, r0, r1
 	add r0, r0, #20
@@ -39,7 +39,7 @@ sub_08016B20: @ 0x08016B20
 	strb r0, [r1]
 	add r0, r4, #0
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 	pop {r4}
 	pop {r0}
 	bx r0

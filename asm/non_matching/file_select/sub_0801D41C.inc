@@ -7,11 +7,11 @@ sub_0801D41C: @ 0x0801D41C
 	cmp r0, #1
 	bls _0801D42E
 	add r0, r5, #0
-	bl 0x080095A4
+	bl sub_080095A4
 _0801D42E:
 	ldr r4, _0801D450  @ =gUnknown_0813A874
 	add r0, r5, #0
-	bl 0x080098DC
+	bl sub_080098DC
 	lsl r0, r0, #24
 	lsr r0, r0, #22
 	add r0, r0, r4

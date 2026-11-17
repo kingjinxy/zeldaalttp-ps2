@@ -3,7 +3,7 @@ sub_08066A78: @ 0x08066A78
 	push {r4,lr}
 	lsl r0, r0, #24
 	lsr r4, r0, #24
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #3
 	bl __umodsi3
 	cmp r0, #1

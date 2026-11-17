@@ -12,11 +12,11 @@ sub_0801828C: @ 0x0801828C
 	beq _080182C2
 	add r0, r4, #0
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 	ldr r0, [r4, #84]
 	mov r1, #3
-	bl 0x08003870
-	bl 0x0800099C
+	bl sub_08003870
+	bl sub_0800099C
 	mov r1, #240
 	and r0, r0, r1
 	add r0, r0, #1

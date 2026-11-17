@@ -15,7 +15,7 @@ sub_0801A1B8: @ 0x0801A1B8
 	add r1, r1, #32
 	strb r1, [r3]
 	mov r1, #1
-	bl 0x08003870
+	bl sub_08003870
 	pop {r0}
 	bx r0
 	THUMB_FUNC_END sub_0801A1B8

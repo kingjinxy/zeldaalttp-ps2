@@ -18,7 +18,7 @@ sub_080206DC: @ 0x080206DC
 _080206FA:
 	ldr r1, _0802070C  @ =gUnknown_0813B67C
 	add r0, r3, #0
-	bl 0x080098A0
+	bl sub_080098A0
 	pop {r0}
 	bx r0
 	.byte 0x00

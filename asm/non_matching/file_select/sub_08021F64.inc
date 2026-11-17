@@ -2,14 +2,14 @@
 sub_08021F64: @ 0x08021F64
 	push {r4-r6,lr}
 	add r4, r0, #0
-	bl 0x08003828
+	bl GetNextFrame
 	ldrb r0, [r4, #23]
 	cmp r0, #0
 	beq _08021FE8
 	sub r0, r0, #1
 	strb r0, [r4, #23]
 	add r0, r4, #0
-	bl 0x08002E64
+	bl sub_08002E64
 	ldr r6, _08021FBC  @ =gUnknown_0813B974
 	add r5, r4, #0
 	add r5, r5, #43
@@ -31,7 +31,7 @@ sub_08021F64: @ 0x08021F64
 	add r0, r0, r2
 	ldr r0, [r0]
 	add r1, r4, #0
-	bl 0x08003F4C
+	bl sub_08003F4C
 	lsl r0, r0, #24
 	lsr r0, r0, #24
 	ldrb r1, [r5]
@@ -71,7 +71,7 @@ _08021FE8:
 	strb r0, [r4, #23]
 	add r0, r4, #0
 	mov r1, #32
-	bl 0x08003870
+	bl sub_08003870
 _08021FF8:
 	add r0, r4, #0
 	bl sub_08022734

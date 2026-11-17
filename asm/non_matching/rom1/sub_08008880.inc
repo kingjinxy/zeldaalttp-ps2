@@ -9,7 +9,7 @@ sub_08008880: @ 0X08008880
 	ldrb r2, [r0, r3]
 	cmp r2, #35
 	beq.n _08008894
-	bl 0x8003828
+	bl GetNextFrame
 _08008894:
 	ldrb r1, [r0, #24]
 	subs r1, #1
@@ -18,11 +18,11 @@ _08008894:
 	ands r1, r2
 	bne.n _080088A6
 	movs r2, #1
-	bl 0x80031ac
+	bl sub_080031AC
 _080088A6:
-	bl 0x8003688
+	bl sub_08003688
 	push {r0}
-	bl 0x803f0e4
+	bl sub_0803F0E4
 	pop {r0}
 _080088B2:
 	pop {r4, pc}
@@ -55,7 +55,7 @@ _080088C4:
 	movs r3, #4
 	movs r2, #63
 	strb r3, [r0, r2]
-	bl 0x8001d5c
+	bl sub_08001D5C
 	str r0, [r1, #44]
 	movs r3, #43
 	movs r2, #13
@@ -85,9 +85,9 @@ _0800890E:
 _0800892A:
 	eors r3, r3
 	strb r3, [r0, #30]
-	bl 0x800238c
+	bl sub_0800238C
 	push {r0}
-	bl 0x80005f0
+	bl sub_080005F0
 	pop {r0}
 	bl sub_08008940
 	pop {pc}

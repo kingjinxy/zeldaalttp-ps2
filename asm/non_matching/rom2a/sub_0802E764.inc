@@ -1,7 +1,7 @@
 	THUMB_FUNC_START sub_0802E764
 sub_0802E764: @ 0x0802E764
 	push {lr}
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r1, _0802E784  @ =gUnknown_08427830
 	ldr r0, _0802E788  @ =gUnknown_03005050
 	ldrb r0, [r0]

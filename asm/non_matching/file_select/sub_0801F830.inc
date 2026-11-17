@@ -18,7 +18,7 @@ _0801F84E:
 	add r0, r4, #0
 	mov r1, #120
 	mov r2, #80
-	bl 0x08009E6C
+	bl sub_08009E6C
 	add r1, r0, #0
 	str r1, [r4, #100]
 	cmp r1, #0

@@ -17,7 +17,7 @@ sub_08017CAC: @ 0x08017CAC
 	mov r1, #192
 	lsl r1, r1, #5
 	add r0, r4, #0
-	bl 0x08003594
+	bl sub_08003594
 	cmp r0, #0
 	bne _08017D0E
 	mov r0, #5
@@ -36,7 +36,7 @@ sub_08017CAC: @ 0x08017CAC
 	mov r0, #128
 	lsl r0, r0, #2
 	str r0, [r4, #12]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #24
 	and r0, r0, r1
 	add r0, r0, #4

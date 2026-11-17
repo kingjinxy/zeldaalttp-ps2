@@ -2,7 +2,7 @@
 sub_0801BE44: @ 0x0801BE44
 	push {r4-r6,lr}
 	add r5, r0, #0
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r4, [r5, #88]
 	add r4, r4, #42
 	mov r1, #3
@@ -21,7 +21,7 @@ sub_0801BE44: @ 0x0801BE44
 	add r6, r5, #0
 	add r6, r6, #42
 	strb r0, [r6]
-	bl 0x0800099C
+	bl sub_0800099C
 	ldrb r2, [r4]
 	lsr r2, r2, #1
 	mov r1, #2
@@ -45,9 +45,9 @@ sub_0801BE44: @ 0x0801BE44
 	add r0, r0, #80
 	strh r1, [r0]
 	add r0, r5, #0
-	bl 0x08008D90
+	bl sub_08008D90
 	add r0, r5, #0
-	bl 0x080093A4
+	bl sub_080093A4
 	lsl r0, r0, #24
 	mov r3, #255
 	lsl r3, r3, #24
@@ -65,7 +65,7 @@ sub_0801BE44: @ 0x0801BE44
 	strh r0, [r1]
 	ldrb r1, [r6]
 	add r0, r5, #0
-	bl 0x08003870
+	bl sub_08003870
 	mov r0, #1
 	b _0801BEDE
 _0801BED8:

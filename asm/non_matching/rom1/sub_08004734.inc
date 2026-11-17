@@ -2,7 +2,7 @@
 	THUMB_FUNC_START sub_08004734
 sub_08004734: @ 0X08004734
 	push {lr}
-	bl 0x8001d5c
+	bl sub_08001D5C
 	movs r2, #255
 	strb r2, [r1, #13]
 	movs r2, #128

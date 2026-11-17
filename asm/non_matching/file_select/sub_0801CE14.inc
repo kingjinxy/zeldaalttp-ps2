@@ -7,7 +7,7 @@ sub_0801CE14: @ 0x0801CE14
 	bne _0801CE38
 	ldr r1, _0801CE34  @ =gUnknown_0813A780
 	add r0, r4, #0
-	bl 0x08009924
+	bl sub_08009924
 	ldr r0, [r4, #84]
 	cmp r0, #0
 	beq _0801CE48

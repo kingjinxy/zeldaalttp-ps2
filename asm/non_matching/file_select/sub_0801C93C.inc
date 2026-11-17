@@ -4,7 +4,7 @@ sub_0801C93C: @ 0x0801C93C
 	add r5, r0, #0
 	mov r1, #192
 	lsl r1, r1, #5
-	bl 0x08003F1C
+	bl sub_08003F1C
 	lsl r0, r0, #24
 	lsr r0, r0, #24
 	cmp r0, #0
@@ -28,9 +28,9 @@ _0801C95A:
 	strb r0, [r4]
 	add r0, r5, #0
 	mov r1, #5
-	bl 0x08003870
+	bl sub_08003870
 	mov r0, #49
-	bl 0x08003DFC
+	bl sub_08003DFC
 	b _0801C996
 _0801C980:
 	add r4, r5, #0
@@ -39,9 +39,9 @@ _0801C980:
 	strb r0, [r4]
 	add r0, r5, #0
 	mov r1, #4
-	bl 0x08003870
+	bl sub_08003870
 	mov r0, #49
-	bl 0x08003DFC
+	bl sub_08003DFC
 _0801C996:
 	ldrb r0, [r4]
 	cmp r0, #4
@@ -53,7 +53,7 @@ _0801C996:
 	strb r0, [r4]
 	add r0, r5, #0
 	mov r1, #3
-	bl 0x08003870
+	bl sub_08003870
 _0801C9AE:
 	pop {r4,r5}
 	pop {r0}

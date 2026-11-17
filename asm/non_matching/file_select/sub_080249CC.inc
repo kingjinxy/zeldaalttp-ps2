@@ -27,7 +27,7 @@ sub_080249CC: @ 0x080249CC
 	cmp r6, #0
 	beq _08024A68
 	ldr r4, _08024A40  @ =gUnknown_03006A30
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r1, _08024A44  @ =gUnknown_03006C80
 	ldrb r1, [r1]
 	bl __umodsi3
@@ -48,7 +48,7 @@ sub_080249CC: @ 0x080249CC
 	mov r0, #0
 	strb r0, [r7]
 	mov r0, #165
-	bl 0x08003DFC
+	bl sub_08003DFC
 	b _08024A68
 _08024A3C:
 	.4byte gUnknown_084276A2
@@ -63,14 +63,14 @@ _08024A48:
 	bne _08024A68
 	mov r0, #2
 	strb r0, [r5, #20]
-	bl 0x0800099C
+	bl sub_0800099C
 	add r0, r0, #30
 	mov r1, #15
 	and r0, r0, r1
 	strb r0, [r5, #23]
 	add r0, r5, #0
 	mov r1, #8
-	bl 0x08003870
+	bl sub_08003870
 _08024A68:
 	add r0, r5, #0
 	add r0, r0, #60

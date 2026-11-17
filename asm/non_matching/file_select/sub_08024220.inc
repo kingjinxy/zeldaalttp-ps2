@@ -35,7 +35,7 @@ _08024260:
 	add r0, r4, #0
 	bl sub_08024F98
 	ldr r0, [r4, #112]
-	bl 0x08003828
+	bl GetNextFrame
 _0802426C:
 	pop {r4}
 	pop {r0}

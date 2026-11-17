@@ -37,7 +37,7 @@ _08019BE6:
 	strb r0, [r1]
 	add r0, r4, #0
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 _08019C12:
 	pop {r4}
 	pop {r0}

@@ -24,7 +24,7 @@ _08013CA4:
 	beq _08013D0E
 	add r1, r5, #0
 	add r2, r6, #0
-	bl 0x0800A148
+	bl sub_0800A148
 	cmp r0, #0
 	beq _08013D0E
 	add r0, r4, #0

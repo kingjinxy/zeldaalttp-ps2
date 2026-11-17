@@ -276,7 +276,7 @@ _0803F7A8:
 	strb r1, [r0]
 	ldr r1, [r7, #4]
 	ldr r0, [r7]
-	bl 0x0800238C
+	bl sub_0800238C
 	ldr r0, _0803FA4C  @ =gUnknown_03006A30
 	ldr r2, [r7]
 	ldrb r1, [r2, #10]
@@ -432,14 +432,14 @@ _0803FA50:
 	ldr r5, _0803FAD0  @ =gUnknown_0813E8BF
 	ldr r1, _0803FAD4  @ =gUnknown_0813E8BC
 	add r0, r1, #0
-	bl 0x08003184
+	bl sub_08003184
 	lsl r1, r0, #24
 	lsr r0, r1, #24
 	add r1, r5, r0
 	ldrb r2, [r1]
 	add r0, r4, #0
 	add r1, r2, #0
-	bl 0x08003E10
+	bl sub_08003E10
 _0803FAC2:
 	ldr r0, [r7]
 	bl sub_080005F0

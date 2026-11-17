@@ -15,7 +15,7 @@ sub_08002530: @ 0X08002530
 	movs r0, #15
 	movs r1, #11
 	eors r2, r2
-	bl 0x804c8a8
+	bl sub_0804C8A8
 	adds r2, r0, #0
 	adds r0, r4, #0
 	orrs r2, r2
@@ -25,9 +25,9 @@ sub_08002530: @ 0X08002530
 	ldrh r3, [r0, #54]
 	strh r3, [r2, #54]
 	movs r2, #171
-	bl 0x80031ac
+	bl sub_080031AC
 	adds r1, r5, #0
-	bl 0x80076c4
+	bl sub_080076C4
 	eors r2, r2
 	movs r3, #137
 	strb r2, [r1, r3]

@@ -3,7 +3,7 @@ sub_080672A4: @ 0x080672A4
 	push {r4,lr}
 	lsl r0, r0, #24
 	lsr r4, r0, #24
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #1
 	and r1, r1, r0
 	cmp r1, #0
@@ -19,7 +19,7 @@ _080672C4:
 	add r1, r4, #0
 	bl sub_0801386C
 _080672CC:
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #1
 	and r1, r1, r0
 	cmp r1, #0
@@ -39,7 +39,7 @@ _080672EC:
 	add r1, r4, #0
 	bl sub_0801386C
 _080672F4:
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #1
 	and r1, r1, r0
 	cmp r1, #0
@@ -59,7 +59,7 @@ _08067314:
 	add r1, r4, #0
 	bl sub_0801386C
 _0806731C:
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #1
 	and r1, r1, r0
 	cmp r1, #0
@@ -79,7 +79,7 @@ _0806733C:
 	add r1, r4, #0
 	bl sub_0801386C
 _08067344:
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #1
 	and r1, r1, r0
 	cmp r1, #0
@@ -99,7 +99,7 @@ _08067364:
 	add r1, r4, #0
 	bl sub_0801386C
 _0806736C:
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #3
 	bl __umodsi3
 	add r1, r0, #0
@@ -134,7 +134,7 @@ _080673A4:
 	add r1, r4, #0
 	bl sub_0801386C
 _080673AC:
-	bl 0x0800099C
+	bl sub_0800099C
 	add r1, r0, #0
 	mov r0, #3
 	and r1, r1, r0

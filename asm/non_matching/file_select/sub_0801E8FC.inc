@@ -7,7 +7,7 @@ sub_0801E8FC: @ 0x0801E8FC
 	bne _0801E914
 	ldr r1, _0801E910  @ =gUnknown_0813AEB0
 	add r0, r2, #0
-	bl 0x08009924
+	bl sub_08009924
 	b _0801E924
 _0801E910:
 	.4byte gUnknown_0813AEB0

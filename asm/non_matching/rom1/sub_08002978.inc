@@ -7,7 +7,7 @@ sub_08002978: @ 0X08002978
 	ands r2, r3
 	bne.n _0800298A
 	push {r0, r1}
-	bl 0x8059818
+	bl sub_08059818
 	pop {r0, r1}
 _0800298A:
 	pop {pc}

@@ -26,13 +26,13 @@ sub_0801F254: @ 0x0801F254
 	strb r0, [r2]
 	add r0, r4, #0
 	mov r1, #12
-	bl 0x08003870
+	bl sub_08003870
 	b _0801F2DA
 _0801F290:
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r0, r4, #0
-	bl 0x080096C4
+	bl sub_080096C4
 	ldrb r0, [r4, #23]
 	sub r0, r0, #1
 	strb r0, [r4, #23]
@@ -51,7 +51,7 @@ _0801F2AE:
 	mov r1, #128
 	orr r0, r0, r1
 	strb r0, [r2]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #28
 	and r0, r0, r1
 	add r1, r4, #0
@@ -62,7 +62,7 @@ _0801F2AE:
 	strb r0, [r1]
 	ldrb r1, [r1]
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 _0801F2DA:
 	pop {r4}
 	pop {r0}

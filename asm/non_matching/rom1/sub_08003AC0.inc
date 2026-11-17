@@ -11,7 +11,7 @@ sub_08003AC0: @ 0X08003AC0
 	ldrsb r2, [r1, r2]
 	movs r3, #0
 	ldrsb r1, [r1, r3]
-	bl 0x80093f8
+	bl sub_080093F8
 	lsrs r2, r1, #14
 	bne.n _08003B2A
 	lsls r1, r1, #1

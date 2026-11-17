@@ -111,7 +111,7 @@ _0802140A:
 	strb r0, [r1]
 	ldr r0, [r4, #84]
 	mov r1, #14
-	bl 0x08003870
+	bl sub_08003870
 	ldr r0, [r4, #84]
 	strb r6, [r0, #20]
 	ldr r0, [r4, #84]
@@ -242,7 +242,7 @@ _080214D6:
 	add r1, r1, r0
 	lsr r1, r1, #24
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 	add r0, r4, #0
 	add r0, r0, #117
 	ldrb r1, [r0]
@@ -305,7 +305,7 @@ _080215AA:
 	add r1, r1, r0
 	lsr r1, r1, #24
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 	ldrb r0, [r4, #20]
 	add r1, r4, #0
 	add r1, r1, #114

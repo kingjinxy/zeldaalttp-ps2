@@ -7,7 +7,7 @@ sub_08036598: @ 0x08036598
 	bne _080365AC
 	add r0, r4, #0
 	mov r1, #3
-	bl 0x080037EC
+	bl sub_080037EC
 	b _080365B2
 _080365AC:
 	add r0, r4, #0

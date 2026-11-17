@@ -2,7 +2,7 @@
 sub_0802595C: @ 0x0802595C
 	push {r4-r6,lr}
 	add r4, r0, #0
-	bl 0x08003828
+	bl GetNextFrame
 	ldr r0, [r4, #84]
 	ldr r2, _080259D4  @ =gUnknown_0813C468
 	add r1, r4, #0

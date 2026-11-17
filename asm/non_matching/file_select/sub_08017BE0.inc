@@ -32,7 +32,7 @@ sub_08017BE0: @ 0x08017BE0
 	strb r0, [r2]
 	ldrb r1, [r2]
 	add r0, r3, #0
-	bl 0x08003870
+	bl sub_08003870
 _08017C24:
 	pop {r0}
 	bx r0

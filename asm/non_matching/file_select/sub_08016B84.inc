@@ -4,11 +4,11 @@ sub_08016B84: @ 0x08016B84
 	add r4, r0, #0
 	mov r1, #128
 	lsl r1, r1, #6
-	bl 0x08003594
+	bl sub_08003594
 	cmp r0, #0
 	bne _08016BB4
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	ldrb r0, [r4, #23]
 	sub r0, r0, #1
 	strb r0, [r4, #23]
@@ -20,7 +20,7 @@ sub_08016B84: @ 0x08016B84
 	strb r0, [r4, #20]
 	add r0, r4, #0
 	mov r1, #1
-	bl 0x08003870
+	bl sub_08003870
 _08016BB4:
 	pop {r4}
 	pop {r0}

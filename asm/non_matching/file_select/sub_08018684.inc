@@ -17,7 +17,7 @@ _0801869E:
 	ldrb r2, [r4, #24]
 	add r0, r4, #0
 	add r1, r2, #0
-	bl 0x08009E6C
+	bl sub_08009E6C
 	add r1, r0, #0
 	cmp r1, #0
 	beq _080186B0

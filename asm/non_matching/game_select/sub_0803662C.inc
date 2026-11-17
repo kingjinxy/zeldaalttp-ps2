@@ -7,7 +7,7 @@ sub_0803662C: @ 0x0803662C
 	bne _08036640
 	add r0, r4, #0
 	mov r1, #3
-	bl 0x080037EC
+	bl sub_080037EC
 	b _08036646
 _08036640:
 	add r0, r4, #0
@@ -40,7 +40,7 @@ _08036674:
 	.4byte gUnknown_03000488
 _08036678:
 	add r0, r4, #0
-	bl 0x08003BCC
+	bl sub_08003BCC
 	add r0, r4, #0
 	bl DeleteThisEntity
 _08036684:

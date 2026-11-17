@@ -16,7 +16,7 @@ _0804A7A2:
 	ldr r1, [r0]
 	mov pc, r1
 _0804A7AC:
-	.4byte 0x0804A7B0
+	.4byte _0804A7AC+0x4
 	.4byte _0804A7C4
 	.4byte _0804A8CC
 	.4byte _0804A954
@@ -68,7 +68,7 @@ _0804A7C4:
 	ldr r2, [r1]
 	ldr r0, [r7]
 	add r1, r2, #0
-	bl 0x08003F4C
+	bl sub_08003F4C
 	ldr r1, [r7]
 	add r2, r1, #0
 	add r1, r1, #43
@@ -169,7 +169,7 @@ _0804A8CC:
 	ldr r2, [r1]
 	ldr r0, [r7]
 	add r1, r2, #0
-	bl 0x08003F4C
+	bl sub_08003F4C
 	ldr r1, [r7]
 	add r2, r1, #0
 	add r1, r1, #43
@@ -226,7 +226,7 @@ _0804A950:
 	.4byte gUnknown_03006A30
 _0804A954:
 	ldr r0, [r7]
-	bl 0x080093A4
+	bl sub_080093A4
 	lsl r1, r0, #24
 	lsr r0, r1, #24
 	cmp r0, #0

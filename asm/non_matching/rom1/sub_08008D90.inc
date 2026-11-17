@@ -6,11 +6,11 @@ sub_08008D90: @ 0X08008D90
 	ldrh r0, [r4, #50]
 	ldrh r1, [r4, #54]
 	ldr r2, [pc, #268]
-	bl 0x8009310
+	bl sub_08009310
 	ldr r5, [pc, #296]
 	cmp r0, #0
 	beq.n _08008DC2
-	bl 0x80094bc
+	bl sub_080094BC
 	cmp r0, #72
 	beq.n _08008DC0
 	cmp r0, #71
@@ -33,7 +33,7 @@ _08008DC2:
 	orrs r2, r5
 	strh r2, [r4, r1]
 	adds r0, r4, #0
-	bl 0x8008dd8
+	bl sub_08008DD8
 	pop {r4, r5, pc}
 	.byte 0x00
 	.byte 0x00

@@ -162,31 +162,31 @@ _0812D102:
 	.byte 0x00
 	.byte 0x00
 	.4byte 0x03002230
-	.4byte 0x0822ab3c
+	.4byte gUnknown_0822A9C8+0x174
 	.4byte 0x0000173c
 	.4byte 0xffff8000
 	.4byte 0x00000cc2
 	.4byte 0xffff8200
 	.4byte 0x00000cc4
-	.4byte 0x0822ada6
+	.4byte gUnknown_0822A9C8+0x3de
 	.4byte 0x00000cc6
 	.4byte 0x00000cc8
-	.4byte 0x0822b010
+	.4byte gUnknown_0822A9C8+0x648
 	.4byte 0x0000173e
 	.4byte 0x00000cca
 	.4byte 0x00000ccc
-	.4byte 0x0822a9dc
+	.4byte gUnknown_0822A9C8+0x14
 	.4byte 0x00001742
 	.4byte 0x00000cb6
 	.4byte 0x00000cb8
-	.4byte 0x0822a9ec
+	.4byte gUnknown_0822A9C8+0x24
 	.4byte 0x00001743
 	.4byte 0x00000cba
-	.4byte 0x0822a9f2
+	.4byte gUnknown_0822A9C8+0x2a
 	.4byte 0x00001744
 	.4byte 0x00000cbe
-	.4byte 0x0822aaf2
-	.4byte 0x0822a9d4
+	.4byte gUnknown_0822A9C8+0x12a
+	.4byte gUnknown_0822A9C8+0xc
 	.4byte 0x00001748
 	.4byte 0x000009c8
 _0812D178:
@@ -372,8 +372,8 @@ _0812D2BE:
 	.4byte 0x00000cd2
 	.4byte 0x00000d04
 	.4byte 0x00000d06
-	.4byte 0x0822ab12
-	.4byte 0x0822ab1e
+	.4byte gUnknown_0822A9C8+0x14a
+	.4byte gUnknown_0822A9C8+0x156
 	.4byte 0x00000cd6
 	.4byte 0x0000a660
 	.4byte 0x00000cd8

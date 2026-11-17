@@ -25,7 +25,7 @@ _08020F7A:
 	str r0, [r1, #12]
 _08020F90:
 	add r0, r1, #0
-	bl 0x08003828
+	bl GetNextFrame
 	pop {r0}
 	bx r0
 	THUMB_FUNC_END sub_08020F64

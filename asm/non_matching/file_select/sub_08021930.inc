@@ -13,7 +13,7 @@ sub_08021930: @ 0x08021930
 	bne _08021A46
 _08021948:
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r0, r4, #0
 	add r0, r0, #41
 	ldrb r1, [r0]
@@ -24,7 +24,7 @@ _08021948:
 	mov r1, #128
 	lsl r1, r1, #6
 	add r0, r4, #0
-	bl 0x08003594
+	bl sub_08003594
 	cmp r0, #0
 	bne _080219AC
 	add r1, r4, #0
@@ -114,7 +114,7 @@ _080219F2:
 	lsl r1, r1, #24
 	lsr r1, r1, #24
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 	b _08021A46
 _08021A10:
 	mov r0, #12
@@ -132,7 +132,7 @@ _08021A10:
 	bl sub_08022A7C
 	b _08021A46
 _08021A30:
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r2, _08021A4C  @ =gUnknown_0813BD9A
 	mov r1, #7
 	and r1, r1, r0

@@ -29,7 +29,7 @@ sub_080205C4: @ 0x080205C4
 	lsl r1, r1, #1
 	strh r1, [r2]
 	mov r1, #1
-	bl 0x08003870
+	bl sub_08003870
 	pop {r0}
 	bx r0
 	.byte 0x00

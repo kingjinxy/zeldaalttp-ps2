@@ -7,15 +7,15 @@ _08004536:
 	movs r1, #3
 	movs r2, #46
 	strb r1, [r0, r2]
-	bl 0x8001d5c
+	bl sub_08001D5C
 	ldrb r2, [r1, #18]
 	cmp r2, #108
 	beq.n _0800454C
-	bl 0x80020a0
+	bl sub_080020A0
 	b.n _08004550
 _0800454C:
-	bl 0x8001f70
+	bl sub_08001F70
 _08004550:
-	bl 0x8001d5c
+	bl sub_08001D5C
 	.syntax unified
 	.thumb

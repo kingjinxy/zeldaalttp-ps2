@@ -10,9 +10,9 @@ sub_08004A34: @ 0X08004A34
 	push {r0}
 	movs r1, #2
 	movs r2, #64
-	bl 0x804cb38
+	bl sub_0804CB38
 	movs r0, #14
-	bl 0x8003dfc
+	bl sub_08003DFC
 	pop {r0}
 _08004A52:
 	ldrb r2, [r0, #21]
@@ -197,8 +197,8 @@ _08004A52:
 	.byte 0x00
 	.byte 0x00
 	.4byte 0x03006c80
-	.4byte 0x080046dc
-	.4byte 0x080046ac
+	.4byte FrameNeedsUpdate+0xe58
+	.4byte FrameNeedsUpdate+0xe28
 	.byte 0xff
 	.byte 0xfb
 	.byte 0x00
@@ -211,7 +211,7 @@ _08004A52:
 	.byte 0xff
 	.byte 0xff
 	.byte 0xff
-	.4byte 0x080046b4
+	.4byte FrameNeedsUpdate+0xe30
 	.byte 0x00
 	.byte 0x50
 	.byte 0x00
@@ -244,7 +244,7 @@ _08004A52:
 	.byte 0x00
 	.byte 0x02
 	.byte 0x00
-	.4byte 0x080046c8
+	.4byte FrameNeedsUpdate+0xe44
 	.byte 0x00
 	.byte 0x02
 	.byte 0x00
@@ -258,7 +258,7 @@ _08004A52:
 	.byte 0x00
 	.byte 0x08
 	.4byte 0x03000e20
-	.4byte 0x080046d4
+	.4byte FrameNeedsUpdate+0xe50
 	.byte 0x9c
 	.byte 0x01
 	.byte 0x00

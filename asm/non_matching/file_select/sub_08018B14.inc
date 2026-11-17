@@ -102,7 +102,7 @@ sub_08018B14: @ 0x08018B14
 	cmp r0, #0
 	beq _08018C00
 	strb r2, [r5, #20]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #3
 	and r0, r0, r1
 	ldrb r1, [r5, #23]
@@ -126,7 +126,7 @@ _08018C04:
 	and r0, r0, r1
 	cmp r0, #0
 	beq _08018C20
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #3
 	and r0, r0, r1
 	ldrb r1, [r5, #23]

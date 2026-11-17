@@ -3,7 +3,7 @@ sub_0801E5D8: @ 0x0801E5D8
 	push {r4,lr}
 	add r4, r0, #0
 	mov r1, #12
-	bl 0x0800997C
+	bl sub_0800997C
 	mov r1, #128
 	and r1, r1, r0
 	cmp r1, #0
@@ -12,7 +12,7 @@ sub_0801E5D8: @ 0x0801E5D8
 	strb r0, [r4, #20]
 	mov r0, #30
 	strb r0, [r4, #23]
-	bl 0x08009E0C
+	bl sub_08009E0C
 	add r1, r0, #0
 	str r1, [r4, #88]
 	add r0, r4, #0
@@ -22,7 +22,7 @@ sub_0801E5D8: @ 0x0801E5D8
 	strb r0, [r1]
 	add r0, r4, #0
 	mov r1, #8
-	bl 0x08003870
+	bl sub_08003870
 	b _0801E684
 _0801E610:
 	ldrb r0, [r4, #23]
@@ -31,19 +31,19 @@ _0801E610:
 	lsl r0, r0, #24
 	cmp r0, #0
 	bne _0801E674
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r2, _0801E640  @ =gUnknown_0813ADB4
 	mov r1, #3
 	and r1, r1, r0
 	add r1, r1, r2
 	ldrb r0, [r1]
 	strb r0, [r4, #23]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #31
 	and r1, r1, r0
 	cmp r1, #0
 	beq _0801E644
-	bl 0x0800099C
+	bl sub_0800099C
 	b _0801E652
 	.byte 0x00
 	.byte 0x00
@@ -71,10 +71,10 @@ _0801E652:
 	strb r0, [r2]
 	ldrb r1, [r2]
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 _0801E674:
 	add r0, r4, #0
-	bl 0x0800963C
+	bl sub_0800963C
 	lsl r0, r0, #16
 	cmp r0, #0
 	bne _0801E684
@@ -82,7 +82,7 @@ _0801E674:
 	strb r0, [r4, #23]
 _0801E684:
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	pop {r4}
 	pop {r0}
 	bx r0

@@ -43,7 +43,7 @@ _08013D8C:
 	add r1, r0, #0
 	add r0, r4, #0
 	mov r2, #128
-	bl 0x080009F4
+	bl sub_080009F4
 	ldr r1, _08013DC4  @ =gUnknown_02000430
 	ldrb r0, [r6]
 	add r0, r0, r1

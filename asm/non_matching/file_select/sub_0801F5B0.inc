@@ -12,7 +12,7 @@ _0801F5C0:
 	add r0, r4, #0
 	mov r1, #96
 	mov r2, #80
-	bl 0x08009E6C
+	bl sub_08009E6C
 	add r1, r0, #0
 	cmp r1, #0
 	beq _0801F5FE
@@ -24,7 +24,7 @@ _0801F5C0:
 	strb r0, [r1]
 	mov r0, #2
 	strb r0, [r4, #20]
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r2, _0801F604  @ =gUnknown_0813B12C
 	mov r1, #7
 	and r1, r1, r0

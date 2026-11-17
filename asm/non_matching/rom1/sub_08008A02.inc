@@ -10,20 +10,20 @@ sub_08008A02: @ 0X08008A02
 	adds r4, #1
 	ldrsb r3, [r1, r4]
 	movs r1, #2
-	bl 0x8001b54
-	bl 0x8009450
+	bl sub_08001B54
+	bl sub_08009450
 	movs r2, #70
 	cmp r1, r2
 	beq.n _08008A3C
-	bl 0x8009404
+	bl sub_080093F8+0xc
 	push {r0}
 	adds r0, r1, #0
 	ldr r1, [pc, #240]
-	bl 0x80012d8
+	bl sub_080012D8
 	pop {r0}
 	bne.n _08008A3C
 	ldr r1, [pc, #232]
-	bl 0x8003754
+	bl sub_08003748+0xc
 	bne.n _08008A58
 _08008A3C:
 	ldrb r1, [r0, #23]
@@ -81,23 +81,23 @@ _08008A88:
 _08008A9A:
 	ldr r1, [r0, #84]
 	push {r0, r1}
-	bl 0x803cecc
+	bl sub_0803CECC
 	adds r2, r0, #0
 	pop {r0, r1}
 	push {r0, r1}
 	movs r1, #43
 	strb r2, [r0, r1]
-	bl 0x803cc20
+	bl sub_0803CC20
 	pop {r0, r1}
 	movs r2, #2
 	adds r3, r2, #0
-	bl 0x800391c
+	bl sub_0800391C
 	beq.n _08008ACE
 	push {r0}
-	bl 0x8000620
+	bl sub_08000620
 	pop {r0}
 	push {r0}
-	bl 0x8012540
+	bl DeleteThisEntity
 	pop {r0}
 	pop {pc}
 _08008ACE:

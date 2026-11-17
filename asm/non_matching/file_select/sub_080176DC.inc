@@ -22,7 +22,7 @@ sub_080176DC: @ 0x080176DC
 	strb r1, [r0]
 	add r0, r4, #0
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 	ldrb r0, [r4, #20]
 	add r0, r0, #1
 	strb r0, [r4, #20]

@@ -16,7 +16,7 @@ _0804DA36:
 	ldr r1, [r0]
 	mov pc, r1
 _0804DA40:
-	.4byte 0x0804DA44
+	.4byte _0804DA40+0x4
 	.4byte _0804DAA0
 	.4byte _0804DAF4
 	.4byte _0804DB88

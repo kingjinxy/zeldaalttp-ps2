@@ -19,7 +19,7 @@ sub_0801E084: @ 0x0801E084
 	str r1, [r0, #72]
 	strh r3, [r0, #58]
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 	pop {r4}
 	pop {r0}
 	bx r0

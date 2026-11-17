@@ -16,7 +16,7 @@ sub_08033C78: @ 0x08033C78
 	mov r0, #3
 	strb r0, [r3, #20]
 	add r0, r3, #0
-	bl 0x08003BCC
+	bl sub_08003BCC
 	b _08033CC2
 	.byte 0x00
 	.byte 0x00

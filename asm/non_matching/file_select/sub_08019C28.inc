@@ -129,7 +129,7 @@ _08019CEA:
 	bl sub_0804C938
 _08019D32:
 	add r0, r5, #0
-	bl 0x08003828
+	bl GetNextFrame
 	pop {r3}
 	mov r8, r3
 	pop {r4-r7}

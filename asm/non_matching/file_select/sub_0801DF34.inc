@@ -2,10 +2,10 @@
 sub_0801DF34: @ 0x0801DF34
 	push {r4,r5,lr}
 	add r4, r0, #0
-	bl 0x080095A4
+	bl sub_080095A4
 	ldr r5, _0801DF74  @ =gUnknown_0813AC78
 	add r0, r4, #0
-	bl 0x080098DC
+	bl sub_080098DC
 	lsl r0, r0, #24
 	lsr r0, r0, #22
 	add r0, r0, r5
@@ -13,7 +13,7 @@ sub_0801DF34: @ 0x0801DF34
 	add r0, r4, #0
 	bl _call_via_r1
 	add r0, r4, #0
-	bl 0x08008D90
+	bl sub_08008D90
 	ldrb r2, [r4, #31]
 	mov r1, #63
 	add r0, r1, #0

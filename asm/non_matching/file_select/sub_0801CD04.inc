@@ -21,7 +21,7 @@ sub_0801CD04: @ 0x0801CD04
 	bl sub_0801CDA0
 	add r0, r4, #0
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 	pop {r4}
 	pop {r0}
 	bx r0

@@ -94,7 +94,7 @@ _0805A748:
 	ldr r2, [r1]
 	ldr r0, [r7]
 	add r1, r2, #0
-	bl 0x08003F4C
+	bl sub_08003F4C
 	ldr r1, [r7]
 	add r2, r1, #0
 	add r1, r1, #43
@@ -121,7 +121,7 @@ _0805A748:
 	add r1, r2, #0
 	mov r2, #8
 	mov r3, #8
-	bl 0x0800390C
+	bl sub_0800390C
 	lsl r1, r0, #24
 	lsr r0, r1, #24
 	cmp r0, #0

@@ -7,7 +7,7 @@ sub_08018AE4: @ 0x08018AE4
 	cmp r0, #1
 	bls _08018AF6
 	add r0, r4, #0
-	bl 0x080095A4
+	bl sub_080095A4
 _08018AF6:
 	ldr r0, _08018B10  @ =gUnknown_08139924
 	ldrb r1, [r4, #20]

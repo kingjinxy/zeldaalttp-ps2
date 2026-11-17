@@ -20,7 +20,7 @@ _08017462:
 	mov r1, #128
 	lsl r1, r1, #10
 	add r0, r4, #0
-	bl 0x08003594
+	bl sub_08003594
 	cmp r0, #0
 	bne _08017536
 	add r1, r4, #0
@@ -45,13 +45,13 @@ _08017462:
 	strb r0, [r1]
 	add r0, r4, #0
 	mov r1, #2
-	bl 0x08003870
+	bl sub_08003870
 	mov r0, #22
-	bl 0x08003DFC
+	bl sub_08003DFC
 	b _08017536
 _080174A8:
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r1, r4, #0
 	add r1, r1, #126
 	ldrh r0, [r1]
@@ -66,7 +66,7 @@ _080174A8:
 	strb r0, [r5]
 	add r0, r4, #0
 	mov r1, #3
-	bl 0x08003870
+	bl sub_08003870
 	b _08017536
 _080174D0:
 	cmp r0, #59
@@ -88,7 +88,7 @@ _080174EC:
 	.4byte gUnknown_08139544
 _080174F0:
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r0, r4, #0
 	add r0, r0, #41
 	ldrb r1, [r0]
@@ -119,7 +119,7 @@ _080174F0:
 	strb r0, [r1]
 	add r0, r4, #0
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 _08017536:
 	pop {r4,r5}
 	pop {r0}

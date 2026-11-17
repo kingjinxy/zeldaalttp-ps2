@@ -43,7 +43,7 @@ _08023FA2:
 	strh r0, [r1]
 	add r0, r4, #0
 	mov r1, #3
-	bl 0x08003870
+	bl sub_08003870
 	b _0802408A
 _08023FD4:
 	.4byte gUnknown_08427688
@@ -68,7 +68,7 @@ _08023FDC:
 	strh r0, [r1]
 	add r0, r4, #0
 	mov r1, #3
-	bl 0x08003870
+	bl sub_08003870
 	mov r0, #15
 	mov r1, #2
 	mov r2, #32
@@ -102,7 +102,7 @@ _08024024:
 	add r1, r1, #55
 	mov r0, #16
 	strh r0, [r1]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #31
 	and r0, r0, r1
 	add r1, r4, #0
@@ -118,7 +118,7 @@ _08024024:
 	strb r1, [r0]
 	add r1, r1, #20
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 	mov r0, #15
 	mov r1, #2
 	mov r2, #32
@@ -130,7 +130,7 @@ _08024024:
 	bl sub_0803D3D0
 _08024084:
 	mov r0, #158
-	bl 0x08003DFC
+	bl sub_08003DFC
 _0802408A:
 	ldr r0, [r4, #84]
 	ldrb r1, [r0, #30]
@@ -148,7 +148,7 @@ _0802408A:
 	strb r0, [r4, #28]
 	ldr r0, _080240C4  @ =gUnknown_0813C164
 	str r0, [r4, #72]
-	bl 0x0800099C
+	bl sub_0800099C
 	add r1, r4, #0
 	add r1, r1, #127
 	strb r0, [r1]

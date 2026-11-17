@@ -25,7 +25,7 @@ sub_08019644: @ 0x08019644
 	add r0, r0, r1
 	strh r0, [r4, #54]
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	b _0801968A
 	.byte 0x00
 	.byte 0x00

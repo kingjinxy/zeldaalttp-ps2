@@ -113,8 +113,8 @@ _08000218:
 	.4byte DeleteThisEntity+1
 	.4byte DoPlayerEntity+1
 	.4byte DeleteThisEntity+1
-	.4byte 0x08009555
-	.4byte 0x08009F1D
+	.4byte sub_08008FA4+0x5b1
+	.4byte sub_08008FA4+0xf79
 	.4byte DeleteThisEntity+1
 	.4byte DoObjectEntity+1
 	.4byte DoPlayerItemEntity+1
@@ -188,9 +188,9 @@ _08000304:
 _08000308:
 	.4byte gUnknown_03005AE0
 _0800030C:
-	.4byte 0x0803E115
+	.4byte sub_0803E114
 _08000310:
-	.4byte 0x080126CD
+	.4byte sub_080126CC
 _08000314:
 	.4byte gUnknown_03000208
 

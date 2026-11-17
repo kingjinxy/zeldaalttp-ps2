@@ -2,7 +2,7 @@
 sub_08019274: @ 0x08019274
 	push {r4,r5,lr}
 	add r4, r0, #0
-	bl 0x08009624
+	bl sub_08009624
 	add r0, r4, #0
 	add r0, r0, #69
 	ldrb r0, [r0]

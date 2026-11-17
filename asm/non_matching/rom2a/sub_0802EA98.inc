@@ -16,7 +16,7 @@ _0802EAA6:
 _0802EAB0:
 	.4byte gUnknown_02016D60
 _0802EAB4:
-	.4byte 0x0802EAB8
+	.4byte _0802EAB4+0x4
 	.4byte _0802EAE4
 	.4byte _0802EB68
 	.4byte _0802EB98

@@ -5,11 +5,11 @@ sub_08003C5C: @ 0X08003C5C
 	adds r4, r0, #0
 	adds r5, r1, #0
 	adds r0, r1, #0
-	bl 0x8003fb0
+	bl sub_08003FB0
 	beq.n _08003C82
 	adds r0, r4, #0
 	adds r1, r5, #0
-	bl 0x8003c84
+	bl sub_08003C84
 	beq.n _08003C82
 	ldrb r0, [r5, #20]
 	cmp r0, #2

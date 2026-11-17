@@ -17,12 +17,12 @@ sub_080184D8: @ 0x080184D8
 	strb r4, [r0]
 	add r0, r5, #0
 	add r1, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 	ldr r0, [r5, #84]
 	add r1, r4, #3
 	lsl r1, r1, #24
 	lsr r1, r1, #24
-	bl 0x08003870
+	bl sub_08003870
 _0801850C:
 	pop {r4,r5}
 	pop {r0}

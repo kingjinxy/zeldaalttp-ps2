@@ -14,7 +14,7 @@ sub_0801A210: @ 0x0801A210
 	mov r0, #15
 	and r0, r0, r1
 	strb r0, [r2]
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r2, _0801A250  @ =gUnknown_08139B2C
 	mov r1, #3
 	and r1, r1, r0

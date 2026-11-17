@@ -10,7 +10,7 @@ sub_080279C4: @ 0x080279C4
 	strb r0, [r1]
 	ldrb r1, [r1]
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 	ldrb r1, [r4, #11]
 	mov r2, #1
 	add r0, r2, #0

@@ -23,7 +23,7 @@ sub_080253B8: @ 0x080253B8
 	mov r0, #150
 	lsl r0, r0, #1
 	strh r0, [r1]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #15
 	and r0, r0, r1
 	add r0, r0, #24

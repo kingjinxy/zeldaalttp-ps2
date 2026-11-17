@@ -7,7 +7,7 @@ sub_0800A34A: @ 0X0800A34A
 	adds r0, r1, #0
 	adds r1, r3, #0
 	adds r2, r4, #0
-	bl 0x8013754
+	bl sub_08013754
 	adds r1, r0, #0
 	pop {r0}
 	beq.n _0800A390
@@ -42,11 +42,11 @@ _0800A390:
 	.byte 0x00
 	.4byte 0x0201eff8
 	.4byte 0x0000ffff
-	.4byte 0x0813812c
-	.4byte 0x08138122
+	.4byte gUnknown_0813811A+0x12
+	.4byte gUnknown_0813811A+0x8
 	.4byte 0x0800a1d8
-	.4byte 0x0800a1a9
-	.4byte 0x081380f8
+	.4byte sub_0800A1A8
+	.4byte gUnknown_081380F8
 	.4byte 0x03000450
 	.4byte 0x0000f000
 	.4byte 0x00000c00

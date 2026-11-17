@@ -16,7 +16,7 @@ sub_08019D48: @ 0x08019D48
 	bl sub_0801A210
 _08019D66:
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	pop {r4}
 	pop {r0}
 	bx r0

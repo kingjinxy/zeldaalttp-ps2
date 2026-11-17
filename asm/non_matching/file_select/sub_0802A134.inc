@@ -6,7 +6,7 @@ sub_0802A134: @ 0x0802A134
 	lsr r5, r1, #16
 	lsl r2, r2, #16
 	lsr r4, r2, #16
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #1
 	and r1, r1, r0
 	cmp r1, #0

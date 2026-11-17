@@ -6,9 +6,9 @@ sub_08009694: @ 0X08009694
 	strh r1, [r0, #44]
 	bl sub_080096DC
 	push {r0, r1}
-	bl 0x800303c
+	bl sub_0800303C
 	pop {r0, r1}
-	bl 0x80038e8
+	bl sub_080038E8
 	adds r0, r1, #0
 	pop {pc}
 	.byte 0x00

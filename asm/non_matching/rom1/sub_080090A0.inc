@@ -2,7 +2,7 @@
 	THUMB_FUNC_START sub_080090A0
 sub_080090A0: @ 0X080090A0
 	adds r0, #60
-	b.n 0x80094ac
+	b.n sub_08009490+0x1c
 	.byte 0x1a
 	.byte 0x40
 	.byte 0x91

@@ -36,7 +36,7 @@ sub_08018A14: @ 0x08018A14
 	add r3, r3, r6
 	mov r9, r3
 	ldrh r2, [r3]
-	bl 0x080093AC
+	bl sub_080093AC
 	lsl r1, r0, #24
 	lsr r0, r1, #24
 	mov r3, #8
@@ -83,7 +83,7 @@ _08018A88:
 	mov r6, r9
 	ldrh r2, [r6]
 	str r3, [sp]
-	bl 0x080093AC
+	bl sub_080093AC
 	lsl r1, r0, #24
 	lsr r0, r1, #24
 	ldr r3, [sp]

@@ -11,7 +11,7 @@ sub_0801B7A4: @ 0x0801B7A4
 	add r0, r4, #0
 	mov r1, #96
 	mov r2, #64
-	bl 0x08009E6C
+	bl sub_08009E6C
 	add r1, r0, #0
 	cmp r1, #0
 	beq _0801B7FA
@@ -32,10 +32,10 @@ sub_0801B7A4: @ 0x0801B7A4
 	strb r0, [r4, #23]
 	ldrb r1, [r1]
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 	add r0, r4, #0
 	mov r1, #92
-	bl 0x08003E10
+	bl sub_08003E10
 	b _0801B7FA
 _0801B7F6:
 	mov r0, #1

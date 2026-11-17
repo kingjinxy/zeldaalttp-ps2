@@ -80,7 +80,7 @@ _08134AAE:
 	str r0, [r5, #60]
 	ldr r4, _08134B74  @ =gUnknown_02031A30
 	add r0, r4, #0
-	bl 0x08133E64
+	bl sub_08133E64
 	str r4, [r5, #52]
 	mov r0, #128
 	lsl r0, r0, #11
@@ -116,9 +116,9 @@ _08134B64:
 _08134B68:
 	.4byte 0x050003EC
 _08134B6C:
-	.4byte 0x08134351
+	.4byte sub_08134350
 _08134B70:
-	.4byte 0x08135B75
+	.4byte _08134B78+0xffd
 _08134B74:
 	.4byte gUnknown_02031A30
 _08134B78:

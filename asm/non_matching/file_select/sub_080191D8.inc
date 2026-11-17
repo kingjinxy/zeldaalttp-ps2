@@ -54,7 +54,7 @@ sub_080191D8: @ 0x080191D8
 	strb r6, [r0]
 	add r0, r4, #0
 	mov r1, #1
-	bl 0x08003870
+	bl sub_08003870
 _08019248:
 	add r0, r4, #0
 	add r0, r0, #117
@@ -68,7 +68,7 @@ _08019248:
 _0801925A:
 	ldr r1, _08019270  @ =gUnknown_08139970
 	add r0, r4, #0
-	bl 0x080098A0
+	bl sub_080098A0
 	pop {r4-r6}
 	pop {r0}
 	bx r0

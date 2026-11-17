@@ -2,9 +2,9 @@
 sub_0801D0FC: @ 0x0801D0FC
 	push {r4,lr}
 	add r4, r0, #0
-	bl 0x0800963C
+	bl sub_0800963C
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r0, r4, #0
 	add r0, r0, #43
 	ldrb r1, [r0]

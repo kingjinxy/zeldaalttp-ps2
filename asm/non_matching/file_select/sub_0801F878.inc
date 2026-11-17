@@ -10,15 +10,15 @@ sub_0801F878: @ 0x0801F878
 	bne _0801F89C
 	ldr r1, [r4, #100]
 	add r0, r4, #0
-	bl 0x08009EA4
+	bl sub_08009EA4
 	add r1, r0, #0
 	lsl r1, r1, #24
 	lsr r1, r1, #24
 	add r0, r4, #0
-	bl 0x080040C4
+	bl sub_080040C4
 _0801F89C:
 	add r0, r4, #0
-	bl 0x08009694
+	bl sub_08009694
 	pop {r4}
 	pop {r0}
 	bx r0

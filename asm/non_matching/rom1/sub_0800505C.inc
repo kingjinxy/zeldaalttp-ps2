@@ -46,7 +46,7 @@ sub_0800505C: @ 0X0800505C
 	strb r2, [r0, #23]
 	bne.n _080050C2
 	strb r2, [r1, #2]
-	bl 0x80012fc
+	bl sub_080012FC
 _080050C2:
 	pop {pc}
 	.byte 0x82

@@ -2,7 +2,7 @@
 sub_08022BB8: @ 0x08022BB8
 	push {r4,lr}
 	add r4, r0, #0
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r2, _08022C1C  @ =gUnknown_0813BD8A
 	mov r1, #7
 	and r1, r1, r0
@@ -21,7 +21,7 @@ sub_08022BB8: @ 0x08022BB8
 	add r0, r0, r2
 	ldr r1, [r0]
 	add r0, r4, #0
-	bl 0x08003F4C
+	bl sub_08003F4C
 	mov r1, #24
 	and r1, r1, r0
 	add r0, r4, #0
@@ -42,7 +42,7 @@ sub_08022BB8: @ 0x08022BB8
 	lsl r1, r1, #24
 	lsr r1, r1, #24
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 	pop {r4}
 	pop {r0}
 	bx r0

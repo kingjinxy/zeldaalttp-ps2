@@ -110,7 +110,7 @@ _0802A6FC:
 	beq _0802A7A8
 	add r0, r4, #0
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 	b _0802A7B0
 	.byte 0x00
 	.byte 0x00
@@ -123,7 +123,7 @@ _0802A7A4:
 _0802A7A8:
 	add r0, r4, #0
 	mov r1, #1
-	bl 0x08003870
+	bl sub_08003870
 _0802A7B0:
 	ldr r1, _0802A7E0  @ =gUnknown_0813D4E8
 	ldrb r0, [r4, #10]
@@ -558,7 +558,7 @@ _0802AA7A:
 	bl sub_08014658
 _0802AB6E:
 	mov r0, #11
-	bl 0x08003DFC
+	bl sub_08003DFC
 	pop {r4-r6}
 	pop {r0}
 	bx r0

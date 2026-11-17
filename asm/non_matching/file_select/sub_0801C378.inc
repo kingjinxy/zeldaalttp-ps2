@@ -2,7 +2,7 @@
 sub_0801C378: @ 0x0801C378
 	push {r4,lr}
 	add r4, r0, #0
-	bl 0x08003828
+	bl GetNextFrame
 	ldrb r0, [r4, #23]
 	sub r0, r0, #1
 	strb r0, [r4, #23]
@@ -28,7 +28,7 @@ sub_0801C378: @ 0x0801C378
 	lsl r1, r1, #24
 	lsr r1, r1, #24
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 	b _0801C3D0
 _0801C3B8:
 	mov r0, #6
@@ -41,7 +41,7 @@ _0801C3B8:
 	lsl r1, r1, #24
 	lsr r1, r1, #24
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 _0801C3D0:
 	pop {r4}
 	pop {r0}

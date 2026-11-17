@@ -7,7 +7,7 @@ sub_08027D40: @ 0x08027D40
 	add r0, r0, #83
 	strb r1, [r0]
 	add r0, r6, #0
-	bl 0x08003828
+	bl GetNextFrame
 	mov r4, #0
 	ldr r5, _08027DE4  @ =gUnknown_03006A30
 	ldrb r1, [r5, #15]

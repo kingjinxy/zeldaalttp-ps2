@@ -11,7 +11,7 @@ _0801D1EE:
 	mov r1, #128
 	lsl r1, r1, #6
 	add r0, r4, #0
-	bl 0x08003594
+	bl sub_08003594
 	cmp r0, #0
 	bne _0801D204
 	mov r0, #9

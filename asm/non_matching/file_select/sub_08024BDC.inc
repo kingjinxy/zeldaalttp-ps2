@@ -5,7 +5,7 @@ sub_08024BDC: @ 0x08024BDC
 	mov r6, r8
 	push {r6,r7}
 	add r5, r0, #0
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r1, _08024C3C  @ =gUnknown_03006C80
 	mov r9, r1
 	ldrb r1, [r1]
@@ -26,7 +26,7 @@ sub_08024BDC: @ 0x08024BDC
 	ldrh r0, [r0]
 	cmp r0, #0
 	beq _08024C40
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r4, [r5, #112]
 	mov r2, r9
 	ldrb r1, [r2]
@@ -72,12 +72,12 @@ _08024C5C:
 	strb r0, [r2, #28]
 	add r0, r5, #0
 	mov r1, #4
-	bl 0x08003870
+	bl sub_08003870
 	ldr r0, [r5, #112]
 	mov r1, #5
-	bl 0x08003870
+	bl sub_08003870
 	mov r0, #162
-	bl 0x08003DFC
+	bl sub_08003DFC
 	pop {r3,r4}
 	mov r8, r3
 	mov r9, r4

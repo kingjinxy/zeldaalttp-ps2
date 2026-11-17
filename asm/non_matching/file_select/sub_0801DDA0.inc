@@ -13,7 +13,7 @@ sub_0801DDA0: @ 0x0801DDA0
 	strb r0, [r5]
 _0801DDB8:
 	add r0, r4, #0
-	bl 0x0800963C
+	bl sub_0800963C
 	lsl r0, r0, #16
 	cmp r0, #0
 	bne _0801DDC8
@@ -28,7 +28,7 @@ _0801DDC8:
 	bne _0801DE00
 	add r0, r4, #0
 	mov r1, #16
-	bl 0x0800997C
+	bl sub_0800997C
 	lsl r1, r0, #24
 	lsr r2, r1, #24
 	mov r1, #128

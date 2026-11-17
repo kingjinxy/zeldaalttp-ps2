@@ -148,7 +148,7 @@ _0801B302:
 	add r3, r3, #118
 	mov r4, #0
 	ldrsh r3, [r3, r4]
-	bl 0x08003F54
+	bl sub_08003F54
 	add r2, r7, #0
 	add r2, r2, #43
 	strb r0, [r2]
@@ -255,7 +255,7 @@ _0801B3AC:
 	add r5, r5, #80
 	ldrh r2, [r5]
 	str r3, [sp]
-	bl 0x08009310
+	bl sub_08009310
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	mov r9, r0
@@ -278,7 +278,7 @@ _0801B3AC:
 	lsl r1, r1, #16
 	asr r1, r1, #16
 	ldrh r2, [r5]
-	bl 0x08009310
+	bl sub_08009310
 	lsl r0, r0, #16
 	lsr r2, r0, #16
 	ldr r1, _0801B448  @ =gUnknown_0814AB24
@@ -360,7 +360,7 @@ _0801B49A:
 	add r3, r3, #118
 	mov r4, #0
 	ldrsh r3, [r3, r4]
-	bl 0x08003F54
+	bl sub_08003F54
 	strb r0, [r5]
 	b _0801B4E2
 _0801B4B2:
@@ -383,7 +383,7 @@ _0801B4C0:
 	add r3, r3, #118
 	mov r4, #0
 	ldrsh r3, [r3, r4]
-	bl 0x08003F54
+	bl sub_08003F54
 _0801B4DC:
 	add r1, r7, #0
 	add r1, r1, #43

@@ -22,7 +22,7 @@ _0801A0AC:
 	blt _0801A0E2
 	cmp r0, #4
 	bgt _0801A0E2
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r5, _0801A110  @ =gUnknown_03006A30
 	ldr r1, _0801A114  @ =gUnknown_08139B20
 	mov r8, r1
@@ -51,7 +51,7 @@ _0801A0E2:
 	add r1, r7, #0
 	add r1, r1, #43
 	strb r0, [r1]
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r2, _0801A118  @ =gUnknown_08139B1C
 	mov r1, #3
 	and r1, r1, r0

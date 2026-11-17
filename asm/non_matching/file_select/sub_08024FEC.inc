@@ -20,7 +20,7 @@ sub_08024FEC: @ 0x08024FEC
 	strb r1, [r0]
 	add r1, r1, #20
 	add r0, r5, #0
-	bl 0x08003870
+	bl sub_08003870
 _08025018:
 	ldr r4, [r5, #84]
 	ldr r3, _08025054  @ =gUnknown_0813E4CC

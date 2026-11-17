@@ -4,7 +4,7 @@ sub_0801CC4C: @ 0x0801CC4C
 	add r5, r0, #0
 	mov r1, #80
 	mov r2, #64
-	bl 0x08009E6C
+	bl sub_08009E6C
 	add r1, r0, #0
 	str r1, [r5, #88]
 	ldrb r0, [r5, #23]
@@ -18,7 +18,7 @@ sub_0801CC4C: @ 0x0801CC4C
 _0801CC6C:
 	cmp r1, #0
 	bne _0801CC8C
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r4, _0801CCAC  @ =gUnknown_03006A30
 	ldr r1, _0801CCB0  @ =gUnknown_03006C80
 	ldrb r1, [r1]

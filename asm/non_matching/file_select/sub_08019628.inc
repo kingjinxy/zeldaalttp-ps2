@@ -10,7 +10,7 @@ sub_08019628: @ 0x08019628
 	add r1, r1, #1
 	strb r1, [r0, #20]
 	mov r1, #5
-	bl 0x08003870
+	bl sub_08003870
 	pop {r0}
 	bx r0
 	THUMB_FUNC_END sub_08019628

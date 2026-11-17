@@ -16,7 +16,7 @@ sub_0801E83C: @ 0x0801E83C
 	ldr r1, _0801E864  @ =gUnknown_0813AEA8
 	str r1, [r0, #72]
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 	pop {r0}
 	bx r0
 _0801E864:

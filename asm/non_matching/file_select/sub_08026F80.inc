@@ -26,16 +26,16 @@ sub_08026F80: @ 0x08026F80
 	orr r0, r0, r1
 	strb r0, [r2]
 	add r0, r4, #0
-	bl 0x08003BCC
+	bl sub_08003BCC
 	add r0, r4, #0
 	mov r1, #1
-	bl 0x08003870
+	bl sub_08003870
 	mov r0, #86
-	bl 0x08003DFC
+	bl sub_08003DFC
 	b _0802702A
 _08026FC8:
 	mov r0, #91
-	bl 0x08003DFC
+	bl sub_08003DFC
 	mov r0, #64
 	strb r0, [r4, #23]
 _08026FD2:

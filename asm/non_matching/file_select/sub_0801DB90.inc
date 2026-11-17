@@ -50,7 +50,7 @@ sub_0801DB90: @ 0x0801DB90
 	beq _0801DBF8
 	strb r1, [r0]
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 _0801DBF8:
 	ldrb r0, [r4, #10]
 	cmp r0, #3
@@ -59,7 +59,7 @@ _0801DBF8:
 	bl sub_0801DC14
 _0801DC04:
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	pop {r4,r5}
 	pop {r0}
 	bx r0

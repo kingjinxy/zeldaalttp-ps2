@@ -16,7 +16,7 @@ _0802F372:
 _0802F37C:
 	.4byte gUnknown_02016D60
 _0802F380:
-	.4byte 0x0802F384
+	.4byte _0802F380+0x4
 	.4byte _0802F3BC
 	.4byte _0802F3DC
 	.4byte _0802F43C

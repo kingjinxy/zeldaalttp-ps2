@@ -41,7 +41,7 @@ sub_08027CB0: @ 0x08027CB0
 	add r5, r6, #0
 	add r5, r5, #80
 	ldrh r2, [r5]
-	bl 0x08008F78
+	bl sub_08008F78
 	mov r0, #50
 	ldrsh r1, [r6, r0]
 	ldrh r0, [r4, #24]
@@ -58,10 +58,10 @@ sub_08027CB0: @ 0x08027CB0
 	lsr r1, r1, #16
 	ldrh r2, [r5]
 	mov r0, #15
-	bl 0x08008F3C
+	bl sub_08008F3C
 	add r0, r6, #0
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 	pop {r4-r6}
 	pop {r0}
 	bx r0

@@ -1,7 +1,7 @@
 	THUMB_FUNC_START sub_0806758C
 sub_0806758C: @ 0x0806758C
 	push {lr}
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #1
 	and r1, r1, r0
 	cmp r1, #0

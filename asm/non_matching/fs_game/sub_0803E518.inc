@@ -14,7 +14,7 @@ sub_0803E518: @ 0x0803E518
 	ldr r1, _0803E540  @ =gUnknown_03006C70
 	cmp r0, r1
 	bcc _0803E544
-	bl 0x0803F0B8
+	bl _0803F0B4+0x4
 _0803E538:
 	.4byte 0xFFFFFD44
 _0803E53C:
@@ -1485,7 +1485,7 @@ _0803E934:
 	add r1, r0, #0
 	add r1, r1, #144
 	str r1, [r7]
-	bl 0x0803E52C
+	bl sub_0803E518+0x14
 _0803F0B4:
 	@ assembler insists on doing 'add r0, r2, #0' instead for some fucking reason
 	@ mov r0, r2

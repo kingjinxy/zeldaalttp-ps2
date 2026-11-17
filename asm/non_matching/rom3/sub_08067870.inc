@@ -3,7 +3,7 @@ sub_08067870: @ 0x08067870
 	push {r4,lr}
 	lsl r0, r0, #24
 	lsr r4, r0, #24
-	bl 0x0800099C
+	bl sub_0800099C
 	add r1, r0, #0
 	mov r0, #7
 	and r1, r1, r0
@@ -17,7 +17,7 @@ _08067886:
 	ldr r0, [r0]
 	mov pc, r0
 _08067890:
-	.4byte 0x08067894
+	.4byte _08067890+0x4
 	.4byte _080678B8
 	.4byte _080678D8
 	.4byte _080678F8

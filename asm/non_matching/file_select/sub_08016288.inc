@@ -15,7 +15,7 @@ sub_08016288: @ 0x08016288
 	bl _call_via_r1
 _080162A4:
 	add r0, r4, #0
-	bl 0x08003688
+	bl sub_08003688
 	pop {r4}
 	pop {r0}
 	bx r0

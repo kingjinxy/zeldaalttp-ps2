@@ -35,10 +35,10 @@ sub_08026F04: @ 0x08026F04
 	add r0, r0, #1
 	strb r0, [r5, #20]
 	add r0, r5, #0
-	bl 0x08003B94
+	bl sub_08003B94
 	add r0, r5, #0
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 	ldr r0, _08026F7C  @ =gUnknown_03000488
 	mov r1, #128
 	lsl r1, r1, #1
@@ -48,7 +48,7 @@ sub_08026F04: @ 0x08026F04
 	add r1, r5, #0
 	bl sub_0803D770
 	add r0, r5, #0
-	bl 0x080005F0
+	bl sub_080005F0
 	pop {r4,r5}
 	pop {r0}
 	bx r0

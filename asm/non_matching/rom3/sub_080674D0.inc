@@ -3,7 +3,7 @@ sub_080674D0: @ 0x080674D0
 	push {r4,lr}
 	lsl r0, r0, #24
 	lsr r4, r0, #24
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #6
 	bl __umodsi3
 	cmp r0, #5
@@ -16,7 +16,7 @@ sub_080674D0: @ 0x080674D0
 	.byte 0x00
 	.byte 0x00
 _080674F0:
-	.4byte 0x080674F4
+	.4byte _080674F0+0x4
 	.4byte _0806750C
 	.4byte _08067520
 	.4byte _08067534

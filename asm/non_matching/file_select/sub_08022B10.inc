@@ -50,7 +50,7 @@ _08022B4E:
 	strh r0, [r4, #50]
 	mov r0, r9
 	strh r0, [r4, #58]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #7
 	and r0, r0, r1
 	add r0, r0, #20

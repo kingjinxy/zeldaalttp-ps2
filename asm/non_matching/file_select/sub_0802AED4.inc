@@ -10,7 +10,7 @@ sub_0802AED4: @ 0x0802AED4
 	beq _0802AF90
 	mov r0, #30
 	strb r0, [r4, #23]
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r2, [r4, #76]
 	add r2, r2, #62
 	ldr r3, _0802AF3C  @ =gUnknown_084276F4
@@ -23,7 +23,7 @@ sub_0802AED4: @ 0x0802AED4
 	mov r1, #31
 	and r0, r0, r1
 	strb r0, [r2]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #7
 	and r0, r0, r1
 	mov r1, #240
@@ -83,7 +83,7 @@ _0802AF62:
 	add r0, r4, #0
 	add r1, r5, #0
 	bl sub_0803D3D0
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #31
 	and r0, r0, r1
 	mov r1, #128
@@ -93,7 +93,7 @@ _0802AF62:
 	strb r0, [r2]
 _0802AF8A:
 	mov r0, #140
-	bl 0x08003DFC
+	bl sub_08003DFC
 _0802AF90:
 	ldrb r0, [r4, #10]
 	cmp r0, #1
@@ -122,7 +122,7 @@ _0802AFB2:
 	strb r0, [r4, #10]
 	add r0, r4, #0
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 _0802AFC8:
 	ldrb r0, [r4, #23]
 	cmp r0, #0
@@ -136,13 +136,13 @@ _0802AFC8:
 	and r0, r0, r1
 	cmp r0, #0
 	bne _0802B010
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r1, [r4, #96]
 	and r0, r0, r5
 	add r1, r1, r0
 	sub r1, r1, #2
 	strh r1, [r4, #50]
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r1, [r4, #100]
 	and r0, r0, r5
 	add r1, r1, r0

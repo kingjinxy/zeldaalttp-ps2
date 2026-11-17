@@ -53,7 +53,7 @@ _0802B410:
 	cmp r0, #0
 	bne _0802B41C
 	add r0, r5, #0
-	bl 0x08003E24
+	bl sub_08003E24
 _0802B41C:
 	ldr r2, _0802B440  @ =gUnknown_08137B10
 	ldrb r1, [r5, #10]
@@ -91,7 +91,7 @@ _0802B448:
 	strb r0, [r5, #26]
 	add r0, r5, #0
 	mov r1, #1
-	bl 0x08003870
+	bl sub_08003870
 _0802B466:
 	ldrb r0, [r5, #20]
 	add r0, r0, #1

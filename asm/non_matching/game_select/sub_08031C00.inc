@@ -16,7 +16,7 @@ _08031C0E:
 _08031C18:
 	.4byte gSubState
 _08031C1C:
-	.4byte 0x08031C20
+	.4byte _08031C1C+0x4
 	.4byte _08031C40
 	.4byte _08031C70
 	.4byte _08031CD4

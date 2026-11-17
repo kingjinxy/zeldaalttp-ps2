@@ -2,7 +2,7 @@
 sub_080285A4: @ 0x080285A4
 	push {r4,lr}
 	add r4, r0, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r2, r4, #0
 	add r2, r2, #41
 	ldrb r1, [r2]
@@ -11,7 +11,7 @@ sub_080285A4: @ 0x080285A4
 	cmp r0, #0
 	beq _080285C8
 	add r0, r4, #0
-	bl 0x08000620
+	bl sub_08000620
 	add r0, r4, #0
 	bl DeleteThisEntity
 	b _080285F0

@@ -15,7 +15,7 @@ sub_0802527C: @ 0x0802527C
 	ldr r1, _080252A4  @ =gUnknown_0813C390
 	str r1, [r0, #72]
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 	pop {r0}
 	bx r0
 	.byte 0x00

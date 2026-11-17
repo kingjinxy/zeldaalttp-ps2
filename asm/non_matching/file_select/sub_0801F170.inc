@@ -10,7 +10,7 @@ sub_0801F170: @ 0x0801F170
 	str r0, [r4, #72]
 	mov r0, #240
 	strb r0, [r4, #23]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #28
 	and r0, r0, r1
 	add r1, r4, #0
@@ -28,7 +28,7 @@ sub_0801F170: @ 0x0801F170
 	add r1, r4, #0
 	add r1, r1, #114
 	strh r0, [r1]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #112
 	and r0, r0, r1
 	add r0, r0, #240
@@ -50,7 +50,7 @@ sub_0801F170: @ 0x0801F170
 	strb r0, [r2]
 	add r0, r4, #0
 	mov r1, #12
-	bl 0x08003870
+	bl sub_08003870
 	b _0801F1FC
 	.byte 0x00
 	.byte 0x00
@@ -67,7 +67,7 @@ _0801F1E4:
 	strb r0, [r4, #28]
 	ldrb r1, [r5]
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 _0801F1FC:
 	pop {r4,r5}
 	pop {r0}

@@ -5,7 +5,7 @@ sub_08016880: @ 0x08016880
 	mov r5, #1
 	mov r0, #1
 	strb r0, [r4, #20]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #63
 	and r0, r0, r1
 	add r0, r0, #180
@@ -24,7 +24,7 @@ sub_08016880: @ 0x08016880
 	str r0, [r4, #72]
 	add r0, r4, #0
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 	add r0, r4, #0
 	bl sub_080169F8
 	pop {r4,r5}

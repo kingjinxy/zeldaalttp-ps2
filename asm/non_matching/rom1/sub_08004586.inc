@@ -38,15 +38,15 @@ _080045AC:
 _080045C6:
 	adds r1, r4, #0
 	bl sub_080042A8
-	bl 0x8009490
+	bl sub_08009490
 	cmp r1, #15
 	bne.n _080045DE
 	movs r3, #30
 	movs r2, #61
 	strb r3, [r0, r2]
-	bl 0x8002200
+	bl sub_08002200
 _080045DE:
-	bl 0x8001d5c
+	bl sub_08001D5C
 	movs r2, #66
 	ldrb r2, [r0, r2]
 	orrs r2, r2
@@ -55,7 +55,7 @@ _080045DE:
 	orrs r2, r2
 	bne.n _080045F8
 	push {r0}
-	bl 0x803d134
+	bl sub_0803D134
 	pop {r0}
 _080045F8:
 	pop {pc}

@@ -29,7 +29,7 @@ sub_080122C0: @ 0x080122C0
 	strb r0, [r1]
 	add r0, r4, #0
 	mov r1, #0
-	bl 0x08003870
+	bl sub_08003870
 	b _08012310
 _08012300:
 	ldrb r0, [r4, #29]
@@ -38,10 +38,10 @@ _08012300:
 	strb r0, [r4, #29]
 	add r0, r4, #0
 	mov r1, #3
-	bl 0x08003870
+	bl sub_08003870
 _08012310:
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	ldrb r0, [r4, #28]
 	mov r5, #4
 	neg r5, r5

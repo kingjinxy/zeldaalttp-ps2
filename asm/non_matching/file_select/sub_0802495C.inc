@@ -20,7 +20,7 @@ sub_0802495C: @ 0x0802495C
 	beq _08024990
 	mov r0, #2
 	strb r0, [r4, #20]
-	bl 0x0800099C
+	bl sub_0800099C
 	add r0, r0, #30
 	mov r1, #15
 	and r0, r0, r1

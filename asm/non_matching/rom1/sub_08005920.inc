@@ -22,7 +22,7 @@ _08005940:
 	strb r2, [r0, #23]
 	bne.n _08005966
 _08005950:
-	bl 0x8001d5c
+	bl sub_08001D5C
 	ldrh r2, [r1, #54]
 	ldr r3, [pc, #620]
 	ands r3, r2
@@ -30,7 +30,7 @@ _08005950:
 	eors r2, r2
 	movs r3, #66
 	strb r2, [r0, r3]
-	bl 0x80012b4
+	bl sub_080012B4
 _08005966:
 	pop {pc}
 	.syntax unified

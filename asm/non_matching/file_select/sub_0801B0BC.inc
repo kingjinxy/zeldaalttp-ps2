@@ -24,7 +24,7 @@ sub_0801B0BC: @ 0x0801B0BC
 	lsr r3, r3, #16
 	add r0, r5, #0
 	mov r1, #9
-	bl 0x080017EC
+	bl sub_080017EC
 	ldrb r1, [r6]
 	lsl r1, r1, #2
 	add r0, r1, #2
@@ -45,7 +45,7 @@ sub_0801B0BC: @ 0x0801B0BC
 	lsr r3, r3, #16
 	add r0, r5, #0
 	mov r1, #9
-	bl 0x080017EC
+	bl sub_080017EC
 	add r2, r5, #0
 	add r2, r2, #113
 	ldrb r0, [r2]
@@ -85,7 +85,7 @@ _0801B158:
 	cmp r0, #0
 	bne _0801B19A
 	add r0, r5, #0
-	bl 0x0800963C
+	bl sub_0800963C
 	lsl r0, r0, #16
 	cmp r0, #0
 	bne _0801B19A
@@ -111,7 +111,7 @@ _0801B190:
 	.4byte gUnknown_08139F38
 _0801B194:
 	add r0, r5, #0
-	bl 0x0800963C
+	bl sub_0800963C
 _0801B19A:
 	pop {r4-r6}
 	pop {r0}

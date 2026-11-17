@@ -39,7 +39,7 @@ _08021056:
 	add r1, r4, #0
 	bl sub_0803D770
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	b _080210EA
 _08021090:
 	.4byte gUnknown_03000E20
@@ -81,7 +81,7 @@ _08021098:
 	bl sub_08021350
 _080210DE:
 	add r0, r4, #0
-	bl 0x08003BCC
+	bl sub_08003BCC
 	add r0, r4, #0
 	bl DeleteThisEntity
 _080210EA:

@@ -5,7 +5,7 @@ sub_08009664: @ 0X08009664
 	movs r1, #8
 	strh r1, [r0, #44]
 	bl sub_080096DC
-	bl 0x800303c
+	bl sub_0800303C
 	adds r0, r1, #0
 	pop {pc}
 	.byte 0x00

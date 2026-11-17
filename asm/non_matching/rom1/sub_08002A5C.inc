@@ -3,7 +3,7 @@
 sub_08002A5C: @ 0X08002A5C
 	bl sub_080025F4
 	push {r0, r1}
-	bl 0x800099c
+	bl sub_0800099C
 	adds r2, r0, #0
 	pop {r0, r1}
 	movs r3, #3

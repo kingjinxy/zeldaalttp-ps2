@@ -174,7 +174,7 @@ _08060A36:
 	b _08060CE0
 _08060A42:
 	ldr r0, [r7]
-	bl 0x08003828
+	bl GetNextFrame
 	ldr r0, [r7]
 	ldrb r1, [r0, #23]
 	cmp r1, #0
@@ -252,7 +252,7 @@ _08060AD4:
 	.4byte gUnknown_03000E20
 _08060AD8:
 	mov r0, #27
-	bl 0x08003DFC
+	bl sub_08003DFC
 	ldr r0, [r7]
 	mov r1, #18
 	mov r2, #0

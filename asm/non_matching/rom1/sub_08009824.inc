@@ -29,14 +29,14 @@ _08009848:
 	.byte 0x00
 	.byte 0x00
 	.4byte 0x03006d14
-	.4byte 0x0813ec74
-	.4byte 0x08009591
+	.4byte gUnknown_0813EC48+0x2c
+	.4byte sub_08008FA4+0x5ed
 	.4byte 0x03000208
 	.4byte 0x0201eff0
-	.4byte 0x080092a0
+	.4byte sub_08008FA4+0x2fc
 	.4byte 0x03000450
 	.4byte 0x00000400
 	.4byte 0x00004000
-	.4byte 0x08009788
+	.4byte sub_08008FA4+0x7e4
 	.syntax unified
 	.thumb

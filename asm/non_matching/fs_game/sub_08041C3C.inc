@@ -102,7 +102,7 @@ _08041CE0:
 	lsr r3, r0, #16
 	ldr r0, [r7]
 	mov r1, #4
-	bl 0x080017EC
+	bl sub_080017EC
 	lsl r1, r0, #24
 	lsr r0, r1, #24
 	cmp r0, #0
@@ -162,7 +162,7 @@ _08041D7A:
 	cmp r1, #0
 	bne _08041D88
 	ldr r0, [r7]
-	bl 0x0800402C
+	bl sub_0800402C
 _08041D88:
 	ldr r0, [r7]
 	bl sub_0803F0E4
@@ -213,13 +213,13 @@ _08041D88:
 	add r1, r0, r1
 	ldrh r0, [r1]
 	ldr r1, _08041F8C  @ =0x08008840
-	bl 0x080012CC
+	bl sub_080012CC
 	lsl r1, r0, #16
 	lsr r0, r1, #16
 	cmp r0, #0
 	bne _08041ED0
 	ldr r0, [r7]
-	bl 0x0800935C
+	bl sub_0800935C
 	lsl r1, r0, #16
 	lsr r0, r1, #16
 	cmp r0, #70
@@ -230,7 +230,7 @@ _08041D88:
 	ldr r0, [r7]
 	ldrh r3, [r0, #54]
 	ldr r0, [r7]
-	bl 0x08003748
+	bl sub_08003748
 	lsl r1, r0, #24
 	lsr r0, r1, #24
 	cmp r0, #0

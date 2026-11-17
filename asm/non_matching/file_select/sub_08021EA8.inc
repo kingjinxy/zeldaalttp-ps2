@@ -10,7 +10,7 @@ sub_08021EA8: @ 0x08021EA8
 	orr r0, r0, r1
 	strb r0, [r4, #28]
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r0, r4, #0
 	add r0, r0, #41
 	ldrb r1, [r0]
@@ -32,7 +32,7 @@ sub_08021EA8: @ 0x08021EA8
 	mov r3, #252
 	lsl r3, r3, #1
 	add r2, r3, #0
-	bl 0x08003F54
+	bl sub_08003F54
 	add r1, r4, #0
 	add r1, r1, #43
 	strb r0, [r1]

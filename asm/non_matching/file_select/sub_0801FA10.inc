@@ -31,7 +31,7 @@ sub_0801FA10: @ 0x0801FA10
 	strb r0, [r2]
 	ldr r0, _0801FA6C  @ =gUnknown_0813B44C
 	str r0, [r5, #72]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #3
 	and r0, r0, r1
 	add r1, r5, #0

@@ -1,7 +1,7 @@
 	.syntax unified
 	THUMB_FUNC_START_NOALIGN sub_08009106
 sub_08009106: @ 0X08009106
-	b.n 0x8008c2c
+	b.n sub_08008C02+0x2a
 	.byte 0x03
 	.byte 0x40
 	.byte 0x86

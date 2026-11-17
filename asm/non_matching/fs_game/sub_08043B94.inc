@@ -390,7 +390,7 @@ _08043E40:
 	add r2, r1, #0
 	strb r2, [r0]
 	ldr r0, [r7]
-	bl 0x08008DD8
+	bl sub_08008DD8
 	mov r0, #0
 	b _08043E9A
 _08043E9A:

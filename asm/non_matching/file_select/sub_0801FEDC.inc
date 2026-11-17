@@ -2,7 +2,7 @@
 sub_0801FEDC: @ 0x0801FEDC
 	push {r4,r5,lr}
 	add r4, r0, #0
-	bl 0x08003828
+	bl GetNextFrame
 	ldr r0, [r4, #100]
 	add r0, r0, #69
 	ldrb r0, [r0]
@@ -13,7 +13,7 @@ sub_0801FEDC: @ 0x0801FEDC
 _0801FEF2:
 	ldr r1, [r4, #100]
 	add r0, r4, #0
-	bl 0x08009EA4
+	bl sub_08009EA4
 	lsl r0, r0, #24
 	lsr r0, r0, #24
 	add r0, r0, #4
@@ -61,12 +61,12 @@ _0801FF46:
 	ldrsh r2, [r2, r5]
 	mov r5, #0
 	ldrsh r3, [r3, r5]
-	bl 0x08003F54
+	bl sub_08003F54
 	add r1, r4, #0
 	add r1, r1, #43
 	strb r0, [r1]
 	add r0, r4, #0
-	bl 0x0800963C
+	bl sub_0800963C
 _0801FF66:
 	ldrb r0, [r4, #24]
 	cmp r0, #0

@@ -7,7 +7,7 @@ sub_0801E9BC: @ 0x0801E9BC
 	bne _0801EA1E
 	add r0, r4, #0
 	mov r1, #16
-	bl 0x0800997C
+	bl sub_0800997C
 	lsl r1, r0, #24
 	lsr r2, r1, #24
 	mov r1, #128
@@ -27,7 +27,7 @@ sub_0801E9BC: @ 0x0801E9BC
 	ldrb r1, [r1]
 	b _0801EA16
 _0801E9F2:
-	bl 0x0800099C
+	bl sub_0800099C
 	add r2, r0, #0
 	mov r0, #24
 	and r2, r2, r0
@@ -46,7 +46,7 @@ _0801E9F2:
 	ldrb r1, [r2]
 _0801EA16:
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 	b _0801EA22
 _0801EA1E:
 	sub r0, r0, #1

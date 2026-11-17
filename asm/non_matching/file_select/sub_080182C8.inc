@@ -23,7 +23,7 @@ sub_080182C8: @ 0x080182C8
 	strb r1, [r5]
 	ldr r1, [r4, #88]
 	add r0, r4, #0
-	bl 0x08009EA4
+	bl sub_08009EA4
 	add r1, r4, #0
 	add r1, r1, #43
 	strb r0, [r1]
@@ -32,13 +32,13 @@ sub_080182C8: @ 0x080182C8
 	strb r0, [r5]
 	ldrb r1, [r5]
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 	ldr r0, [r4, #84]
 	ldrb r1, [r5]
 	add r1, r1, #3
 	lsl r1, r1, #24
 	lsr r1, r1, #24
-	bl 0x08003870
+	bl sub_08003870
 	b _08018336
 _08018320:
 	lsl r0, r2, #24

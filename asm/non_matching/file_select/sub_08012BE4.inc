@@ -72,7 +72,7 @@ _08012C5E:
 	add r0, r0, r1
 	mov r1, #1
 	strb r1, [r0]
-	bl 0x08008ED8
+	bl sub_08008ED8
 	b _08012E9C
 	.byte 0x00
 	.byte 0x00
@@ -116,7 +116,7 @@ _08012CA4:
 	ldr r1, [r5]
 	add r1, r1, r2
 	mov r2, #64
-	bl 0x080009F4
+	bl sub_080009F4
 _08012CCC:
 	add r0, r4, #1
 	lsl r0, r0, #24
@@ -148,14 +148,14 @@ _08012CCC:
 	mov r2, #16
 	bl CpuFastSet
 _08012D0A:
-	bl 0x0800099C
+	bl sub_0800099C
 	ldrb r1, [r7]
 	bl __umodsi3
 	add r0, r0, #15
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	mov r9, r0
-	bl 0x0800099C
+	bl sub_0800099C
 	ldrb r1, [r7]
 	bl __umodsi3
 	mov r2, #187
@@ -179,7 +179,7 @@ _08012D3C:
 	add r0, r5, #0
 	mov r1, #128
 	lsl r1, r1, #7
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r4, r0, #16
 	cmp r4, #21
@@ -212,7 +212,7 @@ _08012D78:
 	add r0, r5, #0
 	mov r1, #128
 	lsl r1, r1, #8
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r4, r0, #16
 	add r0, r4, #0
@@ -250,7 +250,7 @@ _08012DD4:
 	lsr r5, r0, #16
 	add r0, r5, #0
 	add r1, r4, #0
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	mov r9, r0
@@ -269,7 +269,7 @@ _08012DD4:
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	add r1, r4, #0
-	bl 0x08009380
+	bl sub_0800935C+0x24
 	lsl r0, r0, #16
 	lsr r6, r0, #16
 	cmp r6, #66
@@ -336,7 +336,7 @@ _08012E5A:
 	add r0, r0, r1
 	mov r1, #1
 	strb r1, [r0]
-	bl 0x08008ED8
+	bl sub_08008ED8
 _08012E9C:
 	pop {r3-r5}
 	mov r8, r3

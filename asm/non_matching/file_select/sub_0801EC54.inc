@@ -2,9 +2,9 @@
 sub_0801EC54: @ 0x0801EC54
 	push {r4,lr}
 	add r4, r0, #0
-	bl 0x0800963C
+	bl sub_0800963C
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	ldrb r0, [r4, #23]
 	sub r0, r0, #1
 	strb r0, [r4, #23]
@@ -13,7 +13,7 @@ sub_0801EC54: @ 0x0801EC54
 	bne _0801EC94
 	mov r0, #30
 	strb r0, [r4, #23]
-	bl 0x0800099C
+	bl sub_0800099C
 	mov r1, #24
 	and r0, r0, r1
 	add r1, r4, #0
@@ -27,7 +27,7 @@ sub_0801EC54: @ 0x0801EC54
 	strb r0, [r1]
 	add r1, r0, #4
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 _0801EC94:
 	pop {r4}
 	pop {r0}

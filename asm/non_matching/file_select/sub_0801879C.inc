@@ -4,7 +4,7 @@ sub_0801879C: @ 0x0801879C
 	add r4, r0, #0
 	mov r1, #160
 	lsl r1, r1, #6
-	bl 0x08003594
+	bl sub_08003594
 	ldr r0, [r4, #16]
 	cmp r0, #0
 	bge _080187D0

@@ -49,7 +49,7 @@ sub_08023408: @ 0x08023408
 	lsl r1, r1, #24
 	lsr r1, r1, #24
 	mov r0, r12
-	bl 0x08003870
+	bl sub_08003870
 	pop {r4,r5}
 	pop {r0}
 	bx r0

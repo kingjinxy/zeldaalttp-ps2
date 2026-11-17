@@ -3,9 +3,9 @@ sub_080246AC: @ 0x080246AC
 	push {r4,lr}
 	add r4, r0, #0
 	ldr r0, [r4, #112]
-	bl 0x08003828
+	bl GetNextFrame
 	add r0, r4, #0
-	bl 0x08003828
+	bl GetNextFrame
 	add r0, r4, #0
 	add r0, r0, #41
 	ldrb r1, [r0]
@@ -54,7 +54,7 @@ _080246F0:
 	strb r1, [r0]
 	add r1, r1, #20
 	add r0, r4, #0
-	bl 0x08003870
+	bl sub_08003870
 _08024722:
 	pop {r4}
 	pop {r0}

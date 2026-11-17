@@ -17,7 +17,7 @@ sub_0803609C: @ 0x0803609C
 	mov r1, #1
 	bl sub_08003870
 	add r0, r4, #0
-	bl 0x08003B94
+	bl sub_08003B94
 _080360C4:
 	ldr r1, [r4, #84]
 	add r0, r1, #0
@@ -47,7 +47,7 @@ _080360F8:
 	.4byte gUnknown_03000488
 _080360FC:
 	add r0, r4, #0
-	bl 0x08003BCC
+	bl sub_08003BCC
 	add r0, r4, #0
 	bl DeleteThisEntity
 _08036108:

@@ -103,7 +103,7 @@ _0800531E:
 	push {r3}
 	movs r3, #42
 	ldrb r1, [r0, r3]
-	bl 0x8003984
+	bl sub_08003960+0x24
 	pop {r3}
 	lsrs r2, r2, #1
 	ldr r4, [pc, #524]

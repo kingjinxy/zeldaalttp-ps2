@@ -21,7 +21,7 @@ sub_08024D48: @ 0x08024D48
 	and r1, r1, r2
 	strb r1, [r3, #28]
 	mov r1, #3
-	bl 0x08003870
+	bl sub_08003870
 	pop {r0}
 	bx r0
 	THUMB_FUNC_END sub_08024D48

@@ -16,7 +16,7 @@ _0802F6E2:
 _0802F6EC:
 	.4byte gUnknown_02016D60
 _0802F6F0:
-	.4byte 0x0802F6F4
+	.4byte _0802F6F0+0x4
 	.4byte _0802F730
 	.4byte _0802F774
 	.4byte _0802F798

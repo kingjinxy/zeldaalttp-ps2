@@ -27,7 +27,7 @@ sub_08017AF0: @ 0x08017AF0
 	strb r0, [r3]
 	strb r1, [r2, #26]
 	add r0, r2, #0
-	bl 0x08003870
+	bl sub_08003870
 	pop {r0}
 	bx r0
 	.byte 0x00

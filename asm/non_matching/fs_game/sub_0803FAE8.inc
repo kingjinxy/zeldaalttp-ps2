@@ -118,7 +118,7 @@ _0803FBA0:
 	ldr r2, [r1]
 	add r0, r2, #0
 	mov r1, #20
-	bl 0x08003E10
+	bl sub_08003E10
 _0803FBDE:
 	ldr r0, _0803FDA8  @ =gUnknown_03006A30
 	ldr r2, [r7]
@@ -477,7 +477,7 @@ _0803FE6C:
 	ldr r2, [r1]
 	add r0, r2, #0
 	mov r1, #28
-	bl 0x08003E10
+	bl sub_08003E10
 _0803FE9E:
 	add sp, sp, #12
 	pop {r4,r7}

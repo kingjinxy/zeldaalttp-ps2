@@ -46,7 +46,7 @@ _08013E40:
 	str r0, [r7]
 	add r0, r6, #0
 	mov r1, r8
-	bl 0x0800932C
+	bl sub_0800932C
 	ldr r2, _08013EB8  @ =gUnknown_08427630
 	ldrb r1, [r5, #2]
 	mov r0, #31
@@ -60,7 +60,7 @@ _08013E40:
 	bl _call_via_r3
 	add r0, r6, #0
 	mov r1, r8
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	ldr r1, _08013EBC  @ =0x01070000
 	cmp r0, r1

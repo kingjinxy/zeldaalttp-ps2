@@ -236,7 +236,7 @@ _08043104:
 	ldr r1, [r7, #8]
 	add r0, r1, #0
 	mov r1, #30
-	bl 0x08003E10
+	bl sub_08003E10
 	ldr r0, [r7]
 	add r1, r0, #0
 	add r0, r0, #101

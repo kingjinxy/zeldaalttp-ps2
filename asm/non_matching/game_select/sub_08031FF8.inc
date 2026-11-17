@@ -89,7 +89,7 @@ sub_08031FF8: @ 0x08031FF8
 	strb r0, [r1]
 	ldr r0, _08032130  @ =gSubState
 	strb r5, [r0]
-	bl 0x08137AFC
+	bl sub_08137AFC
 	ldr r0, _08032134  @ =gUnknown_0200B310
 	str r6, [r0]
 	mov r0, #5

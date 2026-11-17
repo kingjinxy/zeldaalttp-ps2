@@ -65,7 +65,7 @@ _08020CC0:
 	strh r0, [r1]
 	add r0, r4, #0
 	mov r1, #89
-	bl 0x08003E10
+	bl sub_08003E10
 _08020CFE:
 	pop {r4}
 	pop {r0}

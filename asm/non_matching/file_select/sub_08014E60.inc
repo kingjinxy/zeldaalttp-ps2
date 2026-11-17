@@ -24,7 +24,7 @@ sub_08014E60: @ 0x08014E60
 	ldr r0, [r0]
 	mov r8, r0
 	add r0, r7, #0
-	bl 0x08009380
+	bl sub_0800935C+0x24
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, #39
@@ -68,7 +68,7 @@ _08014ED2:
 	lsr r7, r0, #16
 	add r0, r7, #0
 	mov r1, r9
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, #234
@@ -79,7 +79,7 @@ _08014EEC:
 _08014EEE:
 	add r0, r7, #0
 	mov r1, r9
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, #234
@@ -90,7 +90,7 @@ _08014F00:
 _08014F02:
 	add r0, r7, #0
 	mov r1, r9
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, #234
@@ -104,7 +104,7 @@ _08014F16:
 	lsr r7, r0, #16
 	add r0, r7, #0
 	mov r1, r9
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, #234
@@ -136,7 +136,7 @@ _08014F4E:
 	lsr r7, r0, #16
 	add r0, r7, #0
 	mov r1, r9
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, #238
@@ -148,7 +148,7 @@ _08014F68:
 	lsr r7, r0, #16
 	add r0, r7, #0
 	mov r1, r9
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, #238
@@ -159,7 +159,7 @@ _08014F80:
 _08014F82:
 	add r0, r7, #0
 	mov r1, r9
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, #238
@@ -172,7 +172,7 @@ _08014F94:
 	lsr r7, r0, #16
 	add r0, r7, #0
 	mov r1, r9
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, #238
@@ -183,7 +183,7 @@ _08014FAE:
 _08014FB0:
 	add r0, r7, #0
 	mov r1, r9
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, #238
@@ -195,7 +195,7 @@ _08014FC2:
 	lsr r7, r0, #16
 	add r0, r7, #0
 	mov r1, r9
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, #238
@@ -209,7 +209,7 @@ _08014FDC:
 	lsr r7, r0, #16
 	add r0, r7, #0
 	mov r1, r9
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, #238
@@ -222,7 +222,7 @@ _08014FF4:
 	lsr r7, r0, #16
 	add r0, r7, #0
 	mov r1, r9
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, #238
@@ -234,7 +234,7 @@ _08014FF4:
 _08015014:
 	add r0, r7, #0
 	mov r1, r9
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, #238
@@ -266,7 +266,7 @@ _08015046:
 	lsr r7, r0, #16
 	add r0, r7, #0
 	mov r1, r9
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, #247
@@ -276,7 +276,7 @@ _08015046:
 	lsr r7, r0, #16
 	add r0, r7, #0
 	mov r1, r9
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, #247
@@ -286,7 +286,7 @@ _08015046:
 	lsr r7, r0, #16
 	add r0, r7, #0
 	mov r1, r9
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, #247
@@ -301,7 +301,7 @@ _08015090:
 _08015094:
 	add r0, r7, #0
 	mov r1, r9
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, #247
@@ -312,7 +312,7 @@ _08015094:
 	lsr r7, r0, #16
 	add r0, r7, #0
 	mov r1, r9
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, #247
@@ -323,7 +323,7 @@ _08015094:
 	lsr r7, r0, #16
 	add r0, r7, #0
 	mov r1, r9
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, #247
@@ -339,7 +339,7 @@ _080150DC:
 _080150E0:
 	add r0, r7, #0
 	mov r1, r9
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, #247
@@ -349,7 +349,7 @@ _080150E0:
 	lsr r7, r0, #16
 	add r0, r7, #0
 	mov r1, r9
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, #247
@@ -359,7 +359,7 @@ _080150E0:
 	lsr r7, r0, #16
 	add r0, r7, #0
 	mov r1, r9
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, #247
@@ -377,7 +377,7 @@ _08015126:
 	lsr r7, r0, #16
 	add r0, r7, #0
 	mov r1, r9
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, #247
@@ -388,7 +388,7 @@ _08015126:
 	lsr r7, r0, #16
 	add r0, r7, #0
 	mov r1, r9
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, #247
@@ -399,7 +399,7 @@ _08015126:
 	lsr r7, r0, #16
 	add r0, r7, #0
 	mov r1, r9
-	bl 0x0800932C
+	bl sub_0800932C
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, #247

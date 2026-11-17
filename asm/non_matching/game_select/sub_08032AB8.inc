@@ -12,7 +12,7 @@ sub_08032AB8: @ 0x08032AB8
 	add r0, r0, r1
 	ldr r0, [r0]
 	bl _call_via_r0
-	bl 0x08137AFC
+	bl sub_08137AFC
 	bl sub_08000BAC
 	bl sub_0802BFC4
 	mov r0, #8

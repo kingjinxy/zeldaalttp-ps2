@@ -82,7 +82,7 @@ _08013510:
 	ldr r4, [sp]
 	str r2, [sp, #4]
 	str r3, [sp, #8]
-	bl 0x0800099C
+	bl sub_0800099C
 	add r1, r0, #0
 	mov r0, #3
 	and r1, r1, r0

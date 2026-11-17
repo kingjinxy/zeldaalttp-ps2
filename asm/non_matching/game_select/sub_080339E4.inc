@@ -36,7 +36,7 @@ sub_080339E4: @ 0x080339E4
 	ldr r0, _08033A54  @ =0x00000809
 	strh r0, [r1]
 	add r0, r4, #0
-	bl 0x08003B94
+	bl sub_08003B94
 	mov r1, #128
 	lsl r1, r1, #3
 	str r1, [r4, #12]

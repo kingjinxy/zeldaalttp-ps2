@@ -65,7 +65,7 @@ _080139BC:
 _080139C0:
 	ldrh r4, [r5]
 	add r0, r4, #0
-	bl 0x08008E5C
+	bl sub_08008E5C
 	lsl r0, r0, #16
 	cmp r0, #0
 	beq _080139D4

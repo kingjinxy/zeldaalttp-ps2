@@ -5,7 +5,7 @@ sub_080304FC: @ 0x080304FC
 	cmp r0, #0
 	beq _080305AC
 	bl sub_08037750
-	bl 0x0800099C
+	bl sub_0800099C
 	ldr r0, _0803052C  @ =gUnknown_03005E10
 	ldrh r1, [r0]
 	mov r0, #96
@@ -78,8 +78,8 @@ _08030566:
 _08030598:
 	bl sub_08030728
 	bl sub_08030654
-	bl 0x08137AFC
-	bl 0x08000BAC
+	bl sub_08137AFC
+	bl sub_08000BAC
 	bl sub_08037574
 _080305AC:
 	pop {r0}

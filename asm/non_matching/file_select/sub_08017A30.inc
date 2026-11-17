@@ -43,7 +43,7 @@ _08017A5C:
 	add r0, r0, r1
 	ldrh r1, [r0]
 	add r0, r4, #0
-	bl 0x080038E8
+	bl sub_080038E8
 	ldrb r0, [r4, #20]
 	cmp r0, #4
 	bhi _08017A9C
@@ -81,7 +81,7 @@ _08017AAE:
 _08017ACA:
 	ldr r1, _08017AD8  @ =gUnknown_0813968C
 	add r0, r4, #0
-	bl 0x080098A0
+	bl sub_080098A0
 _08017AD2:
 	pop {r4}
 	pop {r0}

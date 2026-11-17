@@ -5,16 +5,16 @@ sub_080042A8: @ 0X080042A8
 	lsrs r1, r1, #1
 	push {r1}
 	bcs.n _080042B6
-	bl 0x80020c8
+	bl sub_080020C8
 	b.n _080042BA
 _080042B6:
-	bl 0x8001d68
+	bl sub_08001D68
 _080042BA:
 	pop {r1}
 	lsrs r1, r1, #1
 	bcc.n _080042C8
 	push {r1}
-	bl 0x8002294
+	bl sub_08002294
 	pop {r1}
 _080042C8:
 	pop {pc}

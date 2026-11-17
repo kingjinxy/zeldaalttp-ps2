@@ -46,7 +46,7 @@ _08024AC6:
 	add r0, r0, #61
 	strb r1, [r0]
 	mov r0, #45
-	bl 0x08003DFC
+	bl sub_08003DFC
 	pop {r4,r5}
 	pop {r0}
 	bx r0

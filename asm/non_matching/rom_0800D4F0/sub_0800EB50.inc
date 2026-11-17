@@ -27,7 +27,7 @@ sub_0800EB50: @ 0x0800EB50
 	ldr r0, _0800EB94  @ =0x0600D200
 	mov r2, #128
 	lsl r2, r2, #1
-	bl 0x080009F4
+	bl sub_080009F4
 	b _0800EBBA
 _0800EB8C:
 	.4byte 0x03000030
@@ -42,7 +42,7 @@ _0800EB98:
 	ldr r2, _0800EBC8  @ =0x000AEAFC
 	add r1, r1, r2
 	mov r2, #96
-	bl 0x080009F4
+	bl sub_080009F4
 	lsl r0, r5, #7
 	ldr r1, _0800EBCC  @ =0x000AEB5C
 	add r0, r0, r1
@@ -50,7 +50,7 @@ _0800EB98:
 	add r1, r1, r0
 	ldr r0, _0800EBD0  @ =0x0600CC60
 	mov r2, #128
-	bl 0x080009F4
+	bl sub_080009F4
 _0800EBBA:
 	pop {r4,r5}
 	pop {r0}
