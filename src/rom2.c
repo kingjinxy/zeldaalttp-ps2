@@ -801,7 +801,12 @@ asm(".include \"asm/non_matching/rom2/sub_0800C75C.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800C7E8.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800C8E4.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800C940.inc\"");
-asm(".include \"asm/non_matching/rom2/sub_0800C984.inc\"");
+
+bool32 sub_0800C984(void)
+{
+    return (u8 *)gUnknown_03000E34 < gUnknown_030066A6 + gUnknown_03000204 * 128;
+}
+
 asm(".include \"asm/non_matching/rom2/sub_0800C9AC.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800C9F8.inc\"");
 

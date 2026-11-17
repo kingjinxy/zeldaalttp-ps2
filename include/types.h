@@ -724,6 +724,15 @@ struct Struct0202A7E0
     u32 unk10;
 };  // size = 0x14; 8 of them (sub_0804CCBC clears 0xA0 bytes)
 
+struct Struct0202A580
+{
+    u32 unk0;
+    u16 unk4;
+    u8 unk6;
+    u8 unk7;
+    u32 unk8;
+};  // 8 of them, cleared by sub_080137DC
+
 struct Struct03000450
 {
     struct Entity *unk0;  // the entity the camera follows? (sub_0806527C)

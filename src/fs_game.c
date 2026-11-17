@@ -8269,7 +8269,7 @@ void sub_080539D8(struct Entity *this)
     {
         gUnknown_0201F000[this->unk52] |= gUnknown_08137B10[this->form];
         if (this->parameter != 0)
-            sub_08013C8C(sub_08012F84(this->unk52, this->parameter), gUnknown_0201EFF8[this->unk52][0],
+            sub_08013C8C(sub_08012F84_u32(this->unk52, this->parameter), gUnknown_0201EFF8[this->unk52][0],
                          gUnknown_0201EFF8[this->unk52][1], this->unk52);
         DeleteThisEntity(this);
     }
@@ -8718,7 +8718,7 @@ void sub_08054AB4(struct Entity *this)
 
     this->unk60 = sub_08013D20(this->form);
     this->unk14++;
-    v = sub_08012F84(this->unk52, this->unk17);
+    v = sub_08012F84_u32(this->unk52, this->unk17);
     BITU16_AT(this, 0x68) = ((v & 255) << 4) + gUnknown_0201EFF8[this->unk52][0];
     v >>= 8;
     BITU16_AT(this, 0x6A) = ((v & 255) << 4) + gUnknown_0201EFF8[this->unk52][1];
@@ -9101,7 +9101,7 @@ void sub_08055DA4(struct Entity *this)
     {
         this->unk14 = 1;
         this->unk18 = sub_080093C8(((this->x.HALF.HI - gUnknown_03000450.unk18) >> 4) | (((this->y.HALF.HI - gUnknown_03000450.unk1A) >> 4) << 6), this->unk50);
-        sub_08013C8C(sub_08012F84(this->unk52, this->unk60), gUnknown_0201EFF8[this->unk52][0], gUnknown_0201EFF8[this->unk52][1], this->unk52);
+        sub_08013C8C(sub_08012F84_u32(this->unk52, this->unk60), gUnknown_0201EFF8[this->unk52][0], gUnknown_0201EFF8[this->unk52][1], this->unk52);
     }
 }
 
@@ -12452,7 +12452,7 @@ void sub_080600BC(struct Entity *this)
 
 void sub_080600E4(struct Entity *this)
 {
-    this->unk60 = sub_08012F84(this->unk52, this->form);
+    this->unk60 = sub_08012F84_u32(this->unk52, this->form);
     this->unk14++;
 }
 
