@@ -424,3 +424,31 @@ draft generator for the regular -O0 Four Swords code, to speed up matching decom
   26 unreached. The 26 are all handlers of the 10 object subtypes nothing creates and that never ran
   (21, 26, 27, 43, 44, 62, 63, 71, 79, 106) and three sub-state tables of those handlers: no
   contradiction.
+
+## Step 15: the executed -O2 functions Four Swords needs (2026-11-17)
+
+- Work queue from `docs/function_classes.txt`: Four Swords-needed functions still in asm that ran, split
+  into compiled code, hand-written asm and the m4a driver. Hand-written: no `bx` return, or `pop {..pc}`,
+  `mov pc, lr`, `.arm` (agbcc with `-mthumb-interwork` always returns through `bx`). Needed asm: 1,413
+  compiled (296 executed), 308 hand-written (210 executed: matching C impossible; plain C for the port
+  later), 61 m4a (from pret's C later).
+- 78 of the 296 executed compiled functions matched in batches of 10-13 (`o0_draft.py` gives a rough
+  shape for -O2 too; the registers it can't name are usually obvious). Per-function check after a batch:
+  compare each function by symbol against the original (later code shifts while a batch is wrong); a
+  difference only in the literal pool is from another function's size.
+- -O2 lessons:
+  - Block order follows the source for `if (c) return X; return Y;`, not for `c ? X : Y` or
+    `if/else`: when the branch is inverted, swap which case returns first.
+  - A loop with no initial bound check is `do ... while`.
+  - Scheduling a store's constant before an earlier store means the compiler knew they don't alias:
+    two struct fields, not two indexes of one `u8 *` (sub_0800E39C).
+  - `p--` after `p = table[i]` vs `p = table[i] - 1` changes register use (sub_0802C23C).
+  - A caller that passes an argument unconverted had a different prototype: alias the function in the
+    ldscript (`sub_08012F84_u32`, like `CreateObject`).
+  - Second entry points into hand-written code (`sub_08003F1C`, after a 0x40-byte table that starts
+    `sub_08003EDC`) get a `.global` label.
+- Structs found: the text reader `Struct0800EE2C` (rom_0800D4F0; a pointer stack at 0x20, 8-byte entries
+  at 0xD8), `Struct0202A770`, `Struct0202E110`, `Struct02002440`, `gEntityLinks` (8 list heads),
+  `Struct03000450` bytes 4-8 and 0x16.
+- Deferred: sub_08013D20 (narrowing before a struct copy), sub_0801620C (signed range test kept on a
+  `u8`), sub_08012410, sub_08012B04, sub_0802C148, sub_08013C50 (not tried).

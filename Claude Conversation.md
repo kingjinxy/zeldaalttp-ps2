@@ -7323,3 +7323,1255 @@ Remaining fs_game functions:
 
 - tool `Bash`: Append walkthrough step and update planning doc
 
+## Claude
+
+Now the conversation archive:
+
+- tool `Bash`: Rebuild conversation archive and check no removals
+
+- tool `Bash`: Commit docs
+
+- tool `ToolSearch`: 
+
+- tool `PushNotification`: 
+
+## Claude
+
+I matched and committed 22 more Four Swords functions in this stretch. 42 functions are left in assembly, down from 62, and 6 of those are on hold.
+
+**What helped**
+- Several functions that had been on hold matched after small changes to the C:
+  - using a real struct field where the code had pointer arithmetic;
+  - writing `!(x & 1)` instead of `(x ^ 1) & 1`;
+  - making the affine scale fields of `Struct03000488` signed.
+- `sub_08003184` is a second entry point inside hand-written assembly. I exported it so C code can call it. This doesn't change the ROM.
+
+**On hold**
+- **Constant folding:** `sub_0803D134` and `sub_0806041C`. The compiler moves the constant out of `x - (y + C)`, but the original keeps it inside. Writing it as `({ y + 16; })` gets `sub_0806041C` down to a different register choice. That form isn't natural C, so the original source must have looked different.
+- **Comparison load order:** `sub_0803A20C`, the music selection. The original loads the current song before the new one in one comparison, and mine interleaves them.
+- **From before:** `sub_08037574`, `sub_0805C878` and `sub_08059BD0`.
+
+**A slip I corrected:** one commit (`sub_08063E88`) went in with a ROM that didn't match. My check matched both the "OK" and the "did NOT match" lines. I fixed the source and amended the commit straight away. The check now only passes on `zeldaalttp.gba: OK`. The other commits this session each printed OK before committing.
+
+I updated the walkthrough (Step 13), the planning doc and the conversation archive, and sent a push notification. Next are the larger functions, from about 400 lines of assembly up.
+
+## User
+
+To what degree are you confident the C code matches the original source code?
+
+## Claude
+
+I'm fully confident in the compiled output and only moderately confident that the C reads like what the developers wrote.
+
+**Certain: it compiles to the same machine code.** Every function I committed builds, with the same compiler, into a ROM whose SHA-1 matches the original. So its behaviour is the same, byte for byte, which is what the PS2 port needs. The one exception, the bad `sub_08063E88` commit, was fixed before I moved on.
+
+**Not certain: that it's the same source text.** Many different C sources compile to the same bytes. Where it differs, it's mostly in these ways:
+
+- **Names and comments are mine.** `unk64`, `sub_0804E394`, `Hitbox`, "music selection" are guesses or placeholders. The developers' names aren't in the ROM.
+- **Structs are rebuilt from how the code accesses memory.** Field offsets and sizes are right where they're used, but the layout may not be how the original header grouped them. The overlay structs (`EntityU16x12`, `Struct02000010Bits`) and the `BITU16_AT(this, 0x64)` macros are almost certainly not what the developers wrote. The original probably had per-entity-kind structs or unions that I haven't rebuilt yet.
+- **Some forms were found by trying variants until the bytes matched.** `i++` vs `i = i + 1`, `x / 2` vs `x >> 1`, `(u8)` casts and `u32 unused;` locals were all chosen that way. They reproduce the compiler's output, and most are plausible things a programmer writes, but some are probably stand-ins for a different original construct.
+- **The functions on hold show the limit.** For `x - (y + 16)` I couldn't find any natural C that gives the original's code, so the original was written some way I haven't guessed.
+
+**What pushes confidence up:** this code was built without optimisation (-O0), and at -O0 the compiler translates almost statement by statement. Control flow, expression order, the number of loads, and whether something is a bitfield all show up in the machine code. So the shape of each function (which ifs, which loops, which order of statements, which expressions) is probably close to the original. That's much tighter than with optimised code, where very different sources collapse to the same output.
+
+**In rough terms:**
+- Behaviour: certain.
+- Control flow and statement structure: high.
+- Exact expressions: moderate.
+- Types and struct design: low to moderate.
+- Names: essentially none, apart from the few taken from the Minish Cap decomp.
+
+## User
+
+What is left to do for porting to C?
+
+- tool `Bash`: Count remaining asm per module and open plan items
+
+## Claude
+
+There are two answers, depending on what "in C" means.
+
+**1. Decompiling to readable C that matches the ROM: most of the work is still ahead.**
+
+5,931 assembly functions are left. By source file:
+
+| File | Functions left |
+|---|---|
+| rom3c | 1,152 |
+| rom3 | 1,143 |
+| file_select | 1,019 |
+| rom4 | 761 |
+| rom3a | 441 |
+| rom1 | 412 |
+| rom3b | 285 |
+| rom5 | 239 |
+| game_select | 190 |
+| interface | 98 |
+| rom2a, rom_0800D4F0, rom2, hud, rom6 | 49, 43, 27, 20, 10 |
+| **fs_game** | **42** (6 on hold) |
+
+- **fs_game is nearly done.** It's the unoptimised (-O0) Four Swords game code, and 873 of its 915 functions match.
+- **The rest is a mix I haven't sorted yet.** It includes the shared engine, A Link to the Past code, menus, and libraries such as the m4a sound driver and BIOS calls. Splitting it into Four Swords, shared engine and A Link to the Past is still an open item in the plan, so I can't yet say how much of it Four Swords needs.
+- **It's mostly optimised (-O2) code.** That's harder to match than fs_game, because the draft generator only handles -O0.
+- **Functions the game actually runs:** 144 of 657 are done. That's the more useful measure for the port.
+- **The m4a sound driver may not need decompiling.** pret already has m4a in C, and it could be adapted.
+- **Also on the list:**
+  - The ARM and RAM-copied functions need rewriting in C. Matching isn't required, and they're marked `NONMATCHING`.
+  - The data regions still included as raw bytes (`.INCBIN`) that contain pointers need to become labelled data, so the code can move.
+
+**2. Getting C that runs: this already exists, as machine translation.**
+
+`tools/thumb2c.py` turns every function except 4 ARM files into C that emulates the CPU registers. Tested against mGBA on recorded play, 1,155 calls behaved identically, 25 differed and 287 couldn't be checked. That's a recent run on the newer build; on the earlier one only 4 differed. That C isn't readable or editable as game logic, but it could boot the game on PC or PS2 before the decompilation is finished.
+
+**After the C, the port itself hasn't started:**
+1. A PC build with a GBA layer: software graphics, timers, DMA, interrupts, input, save memory and sound, through SDL.
+2. One instance booting into Four Swords and matching mGBA frame for frame, then 2–4 instances in one process linked in memory.
+3. A PS2 build: PCSX2 first, then real hardware, with split-screen output and a frame-rate budget for 4 instances.
+4. Later: a single shared simulation instead of linked instances, and support for more than 4 players.
+
+My suggestion: finish fs_game, then focus on the functions Four Swords actually runs, rather than the whole 5,931. The machine-translated C could carry the port in the meantime.
+
+## User
+
+How would you separate the functions Four Swords actually runs from the Link to the Past functions, or anything else?
+
+## Claude
+
+I'd combine two kinds of evidence, the static call graph and what the game actually runs, then classify each function by which game reaches it. Some of this already exists: `reach.py` and the `mgba_run` traces.
+
+**1. Static reachability from each game's entry points**
+- **Roots.** Find where the shared boot code hands off to Four Swords and where it hands off to A Link to the Past. FourSwordsRecomp's docs describe how Four Swords boots on its own, which gives the Four Swords root. The interrupt handlers count as roots for both games.
+- **Walk the call graph.** From each root, follow every `bl`, every branch outside the function, and every function pointer. The translator already finds odd ROM words that point into code (its ROM_PTRS list), which covers jump tables and entity-handler tables.
+- **The result:** a set of functions each game *can* reach. Because a pointer table counts as reaching all its entries, this is an over-estimate, but it shouldn't miss anything that is called directly. Only pointers built at run time, or stored in RAM, can slip past.
+
+**2. Coverage: what actually runs**
+- Run recorded Four Swords sessions through `mgba_run` with tracing, and log every function entered. Do the same for a few A Link to the Past sessions.
+- This gives a lower bound: functions that definitely run. Today there's one session, which reached 657 executed functions.
+- More recordings widen it: each stage, items, enemies, bosses, menus and 2–4 players.
+
+**3. Classify each function**
+
+| Four Swords reaches | A Link to the Past reaches | Class |
+|---|---|---|
+| yes | no | Four Swords only |
+| yes | yes | shared engine (check the Minish Cap decomp for matches) |
+| no | yes | A Link to the Past only, which the port can skip |
+| no | no | unreachable or dead code, usually skipped |
+
+Within the Four Swords and shared classes, priority goes to what coverage has seen executed, then to what is statically reachable but not yet seen. That's the plan's "work queue = static ∪ executed, ordered by coverage" item.
+
+**4. Supporting evidence**
+- **Address clustering.** Functions were linked by source file, so neighbouring functions usually belong to the same game. fs_game is one block. A function sitting alone in a block of the other game deserves a second look.
+- **The Minish Cap decomp.** A function that matches one there is shared engine code.
+- **Data and strings.** Graphics, text and tables that only one game uses mark the functions that load them.
+- **The EU and JP ROMs.** Code that moved or changed between versions only on the Four Swords side can confirm a split. I haven't checked this yet, so it's a maybe.
+
+**Where it's uncertain**
+- Pointers built at run time: computed calls, code copied into RAM, callbacks registered in RAM.
+- Code reached only from rare situations: link errors, odd save states, 4-player edge cases. Neither the static walk nor small coverage may catch these.
+- For the port, a Four Swords function that was missed isn't fatal. The machine-translated C still runs it, and the gap shows up as a translated call during comparison runs.
+
+**Output:** a CSV of address, class, reached-statically and seen-executed. Then split `asm/` into Four Swords, shared and A Link to the Past files following it. The decompilation work list falls out of that.
+
+## User
+
+Does the FourSwordsRecomp provide any assistance in figuring out what functions need to be decompiled?
+
+## Claude
+
+I'll look at what's in the recomp rather than answer from memory.
+
+- tool `Bash`: Survey FourSwordsRecomp layout and docs
+
+- tool `Bash`: Inspect config, symbol files, generated output
+
+- tool `Bash`: Check jump tables, boot notes, symbols
+
+## Claude
+
+Yes, it gives real help with the roots and the indirect calls, but it doesn't have a ready-made list of Four Swords functions.
+
+**What it gives**
+
+1. **The split point between the two games.** Its `docs/DESIGN.md` ("Boot straight into Four Swords") maps the top-level mode table at `0x0842731C`:
+   - mode 6 is "CHOOSE A GAME" (`0x0803074C`);
+   - mode 9 is Four Swords;
+   - mode 13 is A Link to the Past.
+
+   `0x08030E0C` (`start_four_swords`) sets up Four Swords and switches to mode 9. The doc also lists every place that sets the game mode. These are the roots the static call-graph walk needs: walk from mode 9 and `start_four_swords` for Four Swords, from mode 13 for A Link to the Past, and treat boot, file select and the menus as shared.
+
+2. **Indirect calls the call-graph walk can't see.**
+   - **Jump tables:** `game.toml` lists jump tables with their sizes and the address that dispatches through each, for example the entity-handler tables at `0x0813ED84` and `0x0813EF60`. The sizes were trimmed by its `audit_jump_tables.py`. Most of these tables were generated by script; its comments say the top-level mode table had to be added by hand.
+   - **Pointers stored in data:** `symbols/AZLE_data_pointers.toml` lists functions referenced only from ROM data, found by its `scan_code_pointers` script.
+
+   Both fill the main hole in a static walk, and can be cross-checked against my translator's ROM_PTRS list.
+
+3. **A known-good path through Four Swords.** Its doc describes booting through the intro to the Four Swords title and the "Linking with other systems" screen on several virtual GBAs. That confirms the boot sequence and the in-memory link hub I'd need to reproduce for multiplayer coverage runs.
+
+4. **Possibly, a list of code its static pass missed.** Code its static pass misses is interpreted on first use, and the doc mentions checking for misses on the Four Swords path. If its runtime can log those, a play session would list Four Swords functions reached only indirectly. I haven't confirmed that it writes such a log.
+
+**What it doesn't give**
+- **No Four Swords vs A Link to the Past classification.** It translates from the ROM's entry point and covers both games. Its "static coverage of the Four Swords code paths" goal is still marked as planned, not done.
+- **Its generated output isn't in the repository** (`generated/` is git-ignored). Getting its full function list would mean running its regeneration step on our ROM. The code is GitHub-hosted, so that's allowed, but per CLAUDE.md I'd use it for structure only, not as code.
+- **Only 52 named symbols** in `AZLE_symbols.toml`, so little help with naming.
+
+**How I'd use it:** take its mode roots and `start_four_swords` as walk roots, and merge its jump tables and data-pointer functions into the call graph. Then run the static walk and the coverage traces as I described earlier. Its function list would be an optional cross-check if we regenerate it.
+
+## User
+
+Proceed
+
+## Claude
+
+I'll start with what `reach.py` already does.
+
+- tool `Bash`: Find and read reach.py
+
+- tool `Bash`: Read rest of reach.py and find coverage files
+
+- tool `Bash`: Dump top-level mode table
+
+- tool `Bash`: Add --classify to reach.py and run it
+
+## Claude
+
+The split barely works: 5,689 "shared" and only 2 Four Swords-only, so the A Link to the Past walk still reaches the Four Swords code by another route. Tracing one such route:
+
+- tool `Bash`: Show path to an fs_game function with FS handler cut
+
+- tool `Bash`: Tighten data-pointer edges and rerun
+
+## Claude
+
+Executed-but-unreachable went up to 26, but the false chain is still there. Checking how big those data objects are:
+
+- tool `Bash`: Check data object sizes and hit positions
+
+- tool `Bash`: Require table context in big blobs, rerun
+
+- tool `Bash`: Compare original vs odd-pointer rule
+
+## Claude
+
+The odd-pointer rule cuts the Four Swords side from 5,691 reachable functions to 3,552, but 16 more executed functions become unreachable. Checking how those 16 are really referenced:
+
+- tool `Bash`: Find references to newly-missed executed functions
+
+- tool `Bash`: Relax data rule, rerun classification
+
+- tool `Bash`: Restore original edges, keep classify, per-file breakdown
+
+- tool `Bash`: Trace why LttP sprite/rom3c code is reachable
+
+## Claude
+
+Both go `AgbMain → data 0x0854F7E8 → data 0x08170788 →` the A Link to the Past sprite code. Checking those two objects:
+
+- tool `Bash`: Inspect data objects on the false path
+
+- tool `Bash`: Test blob size thresholds
+
+- tool `Bash`: Restore classify version, summarize, commit
+
+## Claude
+
+One function classed as A Link to the Past-only did run in the Four Swords session. Checking which:
+
+- tool `Bash`: Show executed lttp-class function
+
+## Claude
+
+It's `sub_080099B8`, an engine function in `rom1` that's also on the executed-but-unreachable list. Its call goes through a pointer the static walk can't see, probably one held in RAM, so its class is wrong. Executed functions should override the static class.
+
+I built the split, but it only separates part of the code.
+
+**What I built:** `tools/reach.py --classify FILE` walks the call graph from boot twice. One walk cuts the A Link to the Past mode handler (mode 13, `0x0800B69C`), the other cuts the Four Swords handler (mode 9, `0x0802E764`); both addresses come from the mode table the recomp documents. Each function is then labelled by which walks reach it, and whether the recorded session ran it. It's committed.
+
+| Class | Functions | Ran in session 1 | Still in asm |
+|---|---|---|---|
+| A Link to the Past only | 2,209 | 1 | 1,859 |
+| shared (both walks reach it) | 5,689 | 912 | 3,992 |
+| Four Swords only | 2 | 0 | 2 |
+| reached by neither | 140 | 9 | 68 |
+
+**The "A Link to the Past only" list can be trusted:** the walk over-counts, so if it can't reach a function from Four Swords, Four Swords doesn't call it directly. About 1,860 asm functions can be dropped from the work list, mostly in `rom3`, `rom3a`, `rom4`, `rom3c`, `interface` and `hud`. The one exception is `sub_080099B8`, which ran even though the walk can't reach it from Four Swords.
+
+**The "shared" class doesn't separate the games, for two reasons:**
+- **One entity system serves both games.** It runs from the main loop and interrupt handler before any mode handler, and its handler tables list both games' entities. Cutting the mode handler can't separate them.
+- **Unlabelled data blobs create false links.** The data is still unlabelled `.INCBIN` regions, up to 1 MB each. Words inside them that happen to look like pointers link unrelated code, for example `AgbMain` to the A Link to the Past sprite code. Those blobs also contain real tables, so no size or neighbour rule fixed it: each one I tried dropped 16–34 functions that really run, while shrinking "shared" only slightly. I reverted them.
+
+**What would split "shared" properly:**
+1. **More Four Swords coverage: the main lever.** More recordings mean more functions known to run. Session 1 shows 912 so far; I'd expect stages, bosses, items and 2–4 players to add many more. This needs play sessions recorded the way session 1 was.
+2. **Labelled data.** Turning the `.INCBIN` regions into real symbols, which is already a plan item, would remove the false links. Then cutting the A Link to the Past entity tables would make the static split meaningful.
+3. **Executed always wins.** Anything a Four Swords session runs is needed, whatever its static class.
+
+Until then, the practical work list is the functions Four Swords is seen running, about 900 so far, plus the rest of fs_game.
+
+## User
+
+I'm guessing that at least some of the blobs are graphics data
+
+## Claude
+
+Yes, and that can be checked rather than guessed. First, what the disassembly already labels:
+
+- tool `Bash`: Survey INCBIN blobs and their sizes
+
+- tool `Bash`: Write LZ77 stream scanner and run it
+
+- tool `Bash`: Skip LZ77 ranges in reach walk and compare
+
+## Claude
+
+It hurt: 57 more executed functions became unreachable, so some detected "streams" are really tables. Finding which ranges swallowed real pointers:
+
+- tool `Bash`: Find false-positive LZ ranges holding real pointers
+
+- tool `Bash`: Check remaining false path and blob coverage
+
+- tool `Bash`: Inspect bytes around the chance pointer
+
+- tool `Bash`: Commit scanner and reach option
+
+## Claude
+
+You're right. Graphics data is a large share of the blobs, and it explains part of the problem, though not all of it.
+
+**Compressed graphics: confirmed and handled.**
+- `tools/lz77_scan.py` finds and decodes the ROM's LZ77 streams. These are the BIOS format the game decompresses into video memory. It found 2,085 streams, 2.8 MB in total.
+- Spot checks look like real tile data: they unpack to tile-sized amounts (0x800, 0x2000, 0x4000 bytes).
+- `reach.py --packed` now ignores words inside those streams. That removed false links: 57 functions the session ran had been "reached" only through chance matches inside compressed graphics. They still ran, so they stay on the work list.
+- "Shared" only shrank from 5,689 to 5,554, though.
+
+**Uncompressed graphics: the next source of false links.** The `AgbMain` → A Link to the Past sprite link comes from a tilemap at `0x08568B1C`, stored uncompressed. Its entries are 16-bit values like `0x0788`, `0x0817`. Two of them side by side read as the 32-bit word `0x08170788`, which happens to be the start of a data table. Raw tiles, tilemaps and palettes sit unpacked in the same 1 MB blobs as real tables. Content rules can't separate them reliably: the neighbour and size rules I tried dropped real links too.
+
+**What would really fix it: labelling the graphics.** That means finding each graphics asset's exact start and size from the code that loads it. The loader calls (LZ77 to video memory, DMA or CpuSet copies into video memory, palette or OAM) take the asset's address as an argument, and the copy size gives its length.
+- **Statically:** read those addresses out of the literal pools at each loader call.
+- **Dynamically:** have `mgba_run` log the source range of every copy into video memory. That's exact for whatever the recordings show.
+
+Each found range becomes a labelled graphics symbol, which the walk then skips. This is also the start of the plan's "shiftable ROM" item, and later of extracting assets with `gbagfx`.
+
+My suggestion is the dynamic route first. It's a small addition to `mgba_run`, gives exact ranges, and covers what Four Swords actually loads. Then the static loader scan to catch what the recordings miss.
+
+## User
+
+What do we need to do for that?
+
+## Claude
+
+Let me check what hooks `mgba_run` already has, so the steps are concrete.
+
+- tool `Bash`: Survey mgba_run hooks
+
+- tool `Bash`: Read the per-instruction coverage loop
+
+## Claude
+
+Most of what's needed already exists. `mgba_run` has a loop that steps one instruction at a time, used for `--coverage`, so the logging hooks into that. The steps, in order:
+
+**1. `mgba_run --loads FILE`: log every graphics load while a recording plays.** In the stepping loop, before each instruction:
+- **BIOS calls.** A `swi` instruction that decompresses or copies is a load: LZ77 (0x11/0x12), run-length (0x14/0x15), Huffman (0x13), CpuSet/CpuFastSet (0x0B/0x0C). Log the source in r0, the destination in r1, and for the copies the count in r2.
+- **DMA.** Check the four DMA channels for one that has just been enabled. Log its source, destination, count and width. mGBA keeps this state per channel, so no decoding is needed.
+- **Each log line** holds the kind, source, destination, length, and the PC of the caller.
+- **Filter:** keep only sources in ROM. Mark which destinations are video memory, palette or OAM (graphics) and which are RAM (often maps or other data copied before use).
+
+This is roughly 60–80 lines of C next to the coverage code.
+
+**2. Turn the log into ranges.**
+- A small script merges the logged loads into unique ROM ranges.
+- For compressed loads, the range length comes from decoding the stream, as `lz77_scan.py` already does. For copies it's the count times the width.
+- Output: one line per range with start, end, kind and destination. The same address loaded twice collapses to one range.
+
+**3. Use the ranges.**
+- **Right away:** pass them to `reach.py` like `--packed`, so its words are never read as pointers. This removes the uncompressed tiles, tilemaps and palettes the game was seen loading.
+- **Later, for the decomp:** split `data/*.s` at those addresses into labelled graphics symbols, one per asset. That's the first part of the "shiftable ROM" item, and the basis for extracting assets with `gbagfx`. Splitting `.INCBIN` lines doesn't change the ROM, so `make compare` keeps passing.
+
+**4. Static pass for what the recordings miss.** For each loader call site seen in step 1 (the logged PCs), plus other calls to the same BIOS functions, read the constant source address from the literal pool and add it as a range too. This catches assets the recordings never reach, such as other stages and menus.
+
+**What I need from you:** nothing for steps 1–3 on the existing session 1 recording. For good coverage, more Four Swords recordings later would widen it the same way they widen code coverage.
+
+**Limit:** graphics copied by the CPU in an ordinary loop instead of DMA or the BIOS won't be caught by step 1. Step 4 and the remaining false links will show whether that matters.
+
+Shall I go ahead with steps 1–3?
+
+## User
+
+How can we know for sure that what's being loaded is valid graphics data?
+
+## Claude
+
+We can't prove that in general, but we don't need to. What `reach.py` needs to know is narrower: that the code never uses a word in that range as a pointer. That can be checked directly, and the evidence is strong for most of the ranges.
+
+**1. Where the data goes**
+- A range copied or decompressed into video memory, palette memory or OAM is consumed by the graphics hardware. The hardware reads it as pixels, tile indices, colours or sprite attributes. A word there that looks like `0x08170788` is just two tile entries to the hardware; nothing dereferences it.
+- So "loaded into VRAM, palette or OAM" is all we need, whether or not the bytes would look like a sensible picture. Only those destinations count as safe.
+- Ranges copied into RAM (EWRAM or IWRAM) are different. They can be maps, scripts or structs that do hold pointers, so these don't get excluded on this evidence alone.
+
+**2. Exact bounds**
+- For decompression, the BIOS reads exactly the stream's bytes. The log records the source, and decoding gives the length.
+- For DMA and CpuSet, length is count times width.
+- So each range's edges are what the hardware actually read, not a guess. The tilemap that caused the bee-sprite link is excluded only if its bytes fall inside a logged range.
+
+**3. A contradiction check during the same run**
+Also log every ordinary CPU load (`ldr`/`ldrh`/`ldrb`) from ROM data, and flag any that falls inside a range marked as graphics:
+- **A 32-bit load there** means the code reads that word itself, so the range isn't purely graphics. Don't exclude it.
+- **Small reads** (a palette index, a size header) are harmless. Report them anyway.
+- **Check against real pointers too:** if any edge the walk needs, for a function proven to run, starts from a word inside a graphics range, that's a contradiction. Look at it by hand.
+
+With both checks clean, a range is graphics in the sense that matters: the hardware reads it and the code never treats it as pointers, at least in the recorded runs.
+
+**4. Visual confirmation**
+- Render the decoded ranges with `gbagfx` as 4bpp/8bpp tiles using the palette loaded with them, and look. Garbage-looking output with a VRAM destination usually means wrong width or bit depth, not wrong data.
+- Compare the video-memory dumps from the recording against mGBA's at the same frame. That confirms the log matches what the game drew.
+
+This is the only check that shows the data really is pictures. For the pointer question it's optional.
+
+**What stays uncertain**
+- **Ranges never loaded in a recording.** Nothing from the run proves those, so they keep pointer scanning until a recording or the static loader scan (step 4 from before) covers them.
+- **CPU-loop copies.** Graphics copied with ordinary loads and stores instead of DMA or the BIOS don't show up as loads. The load logging in check 3 would show them as many small ROM reads into video memory, which can be added as a fifth load kind if it turns up.
+- **Doubly used bytes.** Data used as both graphics and a table is possible but rare. Check 3 catches it in the recorded runs.
+
+So the procedure is: exclude only ranges that went to video, palette or OAM memory, have exact bounds, and that no CPU word read touches. Then render a sample as a sanity check.
+
+## User
+
+Proceed with testing
+
+## Claude
+
+I'll start with how session 1 was replayed for coverage, and the build setup for `mgba_run`.
+
+- tool `Bash`: Inspect recording and run script
+
+- tool `Bash`: Read replay command and notes
+
+- tool `Bash`: Find replay usage
+
+## Claude
+
+The replay command is in the header. Now the mGBA structs I need: the DMA state and the CPU registers.
+
+- tool `Bash`: Look up mGBA DMA struct
+
+- tool `Bash`: Find coverage array and includes
+
+- tool `Bash`: View globals around coverage
+
+- tool `Bash`: Add --loads logging to mgba_run and build
+
+- tool `Bash`: Replay session 1 with --loads and coverage
+
+## Claude
+
+The replay ran, but the coverage file wasn't written and no DMA loads were logged. Checking the log:
+
+- tool `Bash`: Check run log and output paths
+
+## Claude
+
+It segfaulted near the end, which fits the screenshot step: the `--out` directory didn't exist. Creating it and rerunning:
+
+- tool `Bash`: Rerun with output dir, verify identical run
+
+- tool `Bash`: Write range builder with contradiction check, run
+
+- tool `Bash`: Check tilemap region and top CPU-load sites
+
+- tool `Bash`: Show loads near tilemap and CPU read sites
+
+- tool `Bash`: Log RAM-to-screen transfers, rebuild, rerun
+
+- tool `Bash`: Detect DMA by register change, rerun
+
+## Claude
+
+Still none. I'll check directly whether any DMA register ever changes, with a short debug run:
+
+- tool `Bash`: Debug DMA register changes
+
+- tool `Bash`: Add screen-buffer rule and rerun ranges
+
+## Claude
+
+15 more ROM ranges now count as graphics through a RAM buffer. Checking the tilemap, then rerunning the classification with both the LZ77 streams and the loaded graphics excluded:
+
+- tool `Bash`: Check tilemap, rerun classification with all ranges
+
+## Claude
+
+The tilemap range still isn't counted. Checking whether its RAM copy at `0x02024024` ever goes to the screen:
+
+- tool `Bash`: Look for transfers from that RAM buffer
+
+- tool `Bash`: Add 32-bit RAM read bitmap
+
+## Claude
+
+Built. Note: RAM is reused over time, so a 32-bit read of the same area at another moment also counts. That makes the check stricter, never looser. Rerunning session 1:
+
+- tool `Bash`: Rerun session 1 with RAM read bitmap
+
+- tool `Bash`: Add no-pointer RAM rule and rerun classification
+
+- tool `Bash`: Per-file class breakdown after filtering
+
+- tool `Bash`: Trace remaining cross-links
+
+- tool `Bash`: Check sound-blob reads around the chance word
+
+- tool `Bash`: Document results and commit
+
+## Claude
+
+The test worked: excluding the graphics the game is seen loading cut the "shared" code from 5,554 functions to 3,472, without losing any real links. One more kind of data, sound samples, still causes false links.
+
+**What the logging found.** I replayed session 1 with the new `mgba_run --loads` logging. The run was identical to the original: same coverage, same final screen.
+- **Graphics loads:** 288 ROM ranges, 243 KB, each with exact bounds. Each one goes to palette, VRAM or OAM, or to a RAM buffer the game sends there, or to RAM the code never reads 32-bit words from.
+- **The contradiction check:** the CPU never reads inside any of these ranges itself, so they can safely be skipped when looking for pointers.
+- **No DMA for graphics.** My first DMA check silently caught nothing, because mGBA starts and finishes a transfer within a single step; I fixed the detection. The game's only DMA is for sound and save memory. It copies graphics with the BIOS CpuFastSet routine instead.
+- **The bee-sprite tilemap** is copied into a RAM map buffer and read there only as 16-bit entries. That's why it's now counted as data and skipped.
+
+**Result of the Four Swords / A Link to the Past split:**
+
+| Class | Before | Now |
+|---|---|---|
+| shared | 5,689 | 3,472 |
+| A Link to the Past only | 2,209 | 4,291 |
+| executed but unreachable | 10 | 67 |
+
+The 57 extra executed-but-unreachable functions came from the LZ77 step. Each had been "reached" only through a chance word inside compressed graphics. Excluding the loaded graphics didn't add any more.
+
+The A Link to the Past side is now coherent: `rom3c`, `rom3b`, `rom4`, most of `rom3a`, the `lttp/sprite*` files, `hud` and `interface`. None of them ran in the Four Swords session.
+
+**Still wrong:**
+- **Sound samples.** Signed 8-bit samples in the sound data blob at `0x083C3BBC` still create one false link, from the sound driver into A Link to the Past code. That keeps 543 functions in `rom3.o`, none of which ran, in "shared", and keeps fs_game reachable from the A Link to the Past side. The sound mixer reads these samples with ARM code running in RAM, which the logging doesn't decode. Two fixes:
+  - Get the sample ranges from the sound driver's instrument tables. That's static, uses a well-known format, and covers samples the recording never played.
+  - Or decode ARM-mode loads in the logging.
+
+  I'd do the instrument tables.
+- **A crash to fix:** `mgba_run --shot` segfaults at the end of a run when the `--out` directory doesn't exist.
+
+Everything is committed, including Step 14 in the walkthrough.
+
+## User
+
+Let's move to the instrument tables
+
+## Claude
+
+First a look at the song table, to confirm the layout. I'm assuming the standard m4a driver structures, as in pret's decomps: song table entries of 8 bytes, a song header pointing at a voice group, 12-byte instruments, and wave data with a 16-byte header.
+
+- tool `Bash`: Inspect song table, header and voicegroup
+
+- tool `Bash`: Scan for the m4a song table
+
+## Claude
+
+A table at `0x083C3E34` with 51 valid entries in a row. Checking why the run stops there:
+
+- tool `Bash`: Inspect song table end
+
+- tool `Bash`: Write and run sample extractor
+
+- tool `Bash`: Sanity-check sample ranges
+
+- tool `Bash`: Check offsets of CPU reads in samples
+
+- tool `Bash`: Exclude samples and rerun classification
+
+- tool `Bash`: Per-file shared breakdown and trace rom3
+
+- tool `Bash`: Document and commit sample tool
+
+## Claude
+
+Excluding the sound samples removed the last false link through data. "Shared" is now down to 2,943 functions, and the walk didn't lose any real links.
+
+**The instrument tables.** `tools/m4a_samples.py` reads the sound driver's song table and instrument tables.
+- **Song table:** it's at `0x083C3E34`, with 466 songs, some of them empty. I found it by its layout. My first guess, `0x083C28FC`, turned out to be the driver's command jump table.
+- **Samples:** 11 instrument sets give 49 samples, 333 KB in total, with no overlaps. The chance word at `0x083E05BC` lies inside one of them.
+- **Check against the recorded session:** the only 32-bit reads inside the samples are the sound driver reading a sample's frequency from its header, and copying short waveforms to the sound hardware. Neither treats the data as pointers. To be strict, each sample's range starts after its 16-byte header.
+
+**Classification with compressed graphics, loaded graphics and samples all excluded:**
+
+| Class | Start | After graphics | Now |
+|---|---|---|---|
+| shared | 5,689 | 3,472 | 2,943 |
+| A Link to the Past only | 2,209 | 4,291 | 4,820 |
+| executed but unreachable | 10 | 67 | 67 |
+
+`rom3.o`'s "shared" count fell from 543 to 72. What's still "shared" is mostly code that really is shared or belongs to Four Swords: `fs_game`, `file_select`, `rom1`, `rom2`, `rom5`, `rom_0800D4F0`, `game_select`, `main`.
+
+**What still joins the two games is a real link, not a chance word.** The entity system runs from the interrupt handler and dispatches through the object handler table at `0x0813F998`. That table holds both games' entities, so a walk over the code alone can't tell which entries Four Swords uses. Two ways to split it:
+- **From the code:** collect the object types Four Swords code passes to `CreateObject` and its siblings, then keep only those handler-table entries for the Four Swords walk.
+- **From the recordings:** use the object types Four Swords is seen creating.
+
+The first is a natural next step, and needs no new recordings. Everything is committed and documented in Step 14.
+
+## User
+
+Proceed
+
+## Claude
+
+First, how `DoObjectEntity` dispatches, and how objects get created:
+
+- tool `Bash`: Read DoObjectEntity and CreateObject
+
+- tool `Bash`: Measure the object table's contribution
+
+- tool `Bash`: Find functions that create type-6 objects
+
+- tool `Bash`: List all type-6 assignments and wrapper functions
+
+- tool `Bash`: Which object subtypes ran in session 1
+
+- tool `Bash`: Scan creator calls for constant subtypes
+
+## Claude
+
+51 constant subtypes, and only 4 calls with a non-constant one. Those 4 decide whether the method is safe, so I'll look at where their subtype comes from:
+
+- tool `Bash`: Find the four non-constant creator calls
+
+- tool `Bash`: Read the data-driven spawner and its callers
+
+- tool `Bash`: Find spawner callers and their arguments
+
+- tool `Bash`: Disassemble the two rom1 call sites
+
+- tool `Bash`: Trace the record base registers
+
+- tool `Bash`: Show record base computations
+
+- tool `Bash`: Write subtype extractor; find direct-store functions
+
+- tool `Bash`: Find functions with direct subtype stores
+
+## Claude
+
+The direct stores are subtype 23 in `sub_0803F0E4`, 15 in `sub_0804055C`, 32 in `sub_08040890` and 64 in `sub_0805B370`. Putting them in the script with their real functions:
+
+- tool `Bash`: Run extractor; compare with executed subtypes
+
+- tool `Bash`: Scan for constant stores to the subtype field
+
+- tool `Bash`: Log entity creation, rerun session 1
+
+- tool `Bash`: Map missing subtypes to their creators
+
+## Claude
+
+Most of them come from one function, `sub_0800A1A8`. That's very likely the loader that creates a room's objects from the stage data. Reading it:
+
+- tool `Bash`: Read sub_0800A1A8
+
+- tool `Bash`: Find branches into sub_0800A1A8
+
+- tool `Bash`: Disassemble the loader before the tail
+
+- tool `Bash`: Find callers of the record decoder
+
+- tool `Bash`: Read the three list walkers
+
+- tool `Bash`: Disassemble the two other list walkers
+
+- tool `Bash`: Find callers of the list walker
+
+- tool `Bash`: Scan ROM for room object lists by shape
+
+- tool `Bash`: Disassemble a room list caller
+
+- tool `Bash`: Read sub_08012F84
+
+- tool `Bash`: Disassemble sub_08012F84
+
+- tool `Bash`: Walk area/room/layer object lists
+
+## Claude
+
+Nothing found, so my guess at the layout is off somewhere. Printing the actual values:
+
+- tool `Bash`: Print area headers
+
+- tool `Bash`: Walk area layer tables for object lists
+
+- tool `Bash`: Test a tightened shape scan
+
+- tool `Bash`: Document and commit object-subtype work
+
+## Claude
+
+The object table hasn't been split yet. Code alone gives only part of the list of object types Four Swords creates; the rest is decided by each room's data. So I haven't applied the filter to the walk yet. The tools that work are committed and the findings are in Step 14.
+
+**The size of the question.** `DoObjectEntity` is Four Swords code. It runs objects through a 108-entry handler table, one entry per object type ("subtype"). Removing that table from the Four Swords walk drops 627 functions, so it's worth splitting. 36 of the 108 types ran in session 1.
+
+**Found from the code (`tools/object_subtypes.py`): 55 types.**
+- constant arguments to the two object-creating functions;
+- 6 fixed spawn lists, from menus and setup;
+- one creator that always makes type 93;
+- two random-drop tables, read by `sub_08013EC0` and `sub_080142F4`;
+- direct stores in already-decompiled C.
+
+**Logged at run time.** `mgba_run --loads` now also records every entity as it's created: its type, subtype and the creating function. The replay is still identical. This showed that 18 of the 36 types that ran aren't in the static list:
+- **15 come from room data.** The room loader reads 8-byte records ending in `0xFFFF`. I decoded the format: subtype, type and position mode, then form, parameter, x and y.
+- **3 come from other code:** `sub_08014958`, `sub_08015888` and `sub_08015AC4`; one wasn't registered at all.
+
+**Where it's stuck: finding all the room lists.**
+- The pointers to each room's lists are filled in at run time by the room loader, at `0x02016330[room]`.
+- The stage table only leads directly to room 0's lists: 12 lists with 2 types.
+- Scanning the ROM for anything shaped like a list is useless: even with tight rules it finds 1,903 "lists", mostly chance shapes.
+
+**Why I haven't applied the filter.** With an incomplete list of types, the Four Swords walk would wrongly drop the objects of stages nobody has recorded yet. Then the work list would be missing things it needs.
+
+**Next step:** decode the room loader, the code that fills `0x02016330`. That gives every room's list pointers, and with them every room's object types. Then the filter can be applied and checked: every type seen running must be in the static list.
+
+Alternatively, more recordings would cover the stages they visit. They'd prove which types are used, but they can't show that a type is unused.
+
+## User
+
+Continue
+
+## Claude
+
+First, every function that refers to the room-pointer array at `0x02016330`:
+
+- tool `Bash`: Find references to the room pointer array
+
+- tool `Bash`: Disassemble the room-array writers
+
+- tool `Bash`: Disassemble room picker and stage getter
+
+- tool `Bash`: Walk room pools for object lists
+
+- tool `Bash`: Collect layer arguments to sub_08012F84
+
+- tool `Bash`: Per-layer validity of room lists
+
+- tool `Bash`: Find tables used by sub_080132B0
+
+## Claude
+
+Three more tables: `0x0842B8A8`, `0x0842AD08` and `0x0842B8C0`. Dumping them, to see whether they lead to headers whose +20 field is a layer table, like the area headers:
+
+- tool `Bash`: Dump the special-stage tables
+
+- tool `Bash`: Add room data to subtype extractor; compare
+
+## Claude
+
+93 of the 108 subtypes are now accounted for. Only 3 of those that ran are still missing: 7, 41 and 42. Checking how `sub_08014958`, `sub_08015888` and `sub_08015AC4` set their subtype:
+
+- tool `Bash`: Find subtype stores in the remaining creators
+
+- tool `Bash`: Trace r4 in sub_08015AC4
+
+- tool `Bash`: Show start of sub_08015AC4
+
+- tool `Bash`: Add tile tables and asm pattern; compare
+
+- tool `Bash`: Search for subtype 42 stores
+
+## Claude
+
+No store of 42 anywhere. Maybe handler 42's function also runs through some other path. Checking whether anything calls it directly:
+
+- tool `Bash`: Check direct calls to handler 42
+
+## Claude
+
+Only the table points to it. Since 41 and 42 are neighbours, maybe object 41 turns itself into 42 by incrementing its subtype. Checking handler 41's code for a store to the subtype field:
+
+- tool `Bash`: Look for subtype increments
+
+- tool `Bash`: Read handler 41's code
+
+- tool `Bash`: Show handler 41 body
+
+## Claude
+
+Not in the setup code. Checking `sub_0805722C`:
+
+- tool `Bash`: Read sub_0805722C
+
+- tool `Bash`: Log subtype changes, rerun session 1
+
+- tool `Bash`: Search data for subtype-42 records
+
+- tool `Bash`: Add --objects gating and compare
+
+- tool `Bash`: Document and commit object gating
+
+## Claude
+
+I decoded where the room object lists come from, and the result settles the question: nearly the whole object handler table is Four Swords code. Filtering it removes only 35 functions.
+
+**Where the room lists come from**
+- **Room pools:** each area has a pool of rooms, 216 in all. Each room has a layer table, and layers 0 and 1 hold its object lists. Layer 3 is a different format and layer 7 is code. The loader that fills `0x02016330[room]` picks rooms from these pools.
+- **Special rooms:** six special room pools (probably boss and event rooms) and the area headers use the same layer-table layout.
+- **Other creators:** objects created from map tiles, via two tables at `0x081380F8` and `0x0813821E`, and assembly code that writes the object type and a constant subtype directly.
+
+**Coverage of the object types:** `object_subtypes.py` now finds 97 of the 108. Of the 36 that ran in session 1, only one (42) isn't explained. The run-time log shows it's created without going through the usual registration function, and I couldn't find where. It ran, so the coverage run keeps it in the work list anyway.
+
+**Applying it:** `reach.py --objects` follows a handler-table entry only when something reachable creates that object type, or the handler ran. The Four Swords walk went from 2,945 to 2,910 functions, and none of the functions the session ran were lost.
+
+**What the classes mean in practice**
+- **"Shared" really means "needed by Four Swords."** The A Link to the Past walk reaches this code only because the entity update runs from the interrupt handler in every game mode.
+- **Port work list:** at most 2,910 functions, 1,780 of them still in assembly, plus anything a recording shows running. That compares with the 5,931 assembly files in total.
+- **Skippable for the port:** 4,820 functions only A Link to the Past reaches, 3,930 of them in assembly.
+
+Step 14 in the walkthrough and the planning doc are updated, and everything is committed. One gap: the excluded-ranges list is still built from files in my scratch directory, so it should become a committed script before anyone else relies on these numbers.
+
+## User
+
+Where can we go from here?
+
+## Claude
+
+There are four directions. I'd start with the first, then the second.
+
+**1. Lock in the work list (small, do first)**
+- Make the classification reproducible: one committed script that runs `lz77_scan.py`, `load_ranges.py` and `m4a_samples.py`, merges their ranges, and runs `reach.py --packed --objects --classify`. The range files are currently in my scratch directory.
+- Write the result as a committed list: each function's class, whether it ran, and whether it's still in assembly.
+- Optionally split `asm/` and `src/` into Four Swords, shared and A Link to the Past files following that list. This is mechanical, and `make compare` checks it.
+
+**2. Decompile the 1,780 assembly functions Four Swords needs (the main work)**
+- **Order:** the functions recordings show running first, then the rest of what the walk reaches.
+- **fs_game first:** its 42 remaining functions are unoptimised (-O0), where the draft generator works.
+- **The rest is mostly optimised (-O2) engine code** in `rom1`, `rom2`, `rom5`, `file_select` and others. That's harder: it needs a different drafting approach, and the Minish Cap decomp may already hold matches for shared engine code.
+- **Libraries can come from pret.** The sound driver (m4a) and the BIOS calls already exist in C there, which could save a large block at once.
+
+**3. Start the PC port in parallel, without waiting for the decomp**
+- **The GBA layer:** a software graphics renderer, timers, the BIOS calls (CpuSet, LZ77 and the rest, partly written already in `tr_check.c`), input, save memory and sound output, all over SDL.
+- **The game code:** link it with the decompiled C plus the machine-translated C (`thumb2c.py`) for everything not yet decompiled.
+- **Checks:** one instance boots into Four Swords and matches mGBA frame for frame. Then 2–4 instances in one process, linked in memory.
+
+This turns the work into a playable port early, and shows bugs in the translation or the GBA layer early too. The 25 differing calls in the latest translator check should be fixed first, since they would show up as bugs here.
+
+**4. More recordings (needs you)**
+- Each recorded stage, boss and 3–4 player session adds coverage. That sharpens the work list and gives the port more reference runs to compare against.
+- **What would help most:** one session per area, a boss fight, and a 4-player session.
+
+**My recommendation:** step 1 now, since it's short. Then alternate steps 2 and 3, about half each: decomp progress improves the port, and the port shows which decompiled code is wrong. Recordings help whenever you have time.
+
+Which would you like next?
+
+## User
+
+Can the recomp help?
+
+## Claude
+
+Let me check what the recomp's runtime contains and its license before answering.
+
+- tool `Bash`: Survey recomp runtime and design sections
+
+- tool `Bash`: Check engine license and link design
+
+## Claude
+
+Yes, mainly for the port design and as a cross-check, but not as code to copy, and not for the decompilation itself.
+
+**What limits it**
+- **License:** FourSwordsRecomp is under the PolyForm Noncommercial license, and CLAUDE.md says to use it for structure, not as code. So its code isn't copied into this port.
+- **The engine isn't in our copy:** the hardware layer comes from GBARecomp, which our checkout includes as an empty `gbarecomp/` directory. Its license would need checking on GitHub before even reading its code closely. That's allowed without asking, since it's GitHub.
+
+**Where it helps, by direction**
+
+1. **The work list: a small cross-check.**
+   - Its hand-checked jump tables in `game.toml`, and its data-pointer function list, should all be classified "Four Swords" or "shared" by `reach.py`. Any that come out "A Link to the Past only" or unreached point to a gap in my walk.
+   - Its runtime interprets any code the static pass missed. If it can log those addresses during play, that's an independent list of indirectly called functions.
+
+2. **Decompilation: essentially no.** Its output is recompiled machine code, like our own `thumb2c.py`, and its symbol file names only 52 functions.
+
+3. **The PC/PS2 port: the biggest help, as a design reference.**
+   - **Several GBAs in one process:** its M3 milestone already runs two GBAs on one cable, with instances on a shared timeline and an in-memory cable hub. Our plan needs exactly that for 2–4 players, so its docs show the approach and the problems it hit.
+   - **Boot straight into Four Swords:** it hooks the mode-6 handler (`0x0803074C`) and lists every place that sets the game mode. The port can do the same in C instead of driving the menus.
+   - **Saves and BIOS:** its notes on save slots and on running without the BIOS cover problems the port will meet.
+   - **Single player:** its "virtual party" design runs two linked GBAs, with the second Link's controller driven from game state. That's a good reference for a later 1-player mode, and for "more than 4 players".
+   - **A second reference to compare against:** if it builds and runs, the same inputs could be played through both mGBA and the recomp, to check whether a difference in our port is our bug.
+
+4. **Recordings: no help.** mGBA plus `mgba_run --play` already does that.
+
+**Suggested use:** read its design docs before starting the GBA layer and the link hub, cross-check its jump tables against `reach.py` now (a few minutes), and check GBARecomp's license before relying on anything beyond the docs.
+
+## User
+
+Proceed with your suggestion
+
+## Claude
+
+I'll start with the reproducible classification script. First, which inputs are committed:
+
+- tool `Bash`: Check which recordings are committed
+
+## Claude
+
+The recordings are local only, since save states hold RAM. So the script takes recording directories as arguments and replays each one. Writing `tools/classify.sh`:
+
+- tool `Bash`: Write reproducible classification script
+
+## Claude
+
+`build/` isn't in `.gitignore` yet, so I'll add it. I'll also give the classification output a column for whether each function is still in assembly, then run the script:
+
+- tool `Bash`: Add asm column and run the pipeline
+
+- tool `Bash`: Check derived frame count
+
+- tool `Bash`: Use frames file; rerun pipeline
+
+## Claude
+
+The script now reproduces the earlier numbers exactly, with identical coverage. So future recordings record their length too, I'll make `mgba_run --play` write the `frames` file when it exits:
+
+- tool `Bash`: Find frame counter in play mode
+
+- tool `Bash`: Write frames file at end of play
+
+## Claude
+
+Next, the cross-check against the recomp's hand-checked jump tables and data-pointer functions. Every function they list should be reached by my walk:
+
+- tool `Bash`: Cross-check recomp tables against classes
+
+## Claude
+
+Most are object-table handlers gated out by `--objects` (the subtypes nothing creates), which is by design. Checking the other 11:
+
+- tool `Bash`: List unreached entries outside the object table
+
+## Claude
+
+Handler 42 shows as unreached, though subtype 42 ran in session 1. The "executed" override should have kept it, so that's a bug. Checking:
+
+- tool `Bash`: Check handler 42 coverage and class
+
+- tool `Bash`: Document and commit pipeline and class list
+
+## Claude
+
+Last item: GBARecomp's license. Finding its repository:
+
+- tool `Bash`: Find GBARecomp repository URL
+
+- tool `Bash`: Look up GBARecomp license on GitHub
+
+- tool `Bash`: Fetch GBARecomp license via GitHub API
+
+- tool `Bash`: Read GBARecomp license text
+
+## Claude
+
+GBARecomp is also under PolyForm Noncommercial. Checking this repository's own license, so I can record what that means:
+
+- tool `Bash`: Check this repo's license
+
+- tool `Bash`: Find where to note the license finding
+
+- tool `Bash`: Read Phase 3 section
+
+- tool `Bash`: Record licence finding and commit
+
+## Claude
+
+I finished all three parts: the classification is now reproducible from one script, it agrees with the recomp, and GBARecomp's license rules out reusing its code.
+
+**1. Reproducible work list**
+- `tools/classify.sh OUT REC_DIR...` rebuilds the whole classification from the build and the local recordings. It replays each recording, rebuilds the excluded ranges (compressed graphics, loaded graphics, sound samples) and the object types, then classifies every function.
+- For session 1 it takes about 2.5 minutes and gives exactly the numbers I'd built by hand.
+- The result is committed as `docs/function_classes.txt`: one line per function with address, name, file, size, class, whether it ran, and whether it's still in assembly.
+- **A bug I found and fixed:** a replay must run for the whole session, not just to the last key change. Session 1 is 44,522 frames, but its last input is at 43,996. So `mgba_run --play` now writes the session length to a `frames` file, and the script reads it. Session 1's `frames` file is added by hand. Recordings stay local, as before.
+- I also added `build/` to `.gitignore`, since the script writes its scratch files there.
+
+**2. Cross-check against FourSwordsRecomp**
+Its 57 hand-checked jump tables and 1,354 data-pointer functions cover 1,769 of our functions:
+
+| Our class | Functions |
+|---|---|
+| shared | 598 |
+| Four Swords only | 1 |
+| A Link to the Past only | 1,144 (the recomp covers the whole ROM) |
+| unreached | 26 |
+
+All 26 unreached ones are handlers for the 10 object types that nothing creates and that never ran, plus three sub-tables of those same handlers. So there's no contradiction: my walk misses nothing the recomp found.
+
+**3. GBARecomp's license**
+I read it through the GitHub API. It's PolyForm Noncommercial 1.0.0, the same license as FourSwordsRecomp. Its code would bring noncommercial terms into this port, so I recorded in the planning doc, under Phase 3, that neither project's code is copied. Their design docs remain a reference for the port: running several GBAs in step, the link hub, booting straight into Four Swords, and saves.
+
+This repository has no license file of its own yet. That's your decision whenever it matters.
+
+**Where things stand:** Four Swords needs at most 2,910 functions, 1,780 of them still in assembly, and the list is committed. The next step, as planned, is to alternate decompiling those functions with starting the PC port's GBA layer.
+
+## User
+
+Proceed
+
+## Claude
+
+I'll start with the decompilation side. These are the functions Four Swords needs that ran in session 1 and are still in assembly, by file:
+
+- tool `Bash`: Needed asm functions by file, executed first
+
+- tool `Bash`: Read tmc_match.py usage
+
+- tool `Bash`: Read prior tmc_match results
+
+- tool `Bash`: Size distribution of executed needed asm functions
+
+## Claude
+
+Many are tiny: 2–8 bytes. Functions that small are usually fragments of hand-written assembly rather than compiled C, and `rom1` holds a lot of hand-written engine assembly. Checking a few:
+
+- tool `Bash`: Inspect tiny functions
+
+- tool `Bash`: Classify needed asm as hand-written or compiled
+
+- tool `Bash`: Check file_select flags and draft quality
+
+- tool `Bash`: Read place.py
+
+## Claude
+
+It works for any file. Writing the work queue: executed, compiled, needed functions, smallest first:
+
+- tool `Bash`: Build the executed-compiled work queue
+
+## Claude
+
+The `rom5` functions at `0x0813xxxx` are the sound driver, which can come from pret's C later, so I'm leaving them out. Here's the first batch of small functions:
+
+- tool `Bash`: Show first batch of small functions
+
+- tool `Bash`: Rebuild queue with stricter hand-asm rule
+
+- tool `Bash`: Show the first queue batch
+
+## Claude
+
+These need the right struct fields. Looking up the globals they use:
+
+- tool `Bash`: Look up globals, struct fields and prototypes
+
+- tool `Bash`: Extend struct and declare globals
+
+## Claude
+
+`gUnknown_0201EF18` is also indexed at offset 0 elsewhere, so it's an array. I'll declare it as one and update its existing use. Writing and placing the batch:
+
+- tool `Bash`: Place first -O2 batch and build
+
+## Claude
+
+The ROM grew by 4 bytes somewhere. I'll write a small checker that compares each placed function against the original by symbol, since addresses shift once one function changes size:
+
+- tool `Bash`: Write per-function comparer and run it
+
+- tool `Bash`: Apply fixes for three functions
+
+- tool `Bash`: Try variants for sub_0800EDF0
+
+- tool `Bash`: Fix EDF0 cleanly; try E39C variants
+
+- tool `Bash`: Try struct for sub_0800E39C
+
+## Claude
+
+No build result was printed, so it didn't compile. Checking:
+
+- tool `Bash`: Show compile error
+
+- tool `Bash`: Fix prototype and rebuild
+
+## Claude
+
+The whole batch matches. Committing:
+
+- tool `Bash`: Commit first -O2 batch
+
+## Claude
+
+That's 13 of the 296. I'll make a helper that prints the next queued functions still in assembly, with the declarations of the globals and prototypes they use, so each batch takes one look:
+
+- tool `Bash`: Write queue viewer and show next batch
+
+## Claude
+
+Writing batch 2. Checking how `gEntityList`, `zero_memory` and `load_gfx_group` are declared, and whether `Struct03000E20` has a field at 0x11:
+
+- tool `Bash`: Check remaining declarations
+
+## Claude
+
+I have everything for batch 2:
+
+- tool `Bash`: Place batch 2 and compare
+
+- tool `Bash`: Try forms for sub_08015DC0
+
+## Claude
+
+The early-return form matches; the loop left the last variant in place, so I'll put that form back and check the whole ROM:
+
+- tool `Bash`: Restore matching form and commit
+
+## Claude
+
+Batch 2 is committed. On to the next batch:
+
+- tool `Bash`: Show batch 3
+
+- tool `Bash`: Check callers and prototypes
+
+## Claude
+
+The fs_game callers pass a full word as the layer, so I'll keep `sub_08012F84`'s prototype and narrow inside the function:
+
+- tool `Bash`: Place batch 3 and compare
+
+## Claude
+
+Nine of eleven match. For `sub_08012F84`, I'll look at the whole disassembly side by side:
+
+- tool `Bash`: Side-by-side for sub_08012F84
+
+- tool `Bash`: Find the alias mechanism
+
+- tool `Bash`: Search for alias definitions
+
+- tool `Bash`: Read alias lines in ldscript
+
+- tool `Bash`: Add alias, fix both functions, rebuild
+
+## Claude
+
+Both match now, with the zero case returned first. Committing:
+
+- tool `Bash`: Commit batch 3 and show batch 4
+
+- tool `Bash`: Check symbols and struct
+
+- tool `Bash`: Add structs and declarations for batch 4
+
+## Claude
+
+Now the prototypes and the batch:
+
+- tool `Bash`: Place batch 4 and compare
+
+- tool `Bash`: Side-by-side for sub_0802C39C
+
+## Claude
+
+The original has no initial bounds check, so it's a `do … while` loop:
+
+- tool `Bash`: Rewrite as do-while and rebuild
+
+- tool `Bash`: Commit batch 4, show batch 5
+
+- tool `Bash`: Resolve raw-address callees and current uses
+
+## Claude
+
+`0x08003F1C` has no global symbol, like `sub_08003184` earlier. Finding its label so I can export it the same way:
+
+- tool `Bash`: Find label for 0x08003F1C
+
+- tool `Bash`: Look at symbols around 0x08003F1C
+
+## Claude
+
+`0x08003F1C` is 0x40 bytes into `sub_08003EDC`, with no label at all. Looking at that function's source:
+
+- tool `Bash`: Read sub_08003EDC asm
+
+- tool `Bash`: Export label, merge structs, declare globals
+
+## Claude
+
+Now the prototypes and the batch:
+
+- tool `Bash`: Place batch 5 and compare
+
+- tool `Bash`: Apply four fixes and rebuild
+
+## Claude
+
+`sub_08015CD0`'s remaining difference is in its literal pool, caused by the other two still being the wrong size. For those two I'll try variants:
+
+- tool `Bash`: Try variants for two functions
+
+- tool `Bash`: Try more sub_08013D20 variants
+
+## Claude
+
+I'll defer `sub_08013D20` and put its assembly back, keeping the rest of the batch:
+
+- tool `Bash`: Restore sub_08013D20 asm and rebuild
+
+- tool `Bash`: Commit batch 5
+
+## Claude
+
+58 of the 296 are done. Next batch:
+
+- tool `Bash`: Show batch 6
+
+- tool `Bash`: Check prototypes for batch 6
+
+- tool `Bash`: Place batch 6 and compare
+
+## Claude
+
+Nine of ten match. In `sub_0802D7E8` the original reads byte 14 before loading the 7, so it's an if/else:
+
+- tool `Bash`: Fix sub_0802D7E8 and rebuild
+
+- tool `Bash`: Commit batch 6, show batch 7
+
+- tool `Bash`: Check fields and prototypes for batch 7
+
+- tool `Bash`: Place batch 7 and compare
+
+## Claude
+
+`rom2.c` failed to compile, so these results come from the previous ELF and mean nothing. The error:
+
+- tool `Bash`: Show rom2 compile error
+
+## Claude
+
+`rom2.c` doesn't include `entity.h`. Adding it:
+
+- tool `Bash`: Include entity.h in rom2.c, rebuild
+
+- tool `Bash`: Fix two functions and rebuild
+
+## Claude
+
+Both now have the wrong length: `sub_0802C23C` is 4 bytes too long and `sub_0801620C` 4 bytes too short. Side by side:
+
+- tool `Bash`: Side-by-side for two functions
+
+- tool `Bash`: Fix loop condition and range test
+
+## Claude
+
+Neither changed. Trying several forms of each in one go:
+
+- tool `Bash`: Try variants for both functions
+
+## Claude
+
+`p--` matches (only the pool differs). I'll defer `sub_0801620C` and put its assembly back:
+
+- tool `Bash`: Defer sub_0801620C, rebuild
+
+- tool `Bash`: Commit batch 7
+
+## Claude
+
+78 of the 296 are done in seven batches. Before continuing, I'll record the -O2 lessons in the walkthrough and update the progress numbers:
+
+- tool `Bash`: Write walkthrough step 15, update planning doc
+
