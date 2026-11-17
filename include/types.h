@@ -477,6 +477,7 @@ struct Struct0202A5E0
     u8 filler1[1];
     u8 unk2_0:4;
     u8 unk2_4:2;
+    u8 unk2_6:2;
     u8 filler3[1];
     u8 unk4_0:5;
     u8 unk4_5:2;
@@ -516,6 +517,7 @@ struct Struct0202A5E0
     u8 filler10A[1];
     u8 unk10B;
     u8 unk10C;
+    s8 unk10D;
     // size = 272 (0x110)?
 };
 static_assert(offsetof(struct Struct0202A5E0, unkF8) == 0xF8);

@@ -2422,7 +2422,27 @@ void sub_0802676C(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/file_select/sub_080267C4.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_080268D8.inc\"");
+
+void sub_080268D8(struct Entity *this)
+{
+    u8 m = sub_08026A6C(this);
+    struct Struct03006A30 *p = gUnknown_03006A30;
+
+    if ((m & 1) && (p->unk36 & 0x90))
+        m &= ~1;
+    p++;
+    if ((m & 2) && (p->unk36 & 0x90))
+        m &= ~2;
+    p++;
+    if ((m & 4) && (p->unk36 & 0x90))
+        m &= ~4;
+    p++;
+    if ((m & 8) && (p->unk36 & 0x90))
+        m &= ~8;
+    if (m == 0)
+        this->unk14 = 3;
+}
+
 asm(".include \"asm/non_matching/file_select/sub_08026958.inc\"");
 
 u16 sub_08008F58(u16, u16);
