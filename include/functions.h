@@ -22,6 +22,7 @@ void sub_08002E70(struct Entity *, s32, u8);
 void sub_08008F48(u16, u16, u16);
 void sub_08008F3C(u8, u16, u16);
 void sub_08003B94(struct Entity *);
+void sub_08003BCC(struct Entity *);
 u16 sub_0800935C(struct Entity *);
 void sub_08008DFC(struct Entity *);
 u8 sub_08003FB0(struct Entity *);
