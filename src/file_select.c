@@ -2986,7 +2986,35 @@ void sub_0802705C(struct Entity *this)
     this->unk60 = 0;
 }
 
-asm(".include \"asm/non_matching/file_select/sub_080270C0.inc\"");
+
+extern const u8 gUnknown_0813CDF4[];
+extern const u16 gUnknown_0813CD4C[];
+
+void sub_080270C0(struct Entity *this)
+{
+    u16 t;
+    u32 lo;
+
+    if (this->unk17 != 0) {
+        this->unk14 = 4;
+    } else {
+        this->unk1C_0 = 1;
+        this->unk14++;
+    }
+    this->unk17 = 30;
+    this->unk5E_0 = 1;
+    this->unk2E = 0;
+    this->unk48 = gUnknown_0813CDF4;
+    this->speed = (this->parameter + 1) << 6;
+    this->unk78.h = this->x.HALF.HI;
+    this->unk78.s2.unk7A = this->y.HALF.HI;
+    t = gUnknown_0813CD4C[gUnknown_03006C80.unk1 * 2 + 1];
+    lo = t & 15;
+    ((u8 *)this)[30] = (t << 4) | lo;
+    sub_0802C070(this, gUnknown_0813CD4C[gUnknown_03006C80.unk1 * 2]);
+    sub_08003870(this, 0);
+}
+
 asm(".include \"asm/non_matching/file_select/sub_0802715C.inc\"");
 
 
