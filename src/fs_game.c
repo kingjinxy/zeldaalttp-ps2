@@ -7723,7 +7723,71 @@ void sub_08053080(struct Entity *this)
     sub_08003870(this, this->parameter);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08053124.inc\"");
+
+void sub_08053124(struct Entity *this)
+{
+    struct Entity *e54;
+    struct Entity *e58;
+    u8 k;
+    u8 unused[24];
+
+    if ((u16)(gUnknown_03005E10[this->parameter] & 4))
+        gUnknown_03006C80.unk6D = gUnknown_03006C80.unk6D ^ (1 << this->parameter);
+    if ((gUnknown_03006C80.unk6D >> this->parameter) & 1)
+    {
+        this->unk1C_0 = 0;
+        return;
+    }
+    e54 = this->unk54;
+    e58 = this->unk58;
+    k = ((struct { u8 pad[0x60]; u8 v[16]; } *)e54)->v[this->parameter + 8];
+    if (k != 0xFF)
+    {
+        if ((u8)(k & 1))
+        {
+            k = k & 14;
+            this->x.HALF_U.HI = gUnknown_081408F4[k];
+            this->y.HALF_U.HI = gUnknown_081408F4[k + 1];
+        }
+        else
+        {
+            switch (k)
+            {
+            case 0:
+                this->x.HALF_U.HI = e58->x.HALF_U.HI - gUnknown_03000450.unk20;
+                this->y.HALF_U.HI = 6;
+                break;
+            case 2:
+                this->x.HALF_U.HI = 234;
+                this->y.HALF_U.HI = e58->y.HALF_U.HI - gUnknown_03000450.unk22;
+                break;
+            case 4:
+                this->x.HALF_U.HI = e58->x.HALF_U.HI - gUnknown_03000450.unk20;
+                this->y.HALF_U.HI = 154;
+                break;
+            case 6:
+                this->x.HALF_U.HI = 6;
+                this->y.HALF_U.HI = e58->y.HALF_U.HI - gUnknown_03000450.unk22;
+                break;
+            }
+        }
+        if (this->y.HALF.HI <= 5)
+            this->y.HALF_U.HI = 6;
+        if (this->y.HALF.HI > 154)
+            this->y.HALF_U.HI = 154;
+        if (this->x.HALF.HI <= 5)
+            this->x.HALF_U.HI = 6;
+        if (this->x.HALF.HI > 234)
+            this->x.HALF_U.HI = 234;
+        this->unk1C_0 = 2;
+    }
+    else
+    {
+        this->unk1C_0 = 0;
+    }
+    GetNextFrame(this);
+}
+
 
 void sub_080533EC(struct Entity *this)
 {
