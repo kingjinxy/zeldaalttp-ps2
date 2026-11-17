@@ -2675,7 +2675,45 @@ void sub_0802676C(struct Entity *this)
     this->unk78.s2.unk7A = sub_0800932C(this->unk7C.h, this->unk50);
 }
 
-asm(".include \"asm/non_matching/file_select/sub_080267C4.inc\"");
+
+
+u8 sub_080269F8(struct Entity *);
+void sub_080267C4(struct Entity *this)
+{
+    u8 m = sub_080269F8(this);
+    struct Struct03006A30 *p;
+
+    if (m == 0)
+        return;
+    p = gUnknown_03006A30;
+    if ((m & 1) && (p->unk36 & 0x90))
+        m &= ~1;
+    p++;
+    if ((m & 2) && (p->unk36 & 0x90))
+        m &= ~2;
+    p++;
+    if ((m & 4) && (p->unk36 & 0x90))
+        m &= ~4;
+    p++;
+    if ((m & 8) && (p->unk36 & 0x90))
+        m &= ~8;
+    if (m == 0)
+        return;
+    gUnknown_0201F000[this->unk52] |= gUnknown_08137B10[this->form];
+    sub_08003E10(this, 18);
+    if (this->parameter != 0) {
+        this->unk14 = 2;
+        sub_08014658(0x149, this->unk7C.h, this->unk50);
+    } else {
+        sub_08014658(0x14B, this->unk7C.h, this->unk50);
+        DeleteThisEntity(this);
+    }
+    if (this->unk78.h != 0xFFFF) {
+        sub_08008F48(this->unk78.h, this->unk7C.h, this->unk50);
+        sub_08008F3C(this->unk7C.s4.unk7E, this->unk7C.h, this->unk50);
+    }
+}
+
 
 void sub_080268D8(struct Entity *this)
 {
