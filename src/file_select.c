@@ -5231,7 +5231,76 @@ void sub_0802CF70(void)
 }
 
 
+#ifdef NONMATCHING
+void sub_0802D104(void);
+void sub_0802D190(u16);
+
+#define HUD_U16(off) (*(u16 *)&gUnknown_03000420[off])
+#define HUD_U32(off) (*(u32 *)&gUnknown_03000420[off])
+
+// Per-frame HUD update: counter timers, rupee/key counters, item icons, per-player respawn timers
+void sub_0802CFBC(void)
+{
+    u16 t;
+    u8 i;
+    struct Entity *e;
+
+    t = HUD_U16(34);
+    if (t != 0) {
+        if (t == 1) {
+            HUD_U32(28) = 0;
+            HUD_U32(20) = 0;
+            HUD_U16(34) = 0;
+            if (HUD_U16(32) != 0)
+                HUD_U32(20) = HUD_U32(24);
+            gUnknown_03000420[2] = 1;
+        } else {
+            HUD_U16(34) = t - 1;
+        }
+    } else {
+        t = HUD_U16(32);
+        if (t != 0) {
+            if (t == 1) {
+                HUD_U32(24) = 0;
+                HUD_U32(20) = 0;
+                HUD_U16(32) = 0;
+                gUnknown_03000420[2] = 1;
+            } else {
+                HUD_U16(32) = t - 1;
+            }
+        }
+    }
+    sub_0802CF70();
+    sub_0802D104();
+    sub_0802D190(gUnknown_03006C80.unk64[gLCDRegisterBuffer].v);
+    if (gUnknown_03000420[12] != gUnknown_03006730->unk1C) {
+        gUnknown_03000420[12] = gUnknown_03006730->unk1C;
+        gUnknown_03000420[14] = gUnknown_03006730->unkF & 2;
+        sub_0802D7E8();
+        sub_0802D820();
+        gUnknown_03000420[2] = 1;
+    }
+    if ((u8)(gUnknown_03006730->unkF & 2) != gUnknown_03000420[14]) {
+        gUnknown_03000420[14] = gUnknown_03006730->unkF & 2;
+        sub_0802D7E8();
+    }
+    sub_0802CE98();
+    for (i = 0; i < gUnknown_03006C80.unk0; i++) {
+        if (((u16 *)&gUnknown_03000420[36])[i] == 0 && gUnknown_03006C80.unk68[i].v > 3) {
+            e = gUnknown_03006A30[i].unk28;
+            sub_0804CB38(e, 21, 0);
+            sub_0800D6A4(0x303);
+            ((u32 *)&gUnknown_0201ED90)[2] = e->form + 1;
+            ((u32 *)&gUnknown_0201ED90)[4] = 500;
+        }
+        ((u16 *)&gUnknown_03000420[36])[i]--;
+    }
+}
+#undef HUD_U16
+#undef HUD_U32
+#else
 asm(".include \"asm/non_matching/file_select/sub_0802CFBC.inc\"");
+#endif
 
 #ifdef NONMATCHING
 s32 sub_0800B830(s32);
