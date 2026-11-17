@@ -2505,8 +2505,37 @@ void sub_0802B018(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/file_select/sub_0802B030.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_0802B0A8.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_0802B0F8.inc\"");
+
+void sub_0802B0A8(struct Entity *this)
+{
+    if (sub_0800932C(this->unk7C.h, this->unk50) == 0x4008) {
+        sub_08008F48(0x4000, this->unk7C.h, this->unk50);
+        this->unk14 = 2;
+        this->unk78.b = 0;
+        this->unk78.s.unk7A = 0;
+        this->unk7C.s.unk7E = 60;
+        sub_08003DFC(152);
+    }
+}
+
+
+void sub_0802B148(struct Entity *);
+
+void sub_0802B0F8(struct Entity *this)
+{
+    if (this->unk7C.s.unk7E != 0) {
+        if ((--*(u16 *)((u8 *)this + 0x7E) & 7) == 0) /* matching: the bitfield form adds a 0xFFFF mask */
+            sub_0802B148(this);
+        GetNextFrame(this);
+    } else if (this->unk78.b != 0) {
+        this->unk78.b--;
+        this->unk7C.s.unk7E = 32;
+    } else {
+        this->unk14 = 1;
+        sub_08003870(this, this->form);
+    }
+}
+
 asm(".include \"asm/non_matching/file_select/sub_0802B148.inc\"");
 
 void sub_0802B200(struct Entity *this)
