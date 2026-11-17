@@ -10711,7 +10711,50 @@ void sub_0805C344(struct Entity *this)
     gUnknown_081410B4[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0805C36C.inc\"");
+
+void sub_0805C36C(struct Entity *this)
+{
+    struct MapDataB *m;
+
+    this->unk1C_0 = 1;
+    BITU16_AT(this, 0x64) = BITU16_AT(this, 0x66) = this->unk17 * 60;
+    this->unk17 = 16;
+    this->unk18 = 0;
+    m = (struct MapDataB *)sub_08015DC0(this->unk50);
+    this->unk74.w = (u32)&m->unk2004[((this->x.HALF.HI - gUnknown_03000450.unk18) >> 4) | ((this->y.HALF.HI - gUnknown_03000450.unk1A) >> 4 << 6)];
+    BITU16_AT(this, 0x70) = (u8)((this->form >> 4) & 3);
+    this->speed = gUnknown_081410CC[U16_AT(this, 0x70)];
+    if ((u8)(this->form & 8))
+    {
+        this->unk14 = 1;
+        this->unk60 = sub_08013D20(this->parameter);
+    }
+    else
+    {
+        this->unk14 = 2;
+    }
+    BITU8_AT(this, 0x68) = (this->form >> 6) & 1;
+    this->unk70.s.unk72 = (this->form >> 2) & 1;
+    this->form = this->form & 3;
+    this->direction = (this->form ^ 2) << 3;
+    sub_08003870(this, this->form << 2);
+    switch (this->form)
+    {
+    case 0:
+    case 2:
+        this->unk78.h = this->x.HALF_U.HI - 16;
+        this->unk78.s2.unk7A = this->y.HALF_U.HI;
+        this->unk7C.h = 32;
+        break;
+    case 1:
+    case 3:
+        this->unk78.h = this->x.HALF_U.HI;
+        this->unk78.s2.unk7A = this->y.HALF_U.HI - 16;
+        this->unk7C.s.unk7E = 32;
+        break;
+    }
+}
+
 
 void sub_0805C61C(struct Entity *this)
 {
