@@ -801,7 +801,14 @@ asm(".include \"asm/non_matching/rom2/sub_0800C6A8.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800C75C.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800C7E8.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800C8E4.inc\"");
-asm(".include \"asm/non_matching/rom2/sub_0800C940.inc\"");
+
+const u8 *sub_0800C940(const u8 *p)
+{
+    CpuFastSet((void *)(p[0] + (p[1] << 8) + (p[2] << 16) + (p[3] << 24)),
+               (void *)(p[4] + (p[5] << 8) + (p[6] << 16) + (p[7] << 24)), (u32)(p[8] + (p[9] << 8)) >> 2);
+    return p + 10;
+}
+
 
 bool32 sub_0800C984(void)
 {
