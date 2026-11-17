@@ -1524,7 +1524,28 @@ u32 sub_0803C2EC(struct Entity *this, struct Entity *a1, u8 a2)
     return 1;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0803C50C.inc\"");
+
+u32 sub_0803C50C(struct Entity *this, struct Entity *a1, u8 a2)
+{
+    a2 = ((a2 ^ 16) - 12) & 31;
+    if (((a1->direction - a2) & 31) <= 24)
+    {
+        this->unk3D = (u8)(a1->unk46 & 0x80) ? a1->unk46 + S8_AT(a1, 0x46) / 4 : -a1->unk46 - S8_AT(a1, 0x46) / 4;
+        a1->unk3D = (u8)(this->unk46 & 0x80) ? this->unk46 + S8_AT(this, 0x46) / 4 : -this->unk46 - S8_AT(this, 0x46) / 4;
+        sub_0803A788(this, a1);
+    }
+    else
+    {
+        a1->unk42 = this->unk46;
+        a1->unk3D = this->unk46;
+        a1->unk3D = (u8)(this->unk46 & 0x80) ? this->unk46 + S8_AT(this, 0x46) / 4 : -this->unk46 - S8_AT(this, 0x46) / 4;
+        a1->unk43 = 240;
+        if (this->unk3D == 0)
+            this->unk3D |= 0xFF;
+    }
+    return 1;
+}
+
 
 u8 sub_0803C72C(struct Entity *this, struct Entity *other, u8 c)
 {
