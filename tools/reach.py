@@ -7,7 +7,8 @@ Reads zeldaalttp.elf/.map/.gba (normal build). Edges: Thumb and ARM BL calls in 
 word in a function's bytes (literal pools, jump tables) that points at a function or into ROM data.
 A data object (from one data symbol to the next) passes on every function and data pointer it holds,
 so function pointer tables and structs with callbacks are followed. --cut removes functions from the
-graph (default: sub_0800B69C, the A Link to the Past mode handler). Over-approximates: a pointer in a
+graph (default: sub_0800B69C, the A Link to the Past mode handler); an address in ROM data cuts that data
+object (e.g. a handler table). Over-approximates: a pointer in a
 data blob counts even if the code never uses it.
 """
 import argparse, bisect, re, struct, subprocess, sys
@@ -120,7 +121,7 @@ def walk(cut):
     while stack:
         n = stack.pop()
         for m in sorted(edges[n]):
-            if m not in parent and not (m[0] == "f" and m[1] in cut):
+            if m not in parent and m[1] not in cut:
                 parent[m] = n
                 stack.append(m)
     return parent

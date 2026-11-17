@@ -7,7 +7,8 @@
 // --loads FILE: every load from ROM data (>= 0x08137B10), all GBAs: BIOS decompress/copy calls (swi 0x0B,
 // 0x0C, 0x11-0x15), DMA transfers, and Thumb CPU loads; plus BIOS copies and DMAs from RAM into palette,
 // VRAM or OAM, to follow ROM data that reaches the screen through a RAM buffer. FILE.ramwords: one byte
-// per EWRAM then IWRAM word, 1 = read by a 32-bit Thumb load (pointer use of data copied to RAM). Each distinct one once, as
+// per EWRAM then IWRAM word, 1 = read by a 32-bit Thumb load (pointer use of data copied to RAM).
+// Also "ent TYPE SUBTYPE 0 CALLER" for each entity registered with sub_08012728 (once per distinct line). Each distinct one once, as
 //   KIND SRC DST N CALLER    KIND = swiNN | dma | cpu32 | cpu16 | cpu8; N = units (swi: r2; dma: count
 // and width as in the register; cpu: register width); DST is 0 for cpu loads. Same run as without it.
 // --trace DIR --trace-list FILE: GBA 0 only. FILE has one hex function address per line; the first
@@ -120,6 +121,8 @@ static void loadsBefore(struct mCore *core, struct ARMCore *cpu) {
 	if (pc >> 24 != 8) return;
 	uint16_t op = core->busRead16(core, pc);
 	uint32_t *r = (uint32_t *) cpu->gprs;
+	if (pc == 0x08012728)  // entity registration (type, entity): type and subtype are set by now
+		logLoad("ent", core->busRead8(core, r[1] + 8), core->busRead8(core, r[1] + 9), 0, r[14] - 1);
 	if ((op & 0xFF00) == 0xDF00) {
 		int n = op & 0xFF;
 		// From ROM data, or from RAM into palette/VRAM/OAM (a RAM buffer the game sends to the screen)

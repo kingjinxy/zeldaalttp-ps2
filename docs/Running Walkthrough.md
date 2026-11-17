@@ -382,3 +382,19 @@ draft generator for the regular -O0 Four Swords code, to speed up matching decom
   is real: `interrupt_main -> DoObjectEntity ->` the object handler table `0x0813F998`, which holds both
   games' entities. Separating those needs which object types Four Swords creates (coverage, or the
   types passed to CreateObject from Four Swords code).
+- Object subtypes (2026-11-17): `reach.py --cut` now also takes data objects. Cutting the object handler
+  table `0x0813F998` (108 entries, indexed by Entity.subtype from `DoObjectEntity`) drops 627 functions
+  from the Four Swords walk; 36 subtypes ran in session 1.
+  - `tools/object_subtypes.py`: subtypes created by code, statically: constant r0 at calls to the
+    creators `sub_0804C8A8`/`sub_0804C938` (51 subtypes, 4 calls non-constant), the spawn lists given to
+    `sub_0804C808` (6 constant lists), `sub_0804CCE4` (always 93), the drop tables read by `sub_08013EC0`
+    (`0x084299B4`) and `sub_080142F4` (`0x08429A00`), direct stores in C. 55 subtypes in all.
+  - `mgba_run --loads` also logs each entity registered by `sub_08012728` (type, subtype, caller). 18 of
+    the 36 subtypes that ran aren't in the static list: 15 come from the room object loader
+    (`sub_0800A148`/`sub_0800A1A8`: 8-byte records, halfword 0 = subtype bits 0-8, type bits 9-12,
+    position mode bits 13-15; halfword 1 = form, parameter; then x, y; lists end with 0xFFFF; walked by
+    `sub_08013C8C`, 17 call sites), 3 from `sub_08014958`/`sub_08015888`/`sub_08015AC4`/not registered.
+  - The room lists hang off per-room pointers at `0x02016330[room]`, filled by the room loader; the area
+    table `0x0842AD18` -> header +20 holds only room 0's layer table (12 lists, 2 subtypes). Finding lists
+    by shape alone is useless (1,903 "lists" even with subtype < 108). Not applied to reach.py yet: an
+    incomplete subtype list would drop objects of stages not yet recorded.
