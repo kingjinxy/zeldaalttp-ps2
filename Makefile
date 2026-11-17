@@ -34,9 +34,14 @@ endif
 ifneq ($(NONMATCHING),)
   CPPFLAGS += -DNONMATCHING
 endif
+# make NONMATCHING=1 NONMATCHING_EXCLUDE="src/rom2.c ...": all NONMATCHING C except those files' (bisecting
+# a bad build; one file alone can outgrow its asm and overlap .rodata)
+ifneq ($(NONMATCHING_EXCLUDE),)
+  CPPFLAGS += -DNONMATCHING_EXCLUDE_SOME
+endif
 # Rebuild C objects when CPPFLAGS change
 CPPFLAGS_STAMP := .cppflags
-$(shell echo '$(CPPFLAGS)' | cmp -s - $(CPPFLAGS_STAMP) || echo '$(CPPFLAGS)' > $(CPPFLAGS_STAMP))
+$(shell echo '$(CPPFLAGS) $(NONMATCHING_EXCLUDE)' | cmp -s - $(CPPFLAGS_STAMP) || echo '$(CPPFLAGS) $(NONMATCHING_EXCLUDE)' > $(CPPFLAGS_STAMP))
 
 SHA1 := $(shell { command -v sha1sum || command -v shasum; } 2>/dev/null) -c
 
@@ -85,6 +90,8 @@ src/rom2.o:         CC1FLAGS += -fprologue-bugfix
 #src/interface.o: CC1FLAGS += -fprologue-bugfix
 # Four Swords game code was built without optimization (frame pointer in r7)
 src/fs_game.o:      CC1FLAGS := $(filter-out -O2,$(CC1FLAGS))
+
+$(foreach f,$(NONMATCHING_EXCLUDE),$(eval $(f:.c=.o): CPPFLAGS := $(filter-out -DNONMATCHING,$(CPPFLAGS))))
 
 #### Main Targets ####
 
