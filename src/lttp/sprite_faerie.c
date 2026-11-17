@@ -56,7 +56,7 @@ void sub_080CFA30(u8 r0)
 }
 
 // Too hard
-#ifdef NONMATCHING
+#ifdef NONMATCHING_LTTP  // upstream LttP drafts that no longer compile
 void sub_080CFAA8(u8 r0)
 {
     s8 temp;

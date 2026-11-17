@@ -97,7 +97,7 @@ u32 sub_080A6B14(u8 a)
     return 0;
 }
 
-#ifdef NONMATCHING
+#ifdef NONMATCHING_LTTP  // upstream LttP drafts that no longer compile
 void sub_080A6B40(u8 a)
 {
     u32 r1 = a;
@@ -395,7 +395,7 @@ void sub_080A7224(void)
 }
 
 // This function is too hard.
-#ifdef NONMATCHING
+#ifdef NONMATCHING_LTTP  // upstream LttP drafts that no longer compile
 void sub_080A7228(void)
 {
     u32 r8;
@@ -880,7 +880,7 @@ _080A74B8:\n\
 }
 #endif
 
-#ifdef NONMATCHING
+#ifdef NONMATCHING_LTTP  // upstream LttP drafts that no longer compile
 void sub_080A74BC(void)
 {
     u16 r2;

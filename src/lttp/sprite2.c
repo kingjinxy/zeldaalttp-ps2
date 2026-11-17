@@ -504,7 +504,7 @@ u16 sub_080CF400(u8 r0, u8 r1)
     return sub_080CF28C(r0, r1);
 }
 
-#ifdef NONMATCHING
+#ifdef NONMATCHING_LTTP  // upstream LttP drafts that no longer compile
 #else
 __attribute__((naked)) void sub_080CF418(u8 r0)
 {
@@ -567,7 +567,7 @@ _080CF47C: \n\
 #endif
 
 // missing push {lr}
-#ifdef NONMATCHING
+#ifdef NONMATCHING_LTTP  // upstream LttP drafts that no longer compile
 void sub_080CF480(u8 r0)
 {
     gShield = gRam.unk1002[r0];
@@ -750,7 +750,7 @@ void sub_080CF66C(u8 r0)
 }
 
 // missing push {lr}
-#ifdef NONMATCHING
+#ifdef NONMATCHING_LTTP  // upstream LttP drafts that no longer compile
 bool8 sub_080CF680(u8 find)
 {
     char cur;

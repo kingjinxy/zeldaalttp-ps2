@@ -27,6 +27,12 @@ ASFLAGS  := -mcpu=arm7tdmi -mthumb-interwork -Iasminclude
 ifneq ($(FS_ONLY),)
   CPPFLAGS += -DFS_ONLY
 endif
+# make NONMATCHING=1: build the functionally equivalent C kept under #ifdef NONMATCHING instead of the
+# original asm (zeldaalttp_nm.gba, does not match). shortcut: asm that calls absolute addresses breaks once
+# a C function changes size, so this ROM proves the C compiles and links, not that it runs.
+ifneq ($(NONMATCHING),)
+  CPPFLAGS += -DNONMATCHING
+endif
 # Rebuild C objects when CPPFLAGS change
 CPPFLAGS_STAMP := .cppflags
 $(shell echo '$(CPPFLAGS)' | cmp -s - $(CPPFLAGS_STAMP) || echo '$(CPPFLAGS)' > $(CPPFLAGS_STAMP))
@@ -40,7 +46,7 @@ endif
 
 #### Files ####
 
-ROM      := zeldaalttp.gba
+ROM      := zeldaalttp$(if $(NONMATCHING),_nm).gba
 ELF      := $(ROM:.gba=.elf)
 MAP      := $(ROM:.gba=.map)
 LDSCRIPT := ldscript.txt

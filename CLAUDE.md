@@ -34,8 +34,11 @@ already in this codebase; standard library or platform; an installed dependency;
 ## Matching build (regression check)
 
 After every decomp change, `make compare` must report `zeldaalttp.gba: OK` (SHA-1 in `checksum.sha1`).
-Needs `tools/agbcc` (pret/agbcc) and `arm-none-eabi` binutils. A decompiled function counts as done only
-when it matches; anything under `NONMATCHING` is tracked in the planning doc.
+Needs `tools/agbcc` (pret/agbcc) and `arm-none-eabi` binutils. The port needs functionally equivalent C,
+not byte-matching C (user, 2026-11-17): after one or two quick tries, commit a correct draft under
+`#ifdef NONMATCHING` with the original asm include in the `#else`. `make NONMATCHING=1` builds that C into
+`zeldaalttp_nm.gba` (must compile and link; it won't run correctly while asm calls absolute addresses).
+The NONMATCHING count is tracked in the planning doc.
 
 ## Accuracy checks (no TAS exists for Four Swords)
 
