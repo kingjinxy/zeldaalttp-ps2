@@ -3458,10 +3458,7 @@ void sub_0802CF70(void)
 
 asm(".include \"asm/non_matching/file_select/sub_0802CFBC.inc\"");
 
-s32 sub_0800B830(s32);
-#define COUNTER (*(u32 *)&gUnknown_03000420[16])
 asm(".include \"asm/non_matching/file_select/sub_0802D104.inc\"");
-#undef COUNTER
 
 
 asm(".include \"asm/non_matching/file_select/sub_0802D190.inc\"");
