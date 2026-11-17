@@ -12836,7 +12836,56 @@ void sub_08065DB4(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08065E44.inc\"");
+
+void sub_08065E44(struct Entity *this)
+{
+    switch (gUnknown_03006C80.unk0)
+    {
+    case 2:
+        gUnknown_03006A30[0].unk28->x.WORD = 0x1E80000;
+        gUnknown_03006A30[0].unk28->y.WORD = 0x2780000;
+        gUnknown_03006A30[0].unk28->z.WORD = 0;
+        gUnknown_03006A30[0].unk28->unk2A = 0;
+        gUnknown_03006A30[1].unk28->x.WORD = 0x2080000;
+        gUnknown_03006A30[1].unk28->y.WORD = 0x2780000;
+        gUnknown_03006A30[1].unk28->z.WORD = 0;
+        gUnknown_03006A30[1].unk28->unk2A = 0;
+        break;
+    case 3:
+        gUnknown_03006A30[0].unk28->x.WORD = 0x1E80000;
+        gUnknown_03006A30[0].unk28->y.WORD = 0x2780000;
+        gUnknown_03006A30[0].unk28->z.WORD = 0;
+        gUnknown_03006A30[0].unk28->unk2A = 0;
+        gUnknown_03006A30[1].unk28->x.WORD = 0x1F80000;
+        gUnknown_03006A30[1].unk28->y.WORD = 0x2780000;
+        gUnknown_03006A30[1].unk28->z.WORD = 0;
+        gUnknown_03006A30[1].unk28->unk2A = 0;
+        gUnknown_03006A30[2].unk28->x.WORD = 0x2080000;
+        gUnknown_03006A30[2].unk28->y.WORD = 0x2780000;
+        gUnknown_03006A30[2].unk28->z.WORD = 0;
+        gUnknown_03006A30[2].unk28->unk2A = 0;
+        break;
+    case 4:
+        gUnknown_03006A30[0].unk28->x.WORD = 0x1E00000;
+        gUnknown_03006A30[0].unk28->y.WORD = 0x2780000;
+        gUnknown_03006A30[0].unk28->z.WORD = 0;
+        gUnknown_03006A30[0].unk28->unk2A = 0;
+        gUnknown_03006A30[1].unk28->x.WORD = 0x1F00000;
+        gUnknown_03006A30[1].unk28->y.WORD = 0x2780000;
+        gUnknown_03006A30[1].unk28->z.WORD = 0;
+        gUnknown_03006A30[1].unk28->unk2A = 0;
+        gUnknown_03006A30[2].unk28->x.WORD = 0x2000000;
+        gUnknown_03006A30[2].unk28->y.WORD = 0x2780000;
+        gUnknown_03006A30[2].unk28->z.WORD = 0;
+        gUnknown_03006A30[2].unk28->unk2A = 0;
+        gUnknown_03006A30[3].unk28->x.WORD = 0x2100000;
+        gUnknown_03006A30[3].unk28->y.WORD = 0x2780000;
+        gUnknown_03006A30[3].unk28->z.WORD = 0;
+        gUnknown_03006A30[3].unk28->unk2A = 0;
+        break;
+    }
+}
+
 
 void sub_080660BC(struct Entity *this)
 {
