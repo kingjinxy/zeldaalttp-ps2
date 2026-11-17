@@ -508,3 +508,22 @@ draft generator for the regular -O0 Four Swords code, to speed up matching decom
   `grep -q "zeldaalttp.gba: OK"` again and the commit was amended. The scratchpad `unplace.py` once
   deleted asm include lines while removing a draft's declarations; the compare caught it before a commit.
 - Deferred with permuter scores in the scratchpad notes: ~30 functions, mostly register choice.
+
+## Step 18: functionally equivalent C is enough (2026-11-17)
+
+- The user's goal for the port is functionally equivalent C; byte-matching was costing most of the time
+  (~10 functions/hour, mostly on register and instruction-order near-misses). New rule (also in
+  CLAUDE.md): one or two quick tries for a match, otherwise commit the C under `#ifdef NONMATCHING` with the
+  original asm include in the `#else`. `make compare` stays the regression check for the matching ROM.
+- `make NONMATCHING=1` builds the equivalent C into `zeldaalttp_nm.gba` (it has to compile and link). It
+  won't run correctly yet: much of the remaining asm calls absolute addresses, which shift once a C function
+  has a different size. Behaviour checks for NONMATCHING code come with the port harness (same inputs, RAM
+  compared against mGBA). Old upstream LttP drafts that no longer compiled are guarded by
+  `NONMATCHING_LTTP` instead.
+- `tools/place_nonmatching.py DRAFT.c...` places drafts this way. All 76 earlier near-miss drafts went in,
+  then new functions at about one try each (~82 NONMATCHING functions now, plus new true matches like
+  sub_0802CD3C and sub_0800EC08).
+- Checks found two real bugs in drafts: argument order in a call that had no prototype (sub_0800E78C to
+  sub_0800E80C), and a missing third argument (sub_0802C070 to sub_0802C1C0). Implicit declarations hide
+  these, so calls from NONMATCHING code get prototypes and are checked against the asm's registers.
+- The permuter queues were stopped: with equivalent C as the goal they no longer pay.

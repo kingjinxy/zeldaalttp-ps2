@@ -10970,3 +10970,870 @@ Batch 3 is still running. It's a good point for the milestone docs. Counting pro
 
 - tool `Bash`: sed -i 's/all code: 5,804 asm files left/all code: 5,767 asm files left/' "docs/Planning Doc.md" && grep -n "5,767" "docs/Planning Doc.md" | head -2 && cat >> "
 
+## Claude
+
+Docs are committed; the archive diff shows only added lines. Back to the queue:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; echo sub_0802C710 sub_0801E7A0 >> $S/skip.txt; bash $S/n
+
+## Claude
+
+Three more: `sub_080133D0`, `sub_0801478C`, `sub_0802715C`. `sub_0801478C` works on the room map buffer; checking its layout and some prototypes:
+
+- tool `Bash`: grep -n "sub_08015DC0\|sub_080132B0\|sub_080128EC\|sub_08015DD8" include/functions.h src/file_select.c | head -6
+
+- tool `Bash`: sed -n 940,952p src/file_select.c; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/b30.txt <<'E
+
+## Claude
+
+Two compile errors: agbcc doesn't accept the flexible array of arrays, and those two buffers are already declared as `u8[]`. Fixing both:
+
+- tool `Bash`: python3 - <<'EOF' fn="src/file_select.c"; s=open(fn).read() s=s.replace("u16 unk5004[0x1000]; u16 blocks[][4]; };","u16 unk5004[0x1000]; u16 blocks[0x800][4]; }
+
+## Claude
+
+Their declarations come later in the file. Moving them above the new code:
+
+- tool `Bash`: sed -i -e '1031,1032d' -e '870i extern u8 gUnknown_02016D90[];\nextern u8 gUnknown_020031D0[];' src/file_select.c && make -j8 2>&1 | grep -v warning | grep "\.c
+
+## Claude
+
+`sub_080133D0` matches. Committing it, and sending the other two to the permuter:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/extract.py sub_0801478C sub_0802715C >/dev/nu
+
+- tool `Bash`: grep -n "gUnknown_02016D90\|gUnknown_020031D0" src/file_select.c | head; make 2>&1 | grep -v warning | grep "\.c:[0-9]" | head -3
+
+- tool `Bash`: grep -n "^void sub_08016084" src/file_select.c; L=$(grep -n "^void sub_080159F4(void \*, void \*);" src/file_select.c | cut -d: -f1); echo $L; sed -i "${L}i ext
+
+## Claude
+
+Committed, with the declarations back where `sub_08016084` needs them, and `unplace.py` now ignores commented-out header lines. Checking batch 3:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat $S/pb3.log; ps -o etime,args -C python3 | grep -c pe
+
+## Claude
+
+Still running. Next items in the queue:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; bash $S/nextq.sh 3 $(cat $S/skip.txt) 2>&1 | cut -c1-260
+
+## Claude
+
+Two more: `sub_080304FC` and `sub_0802C2DC`. `sub_080144F0` is a near-copy of `sub_0801478C`, so it waits for that one's permuter result.
+
+- tool `Bash`: grep -n "sub_080599A8\|sub_08030728\|sub_0802C2B8" include/functions.h src/rom2a.c src/file_select.c | head -4; S=/tmp/claude-1000/-home-alex-Documents-zeldaalt
+
+## Claude
+
+Both close but not matching; queuing them. Checking batch 3:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/extract.py sub_080304FC sub_0802C2DC >/dev/nu
+
+- tool `Bash`: git diff src | grep "^[-+]" | grep -v "^+++\|^---"; git checkout -q src; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099ef
+
+## Claude
+
+Two more: `sub_080278E8` (the wall check again) and `sub_08012824`, which creates a player entity.
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/b32.txt <<'EOF' @@ sub_080278E8 void sub_080278
+
+## Claude
+
+`sub_080278E8` matches; `sub_08012824` is 0x1C bytes short. Committing the match and queuing the other:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/extract.py sub_08012824 >/dev/null; python3 $
+
+## Claude
+
+Next, `sub_08013948`:
+
+- tool `Bash`: grep -n "sub_08008E5C\|sub_08013948" include/functions.h | head -3; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/
+
+- tool `Bash`: sed -n 713p src/file_select.c; grep -n "sub_08013948(" src/file_select.c | head
+
+## Claude
+
+An earlier prototype (line 713) takes `u32 *` for the slot range. Rewriting the definition to match it:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' fn="src/file_select.c"; s=open(fn).rea
+
+## Claude
+
+4 bytes long; queuing it. Checking batch 3:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/extract.py sub_08013948 >/dev/null; python3 $
+
+## Claude
+
+Batch 3's log is still empty. Checking which functions its processes are working on:
+
+- tool `Bash`: for p in $(pgrep -f "decomp-permuter/permuter.py" | head -20); do readlink /proc/$p/cwd; done | sort | uniq -c
+
+## Claude
+
+Batch 3 is still on its six functions, two of which are already solved. Stopping those two by PID to free cores, then queuing the 23 waiting functions in groups of four at 10 minutes each:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for p in $(pgrep -f "decomp-permuter/permuter.py"); do c
+
+## Claude
+
+The permuter queue is running (about an hour). Continuing the hand queue meanwhile:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; bash $S/nextq.sh 3 $(cat $S/skip.txt) 2>&1 | cut -c1-260
+
+## Claude
+
+Three more: `sub_08028AE0`, `sub_0800C1EC` (a palette fade), `sub_08025CEC`. Checking the fields they use:
+
+- tool `Bash`: grep -n "^struct Struct03000520$" -A10 include/types.h; sed -n 60,64p include/entity.h; grep -n "gPaletteBuf1\|gUnknown_0201EDE0" include/variables.h | head -2
+
+- tool `Bash`: sed -n 543,548p include/types.h; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/b34.txt <<'EOF
+
+## Claude
+
+`unk18` is a bitfield, so its address can't be taken. Using a byte pointer instead:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's/                sub_08028C54(this, \&this->unk
+
+## Claude
+
+`sub_08025CEC` differs at an offset that decodes as data on both sides. Dumping our version's tail:
+
+- tool `Bash`: a=$(arm-none-eabi-nm zeldaalttp.elf | grep " sub_08025CEC$" | cut -d' ' -f1); arm-none-eabi-objdump -d --start-address=$(printf 0x%x $((0x$a+0x80))) --stop-addr
+
+## Claude
+
+Ours is 4 bytes shorter overall. Comparing the start of both versions:
+
+- tool `Bash`: a=$(arm-none-eabi-nm zeldaalttp.elf | grep " sub_08025CEC$" | cut -d' ' -f1); arm-none-eabi-objdump -d --start-address=0x$a --stop-address=$(printf 0x%x $((0x$a
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/extract.py sub_08028AE0 sub_0800C1EC >/dev/nu
+
+## Claude
+
+Committed; the full compare confirms it. For `sub_08028AE0` the original computes each pointer just before its test, so I'll interleave the assignments:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import subprocess S="/tmp/claude-1000/
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; (echo "@@ sub_08028AE0"; cat $S/drafts/sub_08028AE0.c) >
+
+## Claude
+
+Committed. Checking the permuter queue:
+
+- tool `Bash`: cat /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/permqueue.log
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; bash $S/nextq.sh 3 $(cat $S/skip.txt) 2>&1 | cut -c1-240
+
+## Claude
+
+Next, `sub_080159F4`, which draws a 64×64-tile map from 2×2 blocks. The inner copy is written out four times, and agbcc -O2 doesn't unroll loops, so the source had four copies. I'll use a macro:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/b35.txt <<'EOF' @@ sub_080159F4 struct MapBuf {
+
+- tool `Bash`: a=$(arm-none-eabi-nm zeldaalttp.elf | grep " sub_080159F4$" | cut -d' ' -f1); arm-none-eabi-objdump -d --start-address=0x$a --stop-address=$(printf 0x%x $((0x$a
+
+## Claude
+
+The original walks the block pointer with `*b++` for the first row and sets `j` before `d2`. Adjusting both:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import subprocess S="/tmp/claude-1000/
+
+## Claude
+
+Closer (4 bytes short); queuing it for the permuter. Next, `sub_08030654`, a camera follow that clamps and eases toward the target:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/extract.py sub_080159F4 >/dev/null; python3 $
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -n "unk26" include/types.h | sed -n 1,3p; cat > $S/
+
+## Claude
+
+Close (4 bytes short); queuing it too. Next, `sub_0800DFC4`, a text-colour helper:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/extract.py sub_08030654 >/dev/null; python3 $
+
+## Claude
+
+16 bytes short; queuing it as well. Next items in the queue:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/extract.py sub_0800DFC4 >/dev/null; python3 $
+
+## Claude
+
+Next, `sub_080275F8`, the same check repeated for each of the four players:
+
+- tool `Bash`: grep -n "sub_08003FB0\|sub_080003E0\|sub_08000694" include/functions.h | head; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c
+
+## Claude
+
+20 bytes short; queuing it. Next, `sub_0802D280`, which draws a 3-5 digit counter with an icon:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/extract.py sub_080275F8 >/dev/null; python3 $
+
+## Claude
+
+Close; queuing it. Checking the permuter queue:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/extract.py sub_0802D280 >/dev/null; python3 $
+
+- tool `Bash`: for p in $(pgrep -f "decomp-permuter/permuter.py"); do echo "$(ps -o etime= -p $p) $(readlink /proc/$p/cwd | sed 's/.*perm.//')"; done | sort -u -k2 | head; pgr
+
+## Claude
+
+Progressing; batch 3's processes are about to time out. Next, `sub_0802D354`:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/b40.txt <<'EOF' @@ sub_0802D354 extern u8 gUnkn
+
+## Claude
+
+Also off (12 bytes long). Setting up a second permuter queue that starts when the first finishes:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/extract.py sub_0802D354 >/dev/null; python3 $
+
+## Claude
+
+Both queues hold about 50 functions in total, which will take a few hours of permuter time. Meanwhile, the next items in the queue:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; bash $S/nextq.sh 3 $(cat $S/skip.txt) 2>&1 | cut -c1-260
+
+## Claude
+
+Two more: `sub_08029720` (four objects around the entity) and `sub_0800E6B0` (text-window sizing). `sub_0803A20C` is already deferred.
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; echo sub_0803A20C >> $S/skip.txt; cat > $S/b41.txt <<'EO
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/extract.py sub_0800E6B0 >/dev/null; python3 $
+
+## Claude
+
+Committed. Next items in the queue:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; bash $S/nextq.sh 3 $(cat $S/skip.txt) 2>&1 | cut -c1-240
+
+## Claude
+
+Next, `sub_0801E4AC`, a switch compiled to a jump table. Counting which entries go to which case:
+
+- tool `Bash`: grep -o "_0801E5[34]\w*\|_0801E57C" asm/non_matching/file_select/sub_0801E4AC.inc | sed -n '1,40p' | awk '/\.4byte/' ; grep "\.4byte _0801E" asm/non_matching/fi
+
+- tool `Bash`: grep -n "sub_080098A0" include/functions.h src/file_select.c | head -2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa
+
+- tool `Bash`: sed -i '/^void sub_080098A0(struct Entity \*, const u8 \*);$/d' src/file_select.c && make -j8 2>&1 | grep -v warning | grep "\.c:[0-9]" | head -3; python3 /tmp/
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A asm/non_matching src include && git commit -qm "Decompile sub_0801E4AC  Co-Authored-By: Claud
+
+## Claude
+
+Committed. Next, `sub_0800E240`, which scrolls the text box up a line:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/b43.txt <<'EOF' @@ sub_0800E240 extern u8 gUnkn
+
+## Claude
+
+Close; it goes on the pending list for the next permuter queue. Next, `sub_0800E950`, which fills the text window's rows:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/extract.py sub_0800E240 >/dev/null; python3 $
+
+## Claude
+
+16 bytes short; pending as well. Next items in the queue:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/extract.py sub_0800E950 >/dev/null; python3 $
+
+## Claude
+
+Next, `sub_0802D428`, which draws a heart-style meter in two rows of ten:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; echo sub_0803D134 >> $S/skip.txt; cat > $S/b45.txt <<'EO
+
+## Claude
+
+4 bytes short; pending. Next items:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/extract.py sub_0802D428 >/dev/null; python3 $
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; bash $S/nextq.sh 1 $(cat $S/skip.txt) sub_0800F0A0 2>&1 
+
+## Claude
+
+Next, `sub_08025B84`, which spawns three child entities:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/b46.txt <<'EOF' @@ sub_08025B84 extern const u8
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A asm/non_matching src include && git commit -qm "Decompile sub_08025B84  Co-Authored-By: Claud
+
+## Claude
+
+Next, `sub_0800D0A8`, a line rasteriser that fills per-scanline x positions (window-effect edges):
+
+- tool `Bash`: grep -n "sub_0800D0A8" src/*.c include/functions.h | head -3; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratc
+
+## Claude
+
+Very close: only the loop tail differs. The original increments `y0` before advancing `p`:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import subprocess S="/tmp/claude-1000/
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A asm/non_matching src include && git commit -qm "Decompile sub_0800D0A8 (scanline edge rasteri
+
+## Claude
+
+Next, `sub_080160F8`, which rebuilds both room maps' collision attributes and fills the edge rows and columns with 0xFF:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/b48.txt <<'EOF' @@ sub_080160F8 struct MapBuf {
+
+## Claude
+
+24 bytes long; pending. Next, `sub_08030214`:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/extract.py sub_080160F8 >/dev/null; python3 $
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -n "sub_08030214" src/rom2a.c | head -3; cat > $S/b
+
+## Claude
+
+8 bytes short. The original indexes the table as `u32` pairs, reading the size with `ldrh` from the second word. Trying that form:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import subprocess S="/tmp/claude-1000/
+
+## Claude
+
+4 bytes short; pending. Checking the permuter queue:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/extract.py sub_08030214 >/dev/null; python3 $
+
+- tool `Bash`: for p in $(pgrep -f "decomp-permuter/permuter.py"); do echo "$(ps -o etime= -p $p) $(readlink /proc/$p/cwd | sed 's/.*perm.//')"; done | sort -u -k2 | head; ls 
+
+## Claude
+
+Only three of the four in this group are running; I'll check the fourth when results come in. Listing the next queue entries with their sizes to pick the simpler ones:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; bash $S/nextq.sh 15 $(cat $S/skip.txt) sub_0800F0A0 2>&1
+
+## Claude
+
+The rest of the queue is larger functions, 264 bytes and up. Next, `sub_0802C3F0`:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; bash $S/nextq.sh 1 $(cat $S/skip.txt) sub_0800F0A0 2>&1 
+
+## Claude
+
+Next, `sub_0802C3F0`, which adds to an entity's health-like counter and checks whether every player is full:
+
+- tool `Bash`: grep -n "sub_0802C3F0" src/*.c include/functions.h | head -5
+
+## Claude
+
+Its -O0 caller passes an `s32`, so I'll keep the prototype and narrow inside:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/b50.txt <<'EOF' @@ sub_0802C3F0 void sub_0802CF
+
+## Claude
+
+Operand order: the original computes `d + old`. Swapping:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's/    u16 v = old + d;/    u16 v = d + old;/' sr
+
+## Claude
+
+Swapping made no difference; pending for the permuter. Next, `sub_0800C54C`:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/extract.py sub_0802C3F0 >/dev/null; python3 $
+
+## Claude
+
+Next, `sub_0800C54C`, the link-cable state machine:
+
+- tool `Bash`: grep -n "sub_0800C54C\|sub_0800C6A8" src/*.c | head -4; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; 
+
+## Claude
+
+The link struct is defined further down `rom2.c`. Moving its definition above the new function:
+
+- tool `Bash`: python3 - <<'EOF' fn="src/rom2.c"; s=open(fn).read() a=s.index("// Link packet header"); b=s.index("extern struct Struct02030790 gUnknown_02030790;\n")+len("ext
+
+## Claude
+
+4 bytes short; pending. Putting it back and checking the struct move on its own still builds a matching ROM:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/extract.py sub_0800C54C >/dev/null; python3 $
+
+- tool `Bash`: git diff src/rom2.c | head -30
+
+## Claude
+
+The ROM still matches, with the struct now ahead of the `sub_0800C54C` include where it'll be needed. Removing the leftover prototype and committing:
+
+- tool `Bash`: python3 - <<'EOF' fn="src/rom2.c"; s=open(fn).read() s=s.replace('u8 sub_0800C6A8(u8 *);\nasm(".include \\"asm/non_matching/rom2/sub_0800C54C.inc\\");\n\n\n','a
+
+## Claude
+
+Committed; one harmless prototype stayed in. Next, `sub_0802D514`:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; bash $S/nextq.sh 1 $(cat $S/skip.txt) sub_0800F0A0 2>&1 
+
+## Claude
+
+Next, `sub_0802D514`, which draws a small tile graphic (variant chosen by `unk4 <= 8`) and copies a 3×4 icon from a table:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/b52.txt <<'EOF' @@ sub_0802D514 extern u8 gUnkn
+
+## Claude
+
+Our version holds the table pointer in an extra register. Indexing the table directly instead:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import subprocess,re S="/tmp/claude-10
+
+## Claude
+
+Still an extra register; pending. Checking the permuter queue:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/extract.py sub_0802D514 >/dev/null; python3 $
+
+## Claude
+
+Still nothing logged. Checking the processes:
+
+- tool `Bash`: for p in $(pgrep -f "decomp-permuter/permuter.py"); do echo "$(ps -o etime= -p $p) $(readlink /proc/$p/cwd | sed 's/.*perm.//')"; done | sort -u -k2 | head; ps 
+
+## Claude
+
+Only about nine and a half minutes have passed for the first group. Next queue item:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; bash $S/nextq.sh 1 $(cat $S/skip.txt) sub_0800F0A0 2>&1 
+
+## Claude
+
+Next, `sub_080267C4`. It opens with the same per-player check as the already-matched `sub_080268D8`:
+
+- tool `Bash`: grep -n "sub_08008F3C\|u8 sub_080269F8" include/functions.h src/file_select.c | head -3; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c
+
+- tool `Bash`: sed -i '/^void sub_08008F3C(u32, u16, u16);$/d' src/file_select.c; grep -n "^u8 sub_080269F8(struct Entity \*);" src/file_select.c | head -2; L=$(grep -n "^void
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A asm/non_matching src include && git commit -qm "Decompile sub_080267C4  Co-Authored-By: Claud
+
+## Claude
+
+The first permuter group is done: `sub_08027F98` reached 0. The `(new_var = this)` part isn't plausible, but computing `t & 15` before the shift could be. Trying just that change:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import subprocess S="/tmp/claude-1000/
+
+## Claude
+
+That matches. `sub_080270C0` has the same byte-30 pattern, so I'll try the same change there too:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; (echo "@@ sub_08027F98"; cat $S/drafts/sub_08027F98.c) >
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/place.py $S/p11.txt >/dev/null && make -j8 co
+
+## Claude
+
+Both committed. Next, `sub_08030100`, the game-select screen's setup:
+
+- tool `Bash`: grep -n "struct UnknownStruct2$" -A7 include/types.h | head -8; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scra
+
+## Claude
+
+4 bytes long; pending. Next item:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/extract.py sub_08030100 >/dev/null; python3 $
+
+## Claude
+
+Next, `sub_080132B0`, which picks a room record (fixed when `unk2` or `unk5` is set, otherwise a shuffled pick):
+
+- tool `Bash`: sed -i 's/^    } unk28\[4\];  \/\/ indexed by Entity.form (player)\n    u8 filler48;/&/' include/types.h; python3 - <<'EOF' p="include/types.h"; s=open(p).read(
+
+## Claude
+
+An earlier prototype (from `sub_080133D0`) already declares the return type as `struct Area080132B0 *`. Switching to that struct:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' fn="src/file_select.c"; s=open(fn).rea
+
+## Claude
+
+The struct is defined further down, beside `sub_080133D0`. Moving its definition above this function:
+
+- tool `Bash`: grep -n "struct Area080132B0 {" src/file_select.c; python3 - <<'EOF' fn="src/file_select.c"; s=open(fn).read() d="struct Area080132B0 { u8 *unk0; u32 unk4; };\n
+
+## Claude
+
+16 bytes short; pending. Putting it back and checking the struct move keeps the ROM matching:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/extract.py sub_080132B0 >/dev/null; head -8 $
+
+## Claude
+
+`unplace.py` left the externs behind because those names also appear in asm include lines. Discarding the file's changes and keeping only the `unk48` header rename:
+
+- tool `Bash`: git checkout -q src && make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git commit -qam "Struct03006C80.unk48 (room pick, sub_080132B0)  Co-Authored-By: 
+
+## Claude
+
+Committed. Next, `sub_080128EC`:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; tail -5 $S/permqueue.log; bash $S/nextq.sh 1 $(cat $S/sk
+
+## Claude
+
+Next, `sub_080128EC`, which picks the players' start positions and creates their entities:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/b56.txt <<'EOF' @@ sub_080128EC extern const u8
+
+## Claude
+
+4 bytes short; pending. Next item:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/extract.py sub_080128EC >/dev/null; python3 $
+
+## Claude
+
+Next, `sub_080156BC`, which checks the tile in front of an entity and queues an event record:
+
+- tool `Bash`: grep -n "sub_080094BC" include/functions.h; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/b57
+
+## Claude
+
+You've hit your 5-hour limit · resets 5:10pm (America/Chicago)
+
+## User
+
+How efficiently are we working?
+
+- tool `Bash`: git checkout -q src; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; b=$(git log --format=%h --grep="Doc
+
+## Claude
+
+Moderately. We match plenty of functions, but most of the time goes into near-misses, and at this rate the full job is very long.
+
+**Throughput.** 48 functions have matched since the Step 16 docs commit about 5 hours ago, roughly 10 an hour. 5,755 asm files are left. Even if we only did the roughly 1,400 compiled functions Four Swords needs, that's well over 100 hours at this pace.
+
+**Where the time goes:**
+- **First tries.** Somewhat under half of my drafts match first time or after one or two quick tweaks. These are cheap, with small functions, entity handlers and repeated patterns like the wall-check macro.
+- **Near-misses.** These are the main cost. Many drafts end up 4–16 bytes off or with swapped registers. I've built up 83 saved drafts, deferred ones included, each of which already cost several tries.
+- **The permuter.** It has reached a perfect score about 5 times in some 50 runs, and each zero needed rewriting into plausible C. Its main value is pointing at which expression matters, and that has led to 7 more matches. It runs in the background, so it costs CPU, not my time, but the payoff is small.
+- **Overhead.**
+  - Bugs in my scratchpad cleanup scripts cost rework and several follow-up commits to remove leftover declarations. One bad commit got through when `| tail` hid make's failure; I amended it.
+  - Printing full asm listings uses a lot of context.
+
+**The biggest lever is your call.** For the PS2 port, the C only has to behave the same, not compile to identical bytes. I could stop chasing the last few bytes: commit near-misses as functionally equivalent C, kept apart and marked `NONMATCHING` the way CLAUDE.md already tracks unfinished matches, while the ROM build keeps using the original asm. Then any of them can be revisited later.
+- **Pros:** most of the 83 drafts could be used for the port right away, and new functions would take one or two tries instead of five to ten. That would roughly double or triple the rate of usable C.
+- **Cons:** an equivalent draft isn't proven correct the way a byte match is. We'd need checks, for example running both versions in mGBA from the same state and comparing RAM, or careful review.
+
+**Smaller fixes I'd make either way:**
+- Drop the permuter to occasional use for functions within about 20 points of matching.
+- Print shorter asm summaries to save context.
+- Fix `unplace.py` properly, or stop editing source files in place for experiments, so there are no more cleanup commits.
+
+Should I keep strict matching only, or start committing equivalent C under `NONMATCHING` for the port?
+
+## User
+
+Yes, all I really want is functionally equivalent C. Proceed with that in mind
+
+## Claude
+
+Saving this as a standing preference first:
+
+- tool `Write`: /home/alex/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/memory/functional-c-ok.md
+
+- tool `Bash`: echo "- [Functional C is enough](functional-c-ok.md) — near-misses go in under NONMATCHING; don't chase bytes" >> ~/.claude/projects/-home-alex-Documents-zeldaa
+
+- tool `Bash`: sed -n 1,60p Makefile | grep -n "ROM\|ELF\|CPPFLAGS\|STAMP\|BUILD" ; sed -n 78,100p Makefile
+
+- tool `Bash`: sed -n 24,30p Makefile
+
+- tool `Bash`: python3 - <<'EOF' p="Makefile"; s=open(p).read() s=s.replace("""ifneq ($(FS_ONLY),)   CPPFLAGS += -DFS_ONLY endif ""","""ifneq ($(FS_ONLY),)   CPPFLAGS += -DFS_
+
+## Claude
+
+Two problems. The `sub_080156BC` `.inc` is still in the scratchpad from the last experiment, so I'm moving it back. And existing NONMATCHING code in `rom3a.c` doesn't compile, which I'll look at:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; ls $S/done/ | head; for f in $(ls $S/done/*.inc 2>/dev/n
+
+## Claude
+
+That's old LttP code from the upstream disassembly, and it uses a register pin. Listing every error in the NONMATCHING build:
+
+- tool `Bash`: make -k -j8 NONMATCHING=1 2>&1 | grep -v warning | grep "\.c:[0-9]" | head -20
+
+## Claude
+
+These are broken LttP drafts from upstream; nothing Four Swords needs. I'll guard just those two files' blocks with a separate `NONMATCHING_LTTP` flag so `NONMATCHING=1` builds our code:
+
+- tool `Bash`: grep -n "NONMATCHING" src/lttp/sprite_faerie.c src/rom3a.c | head; sed -i 's/^#ifdef NONMATCHING$/#ifdef NONMATCHING_LTTP  \/\/ upstream LttP drafts that no lon
+
+## Claude
+
+Everything compiles now; the link step fails. Checking why:
+
+- tool `Bash`: make NONMATCHING=1 2>&1 | grep -v warning | tail -8
+
+- tool `Bash`: grep -rn "NONMATCHING" src/ include/ asm/*.s 2>/dev/null | grep -v "NONMATCHING_LTTP\|^src/.*\.s:" | head; grep -rln "sub_080CF418" src asm/lttp | head
+
+- tool `Bash`: grep -n "sub_080CF418" src/lttp/sprite2.c | head -3; awk 'NR>=500 && NR<=510' src/lttp/sprite2.c
+
+## Claude
+
+Another upstream LttP file: its NONMATCHING branch is empty, so the function vanishes. Guarding `sprite2.c` the same way:
+
+- tool `Bash`: sed -i 's/^#ifdef NONMATCHING$/#ifdef NONMATCHING_LTTP  \/\/ upstream LttP drafts that no longer compile/' src/lttp/sprite2.c; make -k -j8 NONMATCHING=1 2>&1 | 
+
+## Claude
+
+The NONMATCHING ROM now builds, and the matching build still passes. (The compare error above is expected: it's the `_nm` ROM.) Updating CLAUDE.md's matching rule to the new policy, then committing:
+
+- tool `Bash`: grep -n "counts as done only when it matches" CLAUDE.md
+
+- tool `Bash`: grep -n "NONMATCHING\|only when" CLAUDE.md
+
+- tool `Bash`: sed -n 35,38p CLAUDE.md
+
+- tool `Bash`: python3 - <<'EOF' p="CLAUDE.md"; s=open(p).read() old="""Needs `tools/agbcc` (pret/agbcc) and `arm-none-eabi` binutils. A decompiled function counts as done onl
+
+## Claude
+
+The NONMATCHING ROM name is already ignored by `*.gba`. Now a tool that places a draft under `#ifdef NONMATCHING` and leaves the original asm in the `#else`:
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/tools/place_nonmatching.py
+
+## Claude
+
+With functional C as the goal, the background permuter queues are low value, so I'm stopping them to free the CPU:
+
+- tool `Bash`: for p in $(pgrep -f "q2.sh|permqueue.sh|permbatch.sh"); do kill $p; done; for p in $(pgrep -f "decomp-permuter/permuter.py"); do kill $p; done; sleep 2; pgrep -
+
+- tool `Bash`: pgrep -f "decomp-permuter/permuter.py" | wc -l; pgrep -f "permqueue|permbatch|q2.sh" | wc -l
+
+## Claude
+
+Stopped (those counts are the check commands themselves). Listing the drafts whose functions are still in asm:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for d in $S/drafts/sub_*.c; do f=$(basename $d .c); ls a
+
+## Claude
+
+72 drafts, plus the 4 older -O0 drafts. Placing them all under NONMATCHING, then building both ways:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for f in sub_0803A20C sub_08059BD0 sub_0803D134 sub_0806
+
+- tool `Bash`: grep -n "sub_0800C1EC" src/rom2.c | head; git status --short | head
+
+## Claude
+
+The include line is there, but the tool's count fails. Debugging:
+
+- tool `Bash`: python3 -c " t=open('src/rom2.c').read(); inc='asm/non_matching/rom2/sub_0800C1EC.inc' line=f'asm(\".include \\\\\"{inc}\\\\\");' print(repr(line)); print(t.cou
+
+## Claude
+
+The tool's pattern drops the final `"` before `);`. Fixing it:
+
+- tool `Bash`: python3 - <<'EOF' p="tools/place_nonmatching.py"; s=open(p).read() s=s.replace("""    line = f'asm(".include \\\\"{inc[0]}\\\\");'""","""    line = f'asm(".incl
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import re S="/tmp/claude-1000/-home-al
+
+- tool `Bash`: sed -n 4574p src/file_select.c; sed -n 4602p src/file_select.c; sed -n 4701p src/file_select.c; sed -n 4800p src/file_select.c; grep -n "^struct GfxRec0801484C\
+
+- tool `Bash`: python3 - <<'EOF' fn="src/file_select.c"; L=open(fn).read().split("\n") def ln(n): return n-1 assert L[ln(819)].startswith("struct Area080132B0 {") and L[ln(861
+
+## Claude
+
+Only the missing externs remain. Adding them in one block near the top:
+
+- tool `Bash`: python3 - <<'EOF' fn="src/file_select.c"; s=open(fn).read() anchor='#include "sounds.h"\n' assert anchor in s s=s.replace(anchor, anchor+""" #ifdef NONMATCHING 
+
+## Claude
+
+Both builds are clean. Confirming the matching ROM and counting the NONMATCHING functions:
+
+- tool `Bash`: ls zeldaalttp_nm.gba && make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && echo matching-OK; grep -c "^#ifdef NONMATCHING$" src/*.c src/lttp/*.c | grep -v 
+
+## Claude
+
+81 blocks: 76 new functions, the shared declarations block, and 4 that were already there. Committing:
+
+- tool `Bash`: git add tools/place_nonmatching.py src && git commit -qm "76 functions as functionally equivalent C under NONMATCHING (drafts that were close but not byte-match
+
+## Claude
+
+Committed. Lowering my per-function effort and continuing the queue with the new rule: a quick try or two, then NONMATCHING. Making sure the queue skips everything already done:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat $S/nm_candidates.txt >> $S/skip.txt; bash $S/nextq.s
+
+## Claude
+
+`sub_080156BC`'s earlier draft only failed on an extern type clash, since `gUnknown_0202A500` is already declared as `u8[]`. Fixing that with a cast and building:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -e '/^extern u32 gUnknown_0202A500\[\];$/d' -e 's/re
+
+## Claude
+
+Close but not exact, so it goes in as NONMATCHING. I'll script that conversion: save the draft, put the asm back, place it under NONMATCHING, and check both builds:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/tonm.sh <<'EOF' #!/bin/bash # tonm.sh FUNC...: 
+
+## Claude
+
+Both builds pass; the two printed lines are warning fragments. Checking the diff and committing:
+
+- tool `Bash`: git diff --stat; make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git commit -qam "sub_080156BC as NONMATCHING C  Co-Authored-By: Claude Opus 5.5 <norepl
+
+## Claude
+
+Committed. Next, `sub_0800E80C`:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; bash $S/nextq.sh 1 $(cat $S/skip.txt) sub_0800F0A0 2>&1 
+
+## Claude
+
+Next, `sub_0800E80C`, which draws a text-window frame (corners, edges and flipped copies):
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/b58.txt <<'EOF' @@ sub_0800E80C // Draws a w x 
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; $S/tonm.sh sub_0800E80C | tail -1; python3 - <<'EOF' fn=
+
+## Claude
+
+The commit went in, but my fix to `sub_0800E78C` didn't apply: the prototype text wasn't found. Locating it:
+
+- tool `Bash`: grep -n "sub_0800E80C" src/rom_0800D4F0.c | head
+
+## Claude
+
+The prototype was dropped when the draft was saved, so the call relied on an implicit declaration. Adding a real prototype and fixing the argument order:
+
+- tool `Bash`: python3 - <<'EOF' fn="src/rom_0800D4F0.c"; s=open(fn).read() old2="""        sub_0800E80C((gUnknown_03000420[3] << 11) + &gBG0Buffer[(w[5] * 32 + w[4]) * 2],   
+
+## Claude
+
+Lesson: an implicit declaration let that wrong argument order compile silently. Comparing the implicit-declaration warnings between the two builds to find any others in NONMATCHING code:
+
+- tool `Bash`: touch src/*.c; make -j8 compare 2>&1 | grep "implicit declaration" | sort -u > /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c10
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; bash $S/nextq.sh 1 $(cat $S/skip.txt) sub_0800F0A0 2>&1 
+
+## Claude
+
+Next, `sub_0802CFBC`, a per-frame HUD update:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/b59.txt <<'EOF' @@ sub_0802CFBC void sub_0802D1
+
+## Claude
+
+16 bytes long. Its `#define` lines would be lost by `extract.py`, so I'll save the draft straight from the batch file and convert it to NONMATCHING:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/b2nm.sh <<'EOF' #!/bin/bash # b2nm.sh BATCH FUN
+
+## Claude
+
+Both builds pass. Committing:
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git commit -qam "sub_0802CFBC (HUD update) as NONMATCHING C  Co-Authored-By: Claude Opus 5.5 <noreply@an
+
+## Claude
+
+Next, `sub_0802CD3C`, which sets up and runs the HUD and a pause-style overlay:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/b60.txt <<'EOF' @@ sub_0802CD3C extern u8 gUnkn
+
+## Claude
+
+Only the window registers differ: the original writes `win1h` and `win1v`, not `win0`. Fixing:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's/            gUnknown_030004A0.win0h = 0x50A0;/
+
+## Claude
+
+A true match. Committing:
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A asm/non_matching src && git commit -qm "Decompile sub_0802CD3C  Co-Authored-By: Claude Opus 5
+
+## Claude
+
+Next, `sub_0800EF34`, which shifts a 4bpp glyph to the current text column and splits it across two tiles when needed:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/b61.txt <<'EOF' @@ sub_0800EF34 struct GlyphMas
+
+## Claude
+
+12 bytes short; to NONMATCHING. A possible clash: the `sub_0800F190` draft declares `gUnknown_0202E158` with a differently named struct type. The NONMATCHING build will show it:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; $S/b2nm.sh $S/b61.txt sub_0800EF34
+
+- tool `Bash`: python3 - <<'EOF' fn="src/rom_0800D4F0.c"; s=open(fn).read() s=s.replace("struct GlyphMask { u8 unk0; u8 lo; u8 hi; u8 n; u32 mask; };\nextern struct GlyphMask 
+
+## Claude
+
+The commit went in, but "nm-ok" didn't print, so the NONMATCHING build fails. Checking:
+
+- tool `Bash`: make NONMATCHING=1 2>&1 | grep -v warning | grep "rom_0800D4F0.c:[0-9]\|undefined" | head -5; sed -n 955,962p src/rom_0800D4F0.c
+
+## Claude
+
+The struct and extern live in the `sub_0800F190` draft, which comes later in the file. Moving them into the earlier `sub_0800EF34` block:
+
+- tool `Bash`: python3 - <<'EOF' fn="src/rom_0800D4F0.c"; s=open(fn).read() d="struct Mask0202E158 { u8 unk0; u8 lo; u8 hi; u8 n; u32 mask; };\nextern struct Mask0202E158 gUnk
+
+## Claude
+
+Both builds pass. Next item:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; bash $S/nextq.sh 1 $(cat $S/skip.txt) sub_0800F0A0 2>&1 
+
+## Claude
+
+Next, `sub_0802C53C`, the rupee change for a player (shared total, HUD counters, debt spread over the others):
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/b62.txt <<'EOF' @@ sub_0802C53C s32 sub_0800B83
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; $S/b2nm.sh $S/b62.txt sub_0802C53C && make -j8 compare 2
+
+## Claude
+
+4 bytes short; committed as NONMATCHING. Next item:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; bash $S/nextq.sh 1 $(cat $S/skip.txt) sub_0800F0A0 2>&1 
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -n "sub_0800EC08" include/functions.h src/rom_0800D
+
+## Claude
+
+The header declares it `void`; the callers ignore the result, so switching it to `u32` won't change their code:
+
+- tool `Bash`: sed -i '200s/.*/u32 sub_0800EC08(u32, u8 *);/' include/functions.h && make -j8 2>&1 | grep -v warning | grep "rom_0800D4F0.c:[0-9]" | head -3; python3 /tmp/clau
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A asm/non_matching src include && git commit -qm "Decompile sub_0800EC08 (number to decimal str
+
+## Claude
+
+Next, `sub_08015DD8`, the room setup: camera, map tables and inverse block lookup. Checking the field names in `Struct03000450`:
+
+- tool `Bash`: awk '/^struct Struct03000450$/,/^};/' include/types.h
+
+## Claude
+
+Several of those offsets fall inside filler arrays. Splitting the fillers into named `u16` fields:
+
+- tool `Bash`: python3 - <<'EOF' p="include/types.h"; s=open(p).read() old="""    u8 unk8;     u8 filler9[0xD];     u16 unk16;     u16 unk18;  // scroll x? subtracted from ent
+
+- tool `Bash`: grep -n "sub_08015D50\|^void sub_0801484C\|sub_0801484C(const" src/file_select.c | head -3; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b
+
+## Claude
+
+`MapBuf` and `gUnknown_02038000` are only declared inside NONMATCHING blocks, so the matching build can't see them. Moving both to an unconditional section at the top of the file:
+
+- tool `Bash`: grep -n "^struct MapBuf\|^extern u8 gUnknown_02038000" src/file_select.c; python3 - <<'EOF' fn="src/file_select.c"; s=open(fn).read() mb="struct MapBuf { u32 un
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/unplace.py sub_08015DD8 >/dev/null; echo sub_
+
+- tool `Bash`: git diff --stat; make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git commit -qam "sub_08015DD8 (area setup) as NONMATCHING C; MapBuf declared once for f
+
+## Claude
+
+Committed. Time for a docs checkpoint. Counting the NONMATCHING functions:
+
+- tool `Bash`: grep -h -A3 "^#ifdef NONMATCHING$" src/*.c | grep -c "sub_\|^[a-z].*(" ; grep -c "^#ifdef NONMATCHING$" src/*.c | awk -F: '{s+=$2} END {print s}'; find asm/non_
+
