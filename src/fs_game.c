@@ -4743,7 +4743,52 @@ void sub_0804930C(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_080494B8.inc\"");
+
+void sub_080494B8(struct Entity *this)
+{
+    u16 *p = (u16 *)this->unk70.w;
+
+    if (*p == 0xFFFF)
+        return;
+    this->unk74.b.unk74 = *p;
+    switch (*p++)
+    {
+    case 0:
+        this->unk78.h = *p++;
+        if (*p != 0xFFFF)
+            this->speed = *p;
+        p++;
+        if (*p != 0xFFFF)
+            this->direction = *p;
+        p++;
+        break;
+    case 1:
+        this->unk78.s2.unk7A = *p++;
+        if (*p != 0xFFFF)
+            this->speed = *p;
+        p++;
+        this->unk74.b.unk75 = *p++;
+        this->unk74.b.unk76 = *p++;
+        this->direction = (this->direction + this->unk74.b.unk75) & 31;
+        this->unk78.h = this->unk78.s2.unk7A;
+        break;
+    case 2:
+        this->unk10 = *p + (p[1] << 16);
+        p += 2;
+        if (*p != 0xFFFF)
+            this->speed = *p;
+        p++;
+        if (*p != 0xFFFF)
+            this->direction = *p;
+        p++;
+        break;
+    case 3:
+        this->unk78.h = *p++;
+        break;
+    }
+    this->unk70.w = (u32)p;
+}
+
 
 void sub_080496DC(struct Entity *this)
 {
