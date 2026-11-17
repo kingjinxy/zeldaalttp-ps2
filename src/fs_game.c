@@ -4239,7 +4239,47 @@ void sub_08048074(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_080480F0.inc\"");
+
+void sub_080480F0(struct Entity *this)
+{
+    GetNextFrame(this);
+    BITU16_AT(this, 0x76)--;
+    if (BITU16_AT(this, 0x76) > 90)
+    {
+        sub_080489B0(this);
+        if (this->unk78.e->unk29 == 0)
+            GetNextFrame(this->unk78.e);
+        else
+            this->unk78.e->unk3C = this->unk78.e->unk3C | 0x80;
+        if (this->unk7C.e->unk29 == 0)
+            GetNextFrame(this->unk7C.e);
+        else
+            this->unk7C.e->unk3C = this->unk7C.e->unk3C | 0x80;
+    }
+    else if (BITU16_AT(this, 0x76) > 30)
+    {
+        this->unk78.e->unk3C = this->unk78.e->unk3C & 0x7F;
+        this->unk7C.e->unk3C = this->unk7C.e->unk3C & 0x7F;
+        GetNextFrame(this->unk78.e);
+        GetNextFrame(this->unk7C.e);
+    }
+    else if (BITU16_AT(this, 0x76) == 30)
+    {
+        sub_08048BF4(this);
+        this->unk78.e->unk3C = this->unk78.e->unk3C | 0x80;
+        this->unk7C.e->unk3C = this->unk7C.e->unk3C | 0x80;
+    }
+    else if (BITU16_AT(this, 0x76) == 0)
+    {
+        this->unk14 = 12;
+        this->unk78.e->unk3C = this->unk78.e->unk3C & 0x7F;
+        this->unk7C.e->unk3C = this->unk7C.e->unk3C & 0x7F;
+        sub_08003870(this, 1);
+        sub_08003870(this->unk78.e, 4);
+        sub_08003870(this->unk7C.e, 5);
+    }
+}
+
 
 void sub_0804831C(struct Entity *this)
 {
