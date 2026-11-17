@@ -388,7 +388,33 @@ asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E3B0.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E430.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E4EC.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E570.inc\"");
-asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E5EC.inc\"");
+// Draws an n-row frame top into tilemap p (rows go up by 32 tiles)
+void sub_0800E5EC(s8 n, u16 *p)
+{
+    u16 *q;
+    u16 t;
+
+    switch (n) {
+    case 3:
+        p[0] = 101;
+        p[1] = 102;
+        p[21] = 105;
+        p -= 32;
+    case 2:
+        p[0] = 99;
+        p[1] = 100;
+        p[21] = 105;
+        p -= 32;
+    case 1:
+        p[0] = 0x467;
+        t = 103;
+        q = p + 19;
+        do
+            q[1] = t;
+        while ((s32)--q >= (s32)p); /* matching: signed pointer compare */
+        p[21] = 104;
+    }
+}
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E63C.inc\"");
 
 void sub_0800E69C(u32 a)
