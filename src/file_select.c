@@ -2412,8 +2412,8 @@ void sub_08025FB8(struct Entity *this)
     sub_08003870(this, 1);
     sub_08025FF0(this);
 }
-
 asm(".include \"asm/non_matching/file_select/sub_08025FF0.inc\"");
+
 
 void sub_08026094(struct Entity *this)
 {
@@ -2534,7 +2534,23 @@ void sub_080268D8(struct Entity *this)
         this->unk14 = 3;
 }
 
-asm(".include \"asm/non_matching/file_select/sub_08026958.inc\"");
+
+void sub_08026958(struct Entity *this)
+{
+    u16 t = sub_0800932C(this->unk7C.h, this->unk50);
+
+    if ((u16)(t - 328) > 1 && t != this->unk78.s2.unk7A) {
+        this->unk14 = 2;
+        this->unk78.h = sub_08008F58(this->unk7C.h, this->unk50);
+        this->unk7C.s4.unk7E = sub_080093C8(this->unk7C.h, this->unk50);
+    } else {
+        this->unk14 = 1;
+        gUnknown_0201F000[this->unk52] &= ~gUnknown_08137B10[this->form];
+        sub_08014658(328, this->unk7C.h, this->unk50);
+        sub_08003E10(this, 18);
+    }
+}
+
 
 u16 sub_08008F58(u16, u16);
 u8 sub_080093C8(u16, u16);
@@ -2619,7 +2635,29 @@ void sub_08026C3C(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/file_select/sub_08026C50.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_08026CC0.inc\"");
+
+u8 sub_08000A70(u16);
+
+void sub_08026CC0(struct Entity *this, u8 k)
+{
+    u8 i = sub_08000A70(*(u16 *)&this->unk64);
+    struct Entity *e = sub_080123E8();
+
+    if (e != NULL && sub_0800A148(e, (const u8 *)(this->unk70.w + i * 8), this->unk52)) {
+        e->unk70.b = e->subtype;
+        e->unk70.s.unk71 = e->form;
+        e->unk70.s.unk72 = e->parameter;
+        e->unk60 = (u32)this;
+        e->unk68.b = i + 1;
+        e->unk52 = this->unk52;
+        e->type = 6;
+        e->subtype = 10;
+        e->unk18 = k;
+        (*(u16 *)((u8 *)this + 98))++;
+        *(u16 *)&this->unk64 |= gUnknown_08137B10[i];
+    }
+}
+
 
 void sub_08026D60(struct Entity *this)
 {
@@ -2990,7 +3028,35 @@ void sub_0802A304(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/file_select/sub_0802A340.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_0802A3EC.inc\"");
+
+void sub_0802A3EC(struct Entity *this)
+{
+    u8 r = sub_0802A4EC(this);
+
+    if (r >= this->parameter + 2) {
+        gUnknown_0201F000[this->unk52] |= gUnknown_08137B10[this->form];
+        this->unk14 = 2;
+        this->unk18 = 0;
+        this->z.HALF.HI = 0;
+        this->unk2A = 4;
+        sub_08003870(this, 4);
+        sub_08003DFC(113);
+    } else {
+        if (r > this->unk2A) {
+            if (this->parameter + 1 == r) {
+                this->unk18 = 4;
+                sub_08003870(this, r + 1);
+            } else {
+                sub_08003870(this, r);
+            }
+            sub_08003DFC(18);
+        } else if (r < this->unk2A) {
+            sub_08003870(this, r);
+        }
+        this->unk2A = r;
+    }
+}
+
 
 u8 sub_0802A4EC(struct Entity *);
 
