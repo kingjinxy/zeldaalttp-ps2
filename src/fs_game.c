@@ -2596,7 +2596,48 @@ void sub_08042A78(struct Entity *this)
     DeleteThisEntity(this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08042A90.inc\"");
+
+void sub_08042A90(struct Entity *this)
+{
+    u8 k = this->unk1A >> 4;
+    struct Entity *link = gUnknown_03006A30[this->form].unk28;
+    struct Entity *e = this->unk58;
+
+    U32_AT(link, 0x6C) = 0;
+    if (U16_AT(this, 0x64) == (u16)e->type && U16_AT(this, 0x66) == (u16)e->subtype)
+    {
+        if (this->unk58 != this)
+        {
+            e = this->unk58;
+            e->unk15 = 2;
+        }
+        else
+        {
+            this->unk2E = 4;
+        }
+        this->unk1D_6 = link->unk1D_6;
+        this->unk1F_6 = link->unk1F_6;
+        this->unk48 = e->unk48;
+        this->speed = gUnknown_0813EBDC[k];
+        this->unk10 = gUnknown_0813EBE8[k];
+        this->z.HALF_U.HI = e->z.HALF_U.HI;
+        this->y.HALF_U.HI = link->y.HALF_U.HI;
+        this->x.HALF_U.HI = link->x.HALF_U.HI;
+        this->unk50 = link->unk50;
+        this->unk44 = 3;
+        this->unk46 = 12;
+        this->unk40 = 23;
+        this->unk3C = link->unk3C;
+        this->unk3F = 1;
+        sub_080005F0(this);
+    }
+    else
+    {
+        sub_080012A0(&gUnknown_03006A30[this->form]);
+        DeleteThisEntity(this);
+    }
+}
+
 
 void sub_08042CB8(struct Entity *this)
 {
