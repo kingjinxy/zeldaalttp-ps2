@@ -776,7 +776,51 @@ void sub_080386C0(void)
     sub_0802BFC4();
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0803883C.inc\"");
+
+void sub_0803883C(void)
+{
+    u8 i;
+
+    if (sub_08037554() != 0)
+    {
+        for (i = 0; i <= 3; i++)
+            gUnknown_03000940_b[i].v = gUnknown_03005E10_b[i].v = 0;
+        gHeldKeys = gNewKeys = 0;
+        gUnknown_0200B1D0[gLCDRegisterBuffer][gUnknown_03000494 & 15].v = 0;
+        gRandom = gUnknown_03000490;
+        if (gUnknown_03000E20.unk4 <= 0x117)
+        {
+            sub_0800CE74(120, 80, gUnknown_03000E20.unk4, (gUnknown_03000E20.unk0 * 5) & 255);
+            if (gUnknown_03000E20.unk4 <= 139)
+                gUnknown_03000E20.unk4 = gUnknown_03000E20.unk4 + 3;
+            else
+                gUnknown_03000E20.unk4 = gUnknown_03000E20.unk4 + 4;
+            gUnknown_03000E20.unk0++;
+        }
+        else
+        {
+            sub_0803A20C();
+            sub_0800CA3C();
+            gUnknown_03005050++;
+            gSubState = 0;
+            gUnknown_03000E20.unk0 = 0;
+            gUnknown_03006C80.unk5 = gUnknown_03006C80.unk5 & 127;
+            gUnknown_03000FC0.unk10 = gUnknown_03000FC0.unk24 = 0;
+            sub_0800D6F4();
+            sub_0800D744();
+        }
+        ((void (*)(void))gUnknown_03006C70)();
+        sub_08015D9C();
+        sub_08015C64();
+        sub_08008ED8();
+        sub_0802CD3C();
+        sub_0803F284();
+        sub_08000BAC();
+        sub_0802BFC4();
+        sub_08037574();
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_08038A30.inc\"");
 
 bool32 sub_08038CA8(void)

@@ -39,6 +39,7 @@ ROM = open(os.path.join(ROOT, "baserom.gba"), "rb").read()
 VALUE_NAMES = {}  # address -> data or function symbol, for words read straight from the ROM
 NAME_ADDRS = {}
 EXTRA = set()  # called addresses inside other functions
+ALL_TR = set()  # every translated entry point (called through gba_cpu, not the C ABI)
 
 
 def rom_word(a):
@@ -158,6 +159,7 @@ class Func:
         self.entries, self.items, self.names, self.local_funcs = entries, items, names, local_funcs
         self.externs = set()
         self.cur = None
+        self.prev = None
         self.pool = {}       # label -> C expression of the first word stored there
         self.tables = {}     # label -> [labels] for jump tables
         self.used_labels = set()
@@ -244,15 +246,21 @@ class Func:
         target = target.strip()
         m = re.fullmatch(r"_call_via_(\w+)", target)
         if m:
-            return f"r0 = CALL_PTR({reg(m.group(1))}, r0, r1, r2, r3);"
-        if re.fullmatch(r"0x[0-9a-fA-F]+", target):
-            a = int(target, 16)
+            return f"{self.link()} SAVE_REGS; gba_call_ptr({reg(m.group(1))}); LOAD_REGS;"
+        if re.fullmatch(r"0x[0-9a-fA-F]+|_0[89][0-9A-Fa-f]{6}", target):
+            a = int(target.lstrip("_"), 16)
             if a & ~1 not in self.names:
                 raise Unsupported(f"call to unnamed address {target}")
             target = self.names[a & ~1]
-        if target not in self.local_funcs:
-            self.externs.add(("func", target))
-        return f"gba_sp = sp; r0 = {target}(r0, r1, r2, r3);"
+        if target in ALL_TR:
+            self.externs.add(("tr", target))
+            return f"{self.link()} SAVE_REGS; {target}_tr(); LOAD_REGS;"
+        self.externs.add(("func", target))
+        return f"gba_cpu.sp = sp; r0 = {target}(r0, r1, r2, r3);"
+
+    def link(self):
+        # bl sets lr to the next instruction (Thumb bit set); callees may push it and pop it into a register
+        return f"lr = 0x{self.cur + 5:08X}u;" if self.cur is not None else "lr = 0;"
 
     def mem(self, op, ops):
         size = {"ldr": 32, "str": 32, "ldrb": 8, "strb": 8, "ldrh": 16, "strh": 16, "ldrsb": 8, "ldsb": 8,
@@ -305,15 +313,18 @@ class Func:
         if op in ("b",) or (op[0] == "b" and op[1:] in COND):
             lab = ops[0]
             if lab not in self.labels:
-                if re.fullmatch(r"0x[0-9a-fA-F]+", lab):
-                    if int(lab, 16) & ~1 not in self.names:
+                if re.fullmatch(r"0x[0-9a-fA-F]+|_0[89][0-9A-Fa-f]{6}", lab):
+                    if int(lab.lstrip("_"), 16) & ~1 not in self.names:
                         raise Unsupported(f"branch into another function {lab}")
-                    lab = self.names[int(lab, 16) & ~1]
+                    lab = self.names[int(lab.lstrip("_"), 16) & ~1]
                 if lab in self.local_funcs or lab in self.names.values() or re.fullmatch(r"\w+", lab):
                     # tail jump to another function
-                    if lab not in self.local_funcs:
+                    if lab in ALL_TR:
+                        self.externs.add(("tr", lab))
+                        tail = f"{{ SAVE_REGS; {lab}_tr(); return; }}"
+                    else:
                         self.externs.add(("func", lab))
-                    tail = f"{{ gba_sp = sp; return {lab}(r0, r1, r2, r3); }}"
+                        tail = f"{{ gba_cpu.sp = sp; r0 = {lab}(r0, r1, r2, r3); SAVE_REGS; return; }}"
                     return tail if op == "b" else f"if ({COND[op[1:]]}) {tail}"
                 raise Unsupported(f"branch to {lab}")
             self.used_labels.add(lab)
@@ -321,7 +332,12 @@ class Func:
         if op == "bl":
             return self.call(ops[0])
         if op == "bx":
-            return "gba_sp = sp; return r0;"
+            r = ops[0].strip().lower()
+            p = self.prev
+            if r in ("lr", "r14") or (p and p[1] in ("pop", "ldmfd") and r in reglist(p[2][-1])):
+                return "SAVE_REGS; return;"
+            # jump through a register (function table): a call whose return goes straight to our caller
+            return f"SAVE_REGS; gba_call_ptr({reg(r)}); return;"
         if op in ("push", "stmfd") or (op == "stmdb" and ops[0].lower().startswith("sp")):
             rl = reglist(ops[-1])
             out = [f"sp -= {4 * len(rl)};"]
@@ -337,7 +353,7 @@ class Func:
                 out.append(f"{r} = RD32(sp + {4 * k});")
             out.append(f"sp += {4 * len(rl)};")
             if "pc" in rl:
-                out.append("gba_sp = sp; return r0;")
+                out.append("SAVE_REGS; return;")
             return " ".join(out)
         if op in ("ldmia", "stmia"):
             base = ops[0].rstrip("!").strip()
@@ -354,18 +370,18 @@ class Func:
         if op in ("ldr", "str", "ldrb", "strb", "ldrh", "strh", "ldrsb", "ldsb", "ldrsh", "ldsh"):
             return self.mem(op, ops)
         if op == "svc":
-            return f"r0 = gba_swi({num(ops[0])}, r0, r1, r2, r3);"
+            return f"gba_swi({num(ops[0])}, &r0, &r1, &r2, &r3);"
         if op == "mov":
             d = ops[0].strip().lower()
             if d in ("pc", "r15") and ops[1].strip().lower() in ("lr", "r14"):
-                return "gba_sp = sp; return r0;"
+                return "SAVE_REGS; return;"
             if d in ("pc", "r15"):
                 targets = sorted({it[2] for it in self.items if it[0] == "data" and it[2] in self.labels})
                 if not targets or not all(re.fullmatch(r"_0[89][0-9A-Fa-f]{6}", t) for t in targets):
                     raise Unsupported("jump without a table")
                 self.used_labels.update(targets)
                 cases = " ".join(f"case 0x{t[1:].upper()}u: goto L{t};" for t in targets)
-                return f"switch ({reg(ops[1])} & ~1u) {{ {cases} default: return gba_bad_jump({reg(ops[1])}); }}"
+                return f"switch ({reg(ops[1])} & ~1u) {{ {cases} default: gba_bad_jump({reg(ops[1])}); return; }}"
             rd, src = reg(ops[0]), self.operand(ops[1])
             if ops[1].startswith("#"):
                 return f"{rd} = {src}; N = 0; Z = {rd} == 0;"
@@ -419,6 +435,25 @@ class Func:
             return ";"
         raise Unsupported(f"instruction {text}")
 
+    def fall_through(self):
+        """C for running on into the next function when the code does not end in a jump or return."""
+        last = max((k for k, it in enumerate(self.items) if it[0] == "insn"), default=None)
+        if last is None:
+            return None
+        op, ops = self.items[last][1], self.items[last][2]
+        op = op[:-2] if op.endswith((".n", ".w")) else op
+        if op in ("b", "bx") or (op in ("pop", "ldmfd") and "pc" in reglist(ops[-1])) or \
+                (op == "mov" and ops[0].strip().lower() in ("pc", "r15")):
+            return None
+        a = self.addr.get(last)
+        if a is None:
+            raise Unsupported("falls through at an unknown address")
+        a += 4 if op == "bl" else 2
+        if a not in self.names or self.names[a] not in ALL_TR:
+            raise Unsupported(f"falls through into {a:#x}")
+        self.externs.add(("tr", self.names[a]))
+        return f"{{ SAVE_REGS; {self.names[a]}_tr(); return; }}  /* falls through into the next function */"
+
     def body(self):
         out = []
         for k, it in enumerate(self.items):
@@ -427,13 +462,19 @@ class Func:
                 out.append(("label", it[1]))
             elif it[0] == "insn":
                 out.append(("code", self.insn(it[1], it[2], it[3]), it[3]))
+                self.prev = it
+        ft = self.fall_through()
+        if ft:
+            out.append(("code", ft, "(end)"))
         return out
 
 
 def emit_function(name, entry_label, entries, body, func, first):
-    lines = [f"u32 {name}(u32 r0, u32 r1, u32 r2, u32 r3)", "{",
-             "    u32 r4, r5, r6, r7, r8, r9, r10, r11, r12, lr = 0, sp = gba_sp, N = 0, Z = 0, C = 0, V = 0;",
-             "    r4 = r5 = r6 = r7 = r8 = r9 = r10 = r11 = r12 = 0;"]
+    lines = [f"void {name}_tr(void);",
+             f"u32 {name}(u32 a, u32 b, u32 c, u32 d) {{ return gba_enter({name}_tr, a, b, c, d); }}",
+             f"void {name}_tr(void)", "{",
+             "    u32 r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, sp, lr, N, Z, C, V;",
+             "    LOAD_REGS;"]
     if not first:
         lines.append(f"    goto L{entry_label};")
         func.used_labels.add(entry_label)
@@ -442,7 +483,7 @@ def emit_function(name, entry_label, entries, body, func, first):
             lines.append(f"L{rest[0]}:;")
         else:
             lines.append(f"    {rest[0]}  /* {rest[1]} */")
-    lines.append("    gba_sp = sp; return r0;")
+    lines.append("    SAVE_REGS;")
     lines.append("}")
     return lines
 
@@ -457,7 +498,8 @@ def translate_inc(path, names, local_funcs, report):
     except Unsupported as e:
         stem = os.path.basename(path)[:-4]
         report.append(f"{path}: {e}")
-        return [stem], [f"u32 {stem}(u32 r0, u32 r1, u32 r2, u32 r3) {{ return gba_untranslated(\"{stem}\"); }}"], set()
+        return [stem], [f"void {stem}_tr(void);", f"u32 {stem}(u32 a, u32 b, u32 c, u32 d) {{ return gba_enter({stem}_tr, a, b, c, d); }}",
+                        f"void {stem}_tr(void) {{ gba_untranslated(\"{stem}\"); }}"], set()
     lines = []
     for k, e in enumerate(entries):
         lines += emit_function(e, e, entries, body, func, k == 0)
@@ -479,11 +521,22 @@ def main():
     os.makedirs(outdir, exist_ok=True)
     names = addr_names()
     for inc in glob.glob(os.path.join(ROOT, "asm", "non_matching", "*", "*.inc")):
-        for m in re.finditer(r"^\s+b\w*\s+(0x[0-9a-fA-F]+)", open(inc).read(), re.M):
-            a = int(m.group(1), 16) & ~1
+        text = open(inc).read()
+        here = set(re.findall(r"^(_0[89][0-9A-Fa-f]{6}):", text, re.M))
+        for m in re.finditer(r"^\s+(b[\w.]*)\s+(0x[0-9a-fA-F]+|_0[89][0-9A-Fa-f]{6})\s*$", text, re.M):
+            t = m.group(2)
+            if t.startswith("_") and t in here and m.group(1) != "bl":
+                continue
+            a = int(t.lstrip("_"), 16) & ~1
             if a not in names:
                 EXTRA.add(a)
                 names[a] = f"sub_{a:08X}"
+    for inc in glob.glob(os.path.join(ROOT, "asm", "non_matching", "*", "*.inc")):
+        try:
+            ALL_TR.update(parse_inc(inc)[0])
+        except Unsupported:
+            ALL_TR.add(os.path.basename(inc)[:-4])
+    ALL_TR.update(names[a] for a in EXTRA)
     report, total, bad = [], 0, 0
     for src in sorted(glob.glob(os.path.join(ROOT, "src", "*.c"))):
         stem = os.path.basename(src)[:-2]
@@ -507,13 +560,28 @@ def main():
             body += lines + [""]
             externs |= ex
         head = ["/* Generated by tools/thumb2c.py from asm/non_matching: do not edit. */", '#include "gba_tr.h"', ""]
-        funcs = sorted(e[1] for e in externs if isinstance(e, tuple)) + sorted(local)
-        for f in sorted(set(funcs)):
+        funcs = set(e[1] for e in externs if isinstance(e, tuple)) | local
+        for f in sorted(funcs):
             head.append(f"u32 {f}(u32, u32, u32, u32);")
+        for f in sorted(set(e[1] for e in externs if isinstance(e, tuple) and e[0] == "tr") | local):
+            head.append(f"void {f}_tr(void);")
         for d in sorted(e for e in externs if isinstance(e, str)):
             if d not in funcs:
                 head.append(f"extern char {d}[];")
         open(os.path.join(outdir, f"{stem}_tr.c"), "w").write("\n".join(head + [""] + body))
+    # entry points inside asm files that did not translate
+    defined, wanted = set(), set()
+    for c in glob.glob(os.path.join(outdir, "*_tr.c")):
+        if c.endswith("missing_tr.c"):
+            continue
+        t = open(c).read()
+        defined |= set(re.findall(r"^void (\w+)_tr\(void\)$|^void (\w+)_tr\(void\) \{", t, re.M) and
+                       [a or b for a, b in re.findall(r"^void (\w+)_tr\(void\)$|^void (\w+)_tr\(void\) \{", t, re.M)])
+        wanted |= set(re.findall(r"\b(\w+)_tr\(\);", t))
+    miss = ['#include "gba_tr.h"'] + [
+        f"void {f}_tr(void) {{ gba_untranslated(\"{f}\"); }}\nu32 {f}(u32 a, u32 b, u32 c, u32 d) "
+        f"{{ return gba_enter({f}_tr, a, b, c, d); }}" for f in sorted(wanted - defined)]
+    open(os.path.join(outdir, "missing_tr.c"), "w").write("\n".join(miss) + "\n")
     open(os.path.join(outdir, "report.txt"), "w").write("\n".join(report) + "\n")
     print(f"{total} asm files, {bad} not translated (see {outdir}/report.txt)")
 

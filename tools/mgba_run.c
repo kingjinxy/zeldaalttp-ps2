@@ -4,6 +4,9 @@
 //            [--shot N,N,...] [--out DIR] [--dump N:ADDR:LEN] [--watch ADDR] [--coverage FILE]
 // --coverage: write a bitmap of executed ROM halfwords (bit n = address 0x08000000 + 2n, all GBAs combined)
 // for tools/reach.py. Same run as without it (same RAM), a little slower.
+// --trace DIR --trace-list FILE: GBA 0 only. FILE has one hex function address per line; the first
+// --trace-max (default 2) calls of each that no interrupt breaks into are written to DIR/ADDR_N.gz:
+// registers and all GBA memory at entry, then at return (tools/tr_check, the thumb2c test).
 // P is a player number 0-3: --inputs1 a.inputs is GBA 1's script; --inputs is the default for all.
 // --saveP FILE: GBA P's EEPROM is loaded from FILE into memory and never written back, so a run can be
 // repeated exactly. Without it a GBA starts with an empty EEPROM.
@@ -23,6 +26,7 @@
 // makes linked runs differ from run to run (tested: different RAM after 6,000 frames every time). Here
 // all GBAs run on one thread in a fixed order, one core->runLoop (up to the next hardware event) each,
 // skipping GBAs that the link has put to wait, so a run always gives the same result.
+#include <zlib.h>
 #include <mgba/core/core.h>
 #include <mgba/core/config.h>
 #include <mgba/core/log.h>
@@ -82,6 +86,9 @@ static int liveKeys[MAX_GBAS];      // --play: keys from the keyboard
 static FILE *rec[MAX_GBAS];         // --play: recorded inputs
 static int frameReady;              // --play: GBA 0 finished a frame
 static uint8_t covered[0x800000 / 16];
+static const char *traceDir, *traceList;
+static unsigned traceMax = 2;
+static uint8_t traceCount[0x800000 / 2];  // per halfword of ROM: 0 = not traced, else 1 + calls written
 
 static void quietLog(struct mLogger *l, int category, enum mLogLevel level, const char *fmt, va_list args) {
 	(void) l; (void) category; (void) level; (void) fmt; (void) args;
@@ -339,6 +346,56 @@ static int present(SDL_Renderer *ren, SDL_Texture **tex) {
 }
 #endif
 
+// --trace: one capture at a time
+static struct { int active, broken; unsigned steps; uint32_t addr, lr, sp; gzFile f; char path[600]; } tr;
+
+static void traceMemory(struct GBA *gba, gzFile f) {
+	gzwrite(f, gba->memory.wram, 0x40000);
+	gzwrite(f, gba->memory.iwram, 0x8000);
+	gzwrite(f, gba->memory.io, 0x400);
+	gzwrite(f, gba->video.palette, 0x400);
+	gzwrite(f, gba->video.vram, 0x18000);
+	gzwrite(f, gba->video.oam.raw, 0x400);
+}
+
+static void traceRegs(struct ARMCore *cpu, gzFile f) {
+	uint32_t r[17];
+	for (int k = 0; k < 16; k++) r[k] = cpu->gprs[k];
+	r[16] = cpu->cpsr.packed;
+	gzwrite(f, r, sizeof r);
+}
+
+static void traceStep(struct GBA *gba, struct ARMCore *cpu) {
+	int thumb = cpu->executionMode == MODE_THUMB;
+	uint32_t pc = cpu->gprs[ARM_PC] - (thumb ? 2 : 4);
+	if (tr.active) {
+		if (cpu->cpsr.priv != MODE_SYSTEM && cpu->cpsr.priv != MODE_USER || ++tr.steps > 2000000) {
+			// interrupted or too long (a loop that never returns): drop it so other calls get traced
+			gzclose(tr.f);
+			remove(tr.path);
+			tr.active = 0;
+		} else if (pc == (tr.lr & ~1u) && cpu->gprs[ARM_SP] == tr.sp) {
+			traceRegs(cpu, tr.f);
+			traceMemory(gba, tr.f);
+			gzclose(tr.f);
+			tr.active = 0;
+			if (tr.broken) remove(tr.path);
+			else traceCount[(tr.addr - 0x08000000) >> 1]++;
+		}
+		return;
+	}
+	if (!thumb || pc - 0x08000000 >= 0x800000) return;
+	uint8_t c = traceCount[(pc - 0x08000000) >> 1];
+	if (!c || c > traceMax) return;
+	if (cpu->cpsr.priv != MODE_SYSTEM && cpu->cpsr.priv != MODE_USER) return;
+	snprintf(tr.path, sizeof tr.path, "%s/%08X_%u.gz", traceDir, pc, c - 1);
+	tr.f = gzopen(tr.path, "wb1");
+	if (!tr.f) { perror(tr.path); exit(1); }
+	tr.active = 1, tr.broken = 0, tr.steps = 0, tr.addr = pc, tr.lr = cpu->gprs[ARM_LR], tr.sp = cpu->gprs[ARM_SP];
+	traceRegs(cpu, tr.f);
+	traceMemory(gba, tr.f);
+}
+
 int main(int argc, char **argv) {
 	if (argc < 3) { fprintf(stderr, "usage: see tools/mgba_run.c\n"); return 1; }
 	const char *rom = argv[1], *saves[MAX_GBAS] = { 0 };
@@ -358,7 +415,18 @@ int main(int argc, char **argv) {
 		else if (!strcmp(o, "--play")) play = v;
 		else if (!strcmp(o, "--start")) start = v;
 		else if (!strcmp(o, "--save-states")) saveStates = strtoul(v, NULL, 0);
+		else if (!strcmp(o, "--trace")) traceDir = v;
+		else if (!strcmp(o, "--trace-list")) traceList = v;
+		else if (!strcmp(o, "--trace-max")) traceMax = strtoul(v, NULL, 0);
 		else { fprintf(stderr, "unknown option %s\n", o); return 1; }
+	}
+	if (traceList) {
+		FILE *f = fopen(traceList, "r");
+		unsigned a;
+		if (!f) { perror(traceList); return 1; }
+		while (fscanf(f, "%x", &a) == 1)
+			if (a - 0x08000000 < 0x800000) traceCount[(a - 0x08000000) >> 1] = 1;
+		fclose(f);
 	}
 	if (nplayers < 1 || nplayers > MAX_GBAS) { fprintf(stderr, "--players 1-4\n"); return 1; }
 #ifdef MGBA_RUN_SDL
@@ -460,7 +528,14 @@ int main(int argc, char **argv) {
 			all &= p->done;
 			if (p->waiting) continue;  // a GBA past FRAMES keeps running: the others may wait on it
 			ran = 1;
-			if (coverage) {
+			if (traceDir && i == 0) {
+				struct ARMCore *cpu = ((struct GBA *) p->core->board)->cpu;
+				while (cpu->cycles < cpu->nextEvent) {
+					traceStep(p->core->board, cpu);
+					p->core->step(p->core);
+				}
+				cpu->irqh.processEvents(cpu);
+			} else if (coverage) {
 				// ARMRunLoop with each instruction's address recorded before it runs (as mGBA's
 				// ARMDebuggerCheckBreakpoints computes it), so GBAs interleave exactly as with runLoop.
 				struct ARMCore *cpu = ((struct GBA *) p->core->board)->cpu;

@@ -251,3 +251,36 @@
   `gUnknown_0200B320` (alias `gUnknown_0201F020_fs`); Entity 0x68/0x70 are word/byte unions; a pointer to
   a non-packed `struct BitU16` handles bitfield writes through a pointer. fs_game: 531 functions left in
   asm (of 915); all code: 6,420 left (of 7,894 incl. the disassembled blobs).
+
+## Step 12: machine translation of the remaining asm to C (2026-11-16)
+
+Hand-matching cost several thousand tokens per function, with about 6,000 functions left. The user chose
+two cheaper tracks: (1) translate all remaining asm to C mechanically for the PC/PS2 build, and (2) a
+draft generator for the regular -O0 Four Swords code, to speed up matching decomp.
+
+- `tools/thumb2c.py OUTDIR` reads every `asm/non_matching/*/*.inc` that a `src/*.c` still includes and
+  writes `OUTDIR/NAME_tr.c`. Each function becomes `void f_tr(void)` working on `gba_cpu` (registers and
+  flags, `include/gba_tr.h`) with locals copied in and out around calls, plus a C-ABI wrapper
+  `u32 f(a, b, c, d)` for decompiled callers. Memory goes through `RD*`/`WR*`, symbols through `SYM()`,
+  branches are `goto`, switch tables (`mov pc, rN`) are a `switch` on the target address, `bl` sets `lr`
+  to the real return address.
+- First model (C ABI only: r0-r3 in, r0 out) failed on the hand-written engine code in rom1, which passes
+  values in r1-r7 and the carry flag (`push {r1}; bl ...; pop {r1}; lsrs r1, #1; bcc`). Hence the shared
+  register file.
+- Other things the hand asm does: `bx r4` through a function table (only `pop {rN}; bx rN` and `bx lr`
+  are returns), functions that run on into the next function at the end (now a tail call),
+  calls and branches to addresses inside other functions (now extra entry points `sub_ADDR`), loads from
+  another file's literal pool and raw `ldr rN, [pc, #n]` (read from the ROM image; a value equal to a
+  symbol's address becomes that symbol).
+- GBA libc functions (`memcpy`, ...) clash with the host's names; the checker renames them.
+- Result: 5,985 of 6,002 asm files translate and compile with gcc. Not translated (stubs that call
+  `gba_untranslated`): 4 ARM files, 4 `add rN, pc`, 2 jumps without a table, 7 that end in raw `.byte`s.
+- **Check against mGBA** (`tools/tr_check.py`, `tools/tr_check.c`, `mgba_run --trace`): mgba_run records
+  registers and all memory at entry and at return for the first calls of each function (GBA 0 only;
+  calls an interrupt breaks into are dropped). `tr_check` replays each call through the translated C in
+  GBA address space (memory in arrays, the ROM image, SWIs CpuSet/CpuFastSet/Div/Sqrt/LZ77, immediate DMA)
+  and compares r0, r4-r11, sp and all RAM/VRAM/OAM/palette (I/O and the stack below sp excluded). Calls
+  into decompiled C can't be replayed there and are skipped.
+- First trace (6,000 frames of session 1): 165 calls identical, 0 different, 24 skipped.
+- A capture used to wait for its function to return, so one call that never returns (the main loop)
+  blocked all later captures; now captures are dropped on an interrupt or after 2 million instructions.

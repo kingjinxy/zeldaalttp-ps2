@@ -54,6 +54,10 @@ player, linked in memory instead of by cable, each drawn into its own part of th
       part); includes ARM code copied to RAM and Thumb code such as `0x08009924` (tmc `ShowNPCDialogue`)
 - [ ] m4a: our version sits between pokeruby's (2002, most sizes equal) and tmc's; for the port, pret's m4a C
       can stand in. Matching it is optional.
+- [x] Mechanical translation (`tools/thumb2c.py`): every remaining asm function as C for the PC/PS2 build,
+      replaced function by function as decomp matches. 5,985 of 6,002 files; checked against mGBA traces
+      (`tools/tr_check.py`, `mgba_run --trace`). Left: 17 files (ARM, `add rN, pc`, trailing `.byte` code).
+- [ ] Draft generator for the -O0 fs_game code (the user's option 2): C drafts from the asm patterns
 - [ ] Library code first, where C already exists elsewhere: BIOS calls (`syscall.s`), m4a sound
       driver, EEPROM, link/SIO (tmc and pret decomps).
 - [ ] Shared engine code (tmc as reference)
@@ -93,5 +97,8 @@ Requested by the user (2026-11-16). After Phase 4 works with 4 players.
 - [ ] Easier in the Phase 5 shared world (per-player arrays sized by a constant) than with linked instances
 
 ## Open decisions
-- Whether to use automatic Thumb-to-C translation for not-yet-decompiled functions, so Phase 3 starts
-  before Phase 2 is finished (decomp then replaces it function by function).
+- Decided (2026-11-16): automatic Thumb-to-C translation for the not-yet-decompiled functions, so Phase 3
+  starts now; decomp replaces it function by function.
+- Host memory model: translated code keeps GBA addresses in u32 registers, so it needs a 32-bit host
+  (PS2 EE; PC with -m32) where symbols are host addresses and GBA ranges (0x02000000+) are mapped by
+  GBA_PTR, or the GBA-address-space model of tr_check (all memory in arrays at GBA addresses).

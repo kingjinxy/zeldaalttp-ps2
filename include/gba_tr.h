@@ -12,32 +12,50 @@ typedef int s32;
 typedef unsigned long long u64;
 typedef __UINTPTR_TYPE__ uintptr_t;
 
-// Stack pointer shared by all translated functions (points into GBA IWRAM as on the hardware)
-extern u32 gba_sp;
+// Registers and flags shared by translated functions: they call each other through these, so the
+// hand-written engine code can pass values in any register or flag. Each function keeps local copies
+// (LOAD_REGS on entry and after a call, SAVE_REGS before a call and on return).
+struct GbaCpu { u32 r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, sp, lr, N, Z, C, V; };
+extern struct GbaCpu gba_cpu;
+#define LOAD_REGS (r0 = gba_cpu.r0, r1 = gba_cpu.r1, r2 = gba_cpu.r2, r3 = gba_cpu.r3, r4 = gba_cpu.r4, \
+    r5 = gba_cpu.r5, r6 = gba_cpu.r6, r7 = gba_cpu.r7, r8 = gba_cpu.r8, r9 = gba_cpu.r9, r10 = gba_cpu.r10, \
+    r11 = gba_cpu.r11, r12 = gba_cpu.r12, sp = gba_cpu.sp, lr = gba_cpu.lr, N = gba_cpu.N, Z = gba_cpu.Z, \
+    C = gba_cpu.C, V = gba_cpu.V)
+#define SAVE_REGS (gba_cpu.r0 = r0, gba_cpu.r1 = r1, gba_cpu.r2 = r2, gba_cpu.r3 = r3, gba_cpu.r4 = r4, \
+    gba_cpu.r5 = r5, gba_cpu.r6 = r6, gba_cpu.r7 = r7, gba_cpu.r8 = r8, gba_cpu.r9 = r9, gba_cpu.r10 = r10, \
+    gba_cpu.r11 = r11, gba_cpu.r12 = r12, gba_cpu.sp = sp, gba_cpu.lr = lr, gba_cpu.N = N, gba_cpu.Z = Z, \
+    gba_cpu.C = C, gba_cpu.V = V)
+
+// C ABI entry (decompiled C calling a translated function): arguments in r0-r3, result in r0
+static inline u32 gba_enter(void (*f)(void), u32 a, u32 b, u32 c, u32 d) {
+    gba_cpu.r0 = a, gba_cpu.r1 = b, gba_cpu.r2 = c, gba_cpu.r3 = d;
+    f();
+    return gba_cpu.r0;
+}
+// Indirect call (bl _call_via_rN) to a GBA function address: the runtime finds the translated function
+void gba_call_ptr(u32 addr);
 
 // GBA address -> host pointer. Host addresses below 0x02000000 (PS2 EE RAM) pass through; GBA ranges are
 // mapped by the hardware layer. shortcut: identity until the layer exists (32-bit hosts only).
 #ifndef GBA_PTR
 #define GBA_PTR(a) ((void *)(uintptr_t)(a))
 #endif
+#ifndef RD8
 #define RD8(a) (*(volatile u8 *)GBA_PTR(a))
 #define RD16(a) (*(volatile u16 *)GBA_PTR(a))
 #define RD32(a) (*(volatile u32 *)GBA_PTR(a))
 #define WR8(a, v) (*(volatile u8 *)GBA_PTR(a) = (u8)(v))
 #define WR16(a, v) (*(volatile u16 *)GBA_PTR(a) = (u16)(v))
 #define WR32(a, v) (*(volatile u32 *)GBA_PTR(a) = (u32)(v))
-
-typedef u32 (*gba_fn)(u32, u32, u32, u32);
-#ifndef CALL_PTR
-#define CALL_PTR(p, a, b, c, d) (gba_sp = sp, ((gba_fn)(uintptr_t)((p) & ~1u))(a, b, c, d))
 #endif
+
 // Address of a data or function symbol; a test harness can define it as the symbol's GBA address
 #ifndef SYM
 #define SYM(name) ((u32)(uintptr_t)(name))
 #endif
-u32 gba_bad_jump(u32 target);
+void gba_bad_jump(u32 target);
 
-u32 gba_swi(u32 n, u32 r0, u32 r1, u32 r2, u32 r3);
+void gba_swi(u32 n, u32 *r0, u32 *r1, u32 *r2, u32 *r3);
 u32 gba_untranslated(const char *name);
 
 // Flag-setting ALU operations; N, Z, C, V are locals of the calling function
