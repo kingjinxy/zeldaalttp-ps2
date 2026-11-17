@@ -414,7 +414,17 @@ void sub_0800EBD4(struct Struct0800EE2C *p)
 }
 
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EC08.inc\"");
-asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800ED7C.inc\"");
+
+u32 sub_0800ED7C(struct Struct0800EE2C *p, u16 id)
+{
+    u8 *t;
+
+    p->unk6 = id;
+    t = gUnknown_08427444[gGameLanguage];
+    t += ((u32 *)t)[id >> 8];
+    return sub_0800EDB8(p, t + ((u32 *)t)[(u8)id]);
+}
+
 
 u32 sub_0800EDB8(struct Struct0800EE2C *p, u8 *v)
 {

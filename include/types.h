@@ -739,7 +739,8 @@ struct Struct0800EE2C
     u8 unk1;
     u8 unk2;
     u8 filler3;
-    u32 unk4;
+    u16 unk4;
+    u16 unk6;  // text id (sub_0800ED7C)
     u32 unk8[4];  // passed with unkD8[i] to sub_0800EC08 (sub_0800EBD4)
     u8 filler18[8];
     u8 *unk20[8];
@@ -769,6 +770,13 @@ struct EntityLinks
 {
     void *unk0;
     void *unk4;
+};
+
+struct Struct02030A70
+{
+    u8 filler0[5];
+    u8 unk5_0 : 4;
+    u8 unk5_4 : 4;
 };
 
 struct Struct0202A580
