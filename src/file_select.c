@@ -1644,7 +1644,10 @@ void sub_0801DCC8(struct Entity *this)
     }
 }
 
+
+
 asm(".include \"asm/non_matching/file_select/sub_0801DD28.inc\"");
+
 asm(".include \"asm/non_matching/file_select/sub_0801DDA0.inc\"");
 
 void sub_0801DE14(struct Entity *this)
@@ -2198,7 +2201,24 @@ void sub_08025B6C(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/file_select/sub_08025B84.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_08025C78.inc\"");
+
+void sub_0802614C(struct Entity *);
+
+void sub_08025C78(struct Entity *this)
+{
+    if ((this->unk54->unk18 & 1) && ((this->unk54->unk2A - 1) & 3) << 3 == this->direction) {
+        this->unk14 = 2;
+        this->direction = (this->direction - 8) & 31;
+        this->speed = 0x700;
+        this->unk78.h = this->unk54->x.HALF.HI;
+        this->unk78.s2.unk7A = this->unk54->y.HALF.HI;
+        sub_0802614C(this);
+    } else {
+        sub_0802614C(this);
+        this->direction = (this->direction - 1) & 31;
+    }
+}
+
 asm(".include \"asm/non_matching/file_select/sub_08025CEC.inc\"");
 
 void sub_08025DB8(struct Entity *this)
@@ -2388,7 +2408,28 @@ void sub_0802676C(struct Entity *this)
 asm(".include \"asm/non_matching/file_select/sub_080267C4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080268D8.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08026958.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_080269F8.inc\"");
+
+u16 sub_08008F58(u16, u16);
+u8 sub_080093C8(u16, u16);
+
+u8 sub_080269F8(struct Entity *this)
+{
+    u8 r = sub_08000580(this);
+    u16 t;
+
+    if (r != 0) {
+        this->unk78.h = 0xFFFF;
+        return r;
+    }
+    t = sub_0800932C(this->unk7C.h, this->unk50);
+    if (t != 328 && t != 330 && t != this->unk78.s2.unk7A) {
+        this->unk78.h = sub_08008F58(this->unk7C.h, this->unk50);
+        this->unk7C.s4.unk7E = sub_080093C8(this->unk7C.h, this->unk50);
+        return 16;
+    }
+    return 0;
+}
+
 
 u32 sub_08026A6C(struct Entity *this)
 {
@@ -2845,7 +2886,19 @@ void sub_0802B018(struct Entity *this)
     gUnknown_0813D5C8[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/file_select/sub_0802B030.inc\"");
+
+void sub_0802B030(struct Entity *this)
+{
+    this->unk14 = 1;
+    this->unk1C_0 = 1;
+    this->unk5E_0 = 0;
+    this->x.HALF.HI = (this->x.HALF.HI & 0x3F0) + 8;
+    this->y.HALF.HI = (this->y.HALF.HI & 0x3F0) + 8;
+    this->unk7C.h = (this->x.HALF.HI - gUnknown_03000450.unk18) >> 4 | ((this->y.HALF.HI - gUnknown_03000450.unk1A) >> 4) << 6;
+    sub_08008F48(0x4000, this->unk7C.h, this->unk50);
+    sub_08003870(this, this->form);
+}
+
 
 void sub_0802B0A8(struct Entity *this)
 {

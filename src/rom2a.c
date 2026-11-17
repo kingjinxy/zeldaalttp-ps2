@@ -55,7 +55,31 @@ void sub_0803006C(void)
     gUnknown_084278F8[gUnknown_03005050]();
 }
 
-asm(".include \"asm/non_matching/rom2a/sub_0803008C.inc\"");
+
+void sub_0803008C(void)
+{
+    switch (gSubState) {
+    case 0:
+        sub_0800BED8();
+        *(u16 *)0x05000000 = 0x6739;
+        gPaletteBuf2[0] = 0x6739;
+        sub_0801239C();
+        sub_080123BC();
+        sub_0800D6F4();
+        gSubState++;
+        gUnknown_02016D60.unk4 = 10;
+        gUnknown_02016D60.unk6 = 0;
+        sub_08036704(4);
+        break;
+    case 1:
+        if (sub_080367CC() == 1) {
+            gUnknown_03005050++;
+            gSubState = 0;
+        }
+        break;
+    }
+}
+
 asm(".include \"asm/non_matching/rom2a/sub_08030100.inc\"");
 asm(".include \"asm/non_matching/rom2a/sub_08030214.inc\"");
 

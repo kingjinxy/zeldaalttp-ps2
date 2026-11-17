@@ -378,7 +378,20 @@ asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E094.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E1D4.inc\"");
 
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E240.inc\"");
-asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E324.inc\"");
+
+void sub_0800E324(u8 *p)
+{
+    if (p[27] != 2) {
+        sub_0800E69C(6);
+        if (p[254] == 0 && (gUnknown_03005E10[gLCDRegisterBuffer] & 0xF3))
+            p[249] = 3;
+    } else if (gUnknown_0201ED90.unk6 & 0x8000) {
+        p[260] = 1;
+    } else if (--p[260] == 0xFF) {
+        p[249] = 3;
+    }
+}
+
 
 void sub_0800E39C(struct Struct0800EE2C *p)
 {
