@@ -6333,7 +6333,22 @@ u32 sub_0804CF4C(struct Struct0202A7E0 *p)
     return 0;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0804CF84.inc\"");
+// 5-bit fields in gUnknown_02000010 bytes 3 and 4
+struct Struct02000010Bits {
+    u8 filler0[3];
+    u8 unk3 : 5;
+    u8 filler3_5 : 3;
+    u8 unk4 : 5;
+};
+
+u32 sub_0804CF84(struct Struct0202A7E0 *p)
+{
+    sub_0800D67C(((u16 *)p->unk10)[1]);
+    ((struct Struct02000010Bits *)&gUnknown_02000010)->unk3 = 1;
+    ((struct Struct02000010Bits *)&gUnknown_02000010)->unk4 = ((u16 *)p->unk10)[2];
+    p->unk10 += 6;
+    return 0;
+}
 
 u32 sub_0804CFE8(struct Struct0202A7E0 *p)
 {
