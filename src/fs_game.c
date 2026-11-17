@@ -10100,7 +10100,44 @@ void sub_0805A040(struct Entity *this)
     GetNextFrame(this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0805A148.inc\"");
+
+u8 sub_0805A148(struct Entity *this)
+{
+    u32 x;
+    u32 y;
+    u16 dir;
+
+    if ((u16)(this->unk2C & 0xEE00))
+    {
+        dir = (u16)(this->unk2C & 0xE000) ? 64 : 192;
+        x = (this->x.WORD + ((gUnknown_0813E4CC[dir] << 8) * 8)) >> 16;
+        y = (this->y.WORD - ((gUnknown_0813E4CC[dir + 64] << 8) * 8)) >> 16;
+        if (sub_0800932C((u16)(((x - gUnknown_03000450.unk18) >> 4) | (((y - gUnknown_03000450.unk1A) >> 4) * 64)), this->unk50) == 0x4000)
+        {
+            sub_08008F48(0x4008, (u16)(((x - gUnknown_03000450.unk18) >> 4) | (((y - gUnknown_03000450.unk1A) >> 4) * 64)), this->unk50);
+            if (this->parameter != 0xFF)
+                gUnknown_0201F000[this->unk52] = gUnknown_0201F000[this->unk52] | gUnknown_08137B10[this->parameter];
+            DeleteThisEntity(this);
+            return 1;
+        }
+    }
+    if ((u16)(this->unk2C & 0xEE))
+    {
+        dir = (u16)(this->unk2C & 14) == 0 ? 128 : 0;
+        x = (this->x.WORD + ((gUnknown_0813E4CC[dir] << 8) * 8)) >> 16;
+        y = (this->y.WORD - ((gUnknown_0813E4CC[dir + 64] << 8) * 8)) >> 16;
+        if (sub_0800932C((u16)(((x - gUnknown_03000450.unk18) >> 4) | (((y - gUnknown_03000450.unk1A) >> 4) * 64)), this->unk50) == 0x4000)
+        {
+            sub_08008F48(0x4008, (u16)(((x - gUnknown_03000450.unk18) >> 4) | (((y - gUnknown_03000450.unk1A) >> 4) * 64)), this->unk50);
+            if (this->parameter != 0xFF)
+                gUnknown_0201F000[this->unk52] = gUnknown_0201F000[this->unk52] | gUnknown_08137B10[this->parameter];
+            DeleteThisEntity(this);
+            return 1;
+        }
+    }
+    return 0;
+}
+
 
 void sub_0805A3E8(struct Entity *this)
 {
