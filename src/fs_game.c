@@ -821,7 +821,85 @@ void sub_0803883C(void)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08038A30.inc\"");
+
+void sub_08038A30(void)
+{
+    if (sub_08037554() != 0)
+    {
+        sub_08037750();
+        if (gUnknown_03000E20.unk11 != 0 || sub_0803781C(8) != 0)
+        {
+            sub_0802D988();
+            sub_0802CD3C();
+            sub_08037574();
+            return;
+        }
+        {
+            if ((u16)(gUnknown_03000940[0] & 0x400))
+                sub_0803DE94(0);
+            if ((u16)(gUnknown_03000940[1] & 0x400))
+                sub_0803DE94(1);
+            if ((u16)(gUnknown_03000940[2] & 0x400))
+                sub_0803DE94(2);
+            if ((u16)(gUnknown_03000940[3] & 0x400))
+                sub_0803DE94(3);
+            if (gUnknown_03006C80.unk1C <= 0x57E03)
+                gUnknown_03006C80.unk1C++;
+            if ((u16)(gUnknown_03000E20.unk0 & 0xFF) == 0)
+                sub_080141E8();
+            gUnknown_03006C80.unk6F = 0;
+            gUnknown_03000E20.unk0++;
+            sub_0802B74C();
+            ((void (*)(void))gUnknown_03006C70)();
+            sub_08014900();
+            sub_08015D9C();
+            sub_08015C64();
+            sub_08013A60();
+            sub_08008ED8();
+            sub_0802CD3C();
+            sub_08000434();
+            sub_0803F284();
+            sub_08052A88();
+            sub_08000BAC();
+            sub_0802BFC4();
+            if (gUnknown_03000E20.unk12 != 0)
+            {
+                sub_08036760();
+                play_sound(0x80040000);
+                gUnknown_03005050 = gUnknown_03005050 + 2;
+                gSubState = 0;
+                gUnknown_03000C00 = 1;
+                gUnknown_03000E20.unk2 = 180;
+                return;
+            }
+            else
+            {
+                if (sub_08038CA8())
+                {
+                    sub_08036760();
+                    sub_0803DFC8();
+                    sub_0802D970();
+                    play_sound(0x80040000);
+                    BITU8_AT(gUnknown_03000420, 0) = 2;
+                    gUnknown_03006C80.unk6E = 2;
+                    gUnknown_03006D14 = 1;
+                    gUnknown_03005050++;
+                    gSubState = 0;
+                }
+            }
+            {
+                sub_0800099C();
+                gUnknown_03000490 = gRandom;
+                sub_08037574();
+            }
+        }
+    }
+    else
+    {
+        gUnknown_03005E10_b[0].v = gUnknown_03005E10_b[1].v = gUnknown_03005E10_b[2].v = gUnknown_03005E10_b[3].v = 0;
+    }
+}
+
 
 bool32 sub_08038CA8(void)
 {

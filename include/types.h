@@ -700,7 +700,8 @@ struct Struct03000E20
     u16 unk0 : 16;
     u16 unk2 : 16;
     u16 unk4 : 16;
-    u8 filler6[0xC];
+    u8 filler6[0xB];
+    u8 unk11;
     u8 unk12;
 };
 
