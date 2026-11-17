@@ -955,6 +955,8 @@ asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EEA8.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EEE0.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EF14.inc\"");
 #ifdef NONMATCHING
+struct Mask0202E158 { u8 unk0; u8 lo; u8 hi; u8 n; u32 mask; };
+extern struct Mask0202E158 gUnknown_0202E158;
 extern u32 gUnknown_0202E160[32];
 u8 sub_0800F190(u32);
 s32 sub_0800B830(s32);
@@ -1019,8 +1021,6 @@ asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EF34.inc\"");
 #endif
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800F0A0.inc\"");
 #ifdef NONMATCHING
-struct Mask0202E158 { u8 unk0; u8 lo; u8 hi; u8 n; u32 mask; };
-extern struct Mask0202E158 gUnknown_0202E158;
 
 // Counts the all-ones nibbles at both ends of m; returns 2 if m is all ones, 1 if none are, else 0
 u8 sub_0800F190(u32 m)
