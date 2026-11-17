@@ -715,7 +715,9 @@ struct Struct0202A7E0
     u8 unk2;
     u8 filler3;
     u8 unk4 : 8;
-    u8 filler5[3];
+    u8 unk5 : 8;
+    u8 unk6 : 8;
+    u8 filler7;
     u16 unk8 : 16;
     u8 fillerA[2];
     struct Entity *unkC;

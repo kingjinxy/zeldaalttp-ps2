@@ -2058,7 +2058,7 @@ u32 sub_0804CE7C(struct Struct0202A7E0 *);
 //sub_0804CF4C();
 u32 sub_0804CF84(struct Struct0202A7E0 *);
 //sub_0804CFE8();
-//sub_0804D024();
+u32 sub_0804D024(struct Struct0202A7E0 *);
 //sub_0804D0B8();
 //sub_0804D0E0();
 //sub_0804D118();

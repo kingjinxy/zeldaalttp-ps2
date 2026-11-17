@@ -6410,7 +6410,15 @@ u32 sub_0804CFE8(struct Struct0202A7E0 *p)
     return 1;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0804D024.inc\"");
+u32 sub_0804D024(struct Struct0202A7E0 *p)
+{
+    p->unk4 = 3;
+    p->unk5 = ((u16 *)p->unk10)[1];
+    p->unk6 = p->unkC->direction = ((u16 *)p->unk10)[2];
+    p->unkC->speed = ((u16 *)p->unk10)[3];
+    p->unk10 += 8;
+    return 0;
+}
 
 u32 sub_0804D0B8(struct Struct0202A7E0 *p)
 {
