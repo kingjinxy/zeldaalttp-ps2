@@ -717,14 +717,15 @@ u32 sub_0800E6B0(s32 d)
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E6B0.inc\"");
 #endif
 #ifdef NONMATCHING
+void sub_0800E80C(u16 *, s16, s16, u16);
 void sub_0800E78C(void)
 {
     u8 *w;
 
     if (gTextbox.unk10D > 0) {
         w = (u8 *)&gUnknown_020309C0 + gUnknown_03000420[3] * 8;
-        sub_0800E80C((gUnknown_03000420[3] << 11) + &gBG0Buffer[(w[5] * 32 + w[4]) * 2],
-                     (gTextbox.unk2_6 << 12) | 144, w[6], w[7]);
+        sub_0800E80C((u16 *)((gUnknown_03000420[3] << 11) + &gBG0Buffer[(w[5] * 32 + w[4]) * 2]),
+                     w[6], w[7], (gTextbox.unk2_6 << 12) | 144);
         sub_0800E950();
         sub_0800EA38();
         sub_0800EAA4();
