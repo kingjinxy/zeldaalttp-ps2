@@ -983,7 +983,40 @@ u32 sub_08039A70(struct Entity *this)
     return gUnknown_03006C80.unk28[this->form].unk0 & 1;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08039AA0.inc\"");
+
+u8 sub_08039AA0(u8 a0)
+{
+    struct Struct0200B250 *s = &gUnknown_0200B250[unk3000000.unk4];
+    struct Struct03006CA8 *t = &gUnknown_03006CA8[a0];
+    u8 i;
+
+    sub_0802E5E0();
+    if (sub_0802E750(a0) == 0 && t->unk6 <= 0x3E6)
+        t->unk6++;
+    for (i = 0; i < gUnknown_03006C80.unk0; i++)
+    {
+        if (gUnknown_03006C80.unk1 == 2)
+            gUnknown_03006C80.unk28[i].unk0 = gUnknown_03006C80.unk28[i].unk0 | 8;
+        if (gUnknown_03006C80.unk28[i].unk6 > 9)
+            gUnknown_03006C80.unk28[i].unk0 = gUnknown_03006C80.unk28[i].unk0 | 4;
+        if (gUnknown_03006C80.unk3 == 2)
+            gUnknown_03006C80.unk28[i].unk0 = gUnknown_03006C80.unk28[i].unk0 | 0x200;
+    }
+    if (sub_080399CC() >= gUnknown_03006C80.unk6)
+        sub_080398F8(gUnknown_03006C80.unk6);
+    s->unk0 = t->unk0;
+    s->unk5 = t->unk5;
+    s->unk6 = t->unk6;
+    s->unk10 = s->unk10 + gUnknown_03006C80.unkC[a0];
+    s->unk14 = s->unk14 + gUnknown_03006C80.unk20;
+    s->unk18 = s->unk18 + gUnknown_03006C80.unk4;
+    if (s->unk1C < gUnknown_03006C80.unk8)
+        s->unk1C = gUnknown_03006C80.unk8;
+    if (s->unk20 < gUnknown_03006C80.unkC[a0])
+        s->unk20 = gUnknown_03006C80.unkC[a0];
+    return sub_08011434(unk3000000.unk4);
+}
+
 
 u8 sub_08039CD4(void)
 {

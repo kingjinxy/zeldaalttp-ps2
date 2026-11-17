@@ -615,7 +615,7 @@ struct Struct03006C80
     u32 unk8;
     s32 unkC[4];  // per player
     u32 unk1C;  // frames
-    u8 filler20[4];
+    u32 unk20;
     u8 unk24;
     u8 filler25;
     u16 unk26 : 16;  // current music
@@ -623,7 +623,7 @@ struct Struct03006C80
         u32 unk0;
         u8 unk4;
         u8 unk5 : 8;
-        u8 filler6[2];
+        u16 unk6;
     } unk28[4];  // indexed by Entity.form (player)
     u8 filler48[4];
     u8 unk4C;
@@ -784,13 +784,24 @@ struct Struct03006A30
 struct Struct03006CA8
 {
     u32 unk0;
-    u32 unk4;
+    u8 unk4;
+    u8 unk5 : 8;
+    u16 unk6 : 16;
 };
 
 struct Struct0200B250
 {
 	u32 unk0;
-    u8 filler4[0x25-0x4];
+    u8 filler4;
+    u8 unk5 : 8;
+    u16 unk6 : 16;
+    u8 filler8[8];
+    u32 unk10;
+    u32 unk14;
+    u32 unk18;
+    u32 unk1C;
+    u32 unk20;
+    u8 unk24;
     u8 unk25;
     u8 filler26[0x40-0x26];
 };
