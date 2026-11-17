@@ -9840,10 +9840,41 @@ void sub_080591AC(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_080591D4.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_0805950C.inc\"");
+
+void sub_0805950C(struct Entity *this)
+{
+    if (sub_080597A8(this))
+        return;
+    switch (this->form)
+    {
+    case 3:
+        sub_08008F3C(U8_AT(this, 0x7B), (u16)(this->unk78.h + 0x3), this->unk50);
+        sub_08008F3C(U8_AT(this, 0x7B), (u16)(this->unk78.h + 0x43), this->unk50);
+        sub_08008F3C(U8_AT(this, 0x7B), (u16)(this->unk78.h + 0x83), this->unk50);
+        sub_08008F3C(U8_AT(this, 0x7B), (u16)(this->unk78.h + 0xC0), this->unk50);
+        sub_08008F3C(U8_AT(this, 0x7B), (u16)(this->unk78.h + 0xC1), this->unk50);
+        sub_08008F3C(U8_AT(this, 0x7B), (u16)(this->unk78.h + 0xC2), this->unk50);
+        sub_08008F3C(U8_AT(this, 0x7B), (u16)(this->unk78.h + 0xC3), this->unk50);
+    case 2:
+        sub_08008F3C(U8_AT(this, 0x7B), (u16)(this->unk78.h + 0x2), this->unk50);
+        sub_08008F3C(U8_AT(this, 0x7B), (u16)(this->unk78.h + 0x42), this->unk50);
+        sub_08008F3C(U8_AT(this, 0x7B), (u16)(this->unk78.h + 0x80), this->unk50);
+        sub_08008F3C(U8_AT(this, 0x7B), (u16)(this->unk78.h + 0x81), this->unk50);
+        sub_08008F3C(U8_AT(this, 0x7B), (u16)(this->unk78.h + 0x82), this->unk50);
+    case 1:
+        sub_08008F3C(U8_AT(this, 0x7B), (u16)(this->unk78.h + 0x1), this->unk50);
+        sub_08008F3C(U8_AT(this, 0x7B), (u16)(this->unk78.h + 0x40), this->unk50);
+        sub_08008F3C(U8_AT(this, 0x7B), (u16)(this->unk78.h + 0x41), this->unk50);
+    case 0:
+        sub_08008F3C(U8_AT(this, 0x7B), this->unk78.h, this->unk50);
+        break;
+    }
+    DeleteThisEntity(this);
+}
+
 
 // Whether this entity touches any player's entity
-bool32 sub_080597A8(struct Entity *this)
+u8 sub_080597A8(struct Entity *this)
 {
     u16 i;
 

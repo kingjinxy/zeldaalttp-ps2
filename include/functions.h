@@ -2338,7 +2338,7 @@ void sub_08059060(struct Entity *);
 //sub_080591AC();
 //sub_080591D4();
 //sub_0805950C();
-//sub_080597A8();
+u8 sub_080597A8(struct Entity *);
 //sub_08059818();
 //sub_080598D0();
 //sub_080598F8();
