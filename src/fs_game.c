@@ -4306,7 +4306,59 @@ void sub_080484AC(struct Entity *this)
     sub_0803D4A4(this->unk58, this, 0, 1);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08048514.inc\"");
+
+void sub_08048514(struct Entity *this)
+{
+    s32 d;
+
+    if (this->unk14 == 0)
+    {
+        this->unk14 = 1;
+        this->unk1C_0 = 1;
+        this->unk2E = 8;
+        this->unk5E_2 = 3;
+        this->unk3C = this->unk3C | 0x80;
+        this->unk48 = gUnknown_0813F544;
+        sub_08003870(this, 6);
+    }
+    GetNextFrame(this);
+    d = this->unk58->x.WORD - this->unk54->x.WORD;
+    d = d >> 2;
+    this->x.WORD = this->unk54->x.WORD + d * this->parameter;
+    d = this->unk58->y.WORD - this->unk54->y.WORD;
+    d = d >> 2;
+    this->y.WORD = this->unk54->y.WORD + d * this->parameter;
+    if ((u8)(this->unk58->unk70.s.unk72 & 1))
+    {
+        if (this->unk58->direction == 0x60)
+        {
+            if (this->parameter == 2)
+            {
+                this->x.HALF_U.HI = this->x.HALF_U.HI + 2;
+                this->y.HALF_U.HI = this->y.HALF_U.HI - 4;
+            }
+            else
+            {
+                this->x.HALF_U.HI = this->x.HALF_U.HI + 4;
+                this->y.HALF_U.HI = this->y.HALF_U.HI - 6;
+            }
+        }
+        else if (this->unk58->direction == 0xA0)
+        {
+            if (this->parameter == 2)
+            {
+                this->x.HALF_U.HI = this->x.HALF_U.HI - 2;
+                this->y.HALF_U.HI = this->y.HALF_U.HI - 4;
+            }
+            else
+            {
+                this->x.HALF_U.HI = this->x.HALF_U.HI - 4;
+                this->y.HALF_U.HI = this->y.HALF_U.HI - 6;
+            }
+        }
+    }
+}
+
 
 u8 sub_0804871C(struct Entity *this)
 {
