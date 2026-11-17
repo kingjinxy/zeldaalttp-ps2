@@ -457,7 +457,18 @@ struct Entity *sub_080123E8(void)
     return NULL;
 }
 
-asm(".include \"asm/non_matching/file_select/sub_08012410.inc\"");
+// Next free entity slot after e (first word 0), or NULL
+struct Entity *sub_08012410(struct Entity *e)
+{
+    struct Entity *p = e + 1;
+
+    if (p >= (struct Entity *)gUnknown_03004A50)
+        return NULL;
+    for (; p < (struct Entity *)(gUnknown_03004A50 + 0x600); p++)
+        if (*(u32 *)p == 0)
+            return p;
+    return NULL;
+}
 
 struct Entity *sub_08012440(void)
 {
