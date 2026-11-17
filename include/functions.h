@@ -2085,7 +2085,7 @@ void sub_0804DF3C(struct Entity *);
 void sub_0804E198(struct Entity *);
 void sub_0804E248(struct Entity *);
 void sub_0804E364(struct Entity *, struct Entity *);
-//sub_0804E394();
+void sub_0804E394(struct Entity *);
 void sub_0804E434(struct Entity *);
 //sub_0804E4E4();
 //sub_0804E50C();

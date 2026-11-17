@@ -6845,7 +6845,23 @@ void sub_0804E364(struct Entity *a, struct Entity *b)
 }
 
 
-asm(".include \"asm/non_matching/fs_game/sub_0804E394.inc\"");
+void sub_0804E394(struct Entity *this)
+{
+    struct Entity *e;
+
+    if (gUnknown_03006C80.unk6E > 2 && gUnknown_03006C80.unk4F == this->parameter)
+    {
+        this->unk14++;
+        this->unk1E_0 = 1;
+        sub_08003870(this, 0);
+        e = sub_0804C8A8(0x42, !(sub_08000580(this) & 1), 0);
+        if (e != NULL)
+            sub_0803D3D0(this, e);
+    }
+    else
+        GetNextFrame(this);
+    sub_0804E434(this);
+}
 
 
 void sub_0804E434(struct Entity *this)
