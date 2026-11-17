@@ -2014,7 +2014,21 @@ void sub_08025E24(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/file_select/sub_08025E54.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_08025EE0.inc\"");
+
+void sub_08025EE0(struct Entity *this)
+{
+    sub_080261A0(this, this->unk17 >> 1);
+    this->direction = (this->direction - 1) & 31;
+    if (--this->unk17 <= 7) {
+        this->unk14 = 7;
+        this->unk17 = 150;
+        this->unk2E = 0;
+        this->unk3C &= 0x7F;
+        sub_08026204(this);
+        sub_08003DFC(48);
+    }
+}
+
 
 void sub_08025F34(struct Entity *this)
 {
@@ -2143,7 +2157,20 @@ void sub_08026AB4(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/file_select/sub_08026ACC.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_08026B80.inc\"");
+
+void sub_08026B80(struct Entity *this)
+{
+    if ((gUnknown_0201F000[this->unk52] & this->unk68.w) == this->unk68.w) {
+        play_sound(0x80020000);
+        play_sound(0x800D01A7);
+        if (this->unk16 != 0) {
+            play_sound(0x1A1);
+            gUnknown_03006C80.unk26 = 0x1A1;
+        }
+        this->unk14 = 2;
+    }
+}
+
 
 void sub_08026BD4(struct Entity *this)
 {
@@ -2198,7 +2225,25 @@ void sub_08026DB4(struct Entity *this)
         sub_08026E24(this);
 }
 
-asm(".include \"asm/non_matching/file_select/sub_08026DD0.inc\"");
+
+void sub_08026DD0(struct Entity *this)
+{
+    u8 dead;
+
+    GetNextFrame(this);
+    if (this->unk29 == 1) {
+        sub_08026EA0(this);
+    } else if ((dead = this->unk29 & 0x80) != 0) {
+        DeleteThisEntity(this);
+    } else if (this->unk29 & 0x40) {
+        this->unk29 = dead;
+        if (this->unk18 == 0)
+            sub_08003DFC(116);
+        else
+            sub_08003DFC(157);
+    }
+}
+
 asm(".include \"asm/non_matching/file_select/sub_08026E24.inc\"");
 
 void sub_08026EA0(struct Entity *this)
@@ -2841,7 +2886,26 @@ void sub_0802CE98(void)
 }
 
 asm(".include \"asm/non_matching/file_select/sub_0802CEC4.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_0802CF20.inc\"");
+
+u8 sub_0802CEC4(void);
+u16 sub_08004710(void);
+
+void sub_0802CF20(void)
+{
+    u8 r = sub_0802CEC4();
+
+    if (r != 0) {
+        if (gUnknown_03006C80.unk51 == 0) {
+            gUnknown_03006C80.unk51 = 1;
+            sub_0800D6A4(516);
+            ((struct { u8 pad[16]; u32 v; } *)&gUnknown_0201ED90)->v = sub_08004710();
+        }
+    } else {
+        gUnknown_03006C80.unk51 = r;
+    }
+    sub_0803A20C();
+}
+
 
 asm(".include \"asm/non_matching/file_select/sub_0802CF70.inc\"");
 
