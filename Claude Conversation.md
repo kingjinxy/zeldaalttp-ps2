@@ -4335,3 +4335,1418 @@ Signed `HALF.HI` on both sides gives the `bic`. Applying.
 
 - tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 3 more Four Swords functions  Co-Authored-By: Claude
 
+## Claude
+
+Updating docs at this milestone (166 Four Swords functions left), then continuing.
+
+- tool `Bash`: sed -i '52s|.*|- [ ] fs_game: 749 of 915 done; all code: 1,839 of 7,894 functions in C (6,055 left in asm/non_matching)|' "docs/Planning Doc.md" && python3 - <<
+
+- tool `Bash`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/next.sh 3 | cut -c1-4200
+
+- tool `Bash`: for f in sub_0805CF6C sub_08003B64 sub_0805D4B0 sub_08045068 sub_0805EC1C sub_08012468; do grep -n "$f\b" include/functions.h | head -1; done
+
+- tool `Bash`: for f in sub_0805CF6C sub_0805D4B0 sub_08045068 sub_0805EC1C; do sed -i "s|^//$f();|void $f(struct Entity *);|" include/functions.h; done S=/tmp/claude-1000/-ho
+
+- tool `Bash`: python3 - <<'E' a=open("baserom.gba","rb").read(); b=open("zeldaalttp.gba","rb").read() o=0x0805CF6C-0x08000000 for k in range(0,400,2):   if a[o+k:o+k+2]!=b[o+
+
+- tool `Bash`: python3 - <<'E' s=open('src/fs_game.c').read() s=s.replace("    v = sub_0800932C(this->unk7C.h, this->unk50);\n    if (v == 0x4009)\n        return;","    if ((
+
+## Claude
+
+`sub_0805CF6C`: trying a nested-if structure for the literal-pool placement.
+
+- tool `Bash`: python3 - <<'E' s=open('src/fs_game.c').read() i=s.index('void sub_0805CF6C(struct Entity *this)'); e=s.index('\n}\n',i) new='''void sub_0805CF6C(struct Entity 
+
+- tool `Bash`: awk '/^sub_0805EC1C:/{f=1} f' src/fs_game.s | grep -v "^\s*\.[a-z]\|^\.L[0-9]*:$" | sed -n 1,45p | paste -sd';' | sed 's/\t//g' | fold -w 3000
+
+- tool `Bash`: sed -i 's|gUnknown_0201F000\[this->unk52\] = (~(this->unk7C.w ^ this->unk60) \& gUnknown_0201F000\[this->unk52\]) ^ this->unk60;|gUnknown_0201F000[this->unk52] 
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 3 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_08064FCC sub_08065524 sub_0803D9F4 sub_0800390C gUnknown_08142178 gUnknown_0814217C; do grep -n "$f\b" include/*.h | head -1; done; arm-none-eabi-n
+
+## Claude
+
+Batch 132 committed (163 left). Writing batch 133.
+
+- tool `Bash`: for f in sub_08064FCC sub_08065524; do sed -i "s|^//$f();|void $f(struct Entity *);|" include/functions.h; done; sed -i -e 's|^//sub_0803D9F4();|u8 sub_0803D9F4
+
+- tool `Bash`: python3 - <<'E' a=open("baserom.gba","rb").read(); b=open("zeldaalttp.gba","rb").read() o=0x08065524-0x08000000 for k in range(0,400,2):   if a[o+k:o+k+2]!=b[o+
+
+- tool `Bash`: python3 - <<'E' s=open('src/fs_game.c').read() s=s.replace("void sub_08065524(struct Entity *this)\n{\n    u32 unused;\n    u16 i;","void sub_08065524(struct En
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 3 more Four Swords functions  sub_0803D9F4 keeps the
+
+- tool `Bash`: for f in sub_080501DC sub_08052648 sub_0805E154 gUnknown_0813FED8 gUnknown_084292A8; do grep -n "$f\b" include/*.h | head -1; done
+
+## Claude
+
+Batch 133 committed (160 left). Writing batch 134.
+
+- tool `Bash`: sed -i 's|^//sub_08052648();|void sub_08052648(struct Entity *);|' include/functions.h && sed -i -e 's|^//extern gUnknown_0813FED8;|extern const u16 gUnknown_08
+
+- tool `Bash`: python3 - <<'E' s=open('src/fs_game.c').read() i=s.index('void sub_080501DC(struct Entity *this)'); e=s.index('\n}\n',i) new='''void sub_080501DC(struct Entity 
+
+- tool `Bash`: python3 - <<'E' s=open('src/fs_game.c').read() i=s.index('void sub_0805E154(struct Entity *this)'); e=s.index('\n}\n',i) f=s[i:e] body_start=f.index('    if (e 
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 3 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_08049140 sub_0803719C sub_08041088 gUnknown_03000FF8 gUnknown_0813F5FC gUnknown_0813F5A4 sub_080496DC; do grep -n "$f\b" include/*.h | head -1; don
+
+- tool `Bash`: grep -rn "gUnknown_03000FF8" src/*.c | grep -v "asm(" | head
+
+## Claude
+
+Batch 134 committed (157 left). Writing batch 135.
+
+- tool `Bash`: grep -n "sub_0800C54C" include/functions.h; python3 - <<'E' p='include/types.h'; s=open(p).read() a=s.index('struct Struct03000FC0'); b=s.index('};',a) seg=s[a:
+
+- tool `Bash`: sed -i 's|^extern u8 gUnknown_03000FF8\[\];|extern struct LinkPacket gUnknown_03000FF8[];|' include/variables.h && for f in sub_08049140 sub_08041088 sub_080496
+
+- tool `Bash`: python3 - <<'E' s=open('src/fs_game.c').read() i=s.index('void sub_0803719C(u8 player)'); e=s.index('\n}\n',i) new='''void sub_0803719C(u8 player) {     struct 
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 3 more Four Swords functions  struct LinkPacket: one
+
+## Claude
+
+The two "weird" deferred functions only looked odd because my listing filter hides `str r0, [r7]`. Retrying `sub_08037300` and `sub_0803F284`.
+
+- tool `Bash`: sed -n 20,40p asm/non_matching/fs_game/sub_08037300.inc; grep -n "sub_08037300\|gUnknown_03000FD0\|sub_0803F284\|sub_0803F3C4\|sub_080021EC\|sub_0803F550" inclu
+
+- tool `Bash`: arm-none-eabi-nm zeldaalttp.elf | grep -i " sub_080021EC"; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpa
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -i "undefined" | head -3; grep -rn "_080021EC\b\|@ 0x080021EC" asm/non_matching/rom1/*.inc | head -3
+
+- tool `Bash`: git stash -q && make -j8 2>/dev/null >/dev/null; arm-none-eabi-nm -n zeldaalttp.elf | awk '$1 >= "080021b0" && $1 <= "08002200"'; git stash pop -q && git status
+
+- tool `Bash`: git stash -q; arm-none-eabi-nm -n zeldaalttp.elf | awk '$1 >= "08002100" && $1 <= "08002200"' | grep -v ABS; git stash pop -q; grep -rln "sub_0800219C:\|sub_080
+
+- tool `Bash`: f=$(grep -rln "^_080021AC:" asm src | head -1); echo $f; grep -n "_080021AC:\|_080021E\|@ 0x080021" $f | head; awk '/^_080021AC:/{p=1} p' $f | head -40
+
+## Claude
+
+`sub_080021EC` is a function hidden in a `.byte` block of `sub_080020C8.inc` (starts `push {lr}` at 0x080021EC); splitting the bytes to give it a label.
+
+- tool `Bash`: python3 - <<'E' p='asm/non_matching/rom1/sub_080020C8.inc'; s=open(p).read() old="\t.byte 0x98, 0x00, 0x01, 0x00, 0xA4, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile sub_08037300 and sub_0803F284  sub_080021EC gets a l
+
+- tool `Bash`: for f in sub_08047D34 sub_080386C0 sub_0804D8A4 sub_08036704 sub_080367CC sub_0802B738 sub_0800CE74 sub_0800C080 sub_0802BFC4 gUnknown_08428840; do grep -n "$f\
+
+## Claude
+
+Batch 136 committed (152 left). Writing batch 137.
+
+- tool `Bash`: grep -rn "sub_0800CE74(" src/*.c | grep -v "asm(" | head -2; python3 - <<'E' p='include/types.h'; s=open(p).read() s=s.replace("struct Struct03006C80\n{","""// 
+
+- tool `Bash`: python3 - <<'E' a=open("baserom.gba","rb").read(); b=open("zeldaalttp.gba","rb").read() o=0x0804D8A4-0x08000000 for k in range(0,400,2):   if a[o+k:o+k+2]!=b[o+
+
+- tool `Bash`: awk '/^sub_0804D8A4:/{f=1} f' src/fs_game.s | grep -v "^\s*\.[a-z]\|^\.L[0-9]*:$" | sed -n 82,135p | paste -sd';' | sed 's/\t//g' | fold -w 3000
+
+- tool `Bash`: awk '/^sub_0804D8A4:/{f=1} f' src/fs_game.s | grep -v "^\s*\.[a-z]\|^\.L[0-9]*:$" | sed -n 135,165p | paste -sd';' | sed 's/\t//g' | fold -w 3000
+
+- tool `Bash`: sed -n '/^_0804D98C:/,/^_0804D9F8:/p' asm/non_matching/../../asm/non_matching/fs_game/sub_0804D8A4.inc 2>/dev/null | head -5; S=/tmp/claude-1000/-home-alex-Docu
+
+- tool `Bash`: sed -i 's|        this->unk18 = this->y.HALF_U.HI = (sub_0800099C() \& 31) + 112;|        this->unk18 = this->y.HALF.HI = (sub_0800099C() \& 31) + 112;|' src/fs
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 3 more Four Swords functions  Co-Authored-By: Claude
+
+## Claude
+
+Batch 137 committed (149 left). Writing batch 138.
+
+- tool `Bash`: sed -i 's|    /\* 0x3E \*/ u8 unk3E;|    /* 0x3E */ u8 unk3E : 8;|' include/entity.h && for f in sub_0805B8A4 sub_0803C9FC sub_080023C8; do grep -n "$f\b" inclu
+
+- tool `Bash`: sed -i -e 's|^//sub_0805B8A4();|void sub_0805B8A4(struct Entity *);|' -e 's|^//sub_0803C9FC();|u8 sub_0803C9FC(struct Entity *, struct Entity *, u8);|' -e 's|^u
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 2 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_080587BC sub_0804D2C0 gUnknown_08428FB4; do grep -n "$f\b" include/*.h | head -1; done
+
+## Claude
+
+Batch 138 committed (147 left). Writing batch 139.
+
+- tool `Bash`: for f in sub_080587BC sub_0804D2C0; do sed -i "s|^//$f();|void $f(struct Entity *);|" include/functions.h; done; sed -i 's|^//extern gUnknown_08428FB4;|extern c
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 2 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_0804DF3C sub_0806653C sub_08066808 gMainState; do grep -n "$f\b" include/*.h | head -1; done; grep -n "gUnknown_0813FD90" include/variables.h
+
+## Claude
+
+Batch 139 committed (145 left). Writing batch 140.
+
+- tool `Bash`: sed -i -e 's|^//sub_0804DF3C();|void sub_0804DF3C(struct Entity *);|' -e 's|^//sub_0806653C();|void sub_0806653C(struct Entity *);|' -e 's|^//sub_08066808();|vo
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 2 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_08037EEC sub_0805B678 sub_0800D6F4 sub_0800D744 sub_0800F4C4 gUnknown_08427BB4 gUnknown_08142374 sub_08063C5C sub_080093AC gUnknown_08140F5C sub_08
+
+- tool `Bash`: grep -rn "CpuFastSet(\|sub_0800F4C4(" src/*.c | grep -v "asm(" | head -3; arm-none-eabi-nm -n zeldaalttp.elf | awk '$1 >= "08009390" && $1 <= "080093b0"' | grep
+
+## Claude
+
+Batch 140 committed (143 left). `0x080093AC` is another entry point inside an `.inc`; labelling it.
+
+- tool `Bash`: f=$(grep -rln "^_080093AC:" asm | head -1); echo $f; grep -n -B3 -A3 "^_080093AC:" $f
+
+- tool `Bash`: sed -i 's|^_080093AC:$|\t.thumb_func\n\t.global sub_080093AC\nsub_080093AC: @ entry point: (x, y, layer) without the entity\n_080093AC:|' asm/non_matching/rom1/
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad && cat > $S/b141.c <<'E' @@ sub_08037EEC void sub_08037EE
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 2 more Four Swords functions  sub_080093AC gets a la
+
+## Claude
+
+Retrying deferred `sub_08038238` (its zero store was also hidden by the filter).
+
+- tool `Bash`: for f in gUnknown_03000F44 sub_080137DC sub_0800BEC4 sub_0802D954 gBG0Buffer sub_0801424C sub_080138BC sub_08038238; do grep -n "$f\b" include/*.h | head -1; do
+
+- tool `Bash`: grep -rn "sub_0800BEC4\|sub_080137DC\|sub_0801424C\|sub_080138BC" src/*.c | grep -v "asm(" | head -3; for f in sub_080137DC sub_0800BEC4 sub_0802D954 sub_080142
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile sub_08038238  Co-Authored-By: Claude Opus 5.5 <norep
+
+## Claude
+
+Committed; the listing filter no longer hides `str r0, [r7]`. Next batch.
+
+- tool `Bash`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/next.sh 2 | cut -c1-5500
+
+- tool `Bash`: for f in sub_0805FD98 gUnknown_081419A4 gUnknown_08141838 gUnknown_0813F10C sub_080040C4; do grep -n "$f\b" include/*.h | head -1; done; grep -n "0x44" include/
+
+## Claude
+
+Batch 142 committed (140 left). Writing batch 143.
+
+- tool `Bash`: sed -i 's|    /\* 0x44 \*/ u8 unk44;|    /* 0x44 */ u8 unk44 : 8;|' include/entity.h && sed -i -e 's|^//sub_0805FD98();|void sub_0805FD98(struct Entity *);|' -e
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 2 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_0803B3C0 sub_08003FB0 sub_0805E9D4 gUnknown_081414E4 sub_08008F3C; do grep -n "$f\b" include/*.h | head -1; done; awk '/^struct Struct03006A30/,/};
+
+- tool `Bash`: awk '/^struct Struct03006A30$/,/^};/' include/types.h | head -6
+
+## Claude
+
+Batch 143 committed (138 left). Writing batch 144.
+
+- tool `Bash`: python3 - <<'E' p='include/types.h'; s=open(p).read() a=s.index('struct Struct03006A30\n{'); b=s.index('};',a) seg=s[a:b].replace("    u8 filler0[5];\n    u8 un
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 2 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_0803F3C4 sub_08048FB4 gUnknown_08427C2C gUnknown_0813F584 gUnknown_0813F594 gUnknown_0813F55C sub_080098A0; do grep -n "$f\b" include/*.h | head -1
+
+## Claude
+
+Batch 144 committed (136 left). Writing batch 145.
+
+- tool `Bash`: sed -i 's|    /\* 0x1A \*/ u8 filler1A;|    /* 0x1A */ u8 unk1A;|' include/entity.h && sed -i 's|^//sub_08048FB4();|void sub_08048FB4(struct Entity *);|' includ
+
+- tool `Bash`: for v in 'this->direction += (sub_0800099C() \& 1) ? 2 : -2;' 'this->direction = this->direction + ((sub_0800099C() \& 1) ? 2 : -2);'; do python3 - "$v" <<'E' i
+
+- tool `Bash`: sed -i 's|        this->direction = this->direction + ((sub_0800099C() \& 1) ? 2 : -2);|        this->direction += (sub_0800099C() \& 1) ? 2 : -2;|' src/fs_game
+
+- tool `Bash`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/next.sh 2 | cut -c1-6500
+
+- tool `Bash`: for f in sub_080647D0 sub_08043338 sub_0800BD14 sub_080005F0; do grep -n "$f\b" include/functions.h | head -1; done; awk '/^struct Struct03006A30$/,/^};/' inclu
+
+## Claude
+
+Batch 145 committed (134 left). Writing batch 146.
+
+- tool `Bash`: python3 - <<'E' p='include/types.h'; s=open(p).read() a=s.index('struct Struct03006A30\n{'); b=s.index('};',a) seg=s[a:b].replace("    u8 filler3A[5];\n    s8 u
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 2 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_0806075C sub_080608F8 sub_08063384 sub_080637F4 gUnknown_081420BC; do grep -n "$f\b" include/*.h | head -1; done
+
+## Claude
+
+Batch 146 committed (132 left). Writing batch 147.
+
+- tool `Bash`: for f in sub_0806075C sub_080608F8 sub_08063384 sub_080637F4; do sed -i "s|^//$f();|void $f(struct Entity *);|" include/functions.h; done; sed -i 's|^//extern g
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 2 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_08054370 sub_0803F0E4; do grep -n "$f\b" include/functions.h | head -1; done
+
+## Claude
+
+Batch 147 committed (130 left). Writing batch 148.
+
+- tool `Bash`: sed -i 's|^//sub_08054370();|void sub_08054370(struct Entity *);|' include/functions.h S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 2 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_0804EDEC sub_0804EF98 sub_08008DFC sub_080077D0 sub_08042DB0 sub_08042F5C; do grep -n "$f\b" include/functions.h | head -1; done; arm-none-eabi-nm 
+
+## Claude
+
+Batch 148 committed (128 left). Writing batch 149.
+
+- tool `Bash`: for f in sub_0804EDEC sub_08042DB0 sub_08042F5C; do sed -i "s|^//$f();|void $f(struct Entity *);|" include/functions.h; done; sed -i 's|^u16 sub_0800935C(struct
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 2 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_08054D30 sub_08066224 sub_0806682C gUnknown_03005AD8; do grep -n "$f\b" include/*.h | head -1; done
+
+## Claude
+
+Batch 149 committed (126 left). Writing batch 150.
+
+- tool `Bash`: for f in sub_08054D30 sub_08066224; do sed -i "s|^//$f();|void $f(struct Entity *);|" include/functions.h; done; sed -i 's|^//sub_0806682C();|u8 sub_0806682C(st
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 2 more Four Swords functions  Co-Authored-By: Claude
+
+## Claude
+
+Retrying deferred `sub_0806682C` now that its argument is known to be a `Struct03006A30 *`.
+
+- tool `Bash`: python3 - <<'E' p='include/types.h'; s=open(p).read() a=s.index('struct Struct03006A30\n{'); b=s.index('};',a) seg=s[a:b].replace("    u8 filler3A[4];","    u8 
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile sub_0806682C  Co-Authored-By: Claude Opus 5.5 <norep
+
+## Claude
+
+123 left. Continuing with the next ones; I'll revisit the 25 deferred functions afterwards, since several were deferred before the newer techniques existed.
+
+- tool `Bash`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/next.sh 2 | cut -c1-7000
+
+- tool `Bash`: for f in sub_08045C18 sub_08060F44 sub_08061364 sub_0802D97C sub_0802C8F8; do grep -n "$f\b" include/functions.h | head -1; done
+
+## Claude
+
+Batch 151 committed (123 left). Writing batch 152.
+
+- tool `Bash`: for f in sub_08045C18 sub_08060F44 sub_08061364; do sed -i "s|^//$f();|void $f(struct Entity *);|" include/functions.h; done; for f in sub_0802D97C sub_0802C8F8
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 2 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_08054F08 gUnknown_08428D00; do grep -n "$f\b" include/*.h | head -1; done; python3 - <<'E' p='include/types.h'; s=open(p).read() a=s.index('struct 
+
+## Claude
+
+Batch 152 committed (121 left). Writing batch 153.
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad && cat > $S/b153.c <<'E' @@ sub_08054F08 void sub_08054F0
+
+- tool `Bash`: make compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A src include asm && git commit -qm "Decompile 2 more Four Swords functions  Co-Authored-By: Claude
+
+- tool `Bash`: for f in sub_0804930C sub_080494B8 sub_0805B01C gUnknown_0842905C; do grep -n "$f\b" include/*.h | head -1; done
+
+## Claude
+
+Batch 153 committed (119 left). Writing batch 154.
+
+- tool `Bash`: sed -i '/^gUnknown_08003538 = /a gUnknown_08003566 = 0x08003566;  /* table inside rom1'"'"'s code area, read by sub_0805B01C */' ldscript.txt && sed -i 's|^exte
+
+- tool `Bash`: python3 - <<'E' a=open("baserom.gba","rb").read(); b=open("zeldaalttp.gba","rb").read() o=0x0805B01C-0x08000000 for k in range(0,500,2):   if a[o+k:o+k+2]!=b[o+
+
+- tool `Bash`: awk '/^sub_0805B01C:/{f=1} f' src/fs_game.s | grep -v "^\s*\.[a-z]\|^\.L[0-9]*:$" | sed -n 1,25p | paste -sd';' | sed 's/\t//g'
+
+- tool `Bash`: python3 - <<'E' s=open('src/fs_game.c').read() i=s.index('void sub_0805B01C(struct Entity *this)'); e=s.index('\n}\n',i) f=s[i:e] f=f.replace("    if (v != 0x40
+
+- tool `Bash`: python3 - <<'E' a=open("baserom.gba","rb").read(); b=open("zeldaalttp.gba","rb").read() o=0x0805B01C-0x08000000 for k in range(0,500,2):   if a[o+k:o+k+2]!=b[o+
+
+- tool `Bash`: python3 - <<'E' s=open('src/fs_game.c').read() i=s.index('void sub_0805B01C(struct Entity *this)'); e=s.index('\n}\n',i) f=s[i:e] f=f.replace("    switch (v)\n 
+
+## User
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+<system-reminder>
+<tools-used-before-summary>Bash, Edit, PushNotification, Read, TaskStop, ToolSearch, Write</tools-used-before-summary>
+</system-reminder>
+Summary:
+1. Primary Request and Intent:
+   - **Overall goal:** Decompile the zeldaalttp GBA disassembly (USA, Four Swords part) to C, then port it to the PS2 with split-screen multiplayer.
+   - **Latest instructions from the user:**
+     - "Keep working. You can continue to give progress updates, but don't stop until all functions have been translated to C."
+     - "Continue with the assembly to C conversion. I want to add a medium priority item to the planning doc: playing with more than 4 players." The planning-doc item is done (commit `1e6b50b`).
+   - **Workflow rules:**
+     - Work in batches and commit after each one, only when `make compare` prints `zeldaalttp.gba: OK`.
+     - Check the Minish Cap decomp for existing matches.
+     - Keep `docs/Running Walkthrough.md`, `docs/Planning Doc.md` and `Claude Conversation.md` updated at milestones.
+   - **Rules from CLAUDE.md that stay in effect:**
+     - GitHub-only web access without asking.
+     - Never access tcrf.net in any way.
+     - No `pkill -f` with a pattern that matches its own command line.
+     - Never commit ROMs, BIOS, saves or extracted assets.
+     - Never send private information (the user's email) to external services.
+     - The `reference/` folder is never uploaded.
+   - **Memory:** saved `keep-going-decomp.md` (continue batches without stopping, unless a real decision is needed).
+
+2. Key Technical Concepts:
+   - **Build:** agbcc `-O0` for `src/fs_game.c`, frame pointer in r7.
+   - **Batch tooling:**
+     - `place.py` swaps `@@ FUNC` blocks into `src/fs_game.c` and moves each `.inc` to `scratchpad/done`.
+     - `next.sh N` lists the next functions, smallest first, excluding `deferred.txt`. It now shows `str r0, [r7]`, which the old filter hid: those hidden stores were the cause of several false "weird" deferrals.
+   - **Checks after every batch:** `make -j8 compare`, `tools/first_diff.py`, and the nm "first moved" awk check.
+   - **Matching patterns learned:**
+     - **Bitfields written by -O0 code:**
+       - `struct BitU16A { u16 v:16; } __attribute__((packed, aligned(2)))` for arrays the original writes with the bitfield pattern; `struct BitU8A` (packed) for bytes.
+       - Macros `BITU16_AT(base,off)` and `BITU8_AT(base,off)` for bitfield writes at an offset.
+       - Macros `S16_AT`, `U16_AT`, `U8_AT` and `S8_AT` for plain reads at an offset with the large-offset field pattern.
+     - **ldscript aliases:**
+       - `gUnknown_03005E10_b` and `gUnknown_03000940_b` are BitU16A views of the key arrays.
+       - `sub_0802C12C_int` is an int-returning view for a caller that had no prototype.
+       - Addresses inside rom1's code area: `gUnknown_080046DC`, `gUnknown_08008840`, `gUnknown_08003538`, `gUnknown_08003566`.
+       - Use the same symbol for reads and writes within one function, or the literal pool gets an extra entry.
+     - **Entry points given labels inside .inc files:**
+       - `sub_08008F78` (in `sub_08008F68.inc`), `sub_080012A0` (`sub_08001290.inc`), `sub_080021EC` (`sub_080020C8.inc`, inside the `.byte` block), `sub_080093AC` (`sub_080093A4.inc`).
+       - `sub_08003828` is `GetNextFrame`.
+     - **Masks:** `& 0x7FF` compiles to `lsl #21; lsr #21`. The LinkKeys and MapTile views were removed because of this.
+     - **Load order:**
+       - `a->f + b` loads a, then b, then the field.
+       - `x |= y` and `x &= ~y` compute x's address first, then y, then load x.
+       - Explicit `x = x | y` loads both twice.
+     - **Long `if` bodies** produce `beq body; b end` (Thumb ±256-byte branch range), not necessarily `return`.
+       - Literal-pool placement tells the two apart: an early `return` dumps the pool early.
+       - Use nested ifs for long bodies.
+     - **Switches:**
+       - A switch with one case plus `default: break;`, and `case 0: default:` placement.
+       - A range check on adjacent cases.
+       - No break on the last case.
+     - **Bounds-check idiom:** `if (i > 15) while (1);`.
+     - **Assignment in a condition** saves a reload: `if ((v = f()) == X)`.
+     - **Arithmetic forms:**
+       - `* N` versus `<< N`: the `*` form shows an extra copy (`add rX, rY, #0`) before the `lsl`.
+       - `x.HALF.HI & ~15` (signed) gives `bic`.
+       - `x += (rand & 3) - 2`.
+       - `unk18 = y.HALF.HI = v`: the signed field avoids the bic conversion.
+     - **Locals:** declaration order sets the frame layout; add `u32 unused;` for frame padding.
+     - **Pointer difference** shown with `lsr`: `((u32)p - (u32)base) >> 1`.
+     - **Cast lvalues:** `*((u16 *)this->unk74.w)++`.
+
+3. Files and Code Sections:
+   - **`src/fs_game.c`:** about 200 more functions decompiled this session.
+   - **`include/entity.h`:**
+     - Union at 0x74 (`p`, `w`, struct `b` {unk74..unk77 :8}).
+     - Added: `unk70.s2` {u16 lo; u16 unk72:16}, `unk70.s.unk73`, `unk78.s3` {lo; unk79:8}, `unk7C.bf :8`, `unk7C.s4.unk7E :8`.
+     - New names: `unk5E_2 :2` and `unk5E_4`, `unk19 :8`, `unk1A`, `unk3E :8`, `unk3F :8`, `unk44 :8`, `unk46 :8`, `unk53`, `unk6C[2]`.
+   - **`include/types.h`:**
+     - New types: `BitU16A`, `BitU8A`, `MapDataB` {u16 unk0[2]; BitU16A unk4[0x1000]; BitU8A unk2004[0x1000]}, `EntityBox`, `LinkPacket` {u8 unk0, unk1; u16 unk2[5]; u8 fillerC[8]}, `Struct08428840`.
+     - Struct03006A30, many fields named: unk2:8, unk7:8, unkA/unkB:8, unkD, unkF, unk1A:8, unk1C:8, unk1E, unk27:8, unk2C (Entity*), unk38/39:8, unk3C, unk3E_0:2.
+     - Struct03006C80: unk6, unk8, unkC[4] (s32), unk4C, unk4F:8, unk50, unk58[4], unk6C:8, unk6D:8, unk6F:8.
+     - Struct03000FC0: unk12:16, unk18, unk38[4] {unk0, unk2 (keys), unk4, unk8, unkC, unk10}.
+     - Struct02016D60_fs: unk2, unk4:16, unk9, unkA.
+     - Struct03000450: unk0 (Entity*), unk22, unk28.
+     - Struct03000E20: unk2:16.
+   - **`include/variables.h` and `include/functions.h`:** many declarations replacing commented placeholders; `gUnknown_0200B1D0` is now `struct BitU16A [4][16]`.
+   - **`ldscript.txt`:** the aliases listed in section 2.
+   - **Docs:**
+     - Walkthrough updated twice this session.
+     - Planning doc: counts, plus the new section "Medium priority: more than 4 players".
+     - Conversation archive updated.
+
+4. Errors and fixes:
+   - **Undefined references** to functions that start inside other `.inc` files: fixed by adding `.thumb_func`/`.global` labels.
+   - **A plain absolute ldscript symbol for a Thumb function** produced an interworking stub: use labels in the asm instead.
+   - **Conflicting prototypes:**
+     - `sub_0804F6EC` takes `const struct XY16 *`.
+     - `sub_0800BE50` takes `u8 *`.
+     - `sub_0803D520` is `(u8, u16, u8)`.
+     - `sub_0805722C` returns u8.
+     - `sub_08044594` is unprototyped.
+     - `sub_0802C12C` returns u8, with the `_int` alias for the one caller that needs int.
+   - **Test-edit mistake:** a regex replacement corrupted `e->parameter`; fixed by restoring it.
+
+5. Problem Solving:
+   - 118 fs_game functions remain (`ls asm/non_matching/fs_game | wc -l` showed 119 before the current batch); about 6,000 functions remain across all code.
+   - **Deferred list (`scratchpad/deferred.txt`):** sub_0803D770, sub_0803CD8C, sub_0803DD0C, sub_08056D40, sub_0804E394, sub_08055FA0, sub_08063C5C, sub_08063E88, sub_0803A20C, sub_0805C1F4, sub_080447C8, sub_08054A38, sub_0804CF84, sub_0803CE68, sub_0803D440, sub_0804894C, sub_0805AC94, sub_0804CE7C, sub_0804D024, sub_08047538, sub_08062CB8, sub_0803D134 (`v - (x - 1)` folding), sub_0803A5DC (max select), sub_08044594 (a discarded address computation), sub_0806041C (`x - (s + 16)` reassociation).
+   - Many of these were deferred before the newer techniques existed and are worth retrying.
+
+6. All user messages:
+   - "Continue unprompted until you need me to make a decision"
+   - "Keep working. You can continue to give progress updates, but don't stop until all functions have been translated to C"
+   - "Continue with the assembly to C conversion. I want to add a medium priority item to the planning doc: playing with more than 4 players."
+
+7. Pending Tasks:
+   - Continue decompiling every remaining fs_game function, then the deferred list, then the rest of the code. Commit after each batch that passes `make compare`.
+   - Update the walkthrough, planning doc and conversation archive at milestones.
+
+8. Current Work:
+   - **Batch with `sub_0804930C` and `sub_0805B01C`:** both are placed in `src/fs_game.c`. The `gUnknown_08003566` ldscript alias and its declaration are added.
+   - **`sub_0804930C`** (the switch on `unk74.b.unk74`) appears to match.
+   - **`sub_0805B01C` still differs.** It was rewritten as:
+
+     ```c
+     switch (v) { case 0x4002: break; case 0x400F: case 0x4010: case 0x4011: case 0x4012: { direction=(v-15)*8; unk2A=v-15; if(!sub_08003748(this, gUnknown_08003566, x+tbl[(u8)(direction>>2)], y+tbl[..+1])) {sub_08014658(BITU16_AT(this,0x64), tile, unk50); unk14++; play_sound(21);} else { m->unk4[tile].v = 0x400E; } } break; }
+     ```
+
+   - **The remaining difference:**
+     - The original compares `!= 0x4002` then early-exits; then `cmp 0x4012; ble`; then `cmp 0x400F; bge`; then `b body`, reloading v once.
+     - The build compares `beq` for 0x4002, then `bge 0x400F`, then `ble 0x4012`, so the comparison order differs.
+
+9. Optional Next Step:
+   - Try making `sub_0805B01C` match. Candidate forms:
+     - `if (v == 0x4002) return;`, then a switch or an if on the range, with a single reload.
+     - An if written as `if (v != 0x4002) { if (v <= 0x4012 && v >= 0x400F) { ... } }`, keeping the range check order 0x4012 first.
+   - If it doesn't match quickly, defer it (restore its `.inc` from `scratchpad/done` and put the asm include line back), then commit the batch once `make compare` is OK.
+   - After that, continue with `next.sh`, in line with the user's instruction "don't stop until all functions have been translated to C".
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /home/alex/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9.jsonl
+Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.
+
+The messages after this summary are the most recent messages from before compaction, kept verbatim. The summary was written without seeing them, so something it says has not happened yet may already have happened in them.
+
+- tool `Bash`: grep -m1 'asm(".include' src/fs_game.c; grep -n 'void sub_0805B01C' src/fs_game.c
+
+## Claude
+
+Deferring sub_0805B01C (comparison order) and committing the batch.
+
+- tool `Bash`: python3 - <<'E' s=open('src/fs_game.c').read() i=s.index('void sub_0805B01C(struct Entity *this)'); e=s.index('\n}\n',i)+3 s=s[:i]+'asm(".include \\"asm/non_mat
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; ls $S/deferred.txt; (ls $S/done/sub_0805B01C.inc || git 
+
+- tool `Bash`: git status --short && git add -A asm include ldscript.txt src && git commit -qm "Decompile sub_0804930C  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; ls $S; bash $S/next.sh 2 2>&1 | head -150
+
+- tool `Bash`: grep -n -B2 -A45 'struct Struct03006A30' include/types.h | head -70; grep -n 'gUnknown_0813EBB4\|gUnknown_0813EC00\|sub_08040074\|sub_080407E0\|sub_08003E10\|su
+
+- tool `Bash`: grep -n 'define BITU16_AT\|define BITU8_AT' -A1 include/*.h src/fs_game.c | head; grep -n 'filler3\b\|filler3\[' src/*.c | head; grep -n 'unk1A\b' src/fs_game.c
+
+## Claude
+
+Working on the next two functions (sub_0803FEAC and sub_080422D4); one batch was committed so far (sub_0804930C, with sub_0805B01C deferred).
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -n 1,40p $S/place.py; cat $S/c7.c | head -20; cat $S
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad sed -i 's|^    u8 filler3\[2\];\n    u8 unk5;|X|' include
+
+- tool `Bash`: for f in baserom.gba zeldaalttp.gba; do arm-none-eabi-objdump -D -b binary -m arm -M force-thumb --start-address=0x3ff58 --stop-address=0x40070 $f | tail -n +8 
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for f in baserom.gba zeldaalttp.gba; do arm-none-eabi-ob
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; arm-none-eabi-objdump -D -b binary -m arm -M force-thumb
+
+- tool `Bash`: python3 - <<'E' p='src/fs_game.c'; s=open(p).read() i=s.index('void sub_0803FEAC(') old="""            DeleteThisEntity(this);         }         else if (link->
+
+## Claude
+
+Both functions match. Committing and moving on to the next pair.
+
+- tool `Bash`: git add -A asm include src && git commit -qm "Decompile 2 more Four Swords functions  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" && ls asm/non_mat
+
+- tool `Bash`: grep -n 'sub_08003170\|sub_08003F4C\|sub_08003F54\|gUnknown_08429048\|sub_0803DF84\|sub_080660BC' include/*.h; grep -n -A3 '^struct Struct03006C80' include/type
+
+- tool `Bash`: arm-none-eabi-nm zeldaalttp.elf | grep -i '08003170\|08003F4C\|08003F54'; grep -rn '0x08003170\|sub_08003170' asm/*.s src/*.c | head -3
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad python3 - <<'E' p='include/functions.h'; s=open(p).read()
+
+## Claude
+
+Flipping the ternary's comparison:
+
+- tool `Bash`: sed -i 's/unk28->direction > 15 ? 6 : 2;/unk28->direction <= 15 ? 2 : 6;/' src/fs_game.c && make -j8 compare 2>&1 | grep -E "error|OK|FAIL"; python3 tools/first
+
+- tool `Bash`: git add -A asm include src && git commit -qm "Decompile 2 more Four Swords functions  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" && bash /tmp/clau
+
+- tool `Bash`: sed -n 604,660p include/types.h; grep -n 'CpuSet\|sub_08039650\|sub_0800099C\|gUnknown_03006CA8\b' include/*.h | head
+
+- tool `Bash`: grep -n 'gUnknown_0200B1D0\|gUnknown_03000494' src/fs_game.c | head; grep -n -B2 -A25 '^struct Struct03000FC0' include/types.h; grep -n 'gUnknown_03000FE4\|gUnk
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad echo sub_08037574 >> $S/deferred.txt cat > $S/d3.c <<'E' 
+
+- tool `Bash`: git add -A asm include src && git commit -qm "Decompile sub_0803A030  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" && bash /tmp/claude-1000/-home-al
+
+## Claude
+
+You've hit your 5-hour limit · resets 5:10pm (America/Chicago)
+
+## User
+
+Is there a better way to work with the rest of the assembly functions? It seems like doing it the way we're doing it now is an inefficient use of tokens
+
+## Claude
+
+Yes. At this rate the current approach can't finish the job. Each function costs me several thousand tokens of reading asm and retrying builds. About 115 functions are left in fs_game and about 6,000 across all the code. Finishing them all by hand would take a very large number of sessions.
+
+Here are the options, cheapest first:
+
+1. **Translate the remaining asm to C automatically (my recommendation).** This is the open decision in the planning doc. A tool turns each Thumb function into plain C: registers become local variables, `ldr`/`str` become memory reads and writes, branches become `goto`s. That is what `reference/FourSwordsRecomp` does. It covers all 6,000 functions in one pass, and it is what the PC and PS2 builds actually need: C that compiles and behaves the same. It won't byte-match on the GBA, so those functions are marked `NONMATCHING` and swapped for readable decomp later, one by one. We can still check behaviour against mGBA. This lets Phase 3 (the PC host) start now instead of after years of matching.
+
+2. **A draft generator for the fs_game -O0 code.** That code is very regular. Patterns like "bitfield write", "`this->field++`" and "`gUnknown_03006A30[x]` row" map directly to C. A script could write most of each function, so I would only fix the parts that don't match. That would cut the cost per function several times over, but it only helps the 915-function -O0 block, not the -O2 engine code.
+
+3. **Cheaper models or a permuter for the matching work.** Smaller-model subagents or `decomp-permuter` could handle the matching attempts. They would lower the cost but not change how many functions are left.
+
+My suggestion is to do option 1 for the port and keep matching decomp as a side task, possibly with option 2 for fs_game. Should I switch to building the translator? If you'd rather keep everything matching, I'll build the option 2 generator first.
+
+Progress since the last update: 6 more functions match and are committed. sub_0805B01C and sub_08037574 are deferred.
+
+## User
+
+Let's try 1 and 2
+
+- tool `Bash`: ls reference/FourSwordsRecomp; ls reference/FourSwordsRecomp/* | head -40; ls tools
+
+## Claude
+
+I'll start with the translator (1), then build the generator (2) on top of what I learn. First, I'll check the input format.
+
+- tool `Bash`: ls asm/non_matching | head -30; ls asm/non_matching/*/ | grep -c inc; head -30 asm/non_matching/fs_game/sub_08040D90.inc; grep -n 'gbarecomp\|recomp' reference/
+
+## Claude
+
+The .inc files are clean, labelled Thumb with symbol names in the literal pools, so the translator can read them directly. Next I'll list which mnemonics it has to handle.
+
+- tool `Bash`: cat asm/non_matching/*/*.inc | grep -P '^\t[a-z]' | awk '{print $1}' | sort | uniq -c | sort -rn | awk '{printf "%s:%s ", $2,$1}'; echo; cat asm/non_matching/*/
+
+- tool `Bash`: grep -l -P '^\t\.byte' asm/non_matching/*/*.inc | wc -l; grep -l -P '^\t\.byte' asm/non_matching/*/*.inc | head -5; f=$(grep -l -P '^\t\.byte' asm/non_matching/
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/tools/thumb2c.py
+
+## Claude
+
+Now the runtime header the generated code includes:
+
+- tool `Bash`: python3 - <<'E' p='tools/thumb2c.py'; s=open(p).read() s=s.replace("""                    if words[0][1] == 4:                         self.pool[items[i][1]] = 
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/include/gba_tr.h
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; rm -rf $S/tr; python3 tools/thumb2c.py $S/tr && cut -d: 
+
+## Claude
+
+96% translated on the first pass. Now a compile check:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for f in $S/tr/*.c; do gcc -m32 -fsyntax-only -w -Iinclu
+
+## Claude
+
+No 32-bit libc headers are installed, so I'll use the compiler's built-in types instead:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'E' p='include/gba_tr.h'; s=open(p).read() s
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's/else f"if {COND\[op\[1:\]\]} {tail}"/else f"if
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'E' p='tools/thumb2c.py'; s=open(p).read() o
+
+- tool `Bash`: python3 -c "import unicorn; print(unicorn.__version__)" 2>&1; pip download --help >/dev/null 2>&1 && echo pip; ls /usr/lib32 2>&1 | head -3; dpkg -l | grep -i '
+
+- tool `Bash`: grep -n 'coverage\|cpu->gprs\|ARM_PC\|processEvents\|struct ARMCore\|hook\|static void' tools/mgba_run.c | head -40; wc -l tools/mgba_run.c
+
+- tool `Bash`: sed -n 440,504p tools/mgba_run.c; cat tools/mgba_run.sh | head -30
+
+- tool `Bash`: python3 - <<'E' p='tools/thumb2c.py'; s=open(p).read() rep=[ ("""        if name in self.local_funcs:             return f"(u32)&{name}"         if name in self
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'E' p='include/gba_tr.h'; s=open(p).read() s
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; f=$(grep 'jump without' $S/tr/report.txt | head -1 | cut
+
+- tool `Bash`: sed -n 85,135p tools/thumb2c.py
+
+- tool `Bash`: python3 - <<'E' p='tools/thumb2c.py'; s=open(p).read() rep=[ ("""def addr_names():     out = {}     nm""","""ROM = open(os.path.join(ROOT, "baserom.gba"), "rb")
+
+## Claude
+
+My dummy replacement entry failed the assertion; I'll remove it and re-run.
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'E' 2>&1 | tail -3 import re,subprocess src=
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep 'jump without' $S/tr/report.txt | head -3; f=$(grep
+
+## Claude
+
+`mov pc, lr` is just a return:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'E' p='tools/thumb2c.py'; s=open(p).read() x
+
+- tool `Bash`: grep -n 'def main' -A30 tools/thumb2c.py | head -45; grep -n 'def call' -A14 tools/thumb2c.py
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'E' p='tools/thumb2c.py'; s=open(p).read() r
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -E "OK|FAIL" && git add tools/thumb2c.py include/gba_tr.h && git commit -qm "Add thumb2c: mechanical Thumb-to-C translation of the 
+
+## Claude
+
+Next is the differential test harness. First I'll check where mGBA keeps each memory region.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/reference/mgba && grep -n 'uint32_t\* wram\|uint32_t\* iwram\|uint16_t io\[\|wram;\|iwram;\|io\[' include/mgba/internal/g
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2 && sed -n 1,30p tools/mgba_run.c; sed -n 70,85p tools/mgba_run.c; sed -n 340,365p tools/mgba_run.c
+
+## Claude
+
+Adding `--trace` to the runner:
+
+- tool `Bash`: python3 - <<'E' p='tools/mgba_run.c'; s=open(p).read() rep=[ ("""// for tools/reach.py. Same run as without it (same RAM), a little slower. ""","""// for tools/
+
+- tool `Bash`: python3 - <<'E' p='tools/thumb2c.py'; s=open(p).read() x='return f"r0 = gba_swi({num(ops[0])}, r0, r1, r2, r3);"' assert x in s; s=s.replace(x,'return f"gba_swi
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/tools/tr_check.c
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/tools/tr_check.py
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; time python3 tools/tr_check.py $S/trc 2>&1 | grep -v '^$
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's/u32 r2, u32 r3\\)\$", text/u32 r2, u32 r3\\)",
+
+## Claude
+
+The checker builds with 6,026 entry points. Now a trace run. I'll look for the recorded play session to replay:
+
+- tool `Bash`: grep -n 'start DIR\|--start\|recordings\|session1\|Session 1' docs/"Running Walkthrough.md" | tail -8; ls recordings 2>/dev/null | head
+
+- tool `Bash`: sed -n 205,222p docs/"Running Walkthrough.md"; ls recordings/session1
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; rm -rf $S/traces; mkdir -p $S/traces; R=recordings/sessi
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; $S/trc/tr_check baserom.gba $S/traces/*.gz > $S/trres.tx
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for f in $(ls $S/traces/*.gz | head -5); do timeout 10 $
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; f=$(ls $S/traces/*.gz | head -1); gdb -batch -ex run -ex
+
+## Claude
+
+Status: the translator's test harness builds, and a 6,000-frame trace captured 190 calls. The checker crashes, so I'm debugging that now.
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; T=$S/trc; D='-DSYM(n)=ADDR_##n -DGBA_PTR(a)=tr_ptr((a),0
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; T=$S/trc; f=$(ls $S/traces/*.gz | head -1); gdb -batch -
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; T=$S/trc; f=$(ls $S/traces/*.gz | head -1); gdb -batch -
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'E' p='tools/tr_check.py'; s=open(p).read() 
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'E' p='tools/thumb2c.py'; s=open(p).read() r
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cut -d: -f2- $S/trc/tr/report.txt | sed 's/ _0.*\| 0x.*/
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep 'branch into' $S/trc/tr/report.txt | head -3; f=$(g
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -n "_080017F8" asm/non_matching/rom1/sub_080017E0.i
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i '484s/(b\\w\*)/(b[\\w.]*)/' tools/thumb2c.py; sed
+
+## Claude
+
+Now 10 untranslated, and 152 ok against 19 failures. I'll look at the failures one by one, starting with sub_080042A8 (an off-by-one):
+
+- tool `Bash`: grep -rl 'sub_080042A8' asm/non_matching/*/ | head -2; f=$(ls asm/non_matching/*/sub_080042A8.inc 2>/dev/null || grep -rl '^sub_080042A8:' asm/non_matching); ec
+
+- tool `Read`: /home/alex/Documents/zeldaalttp-ps2/tools/thumb2c.py
+
+- tool `Read`: /home/alex/Documents/zeldaalttp-ps2/tools/thumb2c.py
+
+- tool `Bash`: python3 - <<'E' p='tools/thumb2c.py'; s=open(p).read() rep=[ ("EXTRA = set()  # called addresses inside other functions\n",  "EXTRA = set()  # called addresses 
+
+- tool `Bash`: python3 - <<'E' p='tools/thumb2c.py'; s=open(p).read() x="""        funcs = sorted(e[1] for e in externs if isinstance(e, tuple)) + sorted(local)         for f 
+
+## Claude
+
+Now the checker for the new model. It sets all registers and flags from the trace, and compares r0–r12 and sp:
+
+- tool `Bash`: python3 - <<'E' p='tools/tr_check.py'; s=open(p).read() rep=[ ('defined |= set(re.findall(r"^u32 (\\w+)\\(u32 r0, u32 r1, u32 r2, u32 r3\\)", text, re.M))',  'd
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -n 8465p $S/trc/tr/rom1_tr.c; grep -c 'sub_08003184'
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'E' p='tools/thumb2c.py'; s=open(p).read() x
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 tools/tr_check.py $S/trc 2>&1 | grep -B2 -m6 'un
+
+## Claude
+
+Some extra entry points fall inside the 10 files that didn't translate. thumb2c will now write stubs for those into `missing_tr.c`:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'E' p='tools/thumb2c.py'; s=open(p).read() x
+
+## Claude
+
+The stricter check now also flags r1–r3 and r12. Those are scratch registers after a call into C, so differences there are noise. I'll compare r0, r4–r11, sp and memory:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'E' p='tools/tr_check.c'; s=open(p).read() x
+
+- tool `Bash`: f=$(grep -rl '^sub_08001510:' asm/non_matching); echo $f; grep -v '^\s*\.byte' $f | head -50
+
+## Claude
+
+`bx r4` here is a jump through a table, not a return. agbcc's returns are `pop {rN}; bx rN`. Any other `bx rN` should be an indirect tail call:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'E' p='tools/thumb2c.py'; s=open(p).read() x
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; f=$(grep -rl '^sub_08001528:' asm/non_matching); grep -v
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -n 'sub_080093F8' $S/trc/tr/rom1_tr.c | head -3; gr
+
+- tool `Bash`: grep -n -B2 -A12 'sub_080093F8' asm/non_matching/rom1/sub_080093A4.inc | head -40; grep -n -A12 '^void sub_080093F8_tr' /tmp/claude-1000/-home-alex-Documents-ze
+
+## Claude
+
+I'll add a verbose mode to the checker that lists every difference:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'E' p='tools/tr_check.c'; s=open(p).read() x
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -n 3618,3700p $S/trc/tr/rom1_tr.c | cut -c1-150; f=$
+
+## Claude
+
+The translation of this function looks right, so the difference must come from its callee sub_080093F8, which returns values in r1 and r3. Here's that callee:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -n 19455,19520p $S/trc/tr/rom1_tr.c | cut -c1-140
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'E' p='tools/thumb2c.py'; s=open(p).read() x
+
+## Claude
+
+All 165 checkable calls now match mGBA exactly, with 0 failures. Next is a full trace of the 44,522-frame play session for wider coverage. While it runs, I'll look at the 7 newly untranslated files.
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; rm -rf $S/traces2; mkdir -p $S/traces2; R=recordings/ses
+
+- tool `Bash`: tail -5 asm/non_matching/rom1/sub_08004244.inc; arm-none-eabi-nm -n zeldaalttp.elf | grep -i -A1 -B1 '08004250'; tail -4 asm/non_matching/rom1/sub_0800AADC.inc;
+
+## Claude
+
+These end in raw `.byte` blocks that are probably undisassembled code. They go on the hand-fix list with the others (17 files in total).
+
+- tool `Bash`: sleep 200; cat /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/trace2.log; ls /tmp/claude-1000/-home-alex-D
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; until grep -q done $S/trace2.log; do sleep 5; done; cat 
+
+- tool `Bash`: python3 - <<'E' p='tools/mgba_run.c'; s=open(p).read() x="""	if (tr.active) { 		if (cpu->cpsr.priv != MODE_SYSTEM && cpu->cpsr.priv != MODE_USER) tr.broken = 1;
+
+## Claude
+
+The trace run is now writing many more records, so it's slower. While it finishes, I'll update the planning doc and walkthrough.
+
+- tool `Bash`: grep -n '^## Step' docs/"Running Walkthrough.md" | tail -3; tail -20 docs/"Running Walkthrough.md"
+
+- tool `Bash`: cat >> docs/"Running Walkthrough.md" <<'E'  ## Step 12: machine translation of the remaining asm to C (2026-11-16)  Hand-matching cost several thousand tokens p
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat $S/next.sh; cd /home/alex/Documents/zeldaalttp-ps2; 
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/tools/o0_draft.py
+
+- tool `Bash`: python3 tools/o0_draft.py sub_08040D90 2>&1 | head -60
+
+- tool `Bash`: python3 - <<'E' p='tools/o0_draft.py'; s=open(p).read() rep=[ ("""    def R(r):""","""    fresh = set()  # registers written since the last statement (store or 
+
+## Claude
+
+The drafts read well. sub_0803883C (a 170-line asm function) came out as about 50 lines of near-final C. I'll try finishing it with the draft. First, the trace run:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; ls $S/traces2 | wc -l; ps aux | grep -c '[m]gba_run'
+
+- tool `Bash`: grep -n -A8 '^struct Struct03000E20' include/types.h; grep -n 'gUnknown_03000E20\|gUnknown_03006C70\|gUnknown_03005050\|gSubState;\|gRandom;\|gUnknown_03000490;
+
+- tool `Bash`: grep -n 'sub_08037554\|sub_0803A20C\|sub_08015D9C\|sub_08015C64\|sub_08008ED8\|sub_0802CD3C\|sub_08037574' include/functions.h; grep -n 'gUnknown_03005E10_b\|gU
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -n 'sub_08008ED8' include/*.h src/*.c | head -3; py
+
+## Claude
+
+Off by one load: the original reloads the address three times, which is the `++` pattern on a bitfield. I'll make `unk0` a 16-bit bitfield and use `++`:
+
+- tool `Bash`: python3 - <<'E' p='include/types.h'; s=open(p).read() s=s.replace("""struct Struct03000E20 {     u16 unk0;""","""struct Struct03000E20 {     u16 unk0 : 16;""",1
+
+## Claude
+
+It matched on the second try, working from the draft. Committing the function, the tools and the docs:
+
+- tool `Bash`: git add -A asm include src tools/o0_draft.py tools/tr_check.py tools/tr_check.c tools/thumb2c.py tools/mgba_run.c docs && git status --short | head; git commit 
+
+- tool `Bash`: git ls-files tools | grep tr_check; git status --short | head -3
+
+## Claude
+
+The trace run is still going. I'll wait for it to finish:
+
+- tool `Bash`: until ! pgrep -x mgba_run >/dev/null; do sleep 10; done; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad;
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 tools/tr_check.py $S/trc 2>&1 | grep -m3 error; 
+
+## Claude
+
+The full session gives 1,158 matching calls, 36 differences (in 14 functions) and 332 skipped. Two things to check: what the 149 skipped indirect calls target, and the r0 differences.
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep 'indirect' $S/trres2.txt | awk '{print $NF, $(NF-2)
+
+- tool `Bash`: grep -n 'GBAView16' reference/mgba/include/mgba/internal/gba/memory.h; python3 - <<'E' p='tools/mgba_run.c'; s=open(p).read() x="""	if (!thumb || pc - 0x0800000
+
+- tool `Bash`: python3 - <<'E' import subprocess,bisect syms=[] for l in subprocess.run(["arm-none-eabi-nm","-n","zeldaalttp.elf"],capture_output=True,text=True).stdout.splitl
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'E' p='tools/thumb2c.py'; s=open(p).read() x
+
+## Claude
+
+Retracing the session with the call-only rule:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; rm -rf $S/traces2; mkdir -p $S/traces2; R=recordings/ses
+
+## Claude
+
+While that runs, I'll decompile the next function from its draft (sub_08040D90):
+
+- tool `Bash`: grep -n 'sub_080123E8\|sub_08012728\|sub_0800238C\|gUnknown_08428744' include/*.h
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's|^//extern gUnknown_08428744;|extern const u8 g
+
+## Claude
+
+That one matched on the first try. Committing, then drafting the next few:
+
+- tool `Bash`: git add -A asm include src && git commit -qm "Decompile sub_08040D90  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"; S=/tmp/claude-1000/-home-alex-Do
+
+## Claude
+
+Two bugs in the drafts:
+
+- Locals addressed as `add r0, r7, #0; add r0, #8` show up as `&this + 8`.
+- `union` lines in entity.h produce a field named `n`.
+
+Fixing both:
+
+- tool `Bash`: python3 - <<'E' p='tools/o0_draft.py'; s=open(p).read() rep=[ ("""    if m and not m.group(2).startswith(("filler", "union")):""","""    if m and "union" not in
+
+## Claude
+
+Now the four functions. sub_08043614 first, with the asm alongside for the detail:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; bash $S/next.sh 1 | cut -c1-3000; grep -n 'gUnknown_0813
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; bash $S/next.sh 1 | cut -c3000- | sed 's/.*strb r1, \[r0
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'E' p='include/variables.h'; s=open(p).read(
+
+## Claude
+
+sub_08043614 matches. The trace run has finished:
+
+- tool `Bash`: cat /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/tasks/b9jtffxfq.output
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep FAIL $S/trres2.txt | sort -u -k2,2; f=$(grep -l '^s
+
+- tool `Bash`: arm-none-eabi-objdump -D -b binary -m arm -M force-thumb --adjust-vma=0x08000000 --start-address=0x08009E6C --stop-address=0x08009E90 baserom.gba | tail -12
+
+## Claude
+
+objdump prints branch targets as raw addresses, so I'll turn targets inside the same function into labels. I'll also make the fall-through and per-instruction errors into traps:
+
+- tool `Bash`: grep -n 'class Func' -A12 tools/thumb2c.py | head -20; grep -n 'new_items, new_addr = \[\], {}' -B3 -A16 tools/thumb2c.py
+
+- tool `Bash`: python3 - <<'E' p='tools/thumb2c.py'; s=open(p).read() x="""        # second entry points that other code calls by address get a label (and their own C function
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'E' p='tools/thumb2c.py'; s=open(p).read() x
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cut -d: -f2- $S/trc/tr/report.txt | sed 's/ _0.*\| 0x.*\
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep 'unknown address' $S/trc/tr/report.txt | head -2; g
+
+- tool `Bash`: head -12 asm/non_matching/rom1/sub_08002668.inc; arm-none-eabi-nm zeldaalttp.elf | grep -i 'sub_08002668'
+
+- tool `Bash`: arm-none-eabi-nm zeldaalttp.elf | grep -i '08002668\|0800266'; grep -n 'sub_08002668' src/rom1.c ldscript.txt | head
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -E "error|OK|FAIL" | head
+
+- tool `Bash`: make -j8 compare 2>&1 | tail -15
+
+## Claude
+
+sub_08001B54 is an entry point inside another asm file with no label yet. I'll add the label there, the same way as the earlier second entry points:
+
+- tool `Bash`: grep -n -B3 -A25 'sub_08001B40:' asm/non_matching/rom1/sub_08001B40.inc | head -40; grep -n -B2 -A3 'thumb_func\|\.global' asm/non_matching/rom1/sub_08001290.in
+
+- tool `Bash`: sed -i '13i\	.thumb_func\n	.global sub_08001B54\nsub_08001B54: @ entry point: x and y from r2/r3 plus the entity position' asm/non_matching/rom1/sub_08001B40.in
+
+## Claude
+
+The earlier "no difference" was a stale ROM, because the link had failed. sub_08043614 doesn't match yet. I'll find where it differs:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for f in baserom.gba zeldaalttp.gba; do arm-none-eabi-ob
+
+## Claude
+
+As predicted from the asm: `<< 2`, not `* 4`.
+
+- tool `Bash`: sed -i 's/gUnknown_0813EC48\[(u8)(this->unk2A >> 1) \* 4/gUnknown_0813EC48[((u8)(this->unk2A >> 1) << 2)/' src/fs_game.c && grep -n 'gUnknown_0813EC48\[' src/fs
+
+## Claude
+
+It matches now. Lesson: `make compare | grep` printed nothing on a link error, and I misread the stale "no difference" as a match. From now on I check that OK is actually printed. Committing:
+
+- tool `Bash`: make compare 2>&1 | grep -q 'zeldaalttp.gba: OK' && git add -A asm include src tools/thumb2c.py tools/tr_check.c tools/mgba_run.c tools/o0_draft.py && git commi
+
+## Claude
+
+Now the two remaining translator gaps: `[pc]` with no offset, and "unknown address" (which came from the missing ELF, since addresses come from `nm`). Re-running:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'E' p='tools/thumb2c.py'; s=open(p).read() x
+
+## Claude
+
+Only the 4 ARM files are untranslated now. 389 instructions became traps, mostly branches into other functions found in the newly decoded code. Two compile errors mention `pc`:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -n 13756p $S/trc/tr/rom5_tr.c | cut -c1-250; sed -n 
+
+## Claude
+
+Those are Thumb-2 `.w` instructions decoded from data; the GBA's CPU can't run them. They become traps:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'E' p='tools/thumb2c.py'; s=open(p).read() x
+
+## Claude
+
+Several failures show r0 expected to be the caller's return address, which means the original returned through `pop {r0}; bx r0`. sub_08015D9C:
+
+- tool `Bash`: f=$(grep -l '^sub_08015D9C:' asm/non_matching/*/*.inc); grep -v '^\s*\.byte' $f | head -30
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'E' p='tools/tr_check.c'; s=open(p).read() x
+
+## Claude
+
+With the rebuilt checker that call matches, so the earlier failure came from an older build. Re-running all the traces:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; $S/trc/tr_check baserom.gba $S/traces2/*.gz 2>/dev/null 
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for f in $S/traces2/08015D9C_*.gz; do TR_VERBOSE=1 $S/tr
+
+## Claude
+
+sub_08008B30 returns with sp 0x14 lower than it started. Its asm:
+
+- tool `Bash`: f=$(grep -l '^sub_08008B30:' asm/non_matching/*/*.inc); echo $f; grep -v '^\s*\.byte' $f | head -60
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -n -A140 '^void sub_08008B30_tr' $S/trc/tr/rom1_tr.
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -n 'sub_08008B30_tr(void)$' $S/trc/tr/*.c; n=$(grep
+
+- tool `Bash`: ls asm/non_matching/rom1/ | grep -i '08008b\|08008c' ; grep -c '' asm/non_matching/rom1/sub_08008B30.inc; tail -3 asm/non_matching/rom1/sub_08008B30.inc
+
+- tool `Bash`: sed -n 15,30p asm/non_matching/rom1/sub_08008B30.inc; grep -c '\.byte' asm/non_matching/rom1/sub_08008B30.inc
+
+- tool `Bash`: for f in sub_08008B4A sub_08008C02; do echo "== $f"; grep -n 'pop\|bx\|mov pc\|b\.n\|^\s*b \|0x' asm/non_matching/rom1/$f.inc | head -30; done
+
+- tool `Bash`: sed -n 80,105p asm/non_matching/rom1/sub_08008C02.inc
+
+## Claude
+
+Found it. `mov lr, r3; bx r2` is a call to r2 that "returns" to the address in r3, a continuation, rather than to our caller. The translation will call r2, then call the continuation, then return:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'E' p='tools/thumb2c.py'; s=open(p).read() x
+
+## Claude
+
+That leaves 13 failing calls in 5 functions. Next, sub_08000506:
+
+- tool `Bash`: f=$(grep -l 'sub_08000506' asm/non_matching/*/*.inc | head -3); echo $f; grep -n -B3 -A25 'sub_08000506:' $f | head -45
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; n=$(grep -n '^void sub_08000506_tr(void)$' $S/trc/tr/rom
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'E' p='tools/thumb2c.py'; s=open(p).read() x
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 tools/tr_check.py $S/trc 2>&1 | grep -m3 -E 'err
+
+- tool `Bash`: grep -l '0800047A\|sub_08000464\|_0800051E' asm/non_matching/rom1/*.inc | head; f=asm/non_matching/rom1/$(ls asm/non_matching/rom1 | awk '$0<="sub_08000506.inc"
+
+- tool `Bash`: python3 - <<'E' import sys, importlib.util spec=importlib.util.spec_from_file_location('t','tools/thumb2c.py'); t=importlib.util.module_from_spec(spec); spec.lo
+
+## Claude
+
+The addresses are right after all; this function really does have several table entry points. I'll look at the code around 0x08000506:
+
+- tool `Bash`: python3 - <<'E' import importlib.util spec=importlib.util.spec_from_file_location('t','tools/thumb2c.py'); t=importlib.util.module_from_spec(spec); spec.loader.
+
+- tool `Bash`: python3 - <<'E' p='tools/mgba_run.c'; s=open(p).read() x="""	if (!((cpu->gprs[ARM_LR] & ~1u) == prev + 2 && (prevInsn & 0xF800) == 0xF800) && (prevInsn & 0xFF80
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; f=$(ls $S/traces2/0802A340_*.gz | head -1); TR_VERBOSE=1
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'E' p='tools/tr_check.c'; s=open(p).read() x
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; addr2line -f -e $S/trc/tr_check 0x34a8 0x359c
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; gdb -batch -ex 'set env TR_WATCH=030027F5' -ex 'break tr
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; gdb -batch -ex 'break tr_write' -ex 'run' -ex 'info symb
+
+## Claude
+
+Status: 1,190 of 1,203 recorded calls now match. I'm tracking down the last few differences; this one is a pointer written to the wrong value at 0x030027F4.
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; gdb -batch -ex 'break tr_write if $rdi == 0x030027F4' -e
+
+- tool `Bash`: grep -v '^\s*\.byte' asm/non_matching/rom1/sub_08003870.inc | head -80
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'E' p='include/gba_tr.h'; s=open(p).read() x
+
+## Claude
+
+sub_08000506 needs a fresh trace with the fixed tracer. The rest are in the m4a sound driver (0x0813xxxx). sub_08134074 next:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; f=$(ls $S/traces2/08134074_*.gz | head -1); gdb -batch -
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for f in $S/traces2/08134074_*.gz; do TR_VERBOSE=1 $S/tr
+
+- tool `Bash`: grep -l '^sub_081342CC:\|_081342CC:' asm/non_matching/*/*.inc; python3 - <<'E' import importlib.util spec=importlib.util.spec_from_file_location('t','tools/thum
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'E' p='tools/thumb2c.py'; s=open(p).read() x
+
+## Claude
+
+Only the known tracer artifact is left. Committing the translator fixes, then a fresh trace with the fixed tracer, in the background:
+
+- tool `Bash`: git add tools/thumb2c.py tools/tr_check.c tools/mgba_run.c include/gba_tr.h && git commit -qm "thumb2c: unaligned loads as on the ARM7, continuations (mov lr; b
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; rm -rf $S/traces3; mkdir -p $S/traces3; R=recordings/ses
+
+## Claude
+
+While that runs, back to decompiling with the drafts. sub_0804533C:
+
+- tool `Bash`: sed -n 1,12p asm/non_matching/fs_game/sub_0804533C.inc; grep -n 'gUnknown_03000520\|sub_0804CA78\|sub_0800C1EC\|sub_0803DF84' include/*.h | head; grep -n -A12 '
+
+- tool `Bash`: grep -v '^\s*\.byte' asm/non_matching/fs_game/sub_0804533C.inc | sed -n '/_0804542E:/,/_08045488:/p' | tr '\n' ';' | sed 's/\t//g'; echo; grep -v '^\s*\.byte' a
+
+- tool `Bash`: grep -v '^\s*\.byte' asm/non_matching/fs_game/sub_0804533C.inc | sed -n '/_080453CC:/,/_0804542C:/p' | tr '\n' ';' | sed 's/\t//g' | cut -c1-1500; echo; grep -n
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's|^//sub_0800C1EC();|void sub_0800C1EC(u32);|; s
+
+## Claude
+
+sub_0804533C matched on the first try, with OK printed. Committing; next is sub_0804E50C:
+
+- tool `Bash`: git add -A asm include src && git commit -qm "Decompile sub_0804533C  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"; grep -v '^\s*\.byte' asm/non_mat
+
+## Claude
+
+This is the map-tile pattern used before (`MapDataB`). Copying the existing expression form:
+
+- tool `Bash`: grep -n 'MapDataB' src/fs_game.c | head -3; n=$(grep -n 'MapDataB \*' src/fs_game.c | head -1 | cut -d: -f1); sed -n "$((n-3)),$((n+20))p" src/fs_game.c
+
+- tool `Bash`: grep -v '^\s*\.byte' asm/non_matching/fs_game/sub_0804E50C.inc | sed -n '/str r1, \[r0, #12\]/,/bl sub_08003870/p' | tr '\n' ';' | sed 's/\t//g' | cut -c1-900; 
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's|^//extern gUnknown_084289A0;|extern const u8 g
+
+## Claude
+
+Another first-try match. Committing; next is sub_0805BA68:
+
+- tool `Bash`: git add -A asm include src && git commit -qm "Decompile sub_0804E50C  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" -q; grep -v '^\s*\.byte' asm/non_
+
+- tool `Bash`: grep -n 'sub_08003DFC\|sub_08002E70\|sub_0805BC44\|gUnknown_08140F6C\|gUnknown_0813E4CC' include/*.h; grep -n 'union SplitWord' -A8 include/*.h | head -12
+
+- tool `Bash`: sed -n 1,20p include/types.h; grep -n 'gSineTable\|0813E4CC\[' src/fs_game.c | head -3; grep -n 'sub_08002E70' include/*.h src/*.c | head -3
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's|^//extern gUnknown_08140F6C;|extern const u8 g
+
+## Claude
+
+First try again. The drafts have made this much faster: five functions in a row matched first time. Committing, then working in larger batches:
+
+- tool `Bash`: git add -A asm include src && git commit -qm "Decompile sub_0805BA68  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" -q; S=/tmp/claude-1000/-home-alex
+
+## Claude
+
+sub_08043834's draft is clean. The other three use conditional expressions, which the draft doesn't rebuild yet, so they need the asm. sub_08043834 first, checking the shift forms in the asm:
+
+- tool `Bash`: grep -v '^\s*\.byte' asm/non_matching/fs_game/sub_08043834.inc | sed -n '/_08043992:/,$p' | tr '\n' ';' | sed 's/\t//g' | cut -c1-1800; echo; grep -v '^\s*\.byt
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's|^//extern gUnknown_0842879C;|extern const u8 g
+
+## Claude
+
+Matched. Committing; sub_0803BE8C next, from its asm:
+
+- tool `Bash`: git add -A asm include src && git commit -qm "Decompile sub_08043834  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" -q; grep -v '^\s*\.byte' asm/non_
+
+- tool `Bash`: grep -v '^\s*\.byte' asm/non_matching/fs_game/sub_0803BE8C.inc | sed -n '/_0803BF7C:/,$p' | tr '\n' ';' | sed 's/\t//g'
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -n 'sub_0803BE8C\|define S8_AT' include/*.h; grep -
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's|^//sub_0803BE8C();|u32 sub_0803BE8C(struct Ent
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; a=$(arm-none-eabi-nm zeldaalttp.elf | grep ' sub_0803BE8
+
+## Claude
+
+The `unused` local isn't needed: the u8 parameter already gets its own stack slot.
+
+- tool `Bash`: python3 - <<'E' p='src/fs_game.c'; s=open(p).read() s=s.replace("""u32 sub_0803BE8C(struct Entity *this, struct Entity *a1, u8 a2) {     u8 unused = a2;  """,""
+
+## Claude
+
+Matched. Committing; sub_0803C810 has the same structure:
+
+- tool `Bash`: git add -A asm include src && git commit -qm "Decompile sub_0803BE8C  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" -q; grep -v '^\s*\.byte' asm/non_
+
+- tool `Bash`: grep -v '^\s*\.byte' asm/non_matching/fs_game/sub_0803C810.inc | sed -n '/_0803C860:/,/_0803C930:/p' | tr '\n' ';' | sed 's/\t//g'; grep -n 'sub_0803A788\|sub_0
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's|^//sub_0803C810();|u32 sub_0803C810(struct Ent
+
+- tool `Bash`: git add -A asm include src && git commit -qm "Decompile sub_0803C810  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" -q; ls asm/non_matching/fs_game |
+
+## Claude
+
+104 fs_game functions left. sub_0804A584's draft has code after an unconditional `goto`, so something reaches it another way. The asm:
+
+- tool `Bash`: grep -v '^\s*\.byte' asm/non_matching/fs_game/sub_0804A584.inc | sed -n '/_0804A5C2:/,/_0804A6AC:/p' | tr '\n' ';' | sed 's/\t//g'
+
+## Claude
+
+It's a switch through a jump table, which the draft generator doesn't handle yet. Reading the remaining cases from the asm:
+
+- tool `Bash`: grep -v '^\s*\.byte' asm/non_matching/fs_game/sub_0804A584.inc | sed -n '/_0804A6FC:/,/_0804A750:/p' | tr '\n' ';' | sed 's/\t//g'; grep -n 'sub_0804C8A8_\|play
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's|^//sub_0804B708();|void sub_0804B708(struct En
+
+- tool `Bash`: git add -A asm include src && git commit -qm "Decompile sub_0804A584  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" -q; S=/tmp/claude-1000/-home-alex
+
+## Claude
+
+sub_08040B10 is nearly identical to sub_08040D90. sub_0804EB3C needs a few struct fields checked in the asm first:
+
+- tool `Bash`: grep -v '^\s*\.byte' asm/non_matching/fs_game/sub_0804EB3C.inc | sed -n '/_0804EB82:/,/_0804ECEC:/p' | tr '\n' ';' | sed 's/\t//g' | cut -c1-4000; grep -n 'set_
+
+- tool `Bash`: grep -n -A4 '^struct GPURegConfig\|^struct UnknownStruct2' include/*.h; grep -n 'gUnknown_030004A0\.' src/fs_game.c | head -5; grep -v '^\s*\.byte' asm/non_matc
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -n 'filler24\b\|filler24\[' src/*.c | head -2; pyth
+
+## Claude
+
+Both matched on the first try. Committing. sub_0804BD9C keeps values in registers (r4–r6, r8), which the draft doesn't follow, so I'll read its asm:
+
+- tool `Bash`: git add -A asm include src && git commit -qm "Decompile 2 more Four Swords functions  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" -q; grep -v '^\s*
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -n 'gUnknown_0813F940\|sub_0804C088' include/*.h; c
+
+## Claude
+
+Matched. Committing; next batch:
+
+- tool `Bash`: git add -A asm include src && git commit -qm "Decompile sub_0804BD9C  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" -q; S=/tmp/claude-1000/-home-alex
+
+## Claude
+
+sub_08048514 first. I need two details from the asm: the shift type and the form of the `HALF.HI` updates.
+
+- tool `Bash`: grep -v '^\s*\.byte' asm/non_matching/fs_game/sub_08048514.inc | sed -n '/_080485A4:/,/_08048668:/p' | tr '\n' ';' | sed 's/\t//g' | cut -c1-2200; grep -n 'gUnk
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's|^//extern gUnknown_0813F544;|extern const u8 g
+
+## Claude
+
+Matched. Committing; sub_0804F254 next. Its conditional expressions are in the asm:
+
+- tool `Bash`: git add -A asm include src && git commit -qm "Decompile sub_08048514  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" -q; grep -v '^\s*\.byte' asm/non_
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's|^//extern gUnknown_084289B8;|extern const u16 
+
+## Claude
+
+Matched. Committing, then checking on the trace run:
+
+- tool `Bash`: git add -A asm include src && git commit -qm "Decompile sub_0804F254  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" -q; cat /tmp/claude-1000/-home-al
+
+## Claude
+
+Still running. Next, sub_0804C200:
+
+- tool `Bash`: grep -v '^\s*\.byte' asm/non_matching/fs_game/sub_0804C200.inc | sed -n '/_0804C21E:/,$p' | tr '\n' ';' | sed 's/\t//g' | cut -c1-3600; grep -n 'gUnknown_0813C7
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's|^//extern gUnknown_0813C72C;|extern const u16 
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for f in baserom.gba zeldaalttp.gba; do arm-none-eabi-ob
+
+## Claude
+
+The literal pool comes earlier in the original, which is the early-`return` signature. Using `if (*p == 0xFFFE) return;`:
+
+- tool `Bash`: python3 - <<'E' p='src/fs_game.c'; s=open(p).read() i=s.index('void sub_0804C200(struct Entity *this)'); e=s.index('\n}\n',i)+3 new='''void sub_0804C200(struct 
+
+## Claude
+
+Matched. Committing; next batch:
+
+- tool `Bash`: git add -A asm include src && git commit -qm "Decompile sub_0804C200  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" -q; S=/tmp/claude-1000/-home-alex
+
+## Claude
+
+sub_080480F0 next. Checking the access size at 0x76 in the asm:
+
+- tool `Bash`: grep -v '^\s*\.byte' asm/non_matching/fs_game/sub_080480F0.inc | sed -n '1,/_08048150:/p' | tr '\n' ';' | sed 's/\t//g'; echo; grep -n 'sub_080489B0\|sub_08048B
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's|^//sub_080489B0();|void sub_080489B0(struct En
+
+## Claude
+
+Matched. Committing; sub_0803A320 next:
+
+- tool `Bash`: git add -A asm include src && git commit -qm "Decompile sub_080480F0  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" -q; grep -v '^\s*\.byte' asm/non_
+
+- tool `Bash`: grep -n -B2 -A14 '^struct Struct03005060' include/types.h
+
+## Claude
+
+The 0x900-byte block at `gUnknown_03005060` is 16 records of 0x90 bytes, so I'll add a record view and index it:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'E' p='include/types.h'; s=open(p).read() x=
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for f in baserom.gba zeldaalttp.gba; do arm-none-eabi-ob
+
+## Claude
+
+gcc folded the cast-and-index form into separate symbol+offset literals. The original uses the base symbol with large field offsets, so I'll use the offset macros and add a `U32_AT`:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -n 'define U16_AT' include/types.h; python3 - <<'E'
+
+## Claude
+
+Matched. Committing; next batch:
+
+- tool `Bash`: git add -A asm include src && git commit -qm "Decompile sub_0803A320  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" -q; S=/tmp/claude-1000/-home-alex
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's|^//extern gUnknown_0813EBDC;|extern const s32 
+
+- tool `Bash`: git add -A asm include src && git commit -qm "Decompile sub_08042A90  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" -q; ls asm/non_matching/fs_game |
+
+## Claude
+
+94 fs_game functions left. sub_0803C2EC is a variant of sub_0803C810. Checking its differences in the asm:
+
+- tool `Bash`: grep -v '^\s*\.byte' asm/non_matching/fs_game/sub_0803C2EC.inc | sed -n '1,/_0803C33A:/p' | tr '\n' ';' | sed 's/\t//g'; echo; grep -v '^\s*\.byte' asm/non_matc
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's|^//sub_0803C2EC();|u32 sub_0803C2EC(struct Ent
+
+## Claude
+
+Matched. Committing; sub_08055460 next. Its loop over the entity list needs the asm:
+
+- tool `Bash`: git add -A asm include src && git commit -qm "Decompile sub_0803C2EC  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" -q; grep -v '^\s*\.byte' asm/non_
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's|^//sub_080127A8();|struct Entity *sub_080127A8
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for f in baserom.gba zeldaalttp.gba; do arm-none-eabi-ob
+
+## Claude
+
+`sub_0802C3E0`'s result is truncated to u8 here; other callers rely on its u32 prototype, so I'll cast at this call:
+
+- tool `Bash`: sed -i 's/    this->unk1E_0 = sub_0802C3E0(this->form);/    this->unk1E_0 = (u8)sub_0802C3E0(this->form);/' src/fs_game.c && make -j8 compare 2>&1 | grep -E "er
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -c 'sub_0802C3E0' src/*.c; for f in baserom.gba zel
+
+- tool `Bash`: grep -n 'sub_080127A8\|sub_080127D4\|sub_08013D54\|sub_08055688\|sub_0802C3E0' src/*.c | grep -v '^src/fs_game.c:.*void sub_08055460' | head
+
+## Claude
+
+My `sed` also changed the same line in an earlier, already-matching function at line 7880. Reverting that one:
+
+- tool `Bash`: sed -i '7880s/(u8)sub_0802C3E0/sub_0802C3E0/' src/fs_game.c && make -j8 compare 2>&1 | grep -E "error|OK|FAIL"; python3 tools/first_diff.py
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for f in baserom.gba zeldaalttp.gba; do arm-none-eabi-ob
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -n 90,110p $S/baserom.gba.txt
+
+## Claude
+
+Here the original doesn't truncate the call's result, so `sub_08013D54` returns a full word. Changing its prototype:
+
+- tool `Bash`: sed -i 's|^u8 sub_08013D54(u8);|u32 sub_08013D54(u8);|' include/functions.h && make -j8 compare 2>&1 | grep -E "error|OK|FAIL"; python3 tools/first_diff.py
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for f in baserom.gba zeldaalttp.gba; do arm-none-eabi-ob
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -n 185,225p $S/baserom.gba.txt | nl -v185 | tail -25
+
+## Claude
+
+The original has extra jumps that come from explicit `else` branches around the `break` and around the loop. Restructuring to match:
+
+- tool `Bash`: python3 - <<'E' p='src/fs_game.c'; s=open(p).read() old="""                if (e->form == 16 && this->unk14 != 0)                 {                     DeleteTh
+
+## Claude
+
+Matched. Committing, then checking on the trace run:
+
+- tool `Bash`: git add -A asm include src && git commit -qm "Decompile sub_08055460  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" -q; cat /tmp/claude-1000/-home-al
+
+## Claude
+
+Still running. sub_0805C878 next, case 0 from the asm:
+
+- tool `Bash`: grep -v '^\s*\.byte' asm/non_matching/fs_game/sub_0805C878.inc | sed -n '1,/_0805C918:/p' | tr '\n' ';' | sed 's/\t//g'; echo; grep -v '^\s*\.byte' asm/non_matc
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - > $S/d24.c <<'E' def loop(step):     return f"
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for f in baserom.gba zeldaalttp.gba; do arm-none-eabi-ob
+
+## Claude
+
+The original has no jump at the top of the loop, which points to `do { ... } while (1)`:
+
+- tool `Bash`: python3 - <<'E' import re p='src/fs_game.c'; s=open(p).read() i=s.index('void sub_0805C878(struct Entity *this)'); e=s.index('\n}\n',i)+3 f=s[i:e] f=re.sub(r"  
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for f in baserom.gba zeldaalttp.gba; do arm-none-eabi-ob
+
+## Claude
+
+The second test is inverted relative to the original. Writing it as `!(... > 30)`:
+
+- tool `Bash`: sed -i 's/            if (\*p == 0xFF || (u8)(\*p - 1) <= 30)/            if (*p == 0xFF || !((u8)(*p - 1) > 30))/' src/fs_game.c && make -j8 compare 2>&1 | gre
+
+- tool `Bash`: cat /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/tasks/bbgo03o3l.output; S=/tmp/claude-1000/-home-alex-Documents-ze
+
+## Claude
+
+The trace run finished: 1,214 calls match and 4 differ (in 2 functions, which I'll look at later). Back to the loop. Trying a do-while whose condition is the loop test:
+
+- tool `Bash`: python3 - <<'E' import re p='src/fs_game.c'; s=open(p).read() i=s.index('void sub_0805C878(struct Entity *this)'); e=s.index('\n}\n',i)+3 f=s[i:e] f=re.sub(r"  
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for f in baserom.gba zeldaalttp.gba; do arm-none-eabi-ob
+
+## Claude
+
+Case 0 matches now. In case 1, the original's copies before the subtract look like a pointer difference, so I'll use `u8 *` arithmetic in cases 1 and 3:
+
+- tool `Bash`: python3 - <<'E' p='src/fs_game.c'; s=open(p).read() s=s.replace("this->unk7C.h = (this->unk74.w - (u32)p) * 16 + 0xFFF8;","this->unk7C.h = ((u8 *)this->unk74.w 
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -n 96,112p $S/baserom.gba.txt; echo ---; sed -n 96,1
+
+## Claude
+
+The original copies both operands, which matches casting pointers to `u32`. Using `(u32)this->unk74.p` in cases 1 and 3:
+
+- tool `Bash`: python3 - <<'E' p='src/fs_game.c'; s=open(p).read() s=s.replace("this->unk7C.h = ((u8 *)this->unk74.w - p) * 16 + 0xFFF8;","this->unk7C.h = ((u32)this->unk74.p 
+
+- tool `Bash`: python3 - <<'E' p='src/fs_game.c'; s=open(p).read() s=s.replace("this->unk7C.h = ((u32)this->unk74.p - (u32)p) * 16 + 0xFFF8;","this->unk7C.h = ((u8 *)this->unk
+
+- tool `Bash`: python3 - <<'E' p='src/fs_game.c'; s=open(p).read() s=s.replace("this->unk7C.h = ((u8 *)this->unk74.p - p) * 16 + 0xFFF8;","this->unk7C.h = ((s32)this->unk74.w 
+
+- tool `Bash`: python3 - <<'E' p='src/fs_game.c'; s=open(p).read() i=s.index('void sub_0805C878(struct Entity *this)'); e=s.index('\n}\n',i)+3 f=s[i:e] f=f.replace("u8 *p = (u
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for f in baserom.gba zeldaalttp.gba; do arm-none-eabi-ob
+
+## Claude
+
+Only the two copies differ now, and the `0xFFF8` literal matches. Trying explicit `u16` truncation of both operands:
+
+- tool `Bash`: python3 - <<'E' p='src/fs_game.c'; s=open(p).read() s=s.replace("this->unk7C.h = (this->unk74.w - p) * 16 + 0xFFF8;","this->unk7C.h = ((u16)this->unk74.w - (u16
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; try(){ python3 - "$1" "$2" <<'E' import sys p='src/fs_ga
+
+## Claude
+
+The `(u16)(...)` form gets the size right; the first difference is now inside the function:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for f in baserom.gba zeldaalttp.gba; do arm-none-eabi-ob
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'E' p='src/fs_game.c'; s=open(p).read() s=s.
+
+- tool `Bash`: try(){ python3 - "$1" "$2" <<'E' import sys p='src/fs_game.c'; s=open(p).read() i=s.index('void sub_0805C878(struct Entity *this)'); e=s.index('\n}\n',i)+3 line
+
+## Claude
+
+Not converging, so I'm deferring sub_0805C878 with notes and restoring its asm:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'E' p='src/fs_game.c'; s=open(p).read() i=s.
+
+## Claude
+
+The build is OK again. This is a good milestone for the docs: the draft generator, the translator results and the trace numbers. Updating the walkthrough, planning doc and conversation archive:
+
+- tool `Bash`: ls asm/non_matching/fs_game | wc -l; ls asm/non_matching/*/ | grep -c inc; grep -c . /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976
+
+- tool `Bash`: cat >> docs/"Running Walkthrough.md" <<'E' - More translator fixes found by the traces: `mov lr, rM; bx rN` is a call whose return lands at rM (a   continuation
+

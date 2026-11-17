@@ -49,15 +49,16 @@ player, linked in memory instead of by cable, each drawn into its own part of th
 - [x] Four Swords game code `0x0803668C`–`0x080668E4` (915 functions) is `-O0` (frame pointer in r7); it is
       `src/fs_game.c`, built without `-O2`. Four `-O2` functions inside it need their own file when decompiled.
 - [ ] Executed functions first (`reach.py --coverage ... --list-executed`): 144 of 657 done (fs_game: 41 of 156)
-- [ ] fs_game: 749 of 915 done; all code: 1,839 of 7,894 functions in C (6,055 left in asm/non_matching)
+- [ ] fs_game: 823 of 915 done (28 deferred); all code: 5,981 asm files left in asm/non_matching
 - [x] Disassemble the code still `.INCBIN`: 15 blobs, 34 KB in the code range (rom1 mostly, rom5 m4a ARM
       part); includes ARM code copied to RAM and Thumb code such as `0x08009924` (tmc `ShowNPCDialogue`)
 - [ ] m4a: our version sits between pokeruby's (2002, most sizes equal) and tmc's; for the port, pret's m4a C
       can stand in. Matching it is optional.
 - [x] Mechanical translation (`tools/thumb2c.py`): every remaining asm function as C for the PC/PS2 build,
-      replaced function by function as decomp matches. 5,985 of 6,002 files; checked against mGBA traces
-      (`tools/tr_check.py`, `mgba_run --trace`). Left: 17 files (ARM, `add rN, pc`, trailing `.byte` code).
-- [ ] Draft generator for the -O0 fs_game code (the user's option 2): C drafts from the asm patterns
+      replaced function by function as decomp matches. All but 4 ARM files translate (406 trap
+      instructions, mostly data decoded as code). Session 1 trace: 1,214 calls identical to mGBA, 4 differ
+      (`tools/tr_check.py`, `mgba_run --trace`).
+- [x] Draft generator for the -O0 fs_game code (`tools/o0_draft.py`): C drafts from the asm by symbolic execution
 - [ ] Library code first, where C already exists elsewhere: BIOS calls (`syscall.s`), m4a sound
       driver, EEPROM, link/SIO (tmc and pret decomps).
 - [ ] Shared engine code (tmc as reference)

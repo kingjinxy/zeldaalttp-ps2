@@ -284,3 +284,31 @@ draft generator for the regular -O0 Four Swords code, to speed up matching decom
 - First trace (6,000 frames of session 1): 165 calls identical, 0 different, 24 skipped.
 - A capture used to wait for its function to return, so one call that never returns (the main loop)
   blocked all later captures; now captures are dropped on an interrupt or after 2 million instructions.
+- More translator fixes found by the traces: `mov lr, rM; bx rN` is a call whose return lands at rM (a
+  continuation: call rN, then the code at rM); a `bx r3` reached by `bl` is a veneer, not a return;
+  `.align` padding must be counted for addresses; unaligned `ldr`/`ldrh`/`ldrsh` behave as on the ARM7TDMI
+  (rotate / sign-extend a byte) and the animation code relies on it; code left as `.byte` is decoded from
+  the ROM; instructions that can't be translated become `gba_bad_insn` traps (406, mostly data decoded as
+  code) instead of failing the whole function; odd ROM words pointing into code become entry points
+  (function tables). The tracer only starts a capture on a real call (BL just before, or a `bx` that is
+  not a return into a continuation).
+- Trace of the whole session 1 (44,522 frames, up to 3 calls per function): **1,214 calls identical to
+  mGBA, 4 different** (`sub_0800A810`, `sub_0800A830`, not looked at yet), 277 skipped (208 call decompiled
+  C, which the checker can't run; 39 an indirect call into `.byte` data at 0x08134177; RAM code at
+  0x03006D19).
+
+### Draft generator for -O0 code (2026-11-16)
+
+- `tools/o0_draft.py FUNC...`: symbolic execution per basic block of the -O0 asm. Stack slots become
+  locals, loads/stores become field accesses (Entity names from `entity.h`), bitfield read-modify-writes
+  collapse to one assignment marked `/* bf */`, `bl` becomes a call with the arguments written since the
+  last statement, `cmp` + branch becomes `if (...) goto`. Not compilable; it replaces reading 200 lines of
+  asm with ~40 lines of C.
+- Result: 25 fs_game functions matched in this part of the session, most on the first or second build
+  (before: several attempts each). Still read from the asm: conditional expressions (`?:`), jump-table
+  switches, loops through registers.
+- Lessons: `<< N` vs `* N` still needs the asm (a copy before `lsl` means `*`); a `bx`/`b end` before an
+  `else` shows explicit `else` blocks (sub_08055460); `do ... while (a && b)` for search loops; check that
+  `make compare` printed OK (a link error leaves the old ROM and `first_diff.py` says "no difference").
+- Deferred: `sub_0805C878` (16-bit subtraction with operand copies and an unfolded `+ 0xFFF8`).
+- fs_game: 92 left in asm (28 deferred); all code: 5,981 asm files.

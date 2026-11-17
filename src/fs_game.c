@@ -10128,7 +10128,9 @@ void sub_0805C7BC(struct Entity *this)
     GetNextFrame(this);
 }
 
+
 asm(".include \"asm/non_matching/fs_game/sub_0805C878.inc\"");
+
 asm(".include \"asm/non_matching/fs_game/sub_0805CA84.inc\"");
 
 u8 sub_0805CDA4(struct Entity *this)
