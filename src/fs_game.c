@@ -5089,7 +5089,36 @@ void sub_0804BCA4(struct Entity *this)
     sub_0804C088(this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0804BD9C.inc\"");
+
+void sub_0804BD9C(struct Entity *this)
+{
+    if (BITU16_AT(this, 0x70) != 0)
+    {
+        BITU16_AT(this, 0x70)--;
+        if (BITU16_AT(this, 0x70) == 0)
+            this->unk3C = this->unk3C | 0x80;
+    }
+    if ((u8)(this->unk41 & 0x80) && this->unk1E_0 - 7 == this->unk4C->form && (u8)(this->unk41 + 124) <= 135)
+    {
+        this->unk18++;
+        this->unk74.b.unk74++;
+        if (this->unk74.b.unk75 > this->unk18)
+        {
+            this->direction = this->unk3E;
+            this->unk3D = 240;
+            this->unk1E_4 = this->unk1E_0 = gUnknown_0813F940[(this->unk1E_0 - 7) * 3 + sub_0800099C() % (gUnknown_03006C80.unk0 - 1)];
+        }
+        else
+        {
+            this->unk14 = 1;
+            this->parameter = this->parameter | 2;
+            this->direction = this->unk3E;
+        }
+        sub_08003DFC(180);
+    }
+    sub_0804C088(this);
+}
+
 
 void sub_0804BFA4(struct Entity *this)
 {
