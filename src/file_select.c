@@ -1910,7 +1910,28 @@ void sub_0801E76C(struct Entity *this)
 
 
 
-asm(".include \"asm/non_matching/file_select/sub_0801E7A0.inc\"");
+
+extern const s8 gUnknown_0813ADB8[];
+
+void sub_0801E7A0(struct Entity *this)
+{
+    u32 t = this->unk17 - 1;
+
+    this->unk17 = t;
+
+    if ((u8)t != 0) {
+        if ((u8)t <= 59 && (t & 1))
+            this->x.HALF.HI += gUnknown_0813ADB8[((u8)t >> 1) & 3];
+    } else {
+        this->unk14 = 5;
+        this->unk10 = 0x10000;
+        this->speed = 128;
+        this->unk3F = 46;
+        sub_08003870(this, this->unk2A);
+        sub_08003DFC(49);
+    }
+}
+
 
 asm(".include \"asm/non_matching/file_select/sub_0801E80C.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801E83C.inc\"");
