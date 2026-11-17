@@ -1036,7 +1036,50 @@ void sub_0803A2E8(void)
     CpuFill32(0, &gUnknown_0200B320, 0xB004);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0803A320.inc\"");
+
+void sub_0803A320(void)
+{
+    struct Entity *v;
+
+    BITU8_AT(&gUnknown_03005060, 0xC) = 0;
+    BITU8_AT(&gUnknown_03005060, 0x9C) = 0;
+    BITU8_AT(&gUnknown_03005060, 0x12C) = 0;
+    BITU8_AT(&gUnknown_03005060, 0x1BC) = 0;
+    BITU8_AT(&gUnknown_03005060, 0x24C) = 0;
+    BITU8_AT(&gUnknown_03005060, 0x2DC) = 0;
+    BITU8_AT(&gUnknown_03005060, 0x36C) = 0;
+    BITU8_AT(&gUnknown_03005060, 0x3FC) = 0;
+    BITU8_AT(&gUnknown_03005060, 0x48C) = 0;
+    BITU8_AT(&gUnknown_03005060, 0x51C) = 0;
+    BITU8_AT(&gUnknown_03005060, 0x5AC) = 0;
+    BITU8_AT(&gUnknown_03005060, 0x63C) = 0;
+    BITU8_AT(&gUnknown_03005060, 0x6CC) = 0;
+    BITU8_AT(&gUnknown_03005060, 0x75C) = 0;
+    BITU8_AT(&gUnknown_03005060, 0x7EC) = 0;
+    BITU8_AT(&gUnknown_03005060, 0x87C) = 0;
+    switch (gUnknown_03006C80.unk0)
+    {
+    case 2:
+        v = (struct Entity *)U32_AT(&gUnknown_03005060, 0x8);
+        U32_AT(&gUnknown_03005060, 0x8) = U32_AT(&gUnknown_03005060, 0x98);
+        U32_AT(&gUnknown_03005060, 0x98) = (u32)v;
+        break;
+    case 3:
+        v = (struct Entity *)U32_AT(&gUnknown_03005060, 0x8);
+        U32_AT(&gUnknown_03005060, 0x8) = U32_AT(&gUnknown_03005060, 0x98);
+        U32_AT(&gUnknown_03005060, 0x98) = U32_AT(&gUnknown_03005060, 0x128);
+        U32_AT(&gUnknown_03005060, 0x128) = (u32)v;
+        break;
+    case 4:
+        v = (struct Entity *)U32_AT(&gUnknown_03005060, 0x8);
+        U32_AT(&gUnknown_03005060, 0x8) = U32_AT(&gUnknown_03005060, 0x98);
+        U32_AT(&gUnknown_03005060, 0x98) = U32_AT(&gUnknown_03005060, 0x128);
+        U32_AT(&gUnknown_03005060, 0x128) = U32_AT(&gUnknown_03005060, 0x1B8);
+        U32_AT(&gUnknown_03005060, 0x1B8) = (u32)v;
+        break;
+    }
+}
+
 
 void sub_0803A544(void)
 {

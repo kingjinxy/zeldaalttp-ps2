@@ -67,6 +67,7 @@ struct BitU8A {
 #define BITU16_AT(base, off) (((struct { u8 pad[off]; u16 v : 16; } *)(base))->v)
 #define BITU8_AT(base, off) (((struct { u8 pad[off]; u8 v : 8; } *)(base))->v)
 // Plain (not bitfield) reads at an offset, with the large-offset field pattern
+#define U32_AT(base, off) (((struct { u8 pad[off]; u32 v; } *)(base))->v)
 #define S16_AT(base, off) (((struct { u8 pad[off]; s16 v; } *)(base))->v)
 #define U16_AT(base, off) (((struct { u8 pad[off]; u16 v; } *)(base))->v)
 #define U8_AT(base, off) (((struct { u8 pad[off]; u8 v; } *)(base))->v)
@@ -676,6 +677,7 @@ struct Struct03005060
     struct Entity *unk8;
     u8 fillerC[0x8F4];
 };  // size = 0x900
+
 
 // What sub_08015DC0 returns (a map's data); the earlier callers index it as a u16 array
 struct MapData
