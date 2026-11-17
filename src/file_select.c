@@ -724,7 +724,26 @@ u16 sub_08015CD0(s32 *p)
     return *p;
 }
 
-asm(".include \"asm/non_matching/file_select/sub_08015D04.inc\"");
+// Load a list of gfx entries (offsets into the gfx blob): bit 28 = palette, bit 31 = another follows
+struct GfxLoad { u16 dst; u8 count; u8 flags; u32 offset; };
+
+void sub_08015D04(const struct GfxLoad *p)
+{
+    while (1) {
+        const u8 *src = gUnknown_03000030 + p->offset;
+        u32 n = p->count + 1;
+        u32 dst = p->dst;
+
+        if ((*(u32 *)p >> 28) & 1)
+            load_palette((u16 *)src, dst >> 5, n);
+        else
+            CpuFastSet(src, (void *)(dst + 0x06000000), n * 8);
+        if (*(s32 *)p < 0)
+            p++;
+        else
+            break;
+    }
+}
 
 void sub_08015D50(const u16 *ids)
 {
