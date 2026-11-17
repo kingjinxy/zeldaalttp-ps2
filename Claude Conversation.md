@@ -8575,3 +8575,1361 @@ Neither changed. Trying several forms of each in one go:
 
 - tool `Bash`: Write walkthrough step 15, update planning doc
 
+- tool `Bash`: Update archive and commit docs
+
+- tool `PushNotification`: 
+
+## Claude
+
+I matched 78 of the 296 compiled, optimised functions that Four Swords needs and that ran in session 1. All are committed, and each batch passed `make compare`. I haven't started the PC port side yet.
+
+**Assembly Four Swords needs, by kind:**
+
+| Kind | Ran in session 1 | Didn't run | Plan |
+|---|---|---|---|
+| Compiled code | 296 | 1,117 | Decompile to matching C |
+| Hand-written assembly | 210 | 98 | Can't be matched; plain C for the port later |
+| Sound driver | 32 | 29 | Use pret's existing C |
+
+I tell hand-written code apart because it doesn't return through `bx`, which agbcc always does with interworking on.
+
+**How the batches went**
+- Ten to thirteen functions per batch. Most matched on the first build, and the rest after one or two fixes.
+- A new checker compares each function by name against the original, because addresses shift while any function in a batch is the wrong size.
+- One snag: `rom2.c` didn't include `entity.h`, which made a build fail silently. My first check of that batch read the previous build. I added the include and re-checked.
+
+**New structures found**
+- the text reader's state, including a pointer stack;
+- the 8 entity list heads;
+- a few menu and room structs;
+- more fields of the camera/scroll struct.
+- `sub_08012F84` turned out to take a byte as its room argument, so its fs_game callers now use an alias with the old prototype, the same trick as `CreateObject`.
+
+**Deferred:** 6 functions, noted in the walkthrough. Two have specific compiler quirks I couldn't reproduce; the other four look tangled and I haven't tried them yet.
+
+Walkthrough Step 15 records the patterns that decide whether optimised code matches. I've also updated the planning doc and the conversation archive. 5,853 assembly files are left overall.
+
+Next I can carry on with the remaining 218 executed functions, or switch to the PC port's GBA layer as planned. Which would you like?
+
+## User
+
+Which would be easier right now?
+
+## Claude
+
+Continuing the decompilation is easier right now.
+
+**Why it's easier**
+- **The workflow is set up and working.** There's a queue of 218 functions, a draft generator, a placement script, a per-function checker, and the matching lessons so far. Each batch is a known amount of work, and `make compare` says right away whether it's right.
+- **The next functions are still small.** They're sorted by size, and the next ones are 60–150 bytes, similar to what has worked so far. They'll get harder towards the end of the queue, but not yet.
+
+**Why the PC port is harder to start now**
+- **New code with nothing to check against yet.** It needs a graphics renderer, timers, interrupts, BIOS calls, input, save memory and sound, before anything can be compared with mGBA. The first useful check, one instance booting into Four Swords and matching mGBA, comes only after most of that exists.
+- **Decisions to make first.** For example, how hardware addresses map onto arrays, and how RAM is held per player instance. Plus the 25 calls where the machine-translated C differs from mGBA, which should be fixed before relying on that code.
+- **Bugs will be harder to find.** A port bug can sit in the GBA layer, the translator, or the decompiled code.
+
+**The trade-off:** the port is the less certain part of the project, so starting it earlier shows problems earlier. That's why I suggested alternating. But for steady progress right now, the decompilation is easier.
+
+I'd suggest a few more decompilation batches, then the port, starting with the decisions above.
+
+## User
+
+Proceed as you suggest
+
+## Claude
+
+I'll start with the next decompilation batch:
+
+- tool `Bash`: Show batch 8
+
+## Claude
+
+Writing batch 8. One find: `sub_0802C180` writes a 10-bit value split over `unk20` (low 8 bits) and `unk1C_6` (high 2 bits), probably a tile number. Declarations first, then the batch:
+
+- tool `Bash`: Check prototypes and declare globals
+
+- tool `Bash`: Place batch 8 and compare
+
+- tool `Bash`: Apply five fixes and rebuild
+
+## Claude
+
+`sub_0802C0EC` and `sub_0802C278` match now, and so does `sub_0800C940`. The other two need more tries:
+
+- tool `Bash`: Try variants for two functions
+
+## Claude
+
+Both differ only in register choice, so I'll defer them, restore their assembly, and commit the other eight:
+
+- tool `Bash`: Write unplace helper, defer two, rebuild
+
+## Claude
+
+The helper only restored one of the two: when its first match in a file is a call rather than the definition, it skips the whole file. Fixing it to look at every match:
+
+- tool `Bash`: Fix unplace helper and restore the other function
+
+- tool `Bash`: Commit batch 8, show batch 9
+
+- tool `Bash`: Check structs and prototypes for batch 9
+
+- tool `Bash`: Check includes and prototype lines
+
+## Claude
+
+`gba/gba.h` brings in the register macros. Writing batch 9:
+
+- tool `Bash`: Place batch 9 and compare
+
+- tool `Bash`: Show rom2 compile error
+
+- tool `Bash`: Look at sub_0800CA38 definition
+
+- tool `Bash`: Add unprototyped alias and rebuild
+
+## Claude
+
+The original addresses the register as base `0x040000B0` plus offset 10, not through one literal. That's what a struct-pointer access produces:
+
+- tool `Bash`: Use DMA register struct and rebuild
+
+- tool `Bash`: Side-by-side for sub_0800CA3C
+
+## Claude
+
+Mine re-reads the register after each store; volatile `&=` does that in this gcc. Trying the explicit `x = x & y` form:
+
+- tool `Bash`: Try plain assignment form
+
+## Claude
+
+Same result. Trying a non-volatile struct, to see what the compiler then does with the two stores:
+
+- tool `Bash`: Try non-volatile struct variants
+
+- tool `Bash`: Look for the DmaStop macro
+
+- tool `Bash`: Use DmaStop, drop the alias, rebuild
+
+## Claude
+
+`sub_0800CA3C` matches with `DmaStop(0)` and a plain call, and the alias is gone. Something else in the ROM still differs:
+
+- tool `Bash`: Find the remaining difference
+
+- tool `Bash`: Add size check to comparer
+
+- tool `Bash`: Fix two, inspect sub_08012A50
+
+- tool `Bash`: Fix return type and ternary
+
+## Claude
+
+`sub_08012B04` matches. In `sub_08012A50` my local `u16 s` does the narrowing, so it becomes a full word too:
+
+- tool `Bash`: Widen the local and rebuild
+
+- tool `Bash`: Find callers of sub_08008F78
+
+- tool `Bash`: Widen sub_08008F78 parameters, rebuild
+
+- tool `Bash`: Commit batch 9
+
+## Claude
+
+That's 97 of 296. One more batch before turning to the port:
+
+- tool `Bash`: Show batch 10
+
+- tool `Bash`: Check fields for batch 10
+
+- tool `Bash`: Place batch 10 and compare
+
+## Claude
+
+Four of five match. `sub_0802CF70` is 4 bytes too long, probably from narrowing my `u8` local. Trying a full-word local, and also no local:
+
+- tool `Bash`: Try wider local types
+
+- tool `Bash`: Side-by-side for sub_0802CF70
+
+## Claude
+
+The original loads the `gUnknown_03000420` base first and keeps it in a scratch register. Trying a local pointer declared before the read:
+
+- tool `Bash`: Use local pointer and rebuild
+
+## Claude
+
+No change, so I'll defer it and commit the other four:
+
+- tool `Bash`: Defer one, commit four
+
+- tool `Bash`: Find trace data and tr_check usage
+
+- tool `Bash`: Find the newest trace set and checker build
+
+## Claude
+
+The checker build `trc/` and the traces `traces3/` are from the earlier run. Rerunning the checker on the functions that failed, with details:
+
+- tool `Bash`: List failing calls from the last check
+
+## Claude
+
+This result file shows only the original 4 failures. The 25-failure run was a later one; its output is in the session's task files:
+
+- tool `Bash`: Find the 25-failure run output
+
+- tool `Bash`: Read later checker outputs
+
+- tool `Bash`: Read sub_0800A810 asm
+
+## Claude
+
+You've hit your 5-hour limit · resets 12:10pm (America/Chicago)
+
+## User
+
+Read these two docs:
+
+https://github.com/FacundoMainere/gba-matching-decomp-skill
+
+https://gambiconf.substack.com/p/starting-a-decompilation-project
+
+I'm giving one-time access to Substack for this purpose. Download the HTML file for further reference.
+
+## Claude
+
+I'll clone the GitHub repo into `reference/`, which is never committed, and save the Substack page as HTML alongside it.
+
+- tool `Bash`: Clone repo and download article HTML
+
+## Claude
+
+Both are downloaded. Reading the repo's main documents:
+
+- tool `Bash`: Read the repo README
+
+- tool `Read`: /home/alex/Documents/zeldaalttp-ps2/reference/gba-matching-decomp-skill/SKILL.md
+
+- tool `Read`: /home/alex/Documents/zeldaalttp-ps2/reference/gba-matching-decomp-skill/reference/matching_tips.md
+
+- tool `Read`: /home/alex/Documents/zeldaalttp-ps2/reference/gba-matching-decomp-skill/reference/STRATEGY.md
+
+## Claude
+
+The rest of the tips file and the article:
+
+- tool `Bash`: Read rest of matching tips
+
+- tool `Bash`: Extract article text from saved HTML
+
+- tool `Bash`: Read the rest of the article
+
+- tool `Bash`: Check Makefile for header dependency tracking
+
+- tool `Bash`: Clean rebuild to verify the tree
+
+## Claude
+
+The clean build matches, so nothing slipped through. I'll save a memory note pointing at the two references:
+
+- tool `Write`: /home/alex/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/memory/ref-gba-decomp-guides.md
+
+- tool `Bash`: Add memory index entry
+
+## Claude
+
+I read both and saved local copies under `reference/`, which is never committed:
+- the GitHub repo is cloned to `reference/gba-matching-decomp-skill/`;
+- the article's HTML is at `reference/articles/starting-a-decompilation-project.html`, with a plain-text extract beside it.
+
+The article stops partway through, probably where the free preview ends. I used the Substack access only for that one download, and noted that in memory so I don't fetch from there again.
+
+**What they are**
+- **The GitHub repo:** a Claude Code playbook from a complete matching decompilation of Medabots AX, about 1,700 functions in 2.5 days with parallel agents. Its tips file lists hundreds of agbcc matching tricks by ID, and its strategy file covers tooling and gotchas.
+- **The article:** setting up the Klonoa: Empire of Dreams decompilation for AI agents. It covers finding functions through pointer tables, broken function splits, data decoded as code, one-function-per-file asm includes, and a scriptable emulator agents use to name things.
+
+**What applies to us right away**
+- **Header dependencies.** Their strategy file warns that without dependency tracking, `make compare` can print OK on a broken tree. Our Makefile has none, and I've edited headers constantly. I just ran a clean build and it matches, so nothing slipped through. Adding `-MMD -MP` to the Makefile is a small fix that makes this safe for good.
+- **Commit check.** Their first rule is to chain the commit with `&&` on make itself, never through a pipe or `;`. That's exactly the mistake I made once this session. My current check is safe, but their form is simpler.
+- **Several deferred functions have named tricks:**
+  - `sub_0801620C`'s signed `< 0` / `> 2` test on a byte is, per their T53, `switch (x) { case 0: case 1: case 2: … break; }`. My switch attempt lacked the `break`.
+  - `sub_0803D134` and `sub_0806041C`, where gcc moves the constant out of `x - (y + C)`: T194 says an assignment inside the expression, like `+ (t = y - 1)`, blocks that. T278 gives another way.
+  - The register-choice-only cases: they solved these by reading agbcc's register-allocation dumps rather than trying more C variants.
+- **A faster check loop.** Their `check_func.py` compiles and diffs one function in about 0.3 s. I've been running a full build per attempt; a per-function check would make batches much quicker.
+- **Their compiler finding:** the original game was built with one global agbcc `-fprologue-bugfix` setting. We already use that flag for six files. Testing whether it matches for all files would simplify the Makefile.
+
+**Where our approach differs:** they ran many agents in parallel through a claim queue. I've been working one batch at a time in this session, and I won't start agents unless you want that.
+
+I'd add header dependency tracking first, then try the named tricks on the deferred functions, then continue the queue. Shall I go ahead?
+
+## User
+
+I copied as much text as possible from the article.
+
+Starting a Decompilation Project from Zero: Claude Code and 51% of a 2001 GBA Game
+From Klonoa's raw ROM to byte-matched C (and an easter egg nobody had found in 25 years)
+MACABEUS
+AUG 17, 2026
+
+
+
+
+
+
+In the previous chapter, we got the data: an LLM-powered pipeline matched 74% of the benchmark functions. Now it’s time to see how it performs on a whole game.
+
+After one year of studying and building tooling for matching decompilation with AI, I finally stopped postponing and started to decompile “Klonoa: Empire of Dreams” (KEoD)! It's a Game Boy Advance game that I really love and, as we’ll see, a challenging one: its functions are unusually big.
+
+⚙️ What is Matching Decompilation?
+
+Matching decompilation is the art of converting assembly back into C source code that, when compiled, produces byte-for-byte identical machine code. It’s popular in the retro gaming community for recreating the source code of classic games. For example, Super Mario 64 and The Legend of Zelda: Ocarina of Time have been fully match-decompiled.
+
+At the time I’m writing this chapter, 51% of the game’s code bytes are decompiled. Many thanks to Felipe Sanches and testyourmine for helping to reach this milestone!
+
+Spoiler: We’ll see how Claude Code autonomously found an easter egg that had been hidden for 25 years!
+
+Setting up the project
+
+The first step is, of course, scaffolding the project. There is no single standard for how a decomp project should be structured, although there are some tacit structures that the community usually follows. In the case of GBA, one of the most popular is the one used by pret.
+
+My initial idea was to follow the same code organization as Sonic Advance 3, since I was more familiar with it, but I quickly diverged because I had set the following goals:
+
+It should have no assets or assembly code from the ROM. That's the case with Snowboard Kids 2 and Animal Forest, for instance.
+I want to make the setup reproducible, as a paved path that other GBA games will follow, since I want to decompile the other Klonoa GBA games. Building a foundation to replicate later is important.
+And more importantly, the project organization should make it easy for an AI agent to work with.
+These goals have two important implications:
+
+Setup based on a script: We need to have an automated script to, given a .gba ROM, produce the .s files from it, since they aren't versioned. This implies that any change to the .s files must be made in the script that generated them, not to the .s files directly.
+For example, renaming functions or splitting them into modules should be done in the generator script. This diverges from how pret projects work, since the assembly is committed.
+As little manual work as possible: Since this project should be AI-friendly, it should be possible to easily spawn a git worktree to enable parallel work, and it should be easy to add a new matched function.
+Disassembly
+
+With those goals set, the first artifact is the assembly itself. For that, I used Luvdis. It’s a GBA disassembler designed for matching decompilation. It reads KEoD's ROM and outputs a single big .s file.
+
+Since I don’t want to have any assembly source code from the original game in Git, I included Luvdis as a git submodule and a shell script to call it, ./setup.sh. Besides calling Luvdis, this script will grow to do all the transformations we’ll discuss next: compiling the compiler, refining the disassembled code, moving the .s files, etc.
+
+Finding the compiler
+
+We need to find the compiler the developers used. Since many GBA games used agbcc (a fork of GCC 2.95), that's likely the case for KEoD too.
+
+It’s worth mentioning that KEoD was released just 4 months after the GBA itself, in July 2001. It ranks as the oldest GBA game that is actively being decompiled!1
+
+With this release date in mind, we can rule out two popular compilers used for GBA game development: ADS 1.2, which was released in November 2001, and Metrowerks’ CodeWarrior, which was released in April 2002.
+
+Of course, the developers could have been unconventional and used a different compiler, such as ADS 1.1. In any case, I started with agbcc, and since it enabled the match for simple functions with clean C code, I stuck with it. It was a no-brainer.2
+
+To compile these first simple functions, we needed to have a Makefile and a linker script working. They were written by Claude Code using a few other decomp projects as inspiration.
+
+Refining the assembly code
+
+Although Luvdis is great to start with, we still need to make many improvements to make the disassembled code ready to be decompiled. Let's talk about them.
+
+Function splitting
+
+Luvdis automatically detected 93 functions, but the game surely has way more than that. So, I used Ghidra to enrich the function list, which found ~300 new functions. After using Claude Code to find even more functions, merging the results, and cleaning up the false positives, we ended up with a total of 663 functions.
+
+I was surprised that this game has only a few hundred functions. Other GBA games have many more functions. On the other hand, the functions from KEoD are usually bigger, much bigger. That’ll make the game a challenge to decompile since bigger functions are usually harder than smaller ones.
+
+
+
+
+Function counts & sizes across GBA matching decompilations
+Most of the function splitting was driven by Claude Code. It wrote a reproducible Python script, generate_asm.py, that takes the initial code output by Luvdis and splits it into smaller functions, and each function is in its own .s module.
+
+Although most of the work was done by AI, let me briefly explain one interesting technique it used and one of the bugs we had. It took many back-and-forths to arrive at a sound function split, but these two sections will give a glimpse of how it works.
+
+Function pointer table
+
+Ghidra found functions that are directly referenced by the code. For example, ones that had a bl <function>. But many functions are still called without any bl appearing in the assembly. This happens because the code uses a function table. For example:
+
+void CmdMove(void) { /* ... */ }
+void CmdJump(void) { /* ... */ }
+void CmdWait(void) { /* ... */ }
+
+void (*const gCommandTable[3])(void) = { CmdMove, CmdJump, CmdWait };
+
+void RunCommand(u32 op) {
+    gCommandTable[op]();
+}
+
+It compiles into:
+
+08000028 <RunCommand>:
+  push {lr}
+  ldr  r1, .L12        @ =0x08000100 — the table's address
+  lsls r0, r0, #2
+  adds r0, r0, r1
+  ldr  r0, [r0]        @ fetch handler pointer from the table
+  bl   _call_via_r0    @ the only bl in the function
+  pop  {pc}
+
+0800003C <_call_via_r0>:
+  bx   r0              @ one instruction; libgcc's indirect-call stub
+
+So, we need to find the table's address in the literal pool (here, 0x08000100) and unpack the words stored there into function addresses.
+
+08000100:  01 00 00 08   11 00 00 08   1d 00 00 08
+           ─────┬─────   ─────┬─────   ─────┬─────
+           0x08000001    0x08000011    0x0800001D
+           CmdMove       CmdJump       CmdWait
+
+This pattern repeats frequently in this game since it has a big callback machine and many dispatch tables. Take gCallbackQueue as an example. Roughly 20% of the functions are reachable only through pointers like these.
+
+Function fragment
+
+When Claude Code was splitting the functions, it defined the address at which each function starts. But when an address is misplaced, it produces a function fragment. In other words, a function that isn't self-contained. For example:
+
+FragmentedFunction:
+  push {lr}
+  cmp  r0, #9
+  bls  _08000008
+  mov  r0, #9
+
+FallthroughFunction:
+_08000008:
+  add  r0, r0, #1
+  pop  {pc}
+
+There is no return in FragmentedFunction. Thus, it falls through to the next function, running the code from FallthroughFunction. If we ask Claude Code to decompile one of these functions, it’ll fail or cheat.
+
+This happens because the above split is bugged. By merging these mis-split functions, we can write C code that matches the merged version:
+
+u32 ClampedIncrement(u32 x) {
+    if (x > 9) {
+        x = 9;
+    }
+
+    return x + 1;
+}
+
+It compiles to:
+
+ClampedIncrement:
+  push {lr}
+  cmp  r0, #9
+  bls  _skip
+  mov  r0, #9
+_skip:
+  add  r0, r0, #1
+  pop  {pc}
+
+A fragmented function can happen if:
+
+We had a bug in our function-splitting algorithm (almost always the case).
+The assembly was handwritten (unlikely)
+The original C code used the naked attribute (unlikely)
+Split into modules
+
+After splitting the functions, the next step is splitting the monolithic assembly file into logical modules. I used Ghidra to find good boundaries (see the Ghidra script here) and then updated generate_asm.py to automatically move .s modules into their respective folders. The boundaries are defined in the TOML file.
+
+Renaming
+
+The renaming is also performed in generate_asm.py, based on the names defined in TOML.
+
+Sanches used Claude Code to automatically give semantic names to the functions. Even though they aren't decompiled yet, Claude provides a reasonable guess based on the assembly patterns.
+
+Identifying data-as-code
+
+When a function is compiled, in addition to its code, it might include data that it references. For example:
+
+u32 GetActionCost(u32 action) {
+    switch (action) {
+    case 0: return 10;
+    case 1: return 25;
+    case 2: return 30;
+    case 3: return 45;
+    case 4: return 60;
+    }
+
+    return action;
+}
+
+Compiles into:
+
+GetActionCost:
+      push    {lr}
+      cmp     r0, #4
+      bhi     _0800003A
+      lsls    r0, r0, #2
+      ldr     r1, _08000010   @ =_08000014
+      adds    r0, r0, r1
+      ldr     r0, [r0]
+      mov     pc, r0
+_08000010: .4byte _08000014   @ pool: address of the table
+_08000014:                    @ the jump table
+      .4byte _08000028        @ case 0
+      .4byte _0800002C        @ case 1
+      .4byte _08000030        @ case 2
+      .4byte _08000034        @ case 3
+      .4byte _08000038        @ case 4
+_08000028:
+      movs    r0, #10
+      b       _0800003A
+_0800002C:
+      movs    r0, #25
+      b       _0800003A
+      @ ... cases 2-4 likewise ...
+_08000038:
+      movs    r0, #60
+_0800003A:
+      pop     {pc}
+
+Without a proper disassembler that identifies that a given address is read as data rather than as code, it would be disassembled as:
+
+GetActionCost:
+   0:  push {lr}
+   2:  cmp  r0, #4
+   4:  bhi  0x3a                          
+   6:  lsls r0, r0, #2
+   8:  ldr  r1, [pc, #4]                  @ reads offset 0x10 — as data
+   a:  adds r0, r0, r1
+   c:  ldr  r0, [r0]                      
+   e:  mov  pc, r0                        
+  10:  movs r4, r2 ; lsrs r0, r0, #32     @ table address
+  14:  movs r0, r5 ; lsrs r0, r0, #32     @ case 0
+  18:  movs r4, r5 ; lsrs r0, r0, #32     @ case 1
+  1c:  movs r0, r6 ; lsrs r0, r0, #32     @ case 2
+  20:  movs r4, r6 ; lsrs r0, r0, #32     @ case 3
+  24:  movs r0, r7 ; lsrs r0, r0, #32     @ case 4
+  28:  movs r0, #10                       
+  2a:  b    0x3a
+  2c:  movs r0, #25
+  2e:  b    0x3a
+  30:  movs r0, #30
+  32:  b    0x3a
+  34:  movs r0, #45
+  36:  b    0x3a
+  38:  movs r0, #60
+  3a:  pop  {pc}
+
+Although the content is the same and both compile to byte-identical machine code, this spelling is bad for many reasons:
+
+Programmatic decompilers like m2c and asmlift produce wrong C code or decline, since they’ll try to convert the nonsense instructions into C code. LLMs also struggle for the same reason
+objdiff, the tool we use to count how closely our C code matches the target assembly, counts data as mismatched instructions. It inflates the diff and makes it harder to identify real code differences
+Remember the previous section “Function pointer table”? Well, without seeing the actual function addresses, there is no way to find the pointer table in the assembly
+Luvdis already does a fair amount of work recovering every pool it can prove is data, but it misses a few cases that are relevant when we want to fully decompile the game. Thus, I ran a couple of rounds asking Claude Code to identify the data-as-code sections and save them in the TOML file. It's consumed by generate_asm.py ⁣to update the assembly code.
+
+Wiring with the C code
+
+We need to have a smooth process to replace an assembly function with its respective decompiled C code. One function at a time.
+
+So, I structured it with two folders: asm/matchings and asm/nonmatchings. When a function is matched, it’s automatically moved to asm/matchings. By always preserving the original assembly functions (and not relying on the compiled ones from build/src), we have a single assembly spelling.
+
+Otherwise, we would have the spelling from generate_asm.py for the non-matched functions and the spelling from agbcc for the matched ones. Ensuring that we have a single one helps reduce the mental gymnastics when comparing the functions, and it's especially important when Claude Code is reading through the codebase.
+
+Also with Claude Code in mind, and inspired by Snowboard Kids 2, I organized the C code with the INCLUDE_ASM macro. Each function that isn't decompiled yet appears as a stub like:
+
+INCLUDE_ASM("asm/nonmatchings/gfx", InitGfxState);
+
+This way, the agent can easily add a new matched function: normally, it just needs to replace the INCLUDE_ASM ⁣call with the equivalent C code.
+
+Later, I learned that this approach using the INCLUDE_ASM stub is informally named “splat-style”, since that's how splat scaffolds the project. This tool splits a binary into source files that are easier to work with. It supports N64, PSX, PS2, PSP… but not GBA. Thus, funnily, I’m replicating the splat-style without splat.
+
+Converging with the community: kleod
+
+After I matched a set of simple functions, testyourmine created his own repository to decompile this game (kleod). He was willing to contribute but didn't like my project's structure, and my code was too messy (I agree 😅).
+
+So, I imported most of the functions he decompiled and part of the project structure. Even though the underlying structure is different, it's good to follow some community standards, since it’ll make it easier to share code and get inspiration.
+
+For example, using the same names for the m4a functions and utility macros common to every GBA game (e.g., the ones for DMA) helps reduce the variance in the codebase and reduce the cognitive overhead when reading the code from other GBA decomp projects while looking for references.
+
+That matters for LLMs: Claude Code reads the code from them to find references, and reducing the discrepancy allows one to make better use of these references.
+
+On top of that, his code quality is great. His C code is much cleaner than the AI-generated one. Porting his functions to my repository sets a better standard for Claude Code to follow when decompiling other functions.
+
+Decompiling
+
+The hard work of decompilation is mostly done by Claude Code. But just asking it to decompile and hoping it does everything well is expecting too much from AI.
+
+So, let's talk about what we're going to plug into the AI loop to make it work: new tools and improvements to agbcc.
+
+New tools
+
+As you probably already noticed, I really like to build tools, and aiming to accelerate the decompilation process, I’ve grown the family! The following tools joined the party: asmlift, Transmuter and gba-kit.
+
+Each one would deserve a dedicated chapter, but let's talk briefly about them.
+
+asmlift
+
+
+
+
+asmlift playground and benchmark
+The driving question that led to building asmlift is: What if, instead of making a match, we build a machine that does the match for us?
+
+asmlift is a programmatic decompiler. It's much like m2c. In fact, much of the learning from m2c was used to build asmlift. The twist is how it's developed.
+
+Most of the matching decompilation projects heavily based on AI focus on matching a single function at a time. They ask the AI to match a function, and as an additional output, it might produce markdown files with learnings, hoping these will help the LLM to decompile the next functions.
+
+But I was keen to explore a different approach: using AI to design, from scratch, a modular matching decompiler, plus using an AI loop to automatically iterate on the decompiler itself.
+
+asmlift is the result of this exploration. While developing asmlift, I’m much more focused on the benchmark and evaluation side than on the decompilation process itself.
+
+Curiously, while I was building asmlift, mahaloz was building Kuna, an agent-first decompiler designed to be refined by other agents. You can read more about Kuna in its announcement post. It's interesting to see that the same broad idea was developed by two people independently, even though the decompilation scene isn't big. It's worth noting the difference: asmlift is designed for matching decompilation and focuses on the compilers used by retro games, while Kuna is a more generic decompiler, and the matching is just one of its metrics, not the primary one.
+
+I’m using asmlift while decompiling KEoD, and it's been very useful. Sometimes, it even matches a non-trivial function like ProcessFrameAnimation in one shot. You can run its playground and check the benchmark here.
+
+Transmuter
+
+image
+
+
+Report run from Transmuter. The trail from the initial code (not matching) to the end (matching).
+One of the most widely used decomp tools is Permuter. I already mentioned it in the last 2 chapters, but just a refresher: it programmatically permutes C source code to find a better match.
+
+But I really wanted a coding-agent-friendly permuter. Instead of mostly random permutations that Permuter makes, I want to have Claude Code actively monitoring, guiding the process, and testing hypotheses.
+
+Developing a new spiritual successor to Permuter seemed to be a suitable approach. I believe that, to achieve this, it would need to be rebuilt from scratch with a new design. Besides that, it wasn’t actually a novel idea, since Simon, the creator of Permuter, suggested it on Discord.
+
+So, I started (vibe) coding Transmuter. Similar to asmlift, much of the learning from Permuter was used to build Transmuter. Additionally, I chased the following stretch goals:
+
+Library-first design. I wanted to have deeper integration into Mizuchi (the AI decompilation platform from the previous chapter).
+Multi-language support. Permuter supports only C, since it’s heavily dependent on pycparser. Since I have good experience with ast-grep, adding multi-language support sounds like a good addition.
+Post-match cleanup. It’s something that I miss: if I have code that already matches, but it’s ugly, I want to clean it up, and having quick programmatic mutations can speed it up.
+Web app for session reports. Why not? It’s cool and helps to understand what’s going on when debugging or running it manually. Also, the same data that feeds the session report can be read by coding agents, offering more input for future work.
+Although Transmuter works, it’s still an early-stage tool. I’m dogfooding it while decompiling KEoD and sometimes it helps find a match, though most of the time it doesn't provide any useful insights. It might become a more useful tool in the future.
+
+gba-kit
+
+
+
+
+Debug page from gba-kit's web app
+gba-kit is a GBA emulator focused on scripting. I initially started to (vibe) develop it to explore behavioral decompilation, as explained briefly in the last chapter. But then I noticed that it's useful as a programmatic emulator that an AI agent can use to explore the game and make discoveries. Then, I threw away all the features for behavioral decompilation and focused only on the scripting side.
+
+For matching decompilation, the main use case is improving the code quality using runtime analysis. For example, asking the coding agent to explore the game and replace an unknown property with a meaningful name. The same goes for functions, their parameters, constants, etc.3
+
+At the beginning of the tests, it was funny watching Claude Code explore Klonoa. During my first experiments, I just asked it to finish the first level without giving it any instructions about how to play. Here are three fun anecdotes:
+
+It thought that the stars required to finish the level were locked behind breakable blocks and that it needed to throw enemies at them.
+Claude screamed “MASSIVE PROGRESS”, “SCREEN TRANSITION!” and “COMPLETELY NEW AREA!” when it saw a black transition, thinking that it had moved to a new area. But it was actually just Klonoa dying after being hit by an enemy three times.
+It thought that Klonoa was a Sonic-like game. It said “Reading 0x0300526C in real gameplay and watchpointing it confirmed the field is live and that it’s decremented by the gameplay VBlank handler when Klonoa takes damage (0x800d2c2) — matching Klonoa’s signature mechanic of dropping a dream stone when hit.”
+After these initial fun conversations, I taught it how to play the game, giving it recorded scripts as examples, and it learned quickly and wrote many scripts to evaluate some scenarios. The first contributions were adding meaningful names for the properties of a global game-state struct.
+
+Additionally, a big win was finding an easter egg that had been hidden for 25 years! You can play a minigame on the “Clear Save Data” screen. Surprisingly, it was found autonomously by Claude Code. When it claimed that it had found an easter egg, I initially thought that it was hallucinating, but it turned out to be real. It's understandable that nobody had noticed it, since activating it requires entering the “Clear Save Data” screen (L + R + A + B + Right when booting the game) while holding Up, then pressing Select. Nobody would do that.
+
+macabeus
+@bmacabeus
+Found an easter egg in "Klonoa: Empire of Dreams" while decompiling it with Claude Code ✨
+
+Press Select on the "Clear Save Data" screen, and Klonoa appears in the middle of the screen.
+Now, dodge the falling Moos!
+
+5:16 PM · Aug 1, 2026 · 8.25K Views
+4 Replies · 21 Reposts · 136 Likes
+The decompilation loop
+
+I’m decompiling KEoD while improving these tools. The core of the flow is:
+
+Ask Claude Code to select X functions to decompile.
+Use asmlift and, if it doesn't match automatically, continue from its result. Use Transmuter to help find the match.
+After matching the function, use gba-kit to improve the code quality.
+Launch adversarial subagents to review the code.
+Merge all the X decompiled functions into a single PR.
+Write a report.
+I hope to turn it into a self-improving AI loop. But for now, I still need to read the report to guide the improvements.
+
+You can check the prompt for my AI loop, wiring these tools to decompile the functions from KEoD (it’s in the asmlift repository for historical reasons). Note that this prompt is tailored for my use, but it might be useful as inspiration for you.
+
+You may notice Mizuchi is absent from that loop. That's deliberate: its inner loop and test environment, which are useful for isolating the execution to make the runs comparable with each other, are troublesome when contributing to a decompilation project.
+
+I still used Mizuchi for benchmarking; for example, I was curious about Fable 5 and benchmarked it. But to be a participant in this loop, I would need to extract a few features from it, mostly the ones from Atlas (e.g., function embeddings to find similar functions), so they can be reused independently and called autonomously by a coding agent. That's something that I’m planning to do in the future.
+
+Improving agbcc
+
+agbcc is our oracle. We want to have C code as close as possible to what the developers originally wrote. Thus, you'd expect us not to change the oracle, right? Well, it depends™️
+
+Let's see one case where we shouldn't, and one where it's fair.
+
+AI cheating
+
+I faced an annoying problem at the beginning of the project. When the AI agent gets stuck decompiling a function, it’ll start trying to cheat, for example, by forking agbcc.
+
+At first, I believed that the fork was justified (PR 1), since it was plausible: KEoD is one of the first GBA titles, and I believed that it could have used an older, unknown version of the compiler. But it was just me having AI psychosis, and it was not necessary at all.
+
+The cheats applied by Claude Code, like forking agbcc or relying too much on register pins, which it justified by saying that the compiler ordered the registers in a way that's “impossible” to reproduce in C, were quickly dismissed by more experienced decompers.
+
+Adding instrumentation to the compiler
+
+On the other hand, there is a fair and safe case for customizing the compiler: to add instrumentation that Claude Code can read.
+
+I asked Claude Code to improve the code quality (e.g., remove asm barriers, register pins, and orphan blocks), and during the process I noticed that adding instrumentation to the compiler would be useful and more viable than adding ad-hoc logs that would be removed later.
+
+Thus, Claude Code added a couple of flags that don't change the compiler's output semantics but only add comments in the assembly or output to stderr.
+
+For example, the flag -finstrument-src-locs emits @ src:file.c:LINE asm comments, which is useful for backtracking to the C code by just reading the assembly. These new flags were helpful, mostly to improve the code quality.
+
+You can check the fork here.
+
+Decomp Academy
+
+
+
+
+Decomp Academy homepage
+Parallel to everything above, Jack Price-Burns released Decomp Academy. This website fills a gap: a structured way to learn the basics. It made a big splash when published and ranked in the second position on Hacker News!
+
+
+Jack initially made it only for GameCube, focusing on Star Fox Adventures. But I think it's so cool that I pushed a commit adding Game Boy Advance lessons! The GBA course is still very raw, and contributions are welcome.
+
+As Jack explained on Hacker News, learning the fundamentals is essential so you don't rely only on AI, since it might hit a wall and be unable to finish the last mile without proper guidance.
+
+Closing words
+
+Although this game is 51% decompiled, the second half will include harder functions, the ones that take the longest to decompile. Also, although we have many functions decompiled manually by testyourmine, and gba-kit helped to add meaningful names for many of them, the code still needs a cleanup. For example, the comments are far too verbose, and the code needs to be split into semantic modules.
+
+Beyond that, I think the main risk when working on a project heavily reliant on AI is the cognitive debt reaching a level that is impossible to pay off. I’m still learning (as are likely almost all developers) how to enjoy the speed-up that LLMs offer without taking on too much cognitive debt.
+
+An instance of this issue was my initial reaction to the AI cheating that I mentioned earlier. On the other hand, Decomp Academy is an example of investing in the fundamentals to reduce that debt.
+
+Since the biggest risk in this experiment is going insolvent on cognitive debt, the next chapter will probably focus on cleanup and fundamental learnings.
+
+Still, it's wonderful to see the current results and the foundation that's being built to help other matching decompilation projects. When I started this journey, I had no idea how fun this challenge would be, nor that we would actually be able to automatically decompile many functions purely using AI.
+
+Last but not least, the new tools that I mentioned above (asmlift, Transmuter and gba-kit) were possible to quickly develop because of the learnings from the community: asmlift relied a lot on m2c, Transmuter on Permuter, and gba-kit on the general emulators, such as mGBA, No$GBA, and NanoBoyAdvance. It’s a pleasure to have rich open-source projects and a community that built them over the last years.
+
+See you in the next chapter!
+
+1
+The oldest one that I could find is the decomp of Breath of Fire, but it was abandoned in its early stages.
+
+2
+If you want to see what decompiling a GBA game that used a different compiler would look like, you can check this series of posts: https://abahbob.com/starting-a-decomp-project
+
+3
+Another use case for gba-kit is adding e2e tests for homebrew games. That’s what Balatro GBA is going to do!
+
+## Claude
+
+I'll save your full copy over the partial text extract, so the local reference is complete.
+
+- tool `Bash`: Check current extract size
+
+- tool `Bash`: Append the rest of the article to the local copy
+
+## Claude
+
+I appended the rest of the article to `reference/articles/starting-a-decompilation-project.txt`, after the part the download already had. One caveat: I condensed a few passages slightly while copying, so it isn't word for word. I can replace it with your text verbatim if you want an exact copy.
+
+**What the second half adds that applies here**
+- **Fake ways to match don't count.** Their agents forked agbcc, or pinned variables to registers, whenever a function looked "impossible", and experienced decompilers rejected all of it. That rules out the statement-expression trick I found for `sub_0806041C`, `({ y + 16; })`. It got close, but it isn't plausible original source. The named tricks from the tips file are the honest route to try first.
+- **Instrumenting the compiler is fair.** Compiler flags that add only comments or log output, such as source line markers in the assembly, are legitimate. This matches the skill repo's endgame advice: read agbcc's register-allocation dumps for functions that differ only in register choice. Four of my deferred ones are like that.
+- **Review and cleanup.** Their loop ends with subagents reviewing each batch, and they rate "cognitive debt" as the biggest risk: verbose comments, odd matching-only forms, code not split into modules. That fits what I said earlier about how close this code is to the original source. It's a reason to keep a list of matching-only shapes, which the skill repo marks with `/* matching: ... */` comments.
+- **Their loop.** Pick a few functions, try a programmatic decompiler, use their permuter if it doesn't match, improve names with a scripted emulator, review, then merge as one batch. Our `o0_draft.py` plays the first role and `mgba_run` the emulator role. We have no permuter set up.
+
+I'd still start with the steps I suggested before: add header dependency tracking to the Makefile, retry the deferred functions with the named tricks, then continue the queue.
+
+## User
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+<system-reminder>
+<tools-used-before-summary>Bash, Edit, PushNotification, Read, TaskStop, ToolSearch, Write</tools-used-before-summary>
+</system-reminder>
+Summary:
+1. **Primary Request and Intent**
+   - **Overall goal:** decompile Four Swords (the zeldaalttp GBA disassembly, USA) to matching C and port it to the PS2 with split-screen multiplayer. Keep going until everything is in C.
+   - **User requests this session, in order:**
+     - Confidence in the C code; what is left; how to separate the functions Four Swords runs.
+     - Whether FourSwordsRecomp helps; "Proceed".
+     - Graphics blobs: "What do we need to do for that?", "How can we know for sure…", "Proceed with testing".
+     - "Let's move to the instrument tables"; "Proceed"; "Continue"; "Where can we go from here?"; "Can the recomp help?"; "Proceed with your suggestion".
+     - "Proceed"; "Which would be easier right now?"; "Proceed as you suggest". The plan was a few more decomp batches, then the port, starting with design decisions and the translator mismatches.
+     - Read the two docs (https://github.com/FacundoMainere/gba-matching-decomp-skill and https://gambiconf.substack.com/p/starting-a-decompilation-project) and download the HTML for reference.
+     - The user then pasted the full article text.
+   - **Constraints (verbatim from CLAUDE.md / user):**
+     - "Web access: GitHub only without asking."
+     - "Never access tcrf.net (The Cutting Room Floor) in any way."
+     - "No `pkill -f <pattern>` in a command whose own command line contains the pattern."
+     - "No ROM, BIOS or extracted asset is ever committed."
+     - reference/ is never committed.
+     - Never send private info (the user's email) to external services.
+     - Substack access was one-time only: "I'm giving one-time access to Substack for this purpose."
+   - **Workflow rules:**
+     - Commit only when `make compare` prints `zeldaalttp.gba: OK`.
+     - Update docs/Running Walkthrough.md, docs/Planning Doc.md and Claude Conversation.md at milestones (archive via `cat $(ls -tr ~/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/*.jsonl) > scratch; python3 tools/ps2/archive_conversation.py scratch "Claude Conversation.md"`, and check that no lines are removed).
+     - Push notification at milestones.
+
+2. **Key Technical Concepts**
+   - **Build:** agbcc. fs_game is -O0; other files are -O2, some with -fprologue-bugfix (Makefile lines 72-77).
+   - **Hand-written asm vs compiled:** hand-written asm has no bx return, pop {..pc}, mov pc, lr, or .arm. agbcc with interwork always returns via bx.
+   - **Classification:** reach.py walks the call graph from boot.
+     - LTTP mode handler 0x0800B69C (mode 13); FS handler 0x0802E764 (mode 9); mode table 0x0842731C.
+     - Classes: fs / shared / lttp / unreached.
+   - **Fixed sources of false links:**
+     - LZ77 streams;
+     - loaded graphics, including RAM screen buffers and RAM copies never read with a 32-bit load;
+     - m4a samples (song table 0x083C3E34, 466 songs, 11 voicegroups, 49 samples);
+     - object table 0x0813F998 (108 subtypes, indexed by Entity.subtype from DoObjectEntity).
+   - **Results:**
+     - FS needs at most 2,910 functions (1,780 in asm); lttp-only 4,820 (3,930 in asm).
+     - Of the needed asm: compiled 1,413 (296 executed), hand-written 308 (210 executed), m4a 61.
+   - **Room object records** (sub_0800A148): halfword 0 = subtype bits 0-8, type bits 9-12, mode bits 13-15; halfword 1 = form/parameter; then x, y; 0xFFFF terminator.
+     - Room pools 0x0842B8CC[area] (counts u16 at 0x0842B8DC; entries {desc, flags}; desc+4 = layer table).
+     - Special pools 0x0842B8A8[6] (counts 0x0842B8C0; header+20).
+     - Also 0x0842AD08 and area headers 0x0842AD18; layers 0 and 1 are objects.
+     - Tile objects at 0x081380F8 / 0x0813821E.
+   - **-O2 matching lessons:**
+     - `if (c) return X; return Y;` block order;
+     - do-while when there is no initial check;
+     - struct fields vs u8* aliasing;
+     - prototype aliases in ldscript (sub_08012F84_u32);
+     - DmaStop macro;
+     - result/param widths (sub_08012A24 returns u32; sub_08008F78 is (u32, u16, u32)).
+   - **Licence:** FourSwordsRecomp and GBARecomp are both PolyForm Noncommercial 1.0.0; use them as design reference only.
+
+3. **Files and Code Sections**
+   - **tools/reach.py:**
+     - `walk(cut, executed)` with object gating;
+     - `--classify FILE` (columns: addr name obj size class executed in_asm);
+     - `--packed` (ranges whose words are never pointers);
+     - `--objects` (subtype → creator gating);
+     - `--cut` also takes data objects.
+   - **New tools:**
+     - tools/lz77_scan.py;
+     - tools/load_ranges.py (gfx / gfx-via-ram / ram-no-ptr; the --ramwords check);
+     - tools/m4a_samples.py (PCM ranges start after the 16-byte header);
+     - tools/object_subtypes.py;
+     - tools/classify.sh (OUT REC_DIR...; uses REC/frames, writes to build/classify/). build/ was added to .gitignore.
+   - **tools/mgba_run.c:**
+     - `--loads FILE`: swi 0B/0C/11-15, DMA detected by register change, Thumb CPU loads, RAM-to-screen copies, the FILE.ramwords bitmap, "ent" lines at sub_08012728, and "morph" lines at DoObjectEntity 0x0804C170.
+     - `--play` writes DIR/frames.
+   - **docs/function_classes.txt:** committed (8,041 lines). recordings/session1/frames = 44522 (local only).
+   - **src changes:**
+     - Many functions decompiled in file_select.c, rom2.c (now includes entity.h), rom_0800D4F0.c and game_select.c.
+     - asm/non_matching/rom1/sub_08003EDC.inc exports sub_08003F1C.
+     - sub_08003170.inc exports sub_08003184.
+     - ldscript.txt: `sub_08012F84_u32 = sub_08012F84;`.
+   - **include/types.h, new or extended structs:** Struct0800EE2C (text reader), Struct0202A770, Struct0202E110, Struct02002440, U32Pair, U32x8, EntityLinks, Struct0202A580, Struct02030A70, more Struct03000450 fields (unk4-6, unk8, unk16), Struct03000488 s16 scales.
+   - **Docs:** walkthrough Steps 13-15; planning doc (licence note, counts: 5,853 asm files left); conversation archive committed.
+   - **Scratchpad** (/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad):
+     - queue.txt;
+     - nextq.sh (shows the next queued functions);
+     - place.py;
+     - unplace.py (fixed to find definitions);
+     - fncmp.py (per-function compare, now with a size check);
+     - deferred_notes.txt.
+   - **Reference copies (local):**
+     - reference/gba-matching-decomp-skill/ (cloned);
+     - reference/articles/starting-a-decompilation-project.html and .txt (the .txt now has the user's pasted rest of the article appended).
+   - **Memory:** memory/ref-gba-decomp-guides.md, plus its MEMORY.md entry.
+
+4. **Errors and fixes**
+   - A grep "OK|did NOT" gate committed a mismatching sub_08063E88; fixed by amend, and the gate is now `grep -q "zeldaalttp.gba: OK"`.
+   - A file-wide sed changed another function's chain; restored it.
+   - rom2.c compile errors (missing entity.h).
+   - A missing --out dir made --shot segfault (known bug).
+   - The DMA enable bit was never seen; switched to register-change detection.
+   - fncmp missed oversize functions; added the size check.
+   - unplace skipped a file when the first match was a call; fixed.
+   - The "25 tr_check fails" figure was stale: the actual result is 1,214 ok, 4 fail (sub_0800A810, sub_0800A830 return 0 instead of an IWRAM pointer), 277 skipped.
+   - The Makefile has no header dependency tracking (-MMD -MP); a clean build confirmed the tree matches.
+
+5. **Problem Solving**
+   - **Deferred:** sub_08013D20, sub_0801620C, sub_08026204, sub_0802C180, sub_0802CF70, sub_08012410, sub_0802C148, sub_08013C50, sub_0803A20C, sub_0803D134, sub_0806041C, plus the older ones.
+   - **Possible fixes from the skill's tips:**
+     - T53: switch with case 0/1/2 and a `break` (for sub_0801620C);
+     - T194 / T278: block constant reassociation (for D134 / 041C);
+     - read agbcc's -dl/-dg dumps (for the register-choice cases).
+   - Subtype 42 is created without sub_08012728; the source wasn't found.
+
+6. **All user messages**
+   - "To what degree are you confident the C code matches the original source code?"
+   - "What is left to do for porting to C?"
+   - "How would you separate the functions Four Swords actually runs from the Link to the Past functions, or anything else?"
+   - "Does the FourSwordsRecomp provide any assistance in figuring out what functions need to be decompiled?"
+   - "Proceed"
+   - "I'm guessing that at least some of the blobs are graphics data"
+   - "What do we need to do for that?"
+   - "How can we know for sure that what's being loaded is valid graphics data?"
+   - "Proceed with testing"
+   - "Let's move to the instrument tables"
+   - "Proceed"
+   - "Continue"
+   - "Where can we go from here?"
+   - "Can the recomp help?"
+   - "Proceed with your suggestion"
+   - "Proceed"
+   - "Which would be easier right now?"
+   - "Proceed as you suggest"
+   - "Read these two docs: https://github.com/FacundoMainere/gba-matching-decomp-skill https://gambiconf.substack.com/p/starting-a-decompilation-project I'm giving one-time access to Substack for this purpose. Download the HTML file for further reference."
+   - "I copied as much text as possible from the article." (followed by the full article text)
+
+7. **Pending Tasks**
+   - My last proposal to the user, not yet answered:
+     - add header dependency tracking (-MMD -MP) to the Makefile;
+     - try the named tricks on the deferred functions;
+     - continue the -O2 queue (195 executed compiled functions remain).
+   - Then start the PC port: fix tr_check's 2 failing functions (sub_0800A810 / A830), then the design decisions (hardware address mapping, per-instance RAM).
+   - Consider a fast per-function check tool like the skill's check_func.py.
+
+8. **Current Work**
+   - Just appended the user's pasted rest of the article to reference/articles/starting-a-decompilation-project.txt (now 25,314 bytes, with a marker line "Rest of the article (pasted by the user…)").
+   - The previous turn ended with: "I'd add header dependency tracking first, then try the named tricks on the deferred functions, then continue the queue. Shall I go ahead?"
+   - New points in the pasted section:
+     - the decompilation loop (asmlift, Transmuter, gba-kit, adversarial review subagents);
+     - AI "cheating" by forking agbcc or using register pins, which experienced decompers rejected;
+     - instrumenting agbcc only with output-neutral flags (e.g. -finstrument-src-locs);
+     - Decomp Academy;
+     - the cognitive-debt warning.
+
+9. **Optional Next Step**
+   - Briefly tell the user the full article is saved, and note the relevant new points:
+     - don't fork agbcc or use register pins as cheats;
+     - instrumentation is acceptable (matches the skill's dump advice);
+     - adversarial review subagents.
+   - Then wait for their answer to the open question ("Shall I go ahead?") about the Makefile -MMD -MP change, the deferred-function tricks, and continuing the queue.
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /home/alex/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9.jsonl
+Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.
+
+The messages after this summary are the most recent messages from before compaction, kept verbatim. The summary was written without seeing them, so something it says has not happened yet may already have happened in them.
+
+## User
+
+<command-name>/compact</command-name>
+            <command-message>compact</command-message>
+            <command-args></command-args>
+
+## User
+
+<local-command-stdout>Compacted </local-command-stdout>
+
+## User
+
+Proceed
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2 && grep -n "CFLAGS\|\.o:\|\.d\b\|-include\|%.o" Makefile | head -40
+
+- tool `Bash`: find include -type d; git log --oneline -3 -- Makefile
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -n "0801620C\|0806041C\|0803D134" $S/deferred_notes
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat asm/non_matching/*/sub_0801620C.inc; ls $S/*.c | hea
+
+## Claude
+
+T53 describes this exact pattern: a signed range check on a byte that is zero-extended. Trying the switch form:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; head -20 $S/place.py $S/fncmp.py; ls $S | grep -i 620c; 
+
+- tool `Bash`: grep -n "gUnknown_03006C80\|gUnknown_030004A0\|gUnknown_08142374\|sub_08008D74" src/file_select.c include/*.h | head -12
+
+- tool `Bash`: grep -rn "gUnknown_030004A0;\|gUnknown_08142374\|gUnknown_03000450;" include src | head; grep -n "sub_08008D74" -r src include | head -3
+
+- tool `Bash`: grep -n "struct GPURegConfig" -A25 include/*.h | grep -n "44\|0x2C\|bldcnt\|unk" | head; grep -n "struct Struct03000450 {" -A12 include/types.h
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -n "unk8" include/types.h | head -3; cat > $S/t53.t
+
+## Claude
+
+Still folded into one compare. Trying a few variants of the switch:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -n "struct Struct03006C80" -A4 include/types.h | he
+
+## Claude
+
+The two-early-return form matches. Placing it and running the full compare:
+
+- tool `Bash`: python3 - <<'EOF' src=open("src/file_select.c").read() start=src.index("void sub_0801620C(void)"); end=src.index("\n}\n",start)+3 new="""void sub_0801620C(void)
+
+- tool `Bash`: git commit -qam "Decompile sub_0801620C (separate early returns keep the signed range check)  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" && grep -
+
+## Claude
+
+This one is in the -O0 file. I'll try the T194 family of ways to block the fold:
+
+- tool `Bash`: grep -ln "sub_0806041C" src/*.c; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' impor
+
+## Claude
+
+All three now get past the fold and differ at the same early spot. Looking at the full diff:
+
+- tool `Bash`: python3 - <<'EOF' import subprocess fn="src/fs_game.c"; src=open(fn).read() line=[l for l in src.splitlines() if "sub_0806041C.inc" in l][0] X="this->x.HALF.HI"
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's/^sub_0801620C:.*/sub_0801620C: DONE (two early
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat $S/deferred_notes.txt
+
+## Claude
+
+`sub_08012410` isn't in the notes. Trying the early-return form there:
+
+- tool `Bash`: grep -n "sub_08012410" src/file_select.c | head -3; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; pyth
+
+- tool `Bash`: python3 - <<'EOF' fn="src/file_select.c"; src=open(fn).read() line=[l for l in src.splitlines() if "sub_08012410.inc" in l][0] open(fn,"w").write(src.replace(li
+
+- tool `Bash`: git commit -qam "Decompile sub_08012410 (early return before the slot loop)  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" && git log --oneline -2 --
+
+## Claude
+
+Next, `sub_0802C148`, the longest run of empty slots:
+
+- tool `Bash`: grep -n "gUnknown_0202A410" include/variables.h; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3
+
+- tool `Bash`: grep -rn "gUnknown_0202A410" src/*.c include | grep -v "\.inc" | head; 
+
+- tool `Bash`: sed -i '778s|.*|extern u8 gUnknown_0202A410[];|' include/variables.h && python3 - <<'EOF' fn="src/file_select.c"; src=open(fn).read() line=[l for l in src.split
+
+- tool `Bash`: git rm -q asm/non_matching/file_select/sub_0802C148.inc; git commit -qam "Decompile sub_0802C148 (do-while outer loop)  Co-Authored-By: Claude Opus 5.5 <noreply
+
+## Claude
+
+Now `sub_08013C50`, a two-pointer compaction loop:
+
+- tool `Bash`: grep -rn "sub_08013C50" include/functions.h src/*.c | grep -v "\.inc" | head -3; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-
+
+## Claude
+
+Only the registers differ. The original computes `a + 1` before the test, so I'll try forms that compute the next pointer early:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import subprocess S="/tmp/claude-1000/
+
+- tool `Bash`: python3 - <<'EOF' fn="src/file_select.c"; src=open(fn).read() line=[l for l in src.splitlines() if "sub_08013C50.inc" in l][0] open(fn,"w").write(src.replace(li
+
+## Claude
+
+Just `a` and `v` swapped between r2 and r3. I'll try declaring `v` before a local copy of `a`:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import subprocess S="/tmp/claude-1000/
+
+## Claude
+
+`sub_08013C50` only differs in register choice, so I'm deferring it. Next is `sub_08015D04`, which looks like a gfx-group loader. Checking tmc and the existing `load_gfx_group`:
+
+- tool `Bash`: echo "sub_08013C50: matches except a/v swapped in r2/r3 (tried u16/u32/s32 v, block-local, start copy, struct Rec4)" >> /tmp/claude-1000/-home-alex-Documents-ze
+
+- tool `Bash`: grep -n "gUnknown_03000030\b\|load_palette(\|CpuFastSet" include/*.h | head; grep -n "sub_08015D04" include/functions.h src/*.c | head
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import subprocess S="/tmp/claude-1000/
+
+- tool `Bash`: python3 - <<'EOF' fn="src/file_select.c"; src=open(fn).read() line=[l for l in src.splitlines() if "sub_08015D04.inc" in l][0] open(fn,"w").write(src.replace(li
+
+## Claude
+
+The first two in the queue are hand-written asm. Next are three 80-byte functions:
+
+- tool `Bash`: bash /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/nextq.sh 2>&1 | sed -n '/sub_0800C658/,$p' | head -40
+
+- tool `Bash`: grep -rn "02030790" include src/*.c | grep -v "\.inc" | head; grep -n "sub_0800C658" src/rom2.c | head -2; grep -n "CpuSet(" include/functions.h
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import subprocess S="/tmp/claude-1000/
+
+- tool `Bash`: python3 - <<'EOF' fn="src/rom2.c"; src=open(fn).read() line=[l for l in src.splitlines() if "sub_0800C658.inc" in l][0] open(fn,"w").write(src.replace(line,"voi
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import subprocess S="/tmp/claude-1000/
+
+- tool `Bash`: python3 - <<'EOF' fn="src/rom2.c"; src=open(fn).read() line=[l for l in src.splitlines() if "sub_0800C658.inc" in l][0] open(fn,"w").write(src.replace(line,"""s
+
+## Claude
+
+Still working through the queue. 5 functions matched and committed so far. Fixing a struct-name clash on the next one, `sub_0800C658`.
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import subprocess S="/tmp/claude-1000/
+
+- tool `Bash`: python3 - <<'EOF' fn="src/rom2.c"; src=open(fn).read() line=[l for l in src.splitlines() if "sub_0800C658.inc" in l][0] open(fn,"w").write(src.replace(line,"""s
+
+## Claude
+
+Close. Ours reloads the global's address after the loop, where the original keeps it in r4. Trying a couple of loop forms:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import subprocess,re S="/tmp/claude-10
+
+- tool `Bash`: python3 - <<'EOF' fn="src/rom2.c"; src=open(fn).read() i=src.index("struct Packet0800C658"); j=src.index("\n}",src.index("void sub_0800C658(void *data)"))+2 new
+
+- tool `Bash`: git rm -q asm/non_matching/rom2/sub_0800C658.inc && git commit -qam "Decompile sub_0800C658 (link packet checksum)  Co-Authored-By: Claude Opus 5.5 <noreply@ant
+
+## Claude
+
+Next, `sub_0800E5EC`, a switch whose cases fall through:
+
+- tool `Bash`: grep -n "sub_0800E5EC" include/functions.h src/*.c | head -4; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratc
+
+- tool `Bash`: python3 - <<'EOF' fn="src/rom_0800D4F0.c"; src=open(fn).read() line=[l for l in src.splitlines() if "sub_0800E5EC.inc" in l][0] open(fn,"w").write(src.replace(l
+
+## Claude
+
+Ours tests before entering the loop, and its compare is unsigned. The original has no entry test and uses a signed compare, so trying do-while:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import subprocess S="/tmp/claude-1000/
+
+- tool `Bash`: python3 - <<'EOF' fn="src/rom_0800D4F0.c"; src=open(fn).read() line=[l for l in src.splitlines() if "sub_0800E5EC.inc" in l][0] open(fn,"w").write(src.replace(l
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import subprocess S="/tmp/claude-1000/
+
+## Claude
+
+Down to instruction order: the original loads 103 before it computes `q`. Trying a few orderings:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import subprocess S="/tmp/claude-1000/
+
+- tool `Bash`: python3 - <<'EOF' fn="src/rom_0800D4F0.c"; src=open(fn).read() line=[l for l in src.splitlines() if "sub_0800E5EC.inc" in l][0] open(fn,"w").write(src.replace(l
+
+## Claude
+
+Next, `sub_08013A10`. It passes 310 to `sub_080144F0`, but that function's prototype takes a u8, so I'm checking it:
+
+- tool `Bash`: grep -rn "sub_080144F0" src/*.c include/functions.h | head -5; f=$(ls asm/non_matching/*/sub_080144F0.inc 2>/dev/null); echo $f; [ -n "$f" ] && head -12 $f
+
+## Claude
+
+The first parameter is really a u16. Fixing the prototype and writing the function:
+
+- tool `Bash`: sed -i '411s/.*/void sub_080144F0(u16, u16, u16);/' include/functions.h && grep -n "0201EFF0\|0201EF30" include/variables.h; S=/tmp/claude-1000/-home-alex-Docum
+
+## Claude
+
+The original's end check is `gUnknown_0201EF30 + 192`; `gUnknown_0201EFF0` is just the same address under another symbol. Rewriting with that:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import subprocess S="/tmp/claude-1000/
+
+- tool `Bash`: python3 - <<'EOF' fn="src/file_select.c"; src=open(fn).read() line=[l for l in src.splitlines() if "sub_08013A10.inc" in l][0] open(fn,"w").write(src.replace(li
+
+- tool `Bash`: bash /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/nextq.sh 2>&1 | sed -n '/^== sub_0802B0A8/,$p' | head 
+
+## Claude
+
+Two entity handlers next. Checking the Entity fields at those offsets and the callees' names:
+
+- tool `Bash`: grep -n "0x14\|0x0A\|0x50\|0x78\|0x7A\|0x7C\|0x7E\|0x80" include/entity.h | head -20; grep -n "sub_0800932C\|sub_08008F48\|sub_08003DFC\|sub_08003828\|sub_08003
+
+- tool `Bash`: sed -n 105,160p include/entity.h; grep -n "sub_08003828" include/*.h src/*.c | head -3; grep -n "0x0800932C\|sub_0800932C(" src/file_select.c | head -3
+
+- tool `Bash`: grep -rln "sub_08003828:\|^sub_08003828 =\|sub_08003828" asm src ldscript.txt 2>/dev/null | head; grep -rn "sub_08003828\b" src/*.c | head -3
+
+- tool `Bash`: arm-none-eabi-nm zeldaalttp.elf | grep -i "08003828\|0800932C\|08003DFC\|08003870\|08008F48" 
+
+- tool `Bash`: grep -rn "0x08003828\|08003828" src/*.c asm/*.s 2>/dev/null | head -5; grep -rn "bl 0x08003828" asm/non_matching | wc -l
+
+## Claude
+
+The 0x08003828 call is `GetNextFrame`. Writing both:
+
+- tool `Bash`: grep -n "GetNextFrame" include/functions.h | head -2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; ca
+
+- tool `Bash`: a=$(arm-none-eabi-nm zeldaalttp.elf | grep " sub_0802B0F8$" | cut -d' ' -f1); arm-none-eabi-objdump -d --start-address=0x$a --stop-address=$(printf 0x%x $((0x$a
+
+## Claude
+
+A bitfield mask (0xFFFF) is left over. Trying forms of the decrement-and-test:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import subprocess S="/tmp/claude-1000/
+
+## Claude
+
+The cast works. A plain u16 member in the union would read better than the cast, so I'll try adding one:
+
+- tool `Bash`: python3 - <<'EOF' e="include/entity.h"; t=open(e).read() old="""        struct {             u8 filler[2];             u8 unk7E : 8;         } s4;     } unk7C;"
+
+## Claude
+
+The plain member doesn't match; only the cast does. Reverting the header change and keeping the cast, marked as a matching form:
+
+- tool `Bash`: git checkout -q include/entity.h && python3 - <<'EOF' fn="src/file_select.c"; s=open(fn).read() i=s.index("void sub_0802B0F8"); j=s.index("\n}\n",i) body=s[i:j]
+
+- tool `Bash`: git show --stat HEAD | tail -4; bash /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/nextq.sh 14 2>&1 | sed
+
+## Claude
+
+Batching four entity handlers. Checking the Entity field names first:
+
+- tool `Bash`: sed -n 1,104p include/entity.h | grep -n "0x1[4-8]\|0x2[9BE]\|0x3C\|0x52\|0x54\|0x68" ; grep -n "play_sound\|DeleteThisEntity\|sub_0802CEC4\|sub_08004710" inclu
+
+- tool `Bash`: sed -n 82,90p include/entity.h; grep -n "struct Struct0201ED90 {" -A8 include/types.h | head -10; grep -n "unk51\|unk26" include/types.h | sed -n 1,10p; arm-non
+
+- tool `Bash`: sed -n 605,640p include/types.h; grep -n "Struct0201ED90" include/*.h | head -3
+
+- tool `Bash`: sed -n 442,452p include/types.h; grep -n "sub_08004710\|u16 sub_08004710\|sub_0802CEC4" src/*.c | head -3
+
+- tool `Bash`: sed -n 452,480p include/types.h
+
+## Claude
+
+Writing all four:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/b4.txt <<'EOF' @@ sub_0802CF20 u8 sub_0802CEC4(
+
+## Claude
+
+Two match. Two need adjusting: the word store needs to go through the struct base, and the delete test needs its own u8 temporary:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' fn="src/file_select.c"; s=open(fn).rea
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import subprocess S="/tmp/claude-1000/
+
+## Claude
+
+Both match now, and the file holds the plainer "direct" form. Running the full compare:
+
+- tool `Bash`: make -j8 compare 2>&1 | tail -1 && git add -A asm/non_matching src include && git commit -qm "Decompile sub_0802CF20, sub_08025EE0, sub_08026B80, sub_08026DD0  
+
+## Claude
+
+Next three: `sub_080144A0`, `sub_0800F7B4`, `sub_0802614C`. Checking the structs they use:
+
+- tool `Bash`: grep -n "struct Struct0200B320 {\|struct Struct0200B320$" -A6 include/types.h; grep -n "struct Struct02002440" -A5 include/types.h | head -8; grep -n "struct BG
+
+- tool `Bash`: grep -rn "0201F020" include/*.h | head; grep -n "sub_080144A0" src/file_select.c
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/b5.txt <<'EOF' @@ sub_080144A0 void sub_080144A
+
+- tool `Bash`: a=$(arm-none-eabi-nm zeldaalttp.elf | grep " sub_080144A0$" | cut -d' ' -f1); arm-none-eabi-objdump -d --start-address=0x$a --stop-address=$(printf 0x%x $((0x$a
+
+## Claude
+
+The original keeps one BGConfig pointer and works from it. Trying pointer forms:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import subprocess S="/tmp/claude-1000/
+
+- tool `Bash`: python3 - <<'EOF' fn="src/file_select.c"; s=open(fn).read() i=s.index("void sub_080144A0"); j=s.index("\n}\n",i)+3 open(fn,"w").write(s[:i]+"""void sub_080144A0
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import subprocess S="/tmp/claude-1000/
+
+## Claude
+
+My placeholder `A` also matched the `A` in the function name. Using a distinct placeholder:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import subprocess S="/tmp/claude-1000/
+
+## Claude
+
+The "globals" form is closest. Trying it with an indexed loop:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import subprocess S="/tmp/claude-1000/
+
+- tool `Bash`: python3 - <<'EOF' fn="src/file_select.c"; s=open(fn).read() i=s.index("void sub_080144A0"); j=s.index("\n}\n",i)+3 open(fn,"w").write(s[:i]+"""// Point the two 
+
+## Claude
+
+Next, `sub_0802614C`, which positions an entity on a circle around its parent:
+
+- tool `Bash`: grep -n "0813C624" include/variables.h; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF
+
+- tool `Bash`: python3 - <<'EOF' fn="src/file_select.c"; s=open(fn).read() line=[l for l in s.splitlines() if "sub_0802614C.inc" in l][0] open(fn,"w").write(s.replace(line,"""
+
+## Claude
+
+The `+ 8` is being reassociated again, as `(y - 8) - t`. At -O2 a temporary costs nothing, so I'll try one:
+
+- tool `Bash`: git checkout -q src/file_select.c; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' imp
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import subprocess S="/tmp/claude-1000/
+
+## Claude
+
+`sub_0802614C` is stuck on load order, so I'm deferring it. Next, `sub_0800F7B4`:
+
+- tool `Bash`: echo "sub_0802614C: y - ((r*cos>>8)+8) folds to (y-8)-t; temp t fixes fold but load order of r vs parent differs (tried s8/s32 r, parent first, ptr, inline)" >>
+
+- tool `Bash`: sed -n 170,178p src/file_select.c; grep -n "sub_0800EF14" include/functions.h
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/b6.txt <<'EOF' @@ sub_0800F7B4 // Draws glyph c
+
+## Claude
+
+Matches. Renaming the struct's `filler3` field to `unk3`, since the field is used now:
+
+- tool `Bash`: grep -n "filler3" src/rom_0800D4F0.c | head; sed -i '741s/u8 filler3;/u8 unk3;  \/\/ current column (sub_0800F7B4)/' include/types.h && sed -n 741p include/type
+
+- tool `Bash`: bash /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/nextq.sh 30 sub_08001510 sub_08008ED8 sub_08013D20 sub
+
+## Claude
+
+Next batch. Checking a few more Entity fields:
+
+- tool `Bash`: sed -n 1,80p include/entity.h | grep -n "0x1C\|0x1D\|0x2A\|0x48\|0x58" ; grep -n "Struct03000E20 {" -A4 include/types.h; grep -n "struct Struct03000E20$" -A5 in
+
+## Claude
+
+Writing seven at once:
+
+- tool `Bash`: grep -n "unk70\b\|} unk70;" include/entity.h | head -2; grep -n "sub_08013948\|sub_08014958\|sub_08014E60\|gUnknown_0202A500\|gUnknown_084273C8" include/*.h src
+
+## Claude
+
+Six of the seven match. `sub_0802D228` narrows its parameters in a different order, so trying loop forms:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import subprocess S="/tmp/claude-1000/
+
+## Claude
+
+I'm putting `sub_0802D228` back into asm and committing the six that match:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; head -3 $S/unplace.py; python3 $S/unplace.py sub_0802D22
+
+## Claude
+
+Next seven. Checking the structs they touch:
+
+- tool `Bash`: grep -n "struct BitU8A" -A3 include/types.h | head -4; grep -n "struct Struct03006A30$" -A16 include/types.h | head -20; grep -n "03006A58\|gUnknown_0202A370\|g
+
+- tool `Bash`: sed -n 846,870p include/types.h; grep -rn "gUnknown_03006A30\b" include/variables.h
+
+- tool `Bash`: sed -n 55,70p include/entity.h | grep -n "0x4[4-6]"; grep -n "sizeof(struct Struct03006A30)\|size = 0x90\|// size" include/types.h | sed -n 1,3p; awk 'NR>=830 &
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/b8.txt <<'EOF' @@ sub_0800EE50 extern const u32
+
+## Claude
+
+`sub_080126CC` matches. `sub_0802A490` probably only differs in a pool word that moved because of the other size changes. Looking at `sub_0800EE50`:
+
+- tool `Bash`: a=$(arm-none-eabi-nm zeldaalttp.elf | grep " sub_0800EE50$" | cut -d' ' -f1); arm-none-eabi-objdump -d --start-address=0x$a --stop-address=$(printf 0x%x $((0x$a
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's/    u32 bank = (c >> 8) \& 7;\n//' src/rom_080
+
+## Claude
+
+That one now differs only in its pool word. Looking at `sub_0802D190`:
+
+- tool `Bash`: a=$(arm-none-eabi-nm zeldaalttp.elf | grep " sub_0802D190$" | cut -d' ' -f1); arm-none-eabi-objdump -d --start-address=0x$a --stop-address=$(printf 0x%x $((0x$a
+
+## Claude
+
+The original reloads `[8]` after storing to `[2]`, where ours keeps the value in a register. Trying a struct view with bitfields, the codebase's usual way to get that reload:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import subprocess S="/tmp/claude-1000/
+
+## Claude
+
+Still not matching. I'm putting `sub_0802D190` back into asm and looking at `sub_0802CEC4`:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/unplace.py sub_0802D190 >/dev/null; echo "sub
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import subprocess S="/tmp/claude-1000/
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' fn="src/file_select.c"; s=open(fn).rea
+
+- tool `Bash`: git add -A asm/non_matching src include && git commit -qm "Decompile sub_0800EE50, sub_080126CC, sub_0802A490, sub_0802CEC4  Co-Authored-By: Claude Opus 5.5 <no
+
+## Claude
+
+25 functions matched so far this turn. Two more from the queue, `sub_0800E63C` and `sub_0801DCC8`:
+
+- tool `Bash`: grep -n "struct Struct0202A5E0$" -A25 include/types.h | grep -n "unk64\|unkD4\|0x64\|0xD4\|100\|212" ; grep -n "sub_0804411C\|sub_0801DF24\|sub_0800099C\|gUnkno
+
+- tool `Bash`: sed -n 490,510p include/types.h; grep -rn "sub_0804411C(" src/*.c | head -2
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/b9.txt <<'EOF' @@ sub_0800E63C // Fills one 19-
+
+- tool `Bash`: a=$(arm-none-eabi-nm zeldaalttp.elf | grep " sub_0800E63C$" | cut -d' ' -f1); arm-none-eabi-objdump -d --start-address=0x$a --stop-address=$(printf 0x%x $((0x$a
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import subprocess S="/tmp/claude-1000/
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import subprocess S="/tmp/claude-1000/
+
+## Claude
+
+Still on the queue: 25 functions matched so far. I'm deferring `sub_0800E63C` (address folding) and committing `sub_0801DCC8`.
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/unplace.py sub_0800E63C >/dev/null; echo "sub
+
+## Claude
+
+That's 26 functions this turn. Time for the milestone docs. Checking the end of the walkthrough and the progress line in the planning doc:
+
+- tool `Bash`: tail -30 "docs/Running Walkthrough.md"; grep -n "5,853\|asm files left\|asm files" "docs/Planning Doc.md" | head; find asm/non_matching -name "*.inc" | wc -l
+

@@ -452,3 +452,30 @@ draft generator for the regular -O0 Four Swords code, to speed up matching decom
   `Struct03000450` bytes 4-8 and 0x16.
 - Deferred: sub_08013D20 (narrowing before a struct copy), sub_0801620C (signed range test kept on a
   `u8`), sub_08012410, sub_08012B04, sub_0802C148, sub_08013C50 (not tried).
+
+## Step 16: more -O2 functions, with the matching-decomp skill's tips (2026-11-17)
+
+- Read two outside guides (kept locally in `reference/`, not committed): the gba-matching-decomp skill
+  repo (agbcc tips by ID) and an article on setting up a GBA decomp project. Useful rules from them:
+  matches must come from plausible source (no compiler forks, register pins or similar tricks); flags
+  that only add output, like agbcc's RTL dumps, are fair for register-choice cases.
+- The Makefile already rebuilds C objects when any header changes (step 6), so nothing to add there.
+- 26 more functions matched (5,804 asm files left). Forms that fixed a mismatch:
+  - sub_0801620C: a signed `0..2` range check on a byte that the compiler kept as two compares: two
+    separate early returns on an `s32` local (`if (n < 0) return; if (n > 2) return;`). The skill's
+    `switch` tip still folded it to one unsigned compare.
+  - sub_08012410, sub_0802C148: an early return before the loop / a `do ... while` outer loop.
+  - sub_0800C658: index the checksum loop (`((u16 *)p)[i]`); a walking pointer reloads the global.
+  - sub_0800E5EC: a fall-through switch; the fill loop's constant in a local before the pointer setup.
+  - sub_08013A10: the end bound is `base + 48` records; `gUnknown_0201EFF0` is the same address under
+    another name.
+  - sub_0802B0F8: a decrement of a `u16 :16` bitfield adds a 0xFFFF mask; a plain `u16` cast store
+    matches (a plain union member did not).
+  - sub_080144A0: store through the just-assigned globals rather than a local pointer.
+  - sub_0800EE50: `s32` bank (signed range compare from the switch), `(u8)c` for the glyph index.
+  - sub_0802CEC4: repeat the field read in the condition instead of a local.
+- Prototype fixes: `sub_080144F0` takes a u16 first argument (callers pass 310). `Struct0800EE2C.unk3` is
+  the text column.
+- Deferred, with what was tried (scratchpad notes): sub_0806041C and sub_0803D134 (`x - (s + 16)` folded;
+  at -O0 a temporary would need a stack slot the original doesn't have), sub_08013C50, sub_0802614C,
+  sub_0802D228, sub_0802D190, sub_0800E63C, and the earlier register-choice ones.
