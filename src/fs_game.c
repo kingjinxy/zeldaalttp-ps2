@@ -9109,7 +9109,19 @@ void sub_08055ED8(struct Entity *this)
     sub_08003870(this, this->form);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08055FA0.inc\"");
+void sub_08055FA0(struct Entity *this)
+{
+    u16 v;
+
+    if (gUnknown_03000948.unk0 & 1)
+        return;
+    if (this->unk17 != 0)
+        this->unk17--;
+    else
+        this->unk14++;
+    v = this->unk17 & 0xF;
+    BITU16_AT(&gUnknown_030004A0, 0x64) = v << 12 | v << 8;  // mosaic
+}
 
 void sub_08056048(struct Entity *this)
 {
