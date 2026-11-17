@@ -1803,7 +1803,7 @@ s16 sub_0803D310(s16, s16);
 s16 sub_0803D350(s16, s16);
 s16 sub_0803D398(s16);
 void sub_0803D3D0(struct Entity *, struct Entity *);
-//sub_0803D440();
+void sub_0803D440(struct Entity *, struct Entity *);
 void sub_0803D4A4(struct Entity *, struct Entity *, s32, s32);
 void sub_0803D520(u8, u16, u8);
 void sub_0803D65C(u8, u16);

@@ -1982,7 +1982,12 @@ void sub_0803D3D0(struct Entity *a, struct Entity *b)
     sub_08008DD8(b);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0803D440.inc\"");
+void sub_0803D440(struct Entity *this, struct Entity *e)
+{
+    sub_0803D3D0(this, e);
+    if (e->unk5E_0 <= 2)
+        e->unk5E_0++;
+}
 
 void sub_0803D4A4(struct Entity *a, struct Entity *b, s32 dx, s32 dy)
 {
