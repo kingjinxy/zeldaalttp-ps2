@@ -2216,7 +2216,11 @@ void sub_080260AC(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/file_select/sub_080260E4.inc\"");
+
+extern const s8 gUnknown_0813C624[];
+
 asm(".include \"asm/non_matching/file_select/sub_0802614C.inc\"");
+
 asm(".include \"asm/non_matching/file_select/sub_080261A0.inc\"");
 
 asm(".include \"asm/non_matching/file_select/sub_08026204.inc\"");
@@ -2879,7 +2883,9 @@ u8 sub_0802C148(void)
     return best;
 }
 
+
 asm(".include \"asm/non_matching/file_select/sub_0802C180.inc\"");
+
 
 asm(".include \"asm/non_matching/file_select/sub_0802C1C0.inc\"");
 
@@ -3091,7 +3097,16 @@ void sub_0802CF20(void)
 }
 
 
-asm(".include \"asm/non_matching/file_select/sub_0802CF70.inc\"");
+
+// Reloads the 0x180-byte tile set for the player's current unk3E_2 form when it changed
+void sub_0802CF70(void)
+{
+    if (gUnknown_03000420[7] != gUnknown_03006730->unk3E_2) {
+        gUnknown_03000420[7] = gUnknown_03006730->unk3E_2;
+        sub_080009F4((void *)0x0600C200, (u32)(gUnknown_03000030 + (u32)gUnknown_084277B0[gUnknown_03000420[7]]), 384);
+    }
+}
+
 
 asm(".include \"asm/non_matching/file_select/sub_0802CFBC.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802D104.inc\"");

@@ -32,7 +32,7 @@ open(f"{out}/target.s", "w").write('.include "macro.inc"\n.text\n'
 subprocess.run(["arm-none-eabi-as", "-mcpu=arm7tdmi", "-mthumb-interwork", "-Iasminclude",
                 f"{out}/target.s", "-o", f"{out}/target.o"], check=True)
 
-flags = "-mthumb-interwork -O2" + (" -fprologue-bugfix" if re.search(
+flags = "-mthumb-interwork" + ("" if src == "src/fs_game.c" else " -O2") + (" -fprologue-bugfix" if re.search(
     rf"^{re.escape(src[:-2])}\.o:.*-fprologue-bugfix", open("Makefile").read(), re.M) else "")
 open(f"{out}/compile.sh", "w").write(f"""#!/bin/bash
 # $1 = input.c, $3 = output.o
