@@ -4262,7 +4262,44 @@ void sub_08046D24(struct Entity *this)
     GetNextFrame(this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08046D3C.inc\"");
+
+void sub_08046D3C(struct Entity *this)
+{
+    struct BitU8A c[4];
+    u8 sel;
+
+    c[0].v = c[1].v = c[2].v = c[3].v = 0;
+    c[(u8)(this->unk7C.bf & 3)].v++;
+    c[(u8)((this->unk7C.bf >> 2) & 3)].v++;
+    c[(u8)((this->unk7C.bf >> 4) & 3)].v++;
+    if (c[1].v == 0)
+        sel = 0;
+    else if (c[2].v == 0)
+        sel = 1;
+    else if (c[3].v == 0)
+        sel = 2;
+    else
+        sel = sub_0800099C() % 3;
+    switch (sel)
+    {
+    case 0:
+        this->unk14 = 14;
+        sub_08003870(this, 1);
+        sub_08003DFC(178);
+        break;
+    case 1:
+        this->unk14 = 23;
+        this->unk17 = 60;
+        break;
+    case 2:
+        this->unk14 = 30;
+        this->unk17 = 60;
+        break;
+    }
+    this->unk7C.bf = (this->unk7C.bf << 2) | (sel + 1);
+    this->unk18 = 3;
+}
+
 
 u8 sub_08046FB4(struct Entity *this)
 {
