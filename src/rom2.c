@@ -815,7 +815,16 @@ bool32 sub_0800C984(void)
     return (u8 *)gUnknown_03000E34 < gUnknown_030066A6 + gUnknown_03000204 * 128;
 }
 
-asm(".include \"asm/non_matching/rom2/sub_0800C9AC.inc\"");
+
+const u8 *sub_0800C9AC(const u8 *p)
+{
+    u8 *src = (u8 *)(p[0] + (p[1] << 8) + (p[2] << 16) + (p[3] << 24));
+
+    CpuFastSet(src, (void *)(p[4] + (p[5] << 8) + (p[6] << 16) + (p[7] << 24)), (u32)(p[8] + (p[9] << 8)) >> 2);
+    sub_0800BE50(src);
+    return p + 10;
+}
+
 asm(".include \"asm/non_matching/rom2/sub_0800C9F8.inc\"");
 
 void sub_0800CA34(void)
@@ -836,7 +845,19 @@ void sub_0800CA3C(void)
     sub_0800CA38();
 }
 
-asm(".include \"asm/non_matching/rom2/sub_0800CA84.inc\"");
+
+void sub_0800CA84(u32 a, u32 b)
+{
+    gUnknown_030004A0.dispCnt |= 0x2000;
+    gUnknown_030004A0.winin = a;
+    gUnknown_030004A0.winout = b;
+    gUnknown_030004A0.win0v = 160;
+    gUnknown_03000BC0.unk0 = 1;
+    gUnknown_03000BC0.dest = (void *)0x04000040;
+    gUnknown_03000BC0.dmaCnt = 0xA2600001;
+    sub_0800CA34();
+}
+
 asm(".include \"asm/non_matching/rom2/sub_0800CAD4.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800CBBC.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800CCAC.inc\"");
