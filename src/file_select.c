@@ -821,7 +821,10 @@ asm(".include \"asm/non_matching/file_select/sub_08015888.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08015964.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080159F4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08015AC4.inc\"");
+
+
 asm(".include \"asm/non_matching/file_select/sub_08015C64.inc\"");
+
 
 u16 sub_08015CD0(s32 *p)
 {
@@ -1015,7 +1018,10 @@ void sub_08016EA8(struct Entity *this)
     }
 }
 
+
+
 asm(".include \"asm/non_matching/file_select/sub_08016EF0.inc\"");
+
 
 void sub_08016F5C(struct Entity *this)
 {
@@ -1781,7 +1787,10 @@ void sub_0801E76C(struct Entity *this)
     }
 }
 
+
+
 asm(".include \"asm/non_matching/file_select/sub_0801E7A0.inc\"");
+
 asm(".include \"asm/non_matching/file_select/sub_0801E80C.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801E83C.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801E868.inc\"");
@@ -2160,7 +2169,22 @@ void sub_08025B6C(struct Entity *this)
 asm(".include \"asm/non_matching/file_select/sub_08025B84.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08025C78.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08025CEC.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_08025DB8.inc\"");
+
+void sub_08025DB8(struct Entity *this)
+{
+    sub_08026244(this);
+    sub_080040C4(this, this->unk54->unk2A << 3);
+    sub_080040C4(this, this->unk54->unk2A << 3);
+    sub_080040C4(this, this->unk54->unk2A << 3);
+    sub_080040C4(this, this->unk54->unk2A << 3);
+    sub_0803CC20(this);
+    this->speed -= 36;
+    if (this->speed <= 0x43F) {
+        this->unk14 = 4;
+        this->unk17 = 24;
+    }
+}
+
 
 void sub_08025E24(struct Entity *this)
 {
@@ -2249,7 +2273,26 @@ void sub_080260AC(struct Entity *this)
     sub_080260E4(this);
 }
 
-asm(".include \"asm/non_matching/file_select/sub_080260E4.inc\"");
+
+void sub_080260E4(struct Entity *this)
+{
+    struct Entity *a = this->unk58;
+    struct Entity *b;
+    s16 dx = (a->x.HALF.HI - (b = (struct Entity *)this->unk74.w)->x.HALF.HI) / 3;
+    s16 dy = (a->y.HALF.HI - b->y.HALF.HI) / 3;
+
+    switch (this->form) {
+    case 2:
+        this->x.HALF.HI = dx + b->x.HALF.HI;
+        this->y.HALF.HI = dy + b->y.HALF.HI;
+        break;
+    case 3:
+        this->x.HALF.HI = dx * 2 + b->x.HALF.HI;
+        this->y.HALF.HI = dy * 2 + b->y.HALF.HI;
+        break;
+    }
+}
+
 
 extern const s8 gUnknown_0813C624[];
 

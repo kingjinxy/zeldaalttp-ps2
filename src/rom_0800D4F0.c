@@ -374,7 +374,9 @@ asm(".INCLUDE \"macro.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800DCDC.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800DFC4.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E094.inc\"");
+
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E1D4.inc\"");
+
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E240.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E324.inc\"");
 
