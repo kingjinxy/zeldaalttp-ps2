@@ -2372,7 +2372,56 @@ void sub_08025B6C(struct Entity *this)
     gUnknown_0813C5B0[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/file_select/sub_08025B84.inc\"");
+
+extern const u8 gUnknown_0813C65C[];
+
+void sub_08025B84(struct Entity *this)
+{
+    struct Entity *a, *b, *c;
+
+    a = sub_080123E8();
+    if (a == NULL)
+        return;
+    b = sub_08012410(a);
+    if (b == NULL)
+        return;
+    c = sub_08012410(b);
+    if (c == NULL)
+        return;
+    a->type = 4;
+    b->type = 4;
+    c->type = 4;
+    a->subtype = 6;
+    b->subtype = 6;
+    c->subtype = 6;
+    a->form = 1;
+    b->form = 2;
+    c->form = 3;
+    a->unk54 = this->unk54;
+    b->unk54 = this->unk54;
+    c->unk54 = this->unk54;
+    a->unk58 = this;
+    b->unk58 = this;
+    c->unk58 = this;
+    b->unk74.w = (u32)a;
+    c->unk74.w = (u32)a;
+    sub_0803D3D0(this, a);
+    sub_0803D3D0(this, b);
+    sub_0803D3D0(this, c);
+    sub_08012728(5, a);
+    sub_08012728(5, b);
+    sub_08012728(5, c);
+    this->unk14 = 1;
+    this->unk1C_0 = 1;
+    this->unk2E = 8;
+    this->unk48 = gUnknown_0813C65C;
+    this->z.HALF.HI = -4;
+    this->unk3C |= 0x80;
+    ((u8 *)this)[94] |= 3;
+    sub_08008DD8(this);
+    sub_08003870(this, 0);
+}
+
 
 void sub_0802614C(struct Entity *);
 
