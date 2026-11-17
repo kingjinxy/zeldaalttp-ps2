@@ -5126,7 +5126,51 @@ void sub_080496DC(struct Entity *this)
     sub_080494B8(this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08049708.inc\"");
+
+u32 sub_08049708(struct Entity *this)
+{
+    const u16 *p;
+
+    if ((u8)(this->unk19 & 1))
+        return 0;
+    {
+        p = &gUnknown_0813C16C[this->subtype << 3];
+        if (*p == 0xFFFF)
+            p = gUnknown_0813C2EC[p[1]] + (this->form << 3);
+        if (*p != 0)
+        {
+            if ((u16)(*p & 0x8000))
+            {
+                this->unk20 = *p;
+                this->unk1C_6 = (u8)((u16)(*p & 0x300) >> 8);
+            }
+            else if (sub_0802C070(this, *p))
+            {
+                return 1;
+            }
+        }
+        p++;
+        if ((u16)(*p & 0x8000))
+            this->unk1E_0 = this->unk1E_4 = (u16)(*p & 15);
+        else
+            this->unk1E_0 = this->unk1E_4 = sub_0802C2DC(*p);
+        p++;
+        this->unk19 = 1;
+        this->unk1B = *p++;
+        this->unk3C = ((u16)(*p & 0x8000) >> 8) | 9;
+        this->unk40 = *p;
+        this->unk46 = (u16)(*p++ & 0x7F00) >> 8;
+        this->unk44 = (u16)(*p & 0xFF00) >> 8;
+        this->unk45 = *p++;
+        this->speed = *p++;
+        this->unk3F = *p++;
+        this->unk5C = *p;
+        this->unk23 = 0;
+        sub_08008DD8(this);
+    }
+    return 0;
+}
+
 
 void sub_08049A00(struct Entity *this)
 {

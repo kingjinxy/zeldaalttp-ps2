@@ -1295,7 +1295,7 @@ void sub_0802B74C(void);
 //sub_0802BF30();
 void sub_0802BF60(void);
 void sub_0802BFC4(void);
-void sub_0802C070(struct Entity *, u16);
+u8 sub_0802C070(struct Entity *, u16);
 //sub_0802C0EC();
 u8 sub_0802C12C(struct Entity *);
 // sub_0802C12C as sub_080664A8 saw it (no prototype there: int return, not truncated); ldscript alias
@@ -1984,7 +1984,7 @@ void sub_08049140(struct Entity *);
 void sub_0804930C(struct Entity *);
 void sub_080494B8(struct Entity *);
 void sub_080496DC(struct Entity *);
-//sub_08049708();
+u32 sub_08049708(struct Entity *);
 //sub_08049A00();
 //sub_08049A28();
 //sub_08049A38();
