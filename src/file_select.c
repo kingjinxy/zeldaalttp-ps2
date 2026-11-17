@@ -485,7 +485,21 @@ asm(".include \"asm/non_matching/file_select/sub_08012494.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080124C0.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080124EC.inc\"");
 asm(".include \"asm/non_matching/file_select/DeleteThisEntity.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_080126CC.inc\"");
+
+extern u8 gUnknown_0202A370[];
+
+// Clears the entity slots listed in gUnknown_0202A370 (count gUnknown_0202A8C4)
+void sub_080126CC(void)
+{
+    u8 *p = gUnknown_0202A370;
+
+    while (--gUnknown_0202A8C4 != 0xFF) {
+        u32 zero = 0;
+        CpuSet(&zero, gEntityList + (*p++ << 7), 0x05000020);
+    }
+    gUnknown_0202A8C4 = 0;
+}
+
 
 void sub_08012728(u8 type, struct Entity *e)
 {
@@ -2619,7 +2633,24 @@ void sub_0802A304(struct Entity *this)
 
 asm(".include \"asm/non_matching/file_select/sub_0802A340.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802A3EC.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_0802A490.inc\"");
+
+u8 sub_0802A4EC(struct Entity *);
+
+void sub_0802A490(struct Entity *this)
+{
+    u8 r;
+
+    if (this->unk7C.h != 0) {
+        r = sub_0802A4EC(this);
+        if (r < this->parameter + 2) {
+            this->unk14 = 1;
+            this->unk2A = r;
+            gUnknown_0201F000[this->unk52] ^= gUnknown_08137B10[this->form];
+            sub_08003870(this, this->unk2A);
+        }
+    }
+}
+
 asm(".include \"asm/non_matching/file_select/sub_0802A4EC.inc\"");
 
 void sub_0802A6A4(struct Entity *this)
@@ -2982,7 +3013,22 @@ void sub_0802CE98(void)
         play_sound(37);
 }
 
-asm(".include \"asm/non_matching/file_select/sub_0802CEC4.inc\"");
+
+// 1 if some player's unk45 is set, at most twice their unk64 entry, and the timer passed unk8
+u8 sub_0802CEC4(void)
+{
+    u8 found = 0;
+    u8 i;
+
+    for (i = 0; i < gUnknown_03006C80.unk0; i++) {
+        if (gUnknown_03006A30[i].unk28->unk45 != 0
+         && gUnknown_03006A30[i].unk28->unk45 <= gUnknown_03006C80.unk64[i].v * 2
+         && sub_08004710() > gUnknown_03006C80.unk8)
+            found = 1;
+    }
+    return found;
+}
+
 
 u8 sub_0802CEC4(void);
 u16 sub_08004710(void);
@@ -3008,7 +3054,9 @@ asm(".include \"asm/non_matching/file_select/sub_0802CF70.inc\"");
 
 asm(".include \"asm/non_matching/file_select/sub_0802CFBC.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802D104.inc\"");
+
 asm(".include \"asm/non_matching/file_select/sub_0802D190.inc\"");
+
 
 void sub_0802D1E8(void)
 {

@@ -503,7 +503,28 @@ u32 sub_0800EE2C(struct Struct0800EE2C *p)
     return *p->unk20[p->unk2]++;
 }
 
-asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EE50.inc\"");
+
+extern const u32 gUnknown_08427460[];
+
+// Glyph address for character c: bits 8-10 pick the font bank, bits 0-7 the glyph (64 bytes each)
+const u8 *sub_0800EE50(u16 c)
+{
+    s32 bank = (c >> 8) & 7;
+    u16 idx = (u8)c;
+
+    switch (bank) {
+    case 1:
+        if (gGameLanguage != 0 && idx > 128)
+            bank = 0;
+        break;
+    case 3:
+    case 4:
+        idx <<= 1;
+        break;
+    }
+    return gUnknown_03000030 + gUnknown_08427460[bank] + idx * 64;
+}
+
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EEA8.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EEE0.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EF14.inc\"");
