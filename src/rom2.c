@@ -670,7 +670,6 @@ int is_ram_address(void *addr)
         || (uintptr_t)addr - EWRAM < EWRAM_SIZE;
 }
 
-extern u8 gEntityList[];  // TODO: correct type
 
 int sub_0800C004(u8 *a)
 {
@@ -822,7 +821,14 @@ asm(".include \"asm/non_matching/rom2/sub_0800CBBC.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800CCAC.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800CE74.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800D0A8.inc\"");
-asm(".include \"asm/non_matching/rom2/sub_0800D1A0.inc\"");
+
+void sub_0800D1A0(void)
+{
+    zero_memory(gUnknown_0201EDA8, 8);
+    gUnknown_0201EDA8[1] = 0;
+    gUnknown_0201EDA8[0] = 0x100;
+}
+
 asm(".include \"asm/non_matching/rom2/sub_0800D1C0.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800D200.inc\"");
 asm(".include \"asm/non_matching/rom2/play_sound.inc\"");
