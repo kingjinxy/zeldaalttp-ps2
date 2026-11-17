@@ -633,7 +633,10 @@ asm(".include \"asm/non_matching/file_select/sub_0801303C.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080130D4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08013120.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080131C8.inc\"");
+
+struct Room08013120 { u16 unk0; u16 unk2; u32 *unk4; };
 asm(".include \"asm/non_matching/file_select/sub_080131FC.inc\"");
+
 asm(".include \"asm/non_matching/file_select/sub_080132B0.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080133D0.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08013490.inc\"");
@@ -2591,7 +2594,32 @@ void sub_08026AB4(struct Entity *this)
     gUnknown_0813CBF8[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/file_select/sub_08026ACC.inc\"");
+
+void sub_08026ACC(struct Entity *this)
+{
+    u16 *rec;
+    u16 n;
+
+    this->unk14 = 1;
+    this->unk16 = this->x.HALF.HI;
+    this->x.HALF.HI = this->x.HALF.HI * 60;
+    this->unk70.w = sub_08012F84_u32(this->unk52, this->y.HALF.HI);
+    rec = (u16 *)this->unk70.w;
+    n = 0;
+    while (rec[0] != 0xFFFF) {
+        if ((u16)((rec[0] >> 13) - 2) <= 1)
+            sub_08013754(((rec[2] & 0xFC0) >> 6) | (rec[3] & 0xFC0), (rec[2] & 63) + 1, (rec[3] & 63) + 1);
+        n++;
+        rec += 4;
+    }
+    if (this->unk17 == 0 || n < this->unk17)
+        this->unk17 = n;
+    if (this->form != 0xFF)
+        this->unk68.w = sub_08013D20(this->form);
+    else
+        this->unk14++;
+}
+
 
 void sub_08026B80(struct Entity *this)
 {
@@ -2801,23 +2829,31 @@ void sub_08027298(struct Entity *this)
 
 asm(".include \"asm/non_matching/file_select/sub_080272D0.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080275F8.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_080276CC.inc\"");
 
-#define WALL_AT(dx, bit)                                                   \
+// Sets bit in unk2C when the tile at (dx, dy) from the entity isn't 66, 32 or 19-30
+#define WALL_AT(dx, dy, bit)                                               \
     {                                                                      \
-        u16 t = sub_0800934C(this, dx, 24);                                \
+        u16 t = sub_0800934C(this, dx, dy);                                \
         if (t != 66 && t != 32 && (u16)(t - 19) > 11)                      \
             this->unk2C |= bit;                                            \
     }
 
+void sub_080276CC(struct Entity *this)
+{
+    WALL_AT(-21, -25, 2)
+    WALL_AT(-5, -25, 2)
+    WALL_AT(4, -25, 4)
+    WALL_AT(20, -25, 4)
+}
+
+
 void sub_08027780(struct Entity *this)
 {
-    WALL_AT(-21, 32)
-    WALL_AT(-5, 32)
-    WALL_AT(4, 64)
-    WALL_AT(20, 64)
+    WALL_AT(-21, 24, 32)
+    WALL_AT(-5, 24, 32)
+    WALL_AT(4, 24, 64)
+    WALL_AT(20, 24, 64)
 }
-#undef WALL_AT
 
 asm(".include \"asm/non_matching/file_select/sub_0802782C.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080278E8.inc\"");

@@ -805,6 +805,7 @@ struct Struct02030790 {
     s32 unk18;
     struct Packet0800C658 *unk1C, *unk20;  // swapped by sub_0800C75C
     u32 unk24, unk28;  // swapped by sub_0800C75C
+    u8 *unk2C;  // 4 received packets of 28 bytes (sub_0800C6A8)
 };
 extern struct Struct02030790 gUnknown_02030790;
 
@@ -823,6 +824,7 @@ void sub_0800C658(void *data)
     gUnknown_02030790.unk4 = 1;
 }
 asm(".include \"asm/non_matching/rom2/sub_0800C6A8.inc\"");
+
 asm(".include \"asm/non_matching/rom2/sub_0800C75C.inc\"");
 
 asm(".include \"asm/non_matching/rom2/sub_0800C7E8.inc\"");
