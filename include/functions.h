@@ -1775,7 +1775,7 @@ u8 sub_0803C1A4(struct Entity *, struct Entity *, u8);
 //sub_0803C2EC();
 //sub_0803C50C();
 u8 sub_0803C72C(struct Entity *, struct Entity *, u8);
-//sub_0803C810();
+u32 sub_0803C810(struct Entity *, struct Entity *, u8);
 u8 sub_0803C9FC(struct Entity *, struct Entity *, u8);
 u8 sub_0803CB7C(struct Entity *, struct Entity *, u8);
 void sub_0803CC20(struct Entity *);  // tmc: ProcessMovement2

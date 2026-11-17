@@ -1715,7 +1715,7 @@ extern void (*const gUnknown_0813DF38[])(struct Entity *);
 //extern gUnknown_0813DFB4;
 //extern gUnknown_0813DFC0;
 //extern gUnknown_0813E040;
-//extern gUnknown_0813E3F4;
+extern const u8 gUnknown_0813E3F4[];
 //extern gUnknown_0813E400;
 extern const s16 gUnknown_0813E4CC[];  // gSineTable: sin at [i], cos at [i + 64]
 //extern gUnknown_0813E7D4;
