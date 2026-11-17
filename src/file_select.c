@@ -1864,7 +1864,36 @@ void sub_0801E494(struct Entity *this)
     gUnknown_0813AD94[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/file_select/sub_0801E4AC.inc\"");
+
+
+void sub_0801E4AC(struct Entity *this)
+{
+    switch (this->unk41 & 0x7F) {
+    case 0:
+        if (this->unk14 == 3)
+            this->unk17 = 1;
+        break;
+    case 1:
+    case 2:
+    case 3:
+    case 22:
+    case 24:
+    case 25:
+    case 26:
+        if (this->unk14 <= 5) {
+            this->unk14 = 6;
+            this->unk10 = 0x18000;
+            this->speed = 192;
+            this->direction = this->unk3E;
+            this->unk42 = 0;
+            this->unk3F = 47;
+            sub_08003870(this, 9);
+        }
+        break;
+    }
+    sub_080098A0(this, gUnknown_0813AD7C);
+}
+
 
 void sub_0801E590(struct Entity *this)
 {
