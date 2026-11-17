@@ -834,7 +834,10 @@ void sub_08014658(u16 a, u16 b, u16 c)
 
 asm(".include \"asm/non_matching/file_select/sub_080146D4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801478C.inc\"");
+
+struct GfxRec0801484C { u32 src; u8 *dst; s32 ctrl; };
 asm(".include \"asm/non_matching/file_select/sub_0801484C.inc\"");
+
 
 extern u8 gUnknown_0202A500[];
 void sub_08014958(u8 *);
@@ -951,8 +954,7 @@ asm(".include \"asm/non_matching/file_select/sub_08015DD8.inc\"");
 
 extern u8 gUnknown_02038000[];
 extern u8 gUnknown_0203A000[];
-extern void *const gUnknown_08146090[];
-void sub_0801484C(void *, u32);
+extern const struct GfxRec0801484C *const gUnknown_08146090[];
 void sub_0800BAE4(void *, void *, u32, u32);
 void sub_080160F8(void);
 
