@@ -58,7 +58,28 @@ void sub_0803006C(void)
 asm(".include \"asm/non_matching/rom2a/sub_0803008C.inc\"");
 asm(".include \"asm/non_matching/rom2a/sub_08030100.inc\"");
 asm(".include \"asm/non_matching/rom2a/sub_08030214.inc\"");
-asm(".include \"asm/non_matching/rom2a/sub_08030314.inc\"");
+
+void sub_08030214(u8);
+void sub_08030724(void);
+
+void sub_08030314(void)
+{
+    struct Entity *e;
+
+    sub_08030214(((struct { u8 pad[8]; u8 v; } *)&gUnknown_02016D60)->v);
+    sub_0804C8A8(70, 6, ((struct { u8 pad[8]; u8 v; } *)&gUnknown_02016D60)->v);
+    gUnknown_03000450.unk0 = sub_0804C8A8(70, 7, gLCDRegisterBuffer);
+    sub_08036704(5);
+    gUnknown_03005050 = 4;
+    gSubState = 0;
+    if (gLCDRegisterBuffer != 0) {
+        e = sub_0804C8A8(70, 5, 0);
+        e->x.HALF.HI = 120;
+        e->y.HALF.HI = 80;
+    }
+    sub_08030724();
+}
+
 asm(".include \"asm/non_matching/rom2a/sub_08030380.inc\"");
 asm(".include \"asm/non_matching/rom2a/sub_08030418.inc\"");
 asm(".include \"asm/non_matching/rom2a/sub_080304FC.inc\"");
