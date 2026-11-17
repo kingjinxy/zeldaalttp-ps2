@@ -29,7 +29,8 @@ ifneq ($(FS_ONLY),)
 endif
 # make NONMATCHING=1: build the functionally equivalent C kept under #ifdef NONMATCHING instead of the
 # original asm (zeldaalttp_nm.gba, does not match). shortcut: asm that calls absolute addresses breaks once
-# a C function changes size, so this ROM proves the C compiles and links, not that it runs.
+# a C function changes size, so this ROM may not even link (short branches to absolute addresses go out
+# of range); `make NONMATCHING=1 objects` is the check that the C compiles.
 ifneq ($(NONMATCHING),)
   CPPFLAGS += -DNONMATCHING
 endif
@@ -89,6 +90,9 @@ src/fs_game.o:      CC1FLAGS := $(filter-out -O2,$(CC1FLAGS))
 
 compare: $(ROM)
 	$(SHA1) checksum.sha1
+
+# All objects without linking: `make NONMATCHING=1 objects` checks that the equivalent C compiles
+objects: $(OFILES)
 
 clean: tidy
 	$(RM) graphics/*/*.4bpp graphics/*/*.lz

@@ -1472,7 +1472,55 @@ void sub_080159F4(void *dst, void *map)
 #else
 asm(".include \"asm/non_matching/file_select/sub_080159F4.inc\"");
 #endif
+#ifdef NONMATCHING
+extern const u16 gUnknown_0813821E[];
+extern const u16 gUnknown_081381BC[];
+extern const u8 gUnknown_081380F8[];
+
+// Spawns the tile objects of the room: for each tile, a record {tile, type, subtype, form | parameter << 8}
+// in the top-layer list (0x8000), else the bottom-layer list (0x4000), creates that entity on the tile
+// Returns 1 if a record matched the tile (whether or not an entity slot was free)
+static u32 SpawnTileObject(const u16 *rec, u16 pos, u16 layer)
+{
+    struct Entity *e;
+
+    for (; rec[0] != 0xFFFF; rec += 4) {
+        if (rec[0] == sub_0800932C(pos, layer)) {
+            e = sub_080123E8();
+            if (e != NULL) {
+                e->type = rec[1];
+                e->subtype = rec[2];
+                e->form = rec[3];
+                e->parameter = rec[3] >> 8;
+                e->x.HALF.HI = (pos & 63) * 16 + 8;
+                e->y.HALF.HI = ((pos & 0xFC0) >> 2) + 8;
+                e->unk50 = layer | gUnknown_03000450.unk12;
+                sub_08012728(gUnknown_081380F8[e->type], e);
+            }
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void sub_08015AC4(void)
+{
+    u16 w = gUnknown_03000450.unk28 >> 4;
+    u16 h = gUnknown_03000450.unk2A >> 4;
+    u16 pos = 0;
+    u16 x, y;
+
+    for (y = 0; y < h; y++) {
+        for (x = 0; x < w; x++, pos++) {
+            if (SpawnTileObject(gUnknown_0813821E, pos, 0x8000) == 0)
+                SpawnTileObject(gUnknown_081381BC, pos, 0x4000);
+        }
+        pos += 64 - w;
+    }
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_08015AC4.inc\"");
+#endif
 
 
 #ifdef NONMATCHING
