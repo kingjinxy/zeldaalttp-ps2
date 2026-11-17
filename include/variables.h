@@ -775,7 +775,7 @@ extern u16 gUnknown_0202A0F0[][160];
 //extern gUnknown_0202A0F2;
 //extern gUnknown_0202A370;
 extern struct Struct0202E110 gUnknown_0202A3F0[];
-//extern gUnknown_0202A410;
+extern u8 gUnknown_0202A410[];
 //extern gUnknown_0202A49C;
 extern u32 gUnknown_0202A4F0;
 extern const u16 *gUnknown_0202A4F4;

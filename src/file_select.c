@@ -2582,7 +2582,27 @@ void sub_0802C0EC(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/file_select/sub_0802C12C.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_0802C148.inc\"");
+// Longest run of 4-byte records whose byte 1 is 0 (35 records)
+u8 sub_0802C148(void)
+{
+    u8 *p = gUnknown_0202A410;
+    u8 best = 0;
+    u8 n;
+
+    do {
+        if (p[1] == 0) {
+            n = 0;
+            do {
+                n++;
+                p += 4;
+            } while (p[1] == 0);
+            if (best < n)
+                best = n;
+        }
+        p += 4;
+    } while (p < gUnknown_0202A410 + 140);
+    return best;
+}
 
 asm(".include \"asm/non_matching/file_select/sub_0802C180.inc\"");
 
