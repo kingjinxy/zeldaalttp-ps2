@@ -414,7 +414,20 @@ asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EB50.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EBD4.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EC08.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800ED7C.inc\"");
-asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EDB8.inc\"");
+
+u32 sub_0800EDB8(struct Struct0800EE2C *p, u8 *v)
+{
+    if (p->unk0 != 0)
+    {
+        if (p->unk2 > 6)
+            return 0;
+        p->unk2++;
+    }
+    p->unk20[p->unk2] = v;
+    p->unk0 = 1;
+    return 1;
+}
+
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EDE4.inc\"");
 
 u32 sub_0800EDF0(u8 *p)
@@ -429,14 +442,6 @@ u32 sub_0800EDF0(u8 *p)
 }
 
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EE08.inc\"");
-
-struct Struct0800EE2C {
-    u8 unk0;
-    u8 unk1;
-    u8 unk2;
-    u8 filler3[0x1D];
-    u8 *unk20[1];  // indexed by unk2
-};
 
 u32 sub_0800EE2C(struct Struct0800EE2C *p)
 {

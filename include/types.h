@@ -724,6 +724,30 @@ struct Struct0202A7E0
     u32 unk10;
 };  // size = 0x14; 8 of them (sub_0804CCBC clears 0xA0 bytes)
 
+struct Struct0202E110
+{
+    u8 unk0;  // a count, decremented by sub_0802C39C
+    u8 unk1;  // id
+    u8 unk2;
+    u8 unk3;
+};
+
+// Text/script reader state (rom_0800D4F0): unk0 active, unk2 depth of the pointer stack unk20
+struct Struct0800EE2C
+{
+    u8 unk0;
+    u8 unk1;
+    u8 unk2;
+    u8 filler3[0x1D];
+    u8 *unk20[8];
+};
+
+struct EntityLinks
+{
+    void *unk0;
+    void *unk4;
+};
+
 struct Struct0202A580
 {
     u32 unk0;
