@@ -735,7 +735,50 @@ void sub_0800E78C(void)
 #else
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E78C.inc\"");
 #endif
+#ifdef NONMATCHING
+// Draws a w x h window frame at p from tiles t (corner), t+1/t+2 (top edge), t+3/t+4 (side edge);
+// the bottom and right sides are the same tiles flipped (0x800 vertical, 0x400 horizontal)
+void sub_0800E80C(u16 *p, s16 w, s16 h, u16 t)
+{
+    u16 *q = p;
+    u16 *b = p + h * 32 + 32;
+    u16 n;
+
+    *q++ = t;
+    *b++ = t | 0x800;
+    if (w > 0) {
+        *q++ = t + 1;
+        *b++ = (t + 1) | 0x800;
+        for (n = w - 2; (s16)n-- > 0;) {
+            *q++ = t + 2;
+            *b++ = (t + 2) | 0x800;
+        }
+        *q++ = (t + 1) | 0x400;
+        *b++ = (t + 1) | 0xC00;
+    }
+    *q = t | 0x400;
+    *b = t | 0xC00;
+    p += 32;
+    q += 32;
+    if (h > 0) {
+        *p = t + 3;
+        *q = (t + 3) | 0x400;
+        p += 32;
+        q += 32;
+        for (n = h - 2; (s16)n-- > 0;) {
+            *p = t + 4;
+            *q = (t + 4) | 0x400;
+            p += 32;
+            q += 32;
+        }
+        *p = (t + 3) | 0x800;
+        *q = (t + 3) | 0xC00;
+    }
+}
+#else
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E80C.inc\"");
+#endif
+
 #ifdef NONMATCHING
 extern u8 gUnknown_0202D112[];
 extern u8 gUnknown_0201EEC4[];
