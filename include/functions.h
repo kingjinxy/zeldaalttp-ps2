@@ -1301,7 +1301,7 @@ s32 sub_0802C12C_int(struct Entity *);
 //sub_0802C23C();
 void sub_0802C278(void);
 //sub_0802C2B8();
-//sub_0802C2DC();
+u8 sub_0802C2DC(u8);
 //sub_0802C39C();
 //sub_0802C3C4();
 u32 sub_0802C3E0(u8);

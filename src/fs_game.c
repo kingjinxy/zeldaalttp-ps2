@@ -5228,7 +5228,49 @@ void DoObjectEntity(struct Entity *this)
     this->unk41 &= 0x7F;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0804C200.inc\"");
+
+void sub_0804C200(struct Entity *this)
+{
+    const u16 *p;
+
+    if (!(u8)(this->unk19 & 1))
+    {
+        p = &gUnknown_0813C72C[this->subtype * 3];
+        if (*p == 0xFFFE)
+            return;
+        if (*p == 0xFFFF)
+            p = gUnknown_0813CBB4[p[1]] + this->form * 3;
+        if (*p != 0)
+        {
+            if ((u16)(*p & 0x8000))
+            {
+                this->unk20 = *p;
+                this->unk1C_6 = (u8)((u16)(*p & 0x300) >> 8);
+            }
+            else
+            {
+                sub_0802C070(this, *p);
+            }
+        }
+        p++;
+        if ((u16)(*p & 0x8000))
+        {
+            if (*p != 0x80FF)
+                this->unk1E_0 = this->unk1E_4 = (u16)(*p & 15);
+        }
+        else
+        {
+            this->unk1E_0 = this->unk1E_4 = sub_0802C2DC(*p);
+        }
+        p++;
+        this->unk1B = *p;
+        this->unk19 = 1;
+        this->unk23 = 0;
+        this->unk40 = 56;
+        sub_08008DD8(this);
+    }
+}
+
 
 struct Entity *sub_0804C410(struct Entity *this, u8 form)
 {
