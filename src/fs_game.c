@@ -7895,7 +7895,82 @@ void sub_08055438(struct Entity *this)
     gUnknown_08428DB8[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08055460.inc\"");
+
+void sub_08055460(struct Entity *this)
+{
+    struct Entity *e;
+    u8 i;
+
+    this->unk1C_0 = 1;
+    this->unk1B = 11;
+    this->unk48 = gUnknown_08428DC0;
+    this->unk1E_0 = (u8)sub_0802C3E0(this->form);
+    if (this->parameter != 0)
+    {
+        if (this->form == 0xFF)
+        {
+            this->unk1C_6 = 2;
+            this->unk20 = 232;
+        }
+        else
+        {
+            this->unk1C_6 = 2;
+            this->unk20 = sub_08013D54(this->form);
+        }
+        this->unk1D_6 = 1;
+        this->unk1F_6 = 1;
+        this->unk17 = 60;
+        sub_08003870(this, 0);
+    }
+    else
+    {
+        if (this->form == 16)
+        {
+            for (i = 0; i < gUnknown_03006C80.unk0; i++)
+            {
+                if (gUnknown_03006A30[i].unk1C == 16)
+                {
+                    DeleteThisEntity(this);
+                    return;
+                }
+            }
+            e = sub_080127A8(33, 6);
+            if (e != NULL)
+            {
+                if (e->form == 16 && this->unk14 != 0)
+                {
+                    DeleteThisEntity(this);
+                    return;
+                }
+                else
+                {
+                    while (1)
+                    {
+                        e = sub_080127D4(e, 6);
+                        if (e != NULL)
+                        {
+                            if (e->form == 16 && this->unk14 != 0)
+                            {
+                                DeleteThisEntity(this);
+                                return;
+                            }
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        this->unk1C_6 = 2;
+        sub_08003E24(this);
+        sub_08003870(this, 3);
+    }
+    this->unk14++;
+    sub_08055688(this);
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_08055688.inc\"");
 
 void sub_08055A08(struct Entity *this)
