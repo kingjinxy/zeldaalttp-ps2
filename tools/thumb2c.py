@@ -15,8 +15,7 @@ Model (see include/gba_tr.h):
 - literal-pool symbols become the symbol's address; a call is a C call; `bl _call_via_rN` is an indirect
   call; `mov pc, rN` is a jump through a table of label addresses (GCC computed goto); `bx` and
   `pop {pc}` return r0.
-shortcut: unaligned ldr/ldrh do not rotate as on the ARM7; r1-r3 after a call are left as before the
-call (only r0 is the result). Upgrade if a comparison run against mGBA shows a difference there.
+Unaligned loads behave as on the ARM7TDMI (LDR32/LDRH/LDRSH); unaligned stores are not special-cased.
 """
 import collections, glob, os, re, subprocess, sys
 
@@ -149,6 +148,11 @@ def parse_inc(path):
         if s.startswith((".thumb_func",)):
             pending_func = True
             continue
+        m = re.match(r"\.(?:align|balign)\s+(\d+)", s, re.I)
+        if m:
+            n = int(m.group(1))
+            items.append(("align", 1 << n if s.lower().startswith(".align") else n))
+            continue
         if s.lower().startswith(("thumb_func_end", "arm_func_end", ".syntax", ".thumb", ".align", ".global",
                                  ".pool", ".section", ".text", ".balign", ".size", ".type")):
             continue
@@ -186,6 +190,7 @@ class Func:
         self.cur = None
         self.prev = None
         self.traps = []
+        self.at_entry = False
         self.pool = {}       # label -> C expression of the first word stored there
         self.tables = {}     # label -> [labels] for jump tables
         self.used_labels = set()
@@ -198,6 +203,9 @@ class Func:
                 a = int(m.group(1), 16) if m else NAME_ADDRS.get(it[1], a)
                 continue
             if a is None:
+                continue
+            if it[0] == "align":
+                a = (a + it[1] - 1) & ~(it[1] - 1)
                 continue
             if it[0] == "insn" and a & 1:
                 a += 1
@@ -362,9 +370,10 @@ class Func:
         inner = split_ops(addr.strip()[1:-1])
         base = inner[0].strip().lower()
         if base in ("pc", "r15"):
-            if op != "ldr" or self.cur is None or len(inner) != 2:
+            if op != "ldr" or self.cur is None or len(inner) > 2:
                 raise Unsupported("raw pc-relative access")
-            return f"{rd} = {self.rom_value(((self.cur + 4) & ~3) + num(inner[1]))};"
+            off = num(inner[1]) if len(inner) == 2 else 0
+            return f"{rd} = {self.rom_value(((self.cur + 4) & ~3) + off)};"
         a = reg(base)
         if len(inner) > 1:
             off = inner[1].strip()
@@ -374,11 +383,17 @@ class Func:
         if op in ("ldrsb", "ldsb"):
             return f"{rd} = (u32)(s32)(s8)RD8({a});"
         if op in ("ldrsh", "ldsh"):
-            return f"{rd} = (u32)(s32)(s16)RD16({a});"
+            return f"{rd} = LDRSH({a});"
+        if size == 32:
+            return f"{rd} = LDR32({a});"
+        if size == 16:
+            return f"{rd} = LDRH({a});"
         return f"{rd} = RD{size}({a});"
 
     def insn(self, op, ops, text):
-        if op.endswith(".n") or op.endswith(".w"):
+        if op.endswith(".w"):
+            raise Unsupported(f"Thumb-2 instruction {text}")  # data decoded as code: the ARM7 has no Thumb-2
+        if op.endswith(".n"):
             op = op[:-2]
         if op in ALU_S:
             op = op[:-1]
@@ -415,8 +430,14 @@ class Func:
         if op == "bx":
             r = ops[0].strip().lower()
             p = self.prev
+            if self.at_entry:
+                # entered right here (a `bx rN` veneer): a jump through the register
+                return f"SAVE_REGS; gba_call_ptr({reg(r)}); return;"
             if r in ("lr", "r14") or (p and p[1] in ("pop", "ldmfd") and r in reglist(p[2][-1])):
                 return "SAVE_REGS; return;"
+            if p and p[1] == "mov" and p[2][0].strip().lower() in ("lr", "r14"):
+                # mov lr, rM; bx rN: call rN, which "returns" into the code at rM (a continuation)
+                return f"{{ u32 k_ = lr; SAVE_REGS; gba_call_ptr({reg(r)}); gba_call_ptr(k_); return; }}"
             # jump through a register (function table): a call whose return goes straight to our caller
             return f"SAVE_REGS; gba_call_ptr({reg(r)}); return;"
         if op in ("push", "stmfd") or (op == "stmdb" and ops[0].lower().startswith("sp")):
@@ -441,6 +462,8 @@ class Func:
             wb = ops[0].strip().endswith("!")
             b = reg(base)
             rl = reglist(ops[1])
+            if "pc" in rl:
+                raise Unsupported(f"{op} with pc")
             out = [f"{{ u32 a_ = {b};"]
             for k, r in enumerate(rl):
                 out.append(f"{r} = RD32(a_ + {4 * k});" if op == "ldmia" else f"WR32(a_ + {4 * k}, {r});")
@@ -540,7 +563,11 @@ class Func:
         out = []
         for k, it in enumerate(self.items):
             self.cur = self.addr.get(k)
+            self.at_entry = k > 0 and self.items[k - 1][0] == "label" and self.items[k - 1][1] in self.entries[1:]
             if it[0] == "label":
+                if it[1] in self.entries[1:] and k + 1 < len(self.items) and self.items[k + 1][0] == "insn" and \
+                        self.items[k + 1][1] == "bx" and self.prev and self.prev[1] in ("pop", "ldmfd"):
+                    out.append(("code", "SAVE_REGS; return;", "(return before an entry point)"))
                 out.append(("label", it[1]))
             elif it[0] == "insn":
                 try:

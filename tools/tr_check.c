@@ -69,7 +69,12 @@ static void dma(int ch) {
 	memcpy(&io[base + 10], &ctl, 2);
 }
 
+static u32 watch = 1;  // TR_WATCH=ADDR: print writes that cover ADDR, with the writer's host address
+
 void tr_write(u32 a, u32 v, int size) {
+	if (watch == 1) { const char *w = getenv("TR_WATCH"); watch = w ? strtoul(w, NULL, 16) : 0; }
+	if (watch && a <= watch && watch < a + size)
+		printf("  write %08X = %X (%d) from %p\n", a, v, size, __builtin_return_address(0));
 	memcpy(tr_ptr(a, 1), &v, size);
 	if (a >> 24 == 4) {
 		u32 o = a & 0xFFFFFF;
@@ -138,7 +143,9 @@ void gba_swi(u32 n, u32 *r0, u32 *r1, u32 *r2, u32 *r3) {
 void gba_call_ptr(u32 addr) {
 	tr_fn f = tr_lookup(addr & ~1u);
 	if (!f) tr_abort("indirect call to %08X (not translated)", addr);
+	u32 sp0 = gba_cpu.sp;
 	f();
+	if (getenv("TR_VERBOSE")) printf("  call %08X %s: sp %08X -> %08X, r0 %08X\n", addr, tr_name(addr & ~1u), sp0, gba_cpu.sp, gba_cpu.r0);
 }
 
 static int readAll(gzFile f, void *p, size_t n) { return gzread(f, p, n) == (int) n; }

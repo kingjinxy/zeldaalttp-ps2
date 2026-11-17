@@ -395,6 +395,7 @@ static void traceStep(struct GBA *gba, struct ARMCore *cpu) {
 	uint16_t prevInsn = GBAView16(cpu, prev);
 	if (!((cpu->gprs[ARM_LR] & ~1u) == prev + 2 && (prevInsn & 0xF800) == 0xF800) && (prevInsn & 0xFF80) != 0x4700)
 		return;
+	if ((cpu->gprs[ARM_LR] & ~1u) == pc) return;  // a bx lr returning into a continuation, not a call
 	if (cpu->cpsr.priv != MODE_SYSTEM && cpu->cpsr.priv != MODE_USER) return;
 	snprintf(tr.path, sizeof tr.path, "%s/%08X_%u.gz", traceDir, pc, c - 1);
 	tr.f = gzopen(tr.path, "wb1");

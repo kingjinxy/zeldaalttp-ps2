@@ -49,6 +49,12 @@ void gba_call_ptr(u32 addr);
 #define WR32(a, v) (*(volatile u32 *)GBA_PTR(a) = (u32)(v))
 #endif
 
+// ARM7TDMI loads at unaligned addresses (the game relies on them): ldr rotates the aligned word, ldrh at an
+// odd address rotates the aligned halfword, ldrsh at an odd address loads a signed byte
+#define LDR32(a) ({ u32 a_ = (a), w_ = RD32(a_ & ~3u), s_ = (a_ & 3) * 8; s_ ? (w_ >> s_) | (w_ << (32 - s_)) : w_; })
+#define LDRH(a) ({ u32 a_ = (a), h_ = RD16(a_ & ~1u); (a_ & 1) ? (h_ >> 8) | (h_ << 24) : h_; })
+#define LDRSH(a) ({ u32 a_ = (a); (a_ & 1) ? (u32)(s32)(s8)RD8(a_) : (u32)(s32)(s16)RD16(a_); })
+
 // Address of a data or function symbol; a test harness can define it as the symbol's GBA address
 #ifndef SYM
 #define SYM(name) ((u32)(uintptr_t)(name))
