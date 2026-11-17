@@ -1848,7 +1848,21 @@ u16 sub_0803CC9C(struct Entity *this)
     return ((x >> 4) & 63) + ((y * 4) & 0xFC0);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0803CD8C.inc\"");
+// tmc: Hitbox (Entity.unk48 for some kinds)
+struct Hitbox {
+    s8 offset_x;
+    s8 offset_y;
+};
+
+u16 sub_0803CD8C(struct Entity *this)
+{
+    u16 x;
+    u16 y;
+
+    x = this->x.HALF.HI + ((struct Hitbox *)this->unk48)->offset_x - gUnknown_03000450.unk18;
+    y = this->y.HALF.HI + ((struct Hitbox *)this->unk48)->offset_y - gUnknown_03000450.unk1A;
+    return ((x >> 4) & 0x3F) + ((y * 4) & 0xFC0);
+}
 
 u8 sub_0803CE04(struct Entity *this)
 {
