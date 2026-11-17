@@ -580,7 +580,19 @@ void sub_08034678(struct Entity *this)
 asm(".include \"asm/non_matching/game_select/sub_08034690.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_080346F8.inc\"");
 
-asm(".include \"asm/non_matching/game_select/sub_0803472C.inc\"");
+
+void sub_0803472C(struct Entity *this)
+{
+    if (this->unk14 == 0) {
+        this->unk14 = 1;
+        this->unk60 = sub_08013D20(this->form);
+    } else if ((gUnknown_0201F000[this->unk52] & this->unk60) == this->unk60) {
+        sub_08013C8C(sub_08012F84(this->unk52, this->parameter), (u8)gUnknown_0201EFF8[this->unk52][0],
+                     (u8)gUnknown_0201EFF8[this->unk52][1], this->unk52);
+        DeleteThisEntity(this);
+    }
+}
+
 
 
 void sub_0803478C(struct Entity *this)
