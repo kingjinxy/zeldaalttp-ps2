@@ -761,7 +761,8 @@ struct Struct03006A30
     u8 unk1E;
     u8 filler1F[3];
     u16 unk22;  // tile position << 1: x in bits 1-6, y in bits 7-12
-    u8 filler24[3];
+    u8 filler24[2];
+    u8 unk26;
     u8 unk27 : 8;
     struct Entity *unk28;
     struct Entity *unk2C;

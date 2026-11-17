@@ -2161,7 +2161,51 @@ void sub_080407E0(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_08040890.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_08040B10.inc\"");
+
+void sub_08040B10(struct Entity *this)
+{
+    struct Entity *e;
+
+    this->unk1C_0 = 1;
+    this->unk14++;
+    this->unk2E = 4;
+    if (this->form == 0xFF)
+    {
+        this->unk17 = 60;
+    }
+    else if (this->form == 0xFE)
+    {
+        this->unk17 = 15;
+        this->form |= 0xFF;
+    }
+    else
+    {
+        this->unk17 = 240;
+    }
+    this->unk40 = 22;
+    this->unk44 = 8;
+    this->unk46 = 12;
+    this->unk3C = 8;
+    this->unk48 = gUnknown_08428744;
+    this->unk3F = 11;
+    this->unk20 = 206;
+    this->unk1C_6 = 3;
+    this->unk1E_0 = this->unk1E_4 = 1;
+    this->unk1B = 9;
+    BITU8_AT(this, 0x1A) = 0;
+    sub_08003870(this, 5);
+    e = sub_080123E8();
+    if (e != NULL)
+    {
+        e->unk54 = this;
+        e->subtype = 4;
+        e->type = 8;
+        BITU16_AT(e, 0x64) = 1;
+        e->form |= 0xFF;
+        sub_08012728(2, e);
+    }
+}
+
 
 void sub_08040D20(struct Entity *this)
 {
@@ -5809,7 +5853,41 @@ void sub_0804EB2C(struct Entity *this)
 {
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0804EB3C.inc\"");
+
+void sub_0804EB3C(struct Entity *this)
+{
+    if ((u8)(this->unk41 & 0x80) && this->unk4C->type == 1 && gUnknown_03006A30[this->unk4C->form].unk36 == 0 &&
+        gUnknown_03006A30[this->unk4C->form].unk5 == 0 && gUnknown_03006A30[this->unk4C->form].unk26 == 0)
+    {
+        set_palette_color(0, 0);
+        gUnknown_03006A30[this->unk4C->form].unk36 = gUnknown_03006A30[this->unk4C->form].unk36 | 4;
+        this->unk58 = this->unk4C;
+        this->unk4C->unk58 = this;
+        this->unk14 = 4;
+        this->unk17 |= 0xFF;
+        this->z.WORD = 0;
+        this->unk17 = 5;
+        this->unk18 = 0;
+        sub_08003870(this, 6);
+        if (gLCDRegisterBuffer == this->unk58->form)
+        {
+            BITU16_AT(this, 0x68) = gUnknown_030004A0.dispCnt;
+            ((struct BitU16 *)&gUnknown_030004A0)->v = gUnknown_030004A0.dispCnt & 0xF1FF;
+            BITU8_AT(&gUnknown_03000948, 4) = 1;
+            this->unk1F_0 = 1;
+            this->unk58->unk2E = 0;
+            this->unk2E = 0;
+            sub_0800D200(64);
+        }
+        sub_080074C0(this->unk58);
+    }
+    else
+    {
+        this->unk2E = 4;
+        this->unk54->unk17 = 2;
+    }
+}
+
 
 void sub_0804ED44(struct Entity *this)
 {

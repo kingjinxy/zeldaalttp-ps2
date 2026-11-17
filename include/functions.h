@@ -137,7 +137,7 @@ void sub_0800CE74(u32, u32, u32, u32);
 //sub_0800D0A8();
 void sub_0800D1A0(void);
 //sub_0800D1C0();
-//sub_0800D200();
+void sub_0800D200(u32);
 void play_sound();
 void splash_screen_main(void);
 //sub_0800D610();
