@@ -2856,7 +2856,15 @@ void sub_08027780(struct Entity *this)
     WALL_AT(20, 24, 64)
 }
 
-asm(".include \"asm/non_matching/file_select/sub_0802782C.inc\"");
+
+void sub_0802782C(struct Entity *this)
+{
+    WALL_AT(24, -21, 0x2000)
+    WALL_AT(24, -5, 0x2000)
+    WALL_AT(24, 4, 0x4000)
+    WALL_AT(24, 20, 0x4000)
+}
+
 asm(".include \"asm/non_matching/file_select/sub_080278E8.inc\"");
 
 void sub_080279AC(struct Entity *this)
@@ -3557,7 +3565,25 @@ void sub_0802C974(u8 a, u8 b)
     }
 }
 
-asm(".include \"asm/non_matching/file_select/sub_0802C9B8.inc\"");
+
+void sub_0802D514(void);
+void sub_0802D280(void);
+
+void sub_0802C9B8(void)
+{
+    u8 *buf;
+
+    load_gfx_group(1);
+    buf = sub_0800BD14(256);
+    CpuFastSet(gUnknown_03000030 + ((gUnknown_03006C80.unk7 << 7) + 0x435A0), buf, 32);
+    CpuFastSet(gUnknown_03000030 + (((gUnknown_03006C80.unk4 + 1) / 10 << 6) + 0x43320), buf + 128, 16);
+    CpuFastSet(gUnknown_03000030 + (((gUnknown_03006C80.unk4 + 1) % 10 << 6) + 0x43320), buf + 192, 16);
+    sub_080009EC((void *)0x0600CB00, buf, 256);
+    sub_0802D514();
+    sub_0802D280();
+    CpuFastSet(gBG0Buffer, gBG0Buffer + 0x800, 512);
+}
+
 asm(".include \"asm/non_matching/file_select/sub_0802CA70.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802CAA8.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802CC20.inc\"");

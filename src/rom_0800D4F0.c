@@ -401,6 +401,7 @@ void sub_0800E39C(struct Struct0800EE2C *p)
 
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E3B0.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E430.inc\"");
+
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E4EC.inc\"");
 
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E570.inc\"");
