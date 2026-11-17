@@ -788,8 +788,8 @@ void sub_0800C190(struct Struct03000520 *a)
 // Functions not decompiled yet are in asm/non_matching/rom2/, one .inc each (tools/asm_split.py from asm/rom2.s).
 
 asm(".INCLUDE \"macro.inc\"");
-
 asm(".include \"asm/non_matching/rom2/sub_0800C1EC.inc\"");
+
 asm(".include \"asm/non_matching/rom2/sub_0800C2B8.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800C328.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800C41C.inc\"");

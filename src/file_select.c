@@ -2362,7 +2362,32 @@ void sub_08025C78(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/file_select/sub_08025CEC.inc\"");
+
+extern const s8 gUnknown_0813C5D4[];
+
+void sub_08025CEC(struct Entity *this)
+{
+    struct Entity *p;
+    const s8 *t;
+    s16 tx, ty;
+
+    sub_08026244(this);
+    p = this->unk54;
+    t = &gUnknown_0813C5D4[p->unk2A * 2];
+    tx = t[0] + p->x.HALF.HI;
+    ty = t[1] + p->y.HALF.HI;
+    sub_080040C4(this, sub_08003F54(this->x.HALF.HI, this->y.HALF.HI, tx, ty));
+    sub_080040C4(this, sub_08003F54(this->x.HALF.HI, this->y.HALF.HI, tx, ty));
+    sub_0803CC20(this);
+    if (this->unk54->unk2A * 8 == sub_08003F54(this->x.HALF.HI, this->y.HALF.HI, this->unk54->x.HALF.HI, this->unk54->y.HALF.HI)) {
+        this->unk14 = 3;
+        this->speed = 0x700;
+        this->direction = (this->unk54->unk2A * 8 + 8) & 24;
+        this->unk54->unk18 |= 2;
+        sub_08003DFC(97);
+    }
+}
+
 
 void sub_08025DB8(struct Entity *this)
 {
@@ -3081,7 +3106,10 @@ void sub_08028AA0(struct Entity *this)
     this->unk5C = 0x21AA;
 }
 
+
+void sub_08028C54(struct Entity *, u8 *);
 asm(".include \"asm/non_matching/file_select/sub_08028AE0.inc\"");
+
 
 void sub_08028BA8(struct Entity *this)
 {
