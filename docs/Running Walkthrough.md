@@ -371,3 +371,14 @@ draft generator for the regular -O0 Four Swords code, to speed up matching decom
   fs_game reachable with the Four Swords handler cut. Fix: sample ranges from the m4a voice groups, or
   decode ARM-mode loads.
 - Known bug: `mgba_run --shot` with a missing `--out` directory segfaults at the end of the run.
+- `tools/m4a_samples.py`: sample ranges from the m4a instrument tables. The song table is at
+  `0x083C3E34` (466 entries, some empty songs with 0 tracks), found by shape; `0x083C28FC`, the first
+  guess, is the driver's command jump table. 11 voicegroups (key split and rhythm followed), 49 samples,
+  333 KB, no overlaps. The only 32-bit CPU reads inside them are the driver reading the PCM header's
+  frequency and copying wave-memory instruments to the sound hardware, so the PCM ranges start after the
+  16-byte header.
+- With LZ77 streams, loaded graphics and samples excluded: shared 2,943, A Link to the Past only 4,820,
+  executed but not reachable still 67. `rom3.o` shared fell from 543 to 72. What still joins the games
+  is real: `interrupt_main -> DoObjectEntity ->` the object handler table `0x0813F998`, which holds both
+  games' entities. Separating those needs which object types Four Swords creates (coverage, or the
+  types passed to CreateObject from Four Swords code).
