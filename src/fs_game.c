@@ -6557,7 +6557,51 @@ void sub_0804EF98(struct Entity *this, struct Entity *target)
     DeleteThisEntity(this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0804EFC8.inc\"");
+
+void sub_0804EFC8(struct Entity *this)
+{
+    this->unk3C = 0;
+    if ((u16)(gUnknown_03005E10[this->unk58->form] & ~U16_AT(this, 0x66)))
+    {
+        this->unk18++;
+        this->unk17 = 5;
+    }
+    else if (--this->unk17 == 0xFF)
+    {
+        this->unk18 = 0;
+    }
+    switch (this->unk58->unk14)
+    {
+    case 2:
+    case 3:
+    case 6:
+    case 17:
+        this->unk18 = 10;
+    }
+    if (!(u16)(gUnknown_03006A30[this->unk58->form].unk36 & 4))
+        this->unk18 = 10;
+    if ((u16)(gUnknown_03006A30[this->unk58->form].unk36 & 0x11))
+        this->unk18 = 10;
+    if ((u8)(gUnknown_03006A30[this->unk58->form].unk1E & 0x20))
+        this->unk18 = 10;
+    if (this->unk18 > 9)
+    {
+        if (gLCDRegisterBuffer == this->unk58->form)
+        {
+            ((struct BitU16 *)&gUnknown_030004A0)->v = U16_AT(this, 0x68);
+            BITU8_AT(&gUnknown_03000948, 4) = 0;
+            this->unk1F_0 = 0;
+            sub_0800D200(256);
+        }
+        gUnknown_03006A30[this->unk58->form].unk36 = gUnknown_03006A30[this->unk58->form].unk36 & 0xFFFB;
+        sub_0804EF98(this, 0);
+    }
+    else if (gLCDRegisterBuffer == this->unk58->form)
+    {
+        this->unk58->unk2E = 0;
+    }
+}
+
 
 void sub_0804F22C(struct Entity *this)
 {
