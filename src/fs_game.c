@@ -13006,7 +13006,24 @@ void sub_08063DF0(struct Entity *this)
 }
 
 
-asm(".include \"asm/non_matching/fs_game/sub_08063E88.inc\"");
+void sub_08063E88(struct Entity *this)
+{
+    struct Struct03006A30 *p;
+    u8 lo;
+    u8 hi;
+
+    p = &gUnknown_03006A30[this->form];
+    lo = p->unk8;
+    hi = p->unk8 >> 8;
+    this->unk1C_2 = this->unk2A > 4;
+    if (lo <= 163)
+        lo += this->unk2A / 2;
+    if (hi != this->unk1B || lo != this->unk23)
+    {
+        this->unk1B = hi;
+        sub_08003840(this, lo, hi);
+    }
+}
 
 
 void sub_08063F64(struct Entity *this)
