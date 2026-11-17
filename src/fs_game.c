@@ -5009,7 +5009,10 @@ u8 sub_08048850(struct Entity *this)
     return 0;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0804894C.inc\"");
+void sub_0804894C(struct Entity *this)
+{
+    this->unk1E_0 = this->unk1E_4 = gUnknown_084287B7[this->unk58->unk70.s.unk73 + this->form - 1];
+}
 
 void sub_080489B0(struct Entity *this)
 {

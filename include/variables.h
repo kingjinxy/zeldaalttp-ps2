@@ -5412,7 +5412,7 @@ extern void (*const gUnknown_08428794[])(struct Entity *);
 extern const u8 gUnknown_0842879C[];
 extern const u8 gUnknown_084287A4[];
 extern const u8 gUnknown_084287B4[];
-//extern gUnknown_084287B7;
+extern const u8 gUnknown_084287B7[];
 //extern gUnknown_084287D0;
 extern const u32 gUnknown_084287E0[];
 //extern gUnknown_084287F0;
