@@ -4557,7 +4557,12 @@ void sub_08047490(struct Entity *this)
     this->unk7C.s4.unk7E = 128;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08047538.inc\"");
+void sub_08047538(struct Entity *this)
+{
+    this->unk70.s.unk73 = this->unk70.s.unk73 + BITU8_AT(this, 0x7D);
+    this->unk70.s.unk72 = ((gUnknown_0813E4CC[BITU16_AT(this, 0x6E)] * 32) >> 8) + 32;
+    BITU16_AT(this, 0x6E) = (BITU16_AT(this, 0x6E) + 1) & 0x7F;
+}
 
 void sub_080475D0(struct Entity *this)
 {
