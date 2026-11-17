@@ -1387,7 +1387,48 @@ void sub_080152E0(void)
 }
 
 asm(".include \"asm/non_matching/file_select/sub_080152F4.inc\"");
+#ifdef NONMATCHING
+extern const s16 gUnknown_08138194[];
+u16 sub_080094BC(u16);
+
+// Checks the tile in front of entity e (facing unk2A); queues a record for tiles 38-40 or 60
+u32 sub_080156BC(struct Entity *e, u8 *other)
+{
+    const s16 *off;
+    u16 pos;
+    u16 t;
+    u32 *rec;
+
+    sub_08015DC0(e->unk50);
+    off = &gUnknown_08138194[e->unk2A & 6];
+    pos = ((e->x.HALF.HI + off[0] - gUnknown_03000450.unk18) >> 4) | (((e->y.HALF.HI + off[1] - gUnknown_03000450.unk1A) >> 4) << 6);
+    t = sub_080094BC(sub_0800932C(pos, e->unk50));
+    if (t < 38)
+        return 0;
+    if (t <= 40) {
+        if (other[5] == 1 && gUnknown_02000004 <= 15) {
+            rec = (u32 *)gUnknown_0202A500 + gUnknown_02000004 * 2;
+            *rec++ = ((e->unk2A & 6) << 16) | (e->unk50 & 0xC000) | 0x2000000 | (pos & 0xFFF);
+            *rec = (u32)e;
+            gUnknown_02000004++;
+        }
+        return 0;
+    }
+    if (t == 60 && !(other[53] & 0x80) && e->unk29 != 0) {
+        if (gUnknown_02000004 <= 15) {
+            rec = (u32 *)gUnknown_0202A500 + gUnknown_02000004 * 2;
+            *rec++ = ((other[53] & 6) << 16) | (e->unk50 & 0xC000) | 0x1000000 | (pos & 0xFFF);
+            *rec = (u32)e;
+            gUnknown_02000004++;
+        }
+        return 1;
+    }
+    return 0;
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_080156BC.inc\"");
+#endif
+
 asm(".include \"asm/non_matching/file_select/sub_080157F8.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08015888.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08015964.inc\"");
