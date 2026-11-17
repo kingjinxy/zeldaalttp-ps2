@@ -1060,7 +1060,46 @@ void sub_0800EF34(struct Struct0800EE2C *p, const u32 *glyph)
 #else
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EF34.inc\"");
 #endif
+#ifdef NONMATCHING
+extern const u8 *const gUnknown_08427474[];
+
+// Blits an 8x16 4bpp glyph (16 rows of 4 bytes) into the reader's buffer at pixel column unk3, mapping
+// each nibble through colour table unk4 (low nibbles at [0..15], high at [16..31])
+void sub_0800F0A0(struct Struct0800EE2C *p, const u8 *src)
+{
+    const u8 *map = gUnknown_08427474[(u8)p->unk4];
+    u8 *dst = (u8 *)p->unk8[0] + (p->unk3 >> 3) * 64;
+    u8 off = p->unk3 & 7;
+    u8 i, k, b;
+    u8 half, odd, start;
+
+    if (off == 0) {
+        for (i = 64; i != 0; i--) {
+            b = *src++;
+            *dst++ = map[b & 15] | map[16 + ((b >> 4) & 15)];
+        }
+        return;
+    }
+    half = off >> 1;
+    odd = off & 1;
+    start = (off + 1) & 14;
+    for (i = 16; i != 0; i--) {
+        src += half;
+        dst += half;
+        if (odd) {
+            b = *src++;
+            *dst = (*dst & 15) | map[16 + ((b >> 4) & 15)];
+            dst++;
+        }
+        for (k = start; k <= 7; k += 2) {
+            b = *src++;
+            *dst++ = map[b & 15] | map[16 + ((b >> 4) & 15)];
+        }
+    }
+}
+#else
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800F0A0.inc\"");
+#endif
 #ifdef NONMATCHING
 
 // Counts the all-ones nibbles at both ends of m; returns 2 if m is all ones, 1 if none are, else 0
