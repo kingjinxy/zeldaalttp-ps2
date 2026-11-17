@@ -3108,7 +3108,53 @@ void sub_08028AA0(struct Entity *this)
 
 
 void sub_08028C54(struct Entity *, u8 *);
-asm(".include \"asm/non_matching/file_select/sub_08028AE0.inc\"");
+
+void sub_08028C54(struct Entity *, u8 *);
+
+void sub_08028AE0(struct Entity *this)
+{
+    u8 *t0, *t1, *t2, *t3;
+
+    t0 = (u8 *)this + 124;
+    if (*t0)
+        (*t0)--;
+    t1 = (u8 *)this + 125;
+    if (*t1)
+        (*t1)--;
+    t2 = (u8 *)this + 126;
+    if (*t2)
+        (*t2)--;
+    t3 = (u8 *)this + 127;
+    if (*t3)
+        (*t3)--;
+    if (this->unk18)
+        this->unk18--;
+    if (this->unk41 & 0x80) {
+        switch (this->unk4C->form) {
+        case 0:
+            if (*t0 == 0)
+                sub_08028C54(this, t0);
+            break;
+        case 1:
+            if (*t1 == 0)
+                sub_08028C54(this, t1);
+            break;
+        case 2:
+            if (*t2 == 0)
+                sub_08028C54(this, t2);
+            break;
+        case 3:
+            if (*t3 == 0)
+                sub_08028C54(this, t3);
+            break;
+        default:
+            if (this->unk18 == 0)
+                sub_08028C54(this, (u8 *)this + 24);
+            break;
+        }
+    }
+}
+
 
 
 void sub_08028BA8(struct Entity *this)
