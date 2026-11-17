@@ -779,6 +779,19 @@ struct Struct02030A70
     u8 unk5_4 : 4;
 };
 
+struct Struct02002440
+{
+    const u16 *unk0;
+    u16 unk4;
+    u16 unk6;
+};
+
+struct U32Pair
+{
+    u32 unk0;  // bit 31 marks the last record
+    u32 unk4;
+};
+
 struct Struct0202A580
 {
     u32 unk0;
@@ -794,7 +807,9 @@ struct Struct03000450
     u8 unk4;
     u8 unk5;
     u8 unk6;
-    u8 filler7[0xF];
+    u8 filler7;
+    u8 unk8;
+    u8 filler9[0xD];
     u16 unk16;
     u16 unk18;  // scroll x? subtracted from entity x before >> 4 (tile)
     u16 unk1A;  // scroll y?

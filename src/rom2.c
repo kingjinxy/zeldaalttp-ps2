@@ -1,5 +1,6 @@
 #include "gba/gba.h"
 #include "global.h"
+#include "entity.h"
 
 void load_palette_from_gfx_group(u32 gfxId)
 {
@@ -834,6 +835,13 @@ void sub_0800D1A0(void)
     gUnknown_0201EDA8[0] = 0x100;
 }
 
-asm(".include \"asm/non_matching/rom2/sub_0800D1C0.inc\"");
+
+void sub_0800D1C0(struct Entity *this, u32 snd)
+{
+    if (this->type == 1 && this->form != gLCDRegisterBuffer && (snd & 0xFFFF) <= 199)
+        snd = (snd & 0xFFFF0000) | ((snd & 0xFFFF) + 200);
+    play_sound(snd);
+}
+
 asm(".include \"asm/non_matching/rom2/sub_0800D200.inc\"");
 asm(".include \"asm/non_matching/rom2/play_sound.inc\"");
