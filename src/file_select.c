@@ -3181,7 +3181,39 @@ asm(".include \"asm/non_matching/file_select/sub_08028C54.inc\"");
 
 asm(".include \"asm/non_matching/file_select/sub_08028CD0.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080291F8.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_08029720.inc\"");
+
+extern const u8 gUnknown_0813D0FC[];
+
+void sub_08029720(struct Entity *this)
+{
+    struct Entity *e;
+
+    e = sub_0804C8A8(15, 2, 0);
+    if (e != NULL) {
+        e->x.HALF.HI = this->x.HALF.HI - gUnknown_0813D0FC[this->unk17 >> 1];
+        e->y.HALF.HI = this->y.HALF.HI - 20;
+        e->unk50 = this->unk50;
+    }
+    e = sub_0804C8A8(15, 2, 0);
+    if (e != NULL) {
+        e->x.HALF.HI = this->x.HALF.HI + gUnknown_0813D0FC[this->unk17 >> 1];
+        e->y.HALF.HI = this->y.HALF.HI - 20;
+        e->unk50 = this->unk50;
+    }
+    e = sub_0804C8A8(15, 2, 0);
+    if (e != NULL) {
+        e->x.HALF.HI = this->x.HALF.HI - gUnknown_0813D0FC[this->unk17 >> 1];
+        e->y.HALF.HI = this->y.HALF.HI + 20;
+        e->unk50 = this->unk50;
+    }
+    e = sub_0804C8A8(15, 2, 0);
+    if (e != NULL) {
+        e->x.HALF.HI = this->x.HALF.HI + gUnknown_0813D0FC[this->unk17 >> 1];
+        e->y.HALF.HI = this->y.HALF.HI + 20;
+        e->unk50 = this->unk50;
+    }
+}
+
 
 void sub_080297F8(struct Entity *this)
 {
