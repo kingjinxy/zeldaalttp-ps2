@@ -4,6 +4,10 @@
 
 #include "sounds.h"
 
+// Room map buffer (gUnknown_0201F020 and gUnknown_0200B320): tiles, attributes, block tables
+struct MapBuf { u32 unk0; u16 tiles[0x1000]; u8 attrs[0x1000]; u16 unk3004[0x1000]; u16 unk5004[0x1000]; u16 blocks[0x800][4]; };
+extern u8 gUnknown_02038000[];
+
 #ifdef NONMATCHING
 // Declarations the NONMATCHING functions below share
 extern u8 gUnknown_0200B314;
@@ -1283,7 +1287,6 @@ asm(".include \"asm/non_matching/file_select/sub_080146D4.inc\"");
 #ifdef NONMATCHING
 extern u8 gUnknown_02016D90[];
 extern u8 gUnknown_020031D0[];
-struct MapBuf { u32 unk0; u16 tiles[0x1000]; u8 attrs[0x1000]; u16 unk3004[0x1000]; u16 unk5004[0x1000]; u16 blocks[0x800][4]; };
 extern const u8 gUnknown_0814AB24[];
 
 void sub_0801478C(u16 pos, u16 v)
@@ -1571,10 +1574,79 @@ u16 *sub_08015DC0(u16 a)
         return (u16 *)&gUnknown_0200B320;
     return (u16 *)&gUnknown_0201F020_fs;
 }
+#ifdef NONMATCHING
+extern const struct GfxRec0801484C *const gUnknown_08146078[];
+extern const u16 *const gUnknown_08146060[];
+void sub_08015D50(const u16 *);
 
+// Sets up area n: camera on the followed entity, clears the scanline table and both maps' block tables,
+// loads the area gfx, and builds each map's inverse block table
+void sub_08015DD8(u16 n)
+{
+    struct Entity *e;
+    u16 x, y;
+    u16 f;
+    s16 i;
+    u16 *m;
+
+    gUnknown_03000450.unk1C = 0;
+    gUnknown_03000450.unk1E = 0;
+    e = gUnknown_03000450.unk0;
+    x = e->x.HALF.HI;
+    y = e->y.HALF.HI;
+    gUnknown_03000450.unk14 = 0;
+    gUnknown_03000450.unk12 = 14;
+    e->unk50 = 14;
+    gUnknown_03000450.unk28 = 1008;
+    gUnknown_03000450.unk2A = 1008;
+    gUnknown_03000450.unk18 = 0;
+    gUnknown_03000450.unk1A = 0;
+    gUnknown_03000450.unk24 = x;
+    gUnknown_03000450.unk26 = y;
+    if ((s16)x <= 119)
+        gUnknown_03000450.unk20 = 0;
+    else if ((s16)x <= 888)
+        gUnknown_03000450.unk20 = x - 120;
+    else
+        gUnknown_03000450.unk20 = 1008 - 240;
+    if ((s16)y <= 79) {
+        gUnknown_03000450.unk22 = 0;
+    } else {
+        s32 t = gUnknown_03000450.unk2A - 80;
+        if (t >= (s16)y)
+            t = (s16)y;
+        gUnknown_03000450.unk22 = t - 80;
+    }
+    zero_memory(gUnknown_02038000, 0x800);
+    f = 0xFFFF;
+    CpuSet(&f, ((struct MapBuf *)&gUnknown_0201F020_fs)->unk5004, 0x01000800);
+    ((struct MapBuf *)&gUnknown_0201F020_fs)->unk5004[0] = 0;
+    f = 0xFFFF;
+    CpuSet(&f, ((struct MapBuf *)&gUnknown_0200B320)->unk5004, 0x01000800);
+    ((struct MapBuf *)&gUnknown_0200B320)->unk5004[0] = 0;
+    sub_0801484C(gUnknown_08146078[n], 1);
+    load_gfx_group(30);
+    sub_0801620C();
+    if (gUnknown_08146060[n] != NULL)
+        sub_08015D50(gUnknown_08146060[n]);
+    m = ((struct MapBuf *)&gUnknown_0201F020_fs)->unk5004;
+    for (i = 0; i <= 0x7FF; i++)
+        if (m[i] <= 0x7FF)
+            m[0x800 + m[i]] = i;
+    m = ((struct MapBuf *)&gUnknown_0200B320)->unk5004;
+    for (i = 0; i <= 0x7FF; i++)
+        if (m[i] <= 0x7FF)
+            m[0x800 + m[i]] = i;
+    ((u16 *)((struct MapBuf *)&gUnknown_0200B320)->unk0)[1] = ((u16 *)((struct MapBuf *)&gUnknown_0201F020_fs)->unk0)[1]
+        = gUnknown_03000450.unk20 + gUnknown_03000450.unk1C - gUnknown_03000450.unk18;
+    ((u16 *)((struct MapBuf *)&gUnknown_0200B320)->unk0)[2] = ((u16 *)((struct MapBuf *)&gUnknown_0201F020_fs)->unk0)[2]
+        = gUnknown_03000450.unk22 + gUnknown_03000450.unk1E - gUnknown_03000450.unk1A;
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_08015DD8.inc\"");
+#endif
 
-extern u8 gUnknown_02038000[];
+
 extern u8 gUnknown_0203A000[];
 extern const struct GfxRec0801484C *const gUnknown_08146090[];
 void sub_0800BAE4(void *, void *, u32, u32);

@@ -822,16 +822,20 @@ struct Struct03000450
     u8 unk6;
     u8 filler7;
     u8 unk8;
-    u8 filler9[0xD];
+    u8 filler9[9];
+    u16 unk12;
+    u16 unk14;
     u16 unk16;
     u16 unk18;  // scroll x? subtracted from entity x before >> 4 (tile)
     u16 unk1A;  // scroll y?
-    u8 filler1C[4];
-    u16 unk20;
-    u16 unk22;
-    u8 filler24[4];
-    u16 unk28;
-    u16 unk2A;
+    u16 unk1C;
+    u16 unk1E;
+    u16 unk20;  // camera x (sub_08030654)
+    u16 unk22;  // camera y
+    u16 unk24;
+    u16 unk26;
+    u16 unk28;  // room width in pixels
+    u16 unk2A;  // room height in pixels
 };
 
 struct Struct08429004
