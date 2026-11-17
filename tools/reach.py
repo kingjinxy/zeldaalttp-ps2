@@ -21,6 +21,8 @@ ap.add_argument("--why", help="print the chain of edges from boot to this functi
 ap.add_argument("--coverage", action="append", default=[], help="mgba_run --coverage bitmap(s): report executed functions")
 ap.add_argument("--list-executed", help="with --coverage: write executed functions (addr name file size) here")
 ap.add_argument("--list", help="write reachable functions (addr name file size) here")
+ap.add_argument("--classify", help="write every function (addr name file size class executed) here; class from "
+                "two walks, cutting the A Link to the Past (mode 13) or the Four Swords (mode 9) handler")
 args = ap.parse_args()
 
 rom = open("zeldaalttp.gba", "rb").read()
@@ -102,16 +104,19 @@ for s in data_starts:
         if c and c != ("d", s):
             edges[("d", s)].add(c)
 
-cut = {int(c, 16) & ~1 for c in args.cut}
-roots = [("f", ROM_BASE)]  # crt0 _start, the reset vector
-parent = {r: None for r in roots}
-stack = list(roots)
-while stack:
-    n = stack.pop()
-    for m in sorted(edges[n]):
-        if m not in parent and not (m[0] == "f" and m[1] in cut):
-            parent[m] = n
-            stack.append(m)
+def walk(cut):
+    roots = [("f", ROM_BASE)]  # crt0 _start, the reset vector
+    parent = {r: None for r in roots}
+    stack = list(roots)
+    while stack:
+        n = stack.pop()
+        for m in sorted(edges[n]):
+            if m not in parent and not (m[0] == "f" and m[1] in cut):
+                parent[m] = n
+                stack.append(m)
+    return parent
+
+parent = walk({int(c, 16) & ~1 for c in args.cut})
 seen = set(parent)
 if args.why:
     n = ("f", int(args.why, 16) & ~1)
@@ -137,6 +142,7 @@ for a in reach:
 print(f"\n{'file':32} {'reachable':>9} {'of':>5} {'bytes':>8}")
 for o in sorted(per_n, key=lambda o: -per_b[o]):
     print(f"{o:32} {per_r[o]:9} {per_n[o]:5} {per_b[o]:8,}")
+ran = set()
 if args.coverage:
     cov = bytearray(0x80000)
     for path in args.coverage:
@@ -161,3 +167,21 @@ if args.list:
     with open(args.list, "w") as f:
         for a in reach:
             f.write(f"{a:08X} {names[a]} {objfile[a]} {size[a]}\n")
+if args.classify:
+    LTTP, FS = 0x0800B69C, 0x0802E764  # mode table 0x0842731C entries 13 and 9
+    fs = {a for k, a in walk({LTTP}) if k == "f"}
+    lttp = {a for k, a in walk({FS}) if k == "f"}
+    both = {a for k, a in walk(set()) if k == "f"}
+    ran_set = set(ran) if args.coverage else set()
+    # Reached with either handler cut: boot, menus, or engine code the shared modes use
+    cls = {a: "shared" if a in fs and a in lttp else "fs" if a in fs else "lttp" if a in lttp
+           else "both-only" if a in both else "unreached" for a in starts}
+    with open(args.classify, "w") as f:
+        for a in starts:
+            f.write(f"{a:08X} {names[a]} {objfile[a]} {size[a]} {cls[a]} {int(a in ran_set)}\n")
+    print("\nclass        funcs   executed  in asm/non_matching")
+    asm = {int(m, 16) for m in re.findall(r"sub_([0-9A-F]{8})\.inc", "\n".join(
+        subprocess.run(["find", "asm/non_matching", "-name", "*.inc"], capture_output=True, text=True).stdout.split()))}
+    for c in ("fs", "shared", "lttp", "both-only", "unreached"):
+        xs = [a for a in starts if cls[a] == c]
+        print(f"{c:12} {len(xs):5} {sum(a in ran_set for a in xs):9} {sum(a in asm for a in xs):9}")
