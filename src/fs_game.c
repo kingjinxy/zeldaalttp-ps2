@@ -6045,7 +6045,36 @@ void sub_0804F22C(struct Entity *this)
     gUnknown_084289D8[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0804F254.inc\"");
+
+void sub_0804F254(struct Entity *this)
+{
+    u8 i;
+    u8 base;
+    u8 n;
+    u32 mask;
+
+    base = this->form & 31;
+    n = ((this->form >> 5) & 7) + 1;
+    i = 0;
+    mask = 0;
+    for (; i < n; i++)
+        mask = (1 << (base + i)) | mask;
+    this->unk60 = mask;
+    n = (u8)(this->parameter & 3) * 2;
+    if (this->unk17 == 1)
+        BITU16_AT(this, 0x6C) = 0x159;
+    else
+        BITU16_AT(this, 0x6C) = (u8)(n & 2) ? 0x111 : 0x110;
+    BITU16_AT(this, 0x64) = gUnknown_084289B8[n];
+    BITU16_AT(this, 0x66) = gUnknown_084289B8[n + 1];
+    BITU16_AT(this, 0x68) = gUnknown_084289C8[n];
+    BITU16_AT(this, 0x6A) = gUnknown_084289C8[n + 1];
+    this->unk16 = ((this->parameter >> 2) & 15) + 1;
+    this->unk17 = 8;
+    this->unk18 = 0;
+    this->unk14 = (u8)(this->parameter & 0x80) ? 2 : 1;
+}
+
 
 void sub_0804F458(struct Entity *this)
 {
