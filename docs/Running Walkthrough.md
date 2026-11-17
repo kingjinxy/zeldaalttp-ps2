@@ -398,3 +398,18 @@ draft generator for the regular -O0 Four Swords code, to speed up matching decom
     table `0x0842AD18` -> header +20 holds only room 0's layer table (12 lists, 2 subtypes). Finding lists
     by shape alone is useless (1,903 "lists" even with subtype < 108). Not applied to reach.py yet: an
     incomplete subtype list would drop objects of stages not yet recorded.
+- Room lists found (2026-11-17): `sub_080131FC` fills `0x02016330[room]` from room pools
+  `0x0842B8CC[area]` (counts `0x0842B8DC`; 216 rooms, entries {descriptor, flags}, descriptor +4 = layer
+  table), `sub_080133D0` from special pools `0x0842B8A8[6]` (counts `0x0842B8C0`, header +20), plus
+  `0x0842AD08[0..3]` and the area headers. Objects are layers 0 and 1 (`sub_08012F84(room, layer)`
+  callers); layer 3 is another format, layer 7 code. Also: tile objects from `0x081380F8`/`0x0813821E`
+  (`sub_08015AC4`, {key, type, subtype, ?}), asm that stores type 6 then a constant subtype
+  (`sub_08015888`). `object_subtypes.py` now finds 97 of the 108 subtypes; of the 36 that ran only 42 is
+  missing (logged by `mgba_run` as `morph 0 -> 42`: created without `sub_08012728`, source not found).
+- `reach.py --objects FILE`: an object table entry is followed only when a reachable function creates
+  its subtype or its handler ran. Effect: Four Swords walk 2,945 -> 2,910 functions (1,780 still asm),
+  executed-but-unreachable unchanged at 67. Nearly the whole object table is Four Swords code, so the
+  "shared" class is in practice "needed by Four Swords": the A Link to the Past walk reaches it only
+  because the entity update runs from the interrupt handler in every mode.
+- Work list for the port: the Four Swords walk (2,910 functions, 1,780 in asm) plus anything a coverage
+  run executes; the 4,820 "lttp" functions (3,930 in asm) can wait.

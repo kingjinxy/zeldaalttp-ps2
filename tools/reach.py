@@ -22,6 +22,8 @@ ap.add_argument("--why", help="print the chain of edges from boot to this functi
 ap.add_argument("--coverage", action="append", default=[], help="mgba_run --coverage bitmap(s): report executed functions")
 ap.add_argument("--list-executed", help="with --coverage: write executed functions (addr name file size) here")
 ap.add_argument("--packed", help="tools/lz77_scan.py output: compressed ranges, whose words are never pointers")
+ap.add_argument("--objects", help="tools/object_subtypes.py output: follow an object handler table (0x0813F998) "
+                "entry only when its subtype's creator is reachable (or the handler was executed)")
 ap.add_argument("--list", help="write reachable functions (addr name file size) here")
 ap.add_argument("--classify", help="write every function (addr name file size class executed) here; class from "
                 "two walks, cutting the A Link to the Past (mode 13) or the Four Swords (mode 9) handler")
@@ -114,19 +116,48 @@ for s in data_starts:
         if c and c != ("d", s):
             edges[("d", s)].add(c)
 
-def walk(cut):
+OBJ_TABLE = 0x0813F998
+creators = defaultdict(set)  # subtype -> functions that create it
+if args.objects:
+    for line in open(args.objects):
+        if line[0] != "#":
+            st, f = line.split()
+            creators[int(st)].add(int(f, 16))
+handlers = [word(OBJ_TABLE + 4 * i) & ~1 for i in range(108)]
+
+def walk(cut, executed=frozenset()):
     roots = [("f", ROM_BASE)]  # crt0 _start, the reset vector
     parent = {r: None for r in roots}
     stack = list(roots)
-    while stack:
-        n = stack.pop()
-        for m in sorted(edges[n]):
-            if m not in parent and m[1] not in cut:
-                parent[m] = n
+    gated = args.objects is not None
+    while True:
+        while stack:
+            n = stack.pop()
+            if gated and n == ("d", OBJ_TABLE):
+                continue  # entries are added below, per subtype
+            for m in sorted(edges[n]):
+                if m not in parent and m[1] not in cut:
+                    parent[m] = n
+                    stack.append(m)
+        if not gated:
+            return parent
+        # Object handlers: a subtype is live when a reachable function creates it or its handler ran
+        for st, h in enumerate(handlers):
+            m = ("f", h)
+            if m not in parent and h not in cut and (h in executed or any(("f", c) in parent for c in creators[st])):
+                parent[m] = ("d", OBJ_TABLE)
                 stack.append(m)
-    return parent
+        if not stack:
+            return parent
 
-parent = walk({int(c, 16) & ~1 for c in args.cut})
+pre_executed = set()
+if args.coverage and args.objects:
+    _cov = bytearray(0x80000)
+    for path in args.coverage:
+        for i, b in enumerate(open(path, "rb").read()):
+            _cov[i] |= b
+    pre_executed = {h for h in handlers if _cov[(h - ROM_BASE) >> 4] >> (((h - ROM_BASE) >> 1) & 7) & 1}
+parent = walk({int(c, 16) & ~1 for c in args.cut}, pre_executed)
 seen = set(parent)
 if args.why:
     n = ("f", int(args.why, 16) & ~1)
@@ -179,9 +210,9 @@ if args.list:
             f.write(f"{a:08X} {names[a]} {objfile[a]} {size[a]}\n")
 if args.classify:
     LTTP, FS = 0x0800B69C, 0x0802E764  # mode table 0x0842731C entries 13 and 9
-    fs = {a for k, a in walk({LTTP}) if k == "f"}
-    lttp = {a for k, a in walk({FS}) if k == "f"}
-    both = {a for k, a in walk(set()) if k == "f"}
+    fs = {a for k, a in walk({LTTP}, pre_executed) if k == "f"}
+    lttp = {a for k, a in walk({FS}, pre_executed) if k == "f"}
+    both = {a for k, a in walk(set(), pre_executed) if k == "f"}
     ran_set = set(ran) if args.coverage else set()
     # Reached with either handler cut: boot, menus, or engine code the shared modes use
     cls = {a: "shared" if a in fs and a in lttp else "fs" if a in fs else "lttp" if a in lttp
