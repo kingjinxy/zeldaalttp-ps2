@@ -6278,7 +6278,62 @@ void sub_0804D4FC(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0804D5E0.inc\"");
+
+void sub_0804D5E0(struct Entity *this)
+{
+    struct Entity *e;
+    const u8 *p;
+    u8 i;
+
+    if (this->unk17 != 0)
+    {
+        this->unk17--;
+        p = &gUnknown_0813FBC4[(this->unk7C.bf << 4) + ((u8)(this->unk17 & 1) << 3)];
+        for (i = 0; i <= 7; i++)
+        {
+            e = sub_0804C8A8(0, *p++, 1);
+            if (e != NULL)
+            {
+                e->direction = (((this->unk17 << 4) + (i << 1)) & 31) | -128;
+                e->speed = 96;
+                e->unk10 = gUnknown_0842883C[sub_0800099C() & 3] << 12;
+                sub_0803D3D0(this, e);
+            }
+        }
+    }
+    else
+    {
+        if (this->form == 44)
+        {
+            e = sub_0804C8A8(103, 1, 0);
+            if (e != NULL)
+                sub_0803D3D0(this, e);
+        }
+        if (this->form != 15)
+            e = sub_0804C8A8(4, 0, 0);
+        else
+            e = sub_0804C8A8(102, 0, 0);
+        if (e != NULL)
+        {
+            e->x.HALF_U.HI = gUnknown_0813FBB4[gUnknown_03006C80.unk1 * 2];
+            e->y.HALF_U.HI = gUnknown_0813FBB4[gUnknown_03006C80.unk1 * 2 + 1];
+            e->unk50 = 0x4000;
+        }
+        for (i = 0; i <= 3; i++)
+        {
+            e = sub_0804C8A8(0, 7, 1);
+            if (e != NULL)
+            {
+                e->x.HALF_U.HI = gUnknown_0813FBB4[gUnknown_03006C80.unk1 * 2];
+                e->y.HALF_U.HI = gUnknown_0813FBB4[gUnknown_03006C80.unk1 * 2 + 1];
+                e->unk50 = 0x4000;
+            }
+        }
+        gUnknown_0201F000[0] = gUnknown_0201F000[0] | 1;
+        DeleteThisEntity(this);
+    }
+}
+
 
 void sub_0804D854(struct Entity *this)
 {
