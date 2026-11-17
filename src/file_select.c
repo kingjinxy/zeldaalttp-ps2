@@ -2802,7 +2802,23 @@ void sub_08027298(struct Entity *this)
 asm(".include \"asm/non_matching/file_select/sub_080272D0.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080275F8.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080276CC.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_08027780.inc\"");
+
+#define WALL_AT(dx, bit)                                                   \
+    {                                                                      \
+        u16 t = sub_0800934C(this, dx, 24);                                \
+        if (t != 66 && t != 32 && (u16)(t - 19) > 11)                      \
+            this->unk2C |= bit;                                            \
+    }
+
+void sub_08027780(struct Entity *this)
+{
+    WALL_AT(-21, 32)
+    WALL_AT(-5, 32)
+    WALL_AT(4, 64)
+    WALL_AT(20, 64)
+}
+#undef WALL_AT
+
 asm(".include \"asm/non_matching/file_select/sub_0802782C.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080278E8.inc\"");
 
@@ -3027,7 +3043,28 @@ void sub_0802A304(struct Entity *this)
     gUnknown_0813D474[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/file_select/sub_0802A340.inc\"");
+
+extern const u8 gUnknown_0813D4CC[];
+extern const u16 gUnknown_0813D480[];
+
+void sub_0802A340(struct Entity *this)
+{
+    if ((this->parameter & 0x7F) == 3)
+        this->parameter = (this->parameter & 0x80) | (gUnknown_03006C80.unk0 - 2);
+    this->unk14 = 1;
+    this->unk1C_0 = 1;
+    this->unk5E_0 = 0;
+    this->unk48 = gUnknown_0813D4CC;
+    sub_08008DD8(this);
+    sub_08003870(this, 0);
+    this->unk7C.h = this->parameter >> 7;
+    this->parameter &= 3;
+    if (gUnknown_03006C80.unk2 != 0)
+        sub_0802C070(this, gUnknown_0813D480[this->parameter + 12]);
+    else
+        sub_0802C070(this, gUnknown_0813D480[gUnknown_03006C80.unk1 * 3 + this->parameter]);
+}
+
 
 void sub_0802A3EC(struct Entity *this)
 {
@@ -3201,8 +3238,8 @@ void sub_0802B74C(void)
     if (gUnknown_03000E20.unk12 == 0)
         gUnknown_0813D678[gUnknown_0202A770.unk0]();
 }
-
 asm(".include \"asm/non_matching/file_select/sub_0802B778.inc\"");
+
 asm(".include \"asm/non_matching/file_select/sub_0802B820.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802B8D4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802B964.inc\"");
@@ -3246,7 +3283,28 @@ void sub_0802BF60(void)
     }
 }
 
-asm(".include \"asm/non_matching/file_select/sub_0802BFC4.inc\"");
+
+void sub_0802BFC4(void)
+{
+    u8 i;
+    u32 **pp;
+    u32 *r;
+
+    for (i = 8; i <= 42; i++) {
+        pp = &((u32 **)gUnknown_02016C50)[i];
+        if (*pp != NULL && sub_0800C984()) {
+            r = *pp;
+            sub_080009F4((void *)(0x06010000 + (i << 9)), (r[0] & 0xFFFFFF) + (u32)gUnknown_03000030, r[1]);
+            *pp = NULL;
+            if ((s32)r[0] >= 0)
+                gUnknown_0202A3F0[gUnknown_0202A3F0[i].unk0 & 63].unk0 &= 0xBF;
+            else
+                ((u32 **)gUnknown_02016C50)[(u8)(i + ((r[1] + 511) >> 9))] = r + 2;
+            return;
+        }
+    }
+}
+
 
 void sub_0802C1C0(struct Struct0202E110 *, u16);
 asm(".include \"asm/non_matching/file_select/sub_0802C070.inc\"");
