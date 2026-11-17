@@ -6349,7 +6349,19 @@ void sub_0804CE64(struct Struct0202A7E0 *this, u32 value)
     this->unk10 = value;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0804CE7C.inc\"");
+u32 sub_0804CE7C(struct Struct0202A7E0 *p)
+{
+    if (p->unk10 == 0 || *(u16 *)p->unk10 == 0xFFFF)
+        return 1;
+    if (p->unk8 != 0)
+    {
+        p->unk8--;
+        return 0;
+    }
+    while (gUnknown_084287F0[*(u16 *)p->unk10](p))
+        ;
+    return 0;
+}
 
 u32 sub_0804CF00(struct Entity *this)
 {

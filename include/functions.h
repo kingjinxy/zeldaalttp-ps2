@@ -2052,7 +2052,7 @@ void sub_0804CD94(u8);
 void sub_0804CE00(struct Entity *, u16);
 //sub_0804CE38();
 void sub_0804CE64(struct Struct0202A7E0 *, u32);
-//sub_0804CE7C();
+u32 sub_0804CE7C(struct Struct0202A7E0 *);
 //sub_0804CF00();
 //sub_0804CF14();
 //sub_0804CF4C();
