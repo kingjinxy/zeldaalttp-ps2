@@ -22,7 +22,8 @@
 // --save-states FRAME: at the end of FRAME, write that pair for every GBA to --out DIR.
 // --play DIR (built with SDL2, tools/mgba_run.sh): a window to play GBAs 0 and 1 in real time. Writes the
 // starting pair (saveP.sav, stateP.ss) to DIR, records each GBA's buttons to DIR/inputsP, and writes the
-// final EEPROM to DIR/end_saveP.sav. FRAMES is ignored; Esc or closing the window stops. Replay with
+// final EEPROM to DIR/end_saveP.sav and GBA 0's frame count to DIR/frames. FRAMES is ignored; Esc or
+// closing the window stops. Replay with
 //   mgba_run ROM N --players 2 --start DIR --inputs0 DIR/inputs0 --inputs1 DIR/inputs1
 // Keys: GBA 0: WASD, F=A G=B R=L T=R 1=Start 2=Select. GBA 1: arrows, /=A .=B ;=L '=R Enter=Start
 // RShift=Select.
@@ -667,6 +668,10 @@ int main(int argc, char **argv) {
 #endif
 	}
 	if (play) {
+		char fpath[512];  // the session's length, for replays (tools/classify.sh)
+		snprintf(fpath, sizeof fpath, "%s/frames", play);
+		FILE *ff = fopen(fpath, "w");
+		if (ff) fprintf(ff, "%u\n", players[0].frame), fclose(ff);
 		for (int i = 0; i < 2; i++) {
 			void *data = NULL;
 			size_t size = players[i].core->savedataClone(players[i].core, &data);

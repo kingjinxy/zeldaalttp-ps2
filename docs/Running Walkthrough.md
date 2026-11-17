@@ -413,3 +413,14 @@ draft generator for the regular -O0 Four Swords code, to speed up matching decom
   because the entity update runs from the interrupt handler in every mode.
 - Work list for the port: the Four Swords walk (2,910 functions, 1,780 in asm) plus anything a coverage
   run executes; the 4,820 "lttp" functions (3,930 in asm) can wait.
+- `tools/classify.sh OUT REC_DIR...` rebuilds everything from the build and local recordings (replays with
+  `--coverage --loads`, LZ77 streams, loaded graphics, m4a samples, object subtypes) and runs
+  `reach.py --classify`; result committed as `docs/function_classes.txt` (address, name, object, size,
+  class, executed, in asm). 2.5 minutes for session 1, same numbers as by hand. A replay has to run as
+  long as the session, not to its last key change (session 1: 44,522 frames, last input 43,996), so
+  `mgba_run --play` now writes `DIR/frames` and classify.sh reads it.
+- Cross-check against FourSwordsRecomp's hand-checked jump tables (57) and data-pointer functions
+  (1,354): 1,769 of our functions; 598 shared, 1 fs, 1,144 lttp (the recomp covers the whole ROM),
+  26 unreached. The 26 are all handlers of the 10 object subtypes nothing creates and that never ran
+  (21, 26, 27, 43, 44, 62, 63, 71, 79, 106) and three sub-state tables of those handlers: no
+  contradiction.

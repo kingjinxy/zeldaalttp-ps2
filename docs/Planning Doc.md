@@ -39,7 +39,7 @@ player, linked in memory instead of by cable, each drawn into its own part of th
 - [ ] Coverage runs that play Four Swords (stages, items, enemies, bosses), to grow the lower bound.
       Session 1 (one stage, 44,522 frames): 1,135 functions executed (705 before)
 - [ ] Work queue = static ∪ executed; order by coverage first
-- [ ] Split `asm/` by that map into Four Swords, shared engine and LttP files (`reach.py --classify` with `--packed` and `--objects`: Four Swords needs at most 2,910 functions, 1,780 in asm; 4,820 are A Link to the Past only); name shared engine
+- [ ] Split `asm/` by that map into Four Swords, shared engine and LttP files (`tools/classify.sh`, result in `docs/function_classes.txt`: Four Swords needs at most 2,910 functions, 1,780 in asm; 4,820 are A Link to the Past only); name shared engine
       functions from `reference/tmc`.
 
 ## Phase 2: decompile the reachable set to C

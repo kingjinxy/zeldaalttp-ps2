@@ -25,7 +25,7 @@ ap.add_argument("--packed", help="tools/lz77_scan.py output: compressed ranges, 
 ap.add_argument("--objects", help="tools/object_subtypes.py output: follow an object handler table (0x0813F998) "
                 "entry only when its subtype's creator is reachable (or the handler was executed)")
 ap.add_argument("--list", help="write reachable functions (addr name file size) here")
-ap.add_argument("--classify", help="write every function (addr name file size class executed) here; class from "
+ap.add_argument("--classify", help="write every function (addr name file size class executed in_asm) here; class from "
                 "two walks, cutting the A Link to the Past (mode 13) or the Four Swords (mode 9) handler")
 args = ap.parse_args()
 
@@ -217,12 +217,13 @@ if args.classify:
     # Reached with either handler cut: boot, menus, or engine code the shared modes use
     cls = {a: "shared" if a in fs and a in lttp else "fs" if a in fs else "lttp" if a in lttp
            else "both-only" if a in both else "unreached" for a in starts}
-    with open(args.classify, "w") as f:
-        for a in starts:
-            f.write(f"{a:08X} {names[a]} {objfile[a]} {size[a]} {cls[a]} {int(a in ran_set)}\n")
-    print("\nclass        funcs   executed  in asm/non_matching")
     asm = {int(m, 16) for m in re.findall(r"sub_([0-9A-F]{8})\.inc", "\n".join(
         subprocess.run(["find", "asm/non_matching", "-name", "*.inc"], capture_output=True, text=True).stdout.split()))}
+    with open(args.classify, "w") as f:
+        f.write("# address name object size class executed in_asm\n")
+        for a in starts:
+            f.write(f"{a:08X} {names[a]} {objfile[a]} {size[a]} {cls[a]} {int(a in ran_set)} {int(a in asm)}\n")
+    print("\nclass        funcs   executed  in asm/non_matching")
     for c in ("fs", "shared", "lttp", "both-only", "unreached"):
         xs = [a for a in starts if cls[a] == c]
         print(f"{c:12} {len(xs):5} {sum(a in ran_set for a in xs):9} {sum(a in asm for a in xs):9}")
