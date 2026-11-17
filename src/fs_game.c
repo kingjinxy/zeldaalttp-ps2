@@ -12784,7 +12784,14 @@ u8 sub_08062BFC(struct Entity *this, struct Entity *other, u8 flag)
     return d << 2;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08062CB8.inc\"");
+void sub_08062CB8(struct Entity *this)
+{
+    return;
+    if ((s16)(this->x.HALF.HI & 2) != (s16)(this->y.HALF.HI & 2))
+        this->z.HALF_U.HI = 0xFFFE;
+    else
+        this->z.HALF_U.HI = 0;
+}
 
 void sub_08062D10(struct Entity *this)
 {
