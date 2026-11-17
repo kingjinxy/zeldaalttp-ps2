@@ -5032,7 +5032,79 @@ s32 sub_0802C528(s32 a, s32 b, s32 max)
     return a;
 }
 
+#ifdef NONMATCHING
+s32 sub_0800B830(s32);
+void sub_0802CF20(void);
+
+#define HUD_S16(off) (*(s16 *)&gUnknown_03000420[off])
+#define HUD_S32(off) (*(s32 *)&gUnknown_03000420[off])
+
+// Adds d rupees to player this->form (doubled while the bonus flag unk24 is on); the shared total unk8 is
+// the sum of the players' counts, and a loss bigger than the player has is taken from the others in turn
+void sub_0802C53C(struct Entity *this, s32 arg)
+{
+    s16 d = arg;
+    s32 amt;
+    s32 cur;
+    u16 rem;
+    u8 k, i;
+
+    if (d < 0 && (s32)gUnknown_03006C80.unk8 + d < 0)
+        amt = -(s32)gUnknown_03006C80.unk8;
+    else
+        amt = d;
+    if (gUnknown_03006C80.unk24 != 0 && !(gUnknown_03006C80.unk24 & 0x80) && d > 0) {
+        d *= 2;
+        amt = d;
+        play_sound(143);
+    } else {
+        play_sound(8);
+    }
+    gUnknown_03000420[2] = 1;
+    if (amt >= 0) {
+        HUD_S32(24) += amt;
+        HUD_S16(32) = 120;
+        if (HUD_S32(24) > 9999)
+            HUD_S32(24) = 9999;
+        if (HUD_S16(34) == 0)
+            HUD_S32(20) = HUD_S32(24);
+    } else {
+        HUD_S16(32) = 0;
+        HUD_S32(24) = 0;
+        HUD_S32(28) += amt;
+        HUD_S16(34) = 60;
+        if (HUD_S32(28) < -9999)
+            HUD_S32(24) = -9999;
+        HUD_S32(20) = HUD_S32(28);
+    }
+    if (d < 0 && gUnknown_03006C80.unk8 == 0)
+        return;
+    cur = gUnknown_03006C80.unkC[this->form];
+    if (cur + d < 0) {
+        rem = sub_0800B830(d) - gUnknown_03006C80.unkC[this->form];
+        gUnknown_03006C80.unkC[this->form] = 0;
+        do {
+            for (k = 4; k != 0; k--) {
+                i = ((u8 *)&gUnknown_03006C80)[37] = (((u8 *)&gUnknown_03006C80)[37] + 1) & 3;
+                if (gUnknown_03006C80.unkC[i] != 0) {
+                    gUnknown_03006C80.unkC[i]--;
+                    break;
+                }
+            }
+        } while (--rem != 0);
+    } else {
+        gUnknown_03006C80.unkC[this->form] = sub_0802C528(cur, d, 99999);
+    }
+    gUnknown_03006C80.unk8 = 0;
+    for (i = 0; i < gUnknown_03006C80.unk0; i++)
+        gUnknown_03006C80.unk8 += gUnknown_03006C80.unkC[i];
+    sub_0802CF20();
+}
+#undef HUD_S16
+#undef HUD_S32
+#else
 asm(".include \"asm/non_matching/file_select/sub_0802C53C.inc\"");
+#endif
 
 void sub_0802C6AC(struct Entity *this)
 {
