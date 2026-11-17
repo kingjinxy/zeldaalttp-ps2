@@ -388,7 +388,7 @@ void sub_080138BC(void);
 void sub_08013A60(void);
 void sub_08013C04(const u16 *);
 //sub_08013C50();
-void sub_08013C8C(u32, u16, u16, u8);
+void sub_08013C8C(u16 *, u16, u16, u8);
 u32 sub_08013D20(u8);
 u32 sub_08013D54(u8);
 void sub_08013DE0(void);

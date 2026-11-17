@@ -104,7 +104,33 @@ void sub_08030314(void)
     sub_08030724();
 }
 
-asm(".include \"asm/non_matching/rom2a/sub_08030380.inc\"");
+
+void sub_08030314(void);
+void sub_08137AFC(void);
+
+void sub_08030380(void)
+{
+    if (--gUnknown_02016D60.unk4 == 0) {
+        sub_08059A44();
+        if (((u8 *)&gUnknown_02016D60)[10] != 0) {
+            gUnknown_030004A0.dispCnt |= 0x4200;
+            gUnknown_030004A0.winin = 0x3D3F;
+            gUnknown_030004A0.winout = 63;
+            gUnknown_030004A0.win1h = 120;
+            gUnknown_030004A0.win1v = 160;
+            gUnknown_03000450.unk0 = sub_0804C8A8(70, 2, 0);
+            sub_0804C8A8(70, 3, 0);
+            sub_0804C8A8(70, 4, 0);
+            gUnknown_03005050 = 3;
+            gUnknown_02016D60.unk4 = 60;
+        } else {
+            sub_08030314();
+        }
+    }
+    sub_08137AFC();
+    sub_08000BAC();
+}
+
 asm(".include \"asm/non_matching/rom2a/sub_08030418.inc\"");
 asm(".include \"asm/non_matching/rom2a/sub_080304FC.inc\"");
 asm(".include \"asm/non_matching/rom2a/sub_080305BC.inc\"");

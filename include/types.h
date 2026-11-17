@@ -628,7 +628,10 @@ struct Struct03006C80
         u8 unk5 : 8;
         u16 unk6;
     } unk28[4];  // indexed by Entity.form (player)
-    u8 filler48[4];
+    u8 filler48;
+    u8 unk49;
+    u8 filler4A;
+    u8 unk4B;
     u8 unk4C;
     u8 filler4D;
     u8 unk4E : 8;

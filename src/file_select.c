@@ -595,8 +595,41 @@ u32 sub_08012F84(u8 room, u8 layer)
     return t[layer];
 }
 
-asm(".include \"asm/non_matching/file_select/sub_08012FA8.inc\"");
+
+extern u8 gUnknown_0202A720[];
+extern u8 gUnknown_020309E0[];
+
+void sub_08012FA8(void)
+{
+    u32 i, j;
+    u8 t;
+    u32 zero;
+
+    if (gUnknown_03006C80.unk4 == 0) {
+        gUnknown_03006C80.unk4B = 0;
+        gUnknown_03006C80.unk49 = 0;
+        for (i = 0; i < 64; i++) {
+            ((u8 *)gUnknown_0202A880)[i] = i;
+            gUnknown_0202A720[i] = i;
+        }
+        for (i = 63; i != 0; i--) {
+            j = sub_0800099C() % i;
+            t = ((u8 *)gUnknown_0202A880)[i];
+            ((u8 *)gUnknown_0202A880)[i] = ((u8 *)gUnknown_0202A880)[j];
+            ((u8 *)gUnknown_0202A880)[j] = t;
+        }
+        for (i = 63; i != 0; i--) {
+            j = sub_0800099C() % i;
+            t = gUnknown_0202A720[i];
+            gUnknown_0202A720[i] = gUnknown_0202A720[j];
+            gUnknown_0202A720[j] = t;
+        }
+        zero = 0;
+        CpuSet(&zero, gUnknown_020309E0, 0x05000020);
+    }
+}
 asm(".include \"asm/non_matching/file_select/sub_0801303C.inc\"");
+
 asm(".include \"asm/non_matching/file_select/sub_080130D4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08013120.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080131C8.inc\"");
@@ -708,8 +741,8 @@ void sub_08013C50(u32 *a, u32 *b)
         }
     } while (0);
 }
-
 asm(".include \"asm/non_matching/file_select/sub_08013C8C.inc\"");
+
 
 asm(".include \"asm/non_matching/file_select/sub_08013D20.inc\"");
 
@@ -2832,8 +2865,8 @@ void sub_08028154(struct Entity *this)
     if (--this->unk68.w == (u32)-1)
         sub_08028170(this);
 }
-
 asm(".include \"asm/non_matching/file_select/sub_08028170.inc\"");
+
 asm(".include \"asm/non_matching/file_select/sub_08028200.inc\"");
 
 void sub_08028508(struct Entity *this)
@@ -3307,6 +3340,7 @@ void sub_0802C6AC(struct Entity *this)
 
 asm(".include \"asm/non_matching/file_select/sub_0802C6E8.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802C710.inc\"");
+
 asm(".include \"asm/non_matching/file_select/sub_0802C7A8.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802C800.inc\"");
 
@@ -3423,7 +3457,12 @@ void sub_0802CF70(void)
 
 
 asm(".include \"asm/non_matching/file_select/sub_0802CFBC.inc\"");
+
+s32 sub_0800B830(s32);
+#define COUNTER (*(u32 *)&gUnknown_03000420[16])
 asm(".include \"asm/non_matching/file_select/sub_0802D104.inc\"");
+#undef COUNTER
+
 
 asm(".include \"asm/non_matching/file_select/sub_0802D190.inc\"");
 
