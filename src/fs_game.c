@@ -4120,7 +4120,48 @@ void sub_08046918(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08046A2C.inc\"");
+
+void sub_08046A2C(struct Entity *this)
+{
+    u32 i;
+
+    if (this->unk3C != 0)
+    {
+        this->unk3C = 0;
+        this->unk17 = 180;
+        sub_0802D970();
+        sub_0802C8E4();
+        play_sound(0x80010000);
+        play_sound(46);
+    }
+    this->unk1C_0 = this->unk1C_0 ^ 1;
+    if (this->unk17 != 0)
+    {
+        this->unk17--;
+        return;
+    }
+    for (i = 0; i < gUnknown_03006C80.unk0; i++)
+    {
+        if ((u16)(gUnknown_03006A30[i].unk36 & 1) || gUnknown_03006A30[i].unk3C != 0 || gUnknown_03006A30[i].unk28->unk45 == 0)
+            return;
+    }
+    for (i = 0; i < gUnknown_03006C80.unk0; i++)
+    {
+        gUnknown_03006A30[i].unk28->z.HALF_U.HI = 0;
+        gUnknown_03006A30[i].unk28->unk10 = 0;
+        gUnknown_03006A30[i].unk28->direction |= 0xFF;
+        gUnknown_03006A30[i].unk28->unk3D = 0x88;
+        gUnknown_03006A30[i].unk36 = gUnknown_03006A30[i].unk36 & 0xF3FF;
+        sub_080012F4(gUnknown_03006A30[i].unk28);
+    }
+    this->unk14 = 36;
+    this->unk17 = 32;
+    sub_08003870(this, 0);
+    sub_0800C0B0(3, 16);
+    sub_0800D644();
+    sub_080476DC();
+}
+
 
 void sub_08046C7C(struct Entity *this)
 {
