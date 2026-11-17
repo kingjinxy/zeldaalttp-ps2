@@ -341,3 +341,33 @@ draft generator for the regular -O0 Four Swords code, to speed up matching decom
   - `sub_08037574`, `sub_0805C878`, `sub_08059BD0` as before.
 - Mistake caught: one commit went in with a mismatching ROM, because the check `grep -E "OK|did NOT"`
   succeeds on both. It was amended at once; the check is now `grep -q "zeldaalttp.gba: OK"`.
+
+## Step 14: separating Four Swords code from A Link to the Past code (2026-11-17)
+
+- `reach.py --classify FILE` walks the call graph from boot twice, once with the A Link to the Past mode
+  handler cut (mode 13, `0x0800B69C`) and once with the Four Swords one (mode 9, `0x0802E764`; mode table
+  `0x0842731C` as documented by FourSwordsRecomp), and labels each function fs / shared / lttp /
+  unreached, plus whether a coverage run executed it.
+- First result: 5,689 shared, 2 Four Swords only. The walk follows every pointer-like word in data, and
+  the data is still unlabelled `.INCBIN` blobs (up to 1 MB) where graphics and sound bytes happen to look
+  like pointers (`AgbMain` reached the A Link to the Past sprite code through a tilemap). Rules on blob
+  size or neighbouring words also dropped real edges; reverted.
+- `tools/lz77_scan.py`: 2,085 LZ77 streams (2.8 MB, compressed graphics), skipped by `reach.py --packed`.
+- `mgba_run --loads FILE`: logs BIOS copies/decompression (swi 0x0B, 0x0C, 0x11-0x15) and DMA from ROM
+  data, copies from RAM to palette/VRAM/OAM, Thumb CPU loads from ROM data, and a bitmap of RAM words read
+  by 32-bit loads. Replay of session 1 with it: same coverage and same final screen as without.
+  - DMA first logged nothing: mGBA starts and ends an immediate DMA within one step, so the enable bit is
+    never seen; a new transfer is detected by its registers changing. The game moves no graphics by DMA
+    (only sound FIFO and EEPROM); it uses CpuFastSet, also from RAM buffers.
+- `tools/load_ranges.py`: ROM ranges with exact bounds, kept only when the data goes to palette/VRAM/OAM,
+  to a RAM buffer later sent there, or to RAM that no 32-bit load reads (the tilemap behind the false
+  link: CpuSet into a RAM map buffer read as halfwords). No CPU load reads inside any gfx range.
+  288 ranges, 243 KB.
+- Result with both lists excluded: shared 3,472, A Link to the Past only 4,291 (`rom3c`, `rom3b`, `rom4`,
+  most of `rom3a`, the `lttp/sprite*` files, `hud`, `interface`; none executed in the Four Swords
+  session). Functions executed but not reachable stay at the LZ77-only count, so no real edge was lost.
+- Next false link: sound samples (signed 8-bit PCM in `0x083C3BBC`, read by the ARM mixer in IWRAM,
+  which `--loads` doesn't decode) still link the sound driver to A Link to the Past code and keep
+  fs_game reachable with the Four Swords handler cut. Fix: sample ranges from the m4a voice groups, or
+  decode ARM-mode loads.
+- Known bug: `mgba_run --shot` with a missing `--out` directory segfaults at the end of the run.

@@ -4,6 +4,12 @@
 //            [--shot N,N,...] [--out DIR] [--dump N:ADDR:LEN] [--watch ADDR] [--coverage FILE]
 // --coverage: write a bitmap of executed ROM halfwords (bit n = address 0x08000000 + 2n, all GBAs combined)
 // for tools/reach.py. Same run as without it (same RAM), a little slower.
+// --loads FILE: every load from ROM data (>= 0x08137B10), all GBAs: BIOS decompress/copy calls (swi 0x0B,
+// 0x0C, 0x11-0x15), DMA transfers, and Thumb CPU loads; plus BIOS copies and DMAs from RAM into palette,
+// VRAM or OAM, to follow ROM data that reaches the screen through a RAM buffer. FILE.ramwords: one byte
+// per EWRAM then IWRAM word, 1 = read by a 32-bit Thumb load (pointer use of data copied to RAM). Each distinct one once, as
+//   KIND SRC DST N CALLER    KIND = swiNN | dma | cpu32 | cpu16 | cpu8; N = units (swi: r2; dma: count
+// and width as in the register; cpu: register width); DST is 0 for cpu loads. Same run as without it.
 // --trace DIR --trace-list FILE: GBA 0 only. FILE has one hex function address per line; the first
 // --trace-max (default 2) calls of each that no interrupt breaks into are written to DIR/ADDR_N.gz:
 // registers and all GBA memory at entry, then at return (tools/tr_check, the thumb2c test).
@@ -86,6 +92,84 @@ static int liveKeys[MAX_GBAS];      // --play: keys from the keyboard
 static FILE *rec[MAX_GBAS];         // --play: recorded inputs
 static int frameReady;              // --play: GBA 0 finished a frame
 static uint8_t covered[0x800000 / 16];
+static FILE *loads;                 // --loads FILE
+static const char *loadsPath;
+static uint8_t ramWord[0x48000 / 4];  // --loads: EWRAM (0x40000) and IWRAM words read by a 32-bit CPU load
+static uint32_t dmaSeen[MAX_GBAS][4][3];  // last logged source, dest, control per DMA channel
+static uint64_t loadSet[1 << 20];   // hashes of logged loads (open addressing; 0 = empty)
+
+#define ROM_DATA 0x08137B10u
+// Log one load unless the same (kind, src, dst, n, caller) was logged before
+static void logLoad(const char *kind, uint32_t src, uint32_t dst, uint32_t n, uint32_t caller) {
+	uint64_t h = 1469598103934665603ull;
+	for (const char *c = kind; *c; c++) h = (h ^ (uint8_t) *c) * 1099511628211ull;
+	uint32_t v[4] = { src, dst, n, caller };
+	for (int i = 0; i < 4; i++) h = (h ^ v[i]) * 1099511628211ull;
+	h |= 1;
+	for (uint32_t i = (uint32_t) h & ((1 << 20) - 1);; i = (i + 1) & ((1 << 20) - 1)) {
+		if (loadSet[i] == h) return;
+		if (!loadSet[i]) { loadSet[i] = h; break; }
+	}
+	fprintf(loads, "%s %08X %08X %X %08X\n", kind, src, dst, n, caller);
+}
+
+// Before an instruction runs: a BIOS call that reads its source from ROM data, or a Thumb load from it
+static void loadsBefore(struct mCore *core, struct ARMCore *cpu) {
+	if (cpu->executionMode != MODE_THUMB) return;
+	uint32_t pc = cpu->gprs[ARM_PC] - 2;
+	if (pc >> 24 != 8) return;
+	uint16_t op = core->busRead16(core, pc);
+	uint32_t *r = (uint32_t *) cpu->gprs;
+	if ((op & 0xFF00) == 0xDF00) {
+		int n = op & 0xFF;
+		// From ROM data, or from RAM into palette/VRAM/OAM (a RAM buffer the game sends to the screen)
+		int fromRam = (r[0] >> 24 == 2 || r[0] >> 24 == 3) && r[1] >> 24 >= 5 && r[1] >> 24 <= 7;
+		if ((n == 0x0B || n == 0x0C || (n >= 0x11 && n <= 0x15)) && ((r[0] >= ROM_DATA && r[0] >> 24 < 0x0A) || fromRam)) {
+			char k[8];
+			snprintf(k, sizeof k, "swi%02X", n);
+			logLoad(k, r[0], r[1], n <= 0x0C ? r[2] : 0, r[14]);
+		}
+		return;
+	}
+	uint32_t a = 0; const char *k = NULL;
+	if ((op & 0xF800) == 0x6800) a = r[op >> 3 & 7] + (op >> 6 & 31) * 4, k = "cpu32";       // ldr [rb, #imm]
+	else if ((op & 0xF800) == 0x7800) a = r[op >> 3 & 7] + (op >> 6 & 31), k = "cpu8";        // ldrb [rb, #imm]
+	else if ((op & 0xF800) == 0x8800) a = r[op >> 3 & 7] + (op >> 6 & 31) * 2, k = "cpu16";   // ldrh [rb, #imm]
+	else if ((op & 0xF200) == 0x5000 && (op & 0x0800)) {                                       // load [rb, ro]
+		a = r[op >> 3 & 7] + r[op >> 6 & 7];
+		int o = op >> 9 & 7;  // 4 ldr, 5 ldrh, 6 ldrb, 7 ldsh; 3 is ldsb (0x5600)
+		k = o == 4 ? "cpu32" : o == 6 || o == 3 ? "cpu8" : "cpu16";
+	} else if ((op & 0xFE00) == 0x5600) a = r[op >> 3 & 7] + r[op >> 6 & 7], k = "cpu8";      // ldsb [rb, ro]
+	else if ((op & 0xFA00) == 0x5A00) a = r[op >> 3 & 7] + r[op >> 6 & 7], k = "cpu16";      // ldrh/ldsh [rb, ro]
+	else if ((op & 0xF800) == 0xC800 && (op & 0xFF)) a = r[op >> 8 & 7], k = "cpu32";         // ldmia (first word)
+	if (k && k[3] == '3' && (a >> 24 == 2 || a >> 24 == 3)) {  // 32-bit reads from RAM, for RAM copies of ROM data
+		uint32_t o = a >> 24 == 2 ? (a & 0x3FFFF) : 0x40000 + (a & 0x7FFF);
+		int words = (op & 0xF800) == 0xC800 ? __builtin_popcount(op & 0xFF) : 1;
+		for (int w = 0; w < words && (o >> 2) + w < sizeof ramWord; w++) ramWord[(o >> 2) + w] = 1;
+	}
+	if (k && a >= ROM_DATA && a >> 24 < 0x0A) {
+		if ((op & 0xF800) == 0xC800)  // every word of an ldmia
+			for (int b = 0; b < 8; b++) { if (op >> b & 1) { logLoad(k, a, 0, 4, pc); a += 4; } }
+		else
+			logLoad(k, a, 0, k[3] == '3' ? 4 : k[3] == '1' ? 2 : 1, pc);
+	}
+}
+
+// After an instruction: a DMA channel set up for a new transfer from ROM data (or from RAM to the screen)
+static void loadsAfter(int id, struct GBA *gba) {
+	for (int ch = 0; ch < 4; ch++) {
+		struct GBADMA *d = &gba->memory.dma[ch];
+		uint32_t *seen = dmaSeen[id][ch];
+		// An immediate DMA starts and ends within one step, so the enable bit is rarely seen set: a new
+		// transfer shows as new source/dest/control registers (the game writes them before each one).
+		uint32_t ctl = GBADMARegisterClearEnable(d->reg) | 0x10000;
+		if (seen[0] == d->source && seen[1] == d->dest && seen[2] == ctl) continue;
+		seen[0] = d->source, seen[1] = d->dest, seen[2] = ctl;
+		int fromRam = (d->source >> 24 == 2 || d->source >> 24 == 3) && d->dest >> 24 >= 5 && d->dest >> 24 <= 7;
+		if ((d->source >= ROM_DATA && d->source >> 24 < 0x0A) || fromRam)
+			logLoad("dma", d->source, d->dest, (uint32_t) d->count | (uint32_t) d->reg << 16, gba->cpu->gprs[ARM_LR]);
+	}
+}
 static const char *traceDir, *traceList;
 static unsigned traceMax = 2;
 static uint8_t traceCount[0x800000 / 2];  // per halfword of ROM: 0 = not traced, else 1 + calls written
@@ -421,6 +505,7 @@ int main(int argc, char **argv) {
 		else if (!strcmp(o, "--dump") && ndumps < 64) dumps[ndumps++] = v;
 		else if (!strcmp(o, "--watch")) watch = strtoul(v, NULL, 0);
 		else if (!strcmp(o, "--coverage")) coverage = v;
+		else if (!strcmp(o, "--loads")) { loadsPath = v; if (!(loads = fopen(v, "w"))) { perror(v); return 1; } }
 		else if (!strcmp(o, "--play")) play = v;
 		else if (!strcmp(o, "--start")) start = v;
 		else if (!strcmp(o, "--save-states")) saveStates = strtoul(v, NULL, 0);
@@ -544,14 +629,16 @@ int main(int argc, char **argv) {
 					p->core->step(p->core);
 				}
 				cpu->irqh.processEvents(cpu);
-			} else if (coverage) {
+			} else if (coverage || loads) {
 				// ARMRunLoop with each instruction's address recorded before it runs (as mGBA's
 				// ARMDebuggerCheckBreakpoints computes it), so GBAs interleave exactly as with runLoop.
 				struct ARMCore *cpu = ((struct GBA *) p->core->board)->cpu;
 				while (cpu->cycles < cpu->nextEvent) {
 					uint32_t pc = cpu->gprs[ARM_PC] - (cpu->executionMode == MODE_THUMB ? 2 : 4) - 0x08000000;
 					if (pc < 0x800000) covered[pc >> 4] |= 1 << ((pc >> 1) & 7);
+					if (loads) loadsBefore(p->core, cpu);
 					p->core->step(p->core);
+					if (loads) loadsAfter(i, p->core->board);
 				}
 				cpu->irqh.processEvents(cpu);
 			} else
@@ -579,6 +666,12 @@ int main(int argc, char **argv) {
 		printf("recorded %u frames to %s\n", players[0].frame, play);
 	}
 	for (int i = 0; i < nplayers; i++) players[i].core->deinit(players[i].core);
+	if (loads) {
+		fclose(loads);
+		char path[600];
+		snprintf(path, sizeof path, "%s.ramwords", loadsPath);  // bitmap: EWRAM then IWRAM, one byte per word
+		writeFile(path, ramWord, sizeof ramWord);
+	}
 	if (coverage) {
 		FILE *f = fopen(coverage, "wb");
 		if (!f || fwrite(covered, sizeof covered, 1, f) != 1) { perror(coverage); return 1; }
