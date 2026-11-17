@@ -312,3 +312,32 @@ draft generator for the regular -O0 Four Swords code, to speed up matching decom
   `make compare` printed OK (a link error leaves the old ROM and `first_diff.py` says "no difference").
 - Deferred: `sub_0805C878` (16-bit subtraction with operand copies and an unfolded `+ 0xFFF8`).
 - fs_game: 92 left in asm (28 deferred); all code: 5,981 asm files.
+
+## Step 13: the small fs_game functions (2026-11-17)
+
+- 22 more fs_game functions matched with `tools/o0_draft.py` drafts, including several that had been
+  deferred before. fs_game: 42 left in asm (6 of them deferred, below), all code: 5,931 asm files.
+- What made the deferred ones match:
+  - A `copy; add #N` address (`add r3, r1, #0; add r1, #96`) is a real struct member, not pointer
+    arithmetic; the same function written with a cast pointer (`((u16 *)&this->unk60)[i]`) doesn't
+    match. Small overlay structs in `fs_game.c` stand in for fields an entity kind keeps at an offset
+    that `struct Entity` types differently (`EntityU16x12`, `Struct02000010Bits`, `Hitbox`).
+  - `(x ^ 1) & 1` after a narrowed call result is `!(x & 1)` (sub_0804E394).
+  - A chained store with no `bic #0` (the masked value of the inner assignment) means the fields are
+    signed: `Struct03000488`'s scales are `s16 : 16` (sub_0805C1F4).
+  - `i++` takes one dead address computation more than `i = i + 1` (sub_08054A38).
+  - `x / 2` and `x >> 1` differ in register use for a u8 bitfield (sub_08063E88).
+  - The constant- and index-first order of `+` decides `adds r0, r0, r1` vs `adds r0, r1, r0`; integer
+    arithmetic (`idx * 32 + (u32)base`) was the only form that gave the original's (sub_0803D770).
+  - Dead code after an early `return;` is still emitted at -O0 (sub_08062CB8).
+  - `sub_08003184` is a second entry point inside hand-written `sub_08003170`; it is exported with
+    `.global` so C can call it.
+- Still deferred (notes in the session scratchpad):
+  - `sub_0803D134`, `sub_0806041C`: `x - (y + C)` / `d - (x - 1)`. gcc's front end folds the constant
+    out (`(x - C) - y`), the original keeps it inside. A `(u16)` cast stops the fold but adds a narrowing;
+    a statement expression `({ y + 16; })` stops it and leaves only a register choice different. The
+    original source must have had some other form.
+  - `sub_0803A20C`: the music selection; `unk26 != (u16)song` loads in a different order.
+  - `sub_08037574`, `sub_0805C878`, `sub_08059BD0` as before.
+- Mistake caught: one commit went in with a mismatching ROM, because the check `grep -E "OK|did NOT"`
+  succeeds on both. It was amended at once; the check is now `grep -q "zeldaalttp.gba: OK"`.
