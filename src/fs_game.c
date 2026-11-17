@@ -10319,7 +10319,68 @@ void sub_0805A64C(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_0805A6AC.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_0805A9BC.inc\"");
+
+void sub_0805A9BC(struct Entity *this)
+{
+    struct Entity *e;
+    u8 d;
+    u16 n;
+    u16 t;
+
+    if (gUnknown_03006C80.unk6E <= 1)
+    {
+        U32_AT(this, 0x6C)--;
+        if (U32_AT(this, 0x6C) == 0)
+        {
+            t = 0xA8C - this->unk68.w;
+            if (t <= 0x707)
+                n = 1;
+            else if (t <= 0x95F)
+                n = 5;
+            else
+                n = 20;
+            sub_0803D520(this->parameter, n, sub_0800099C() & 31);
+            U32_AT(this, 0x6C) = 90;
+        }
+    }
+    e = sub_0805AD74(this);
+    if (e != NULL && gLCDRegisterBuffer != this->parameter)
+    {
+        e->x.WORD = 0;
+        e->y.WORD = 0;
+    }
+    if (gLCDRegisterBuffer == this->parameter)
+        this->unk1C_0 = 1;
+    else
+        this->unk1C_0 = 0;
+    this->unk50 = gUnknown_03006A30[this->parameter].unk28->unk50;
+    sub_0803CC20(this);
+    d = (sub_08003F4C(this, gUnknown_03006A30[this->parameter].unk28) - this->direction) & 31;
+    if (d > 15)
+        this->direction--;
+    else
+        this->direction++;
+    this->direction = this->direction & 31;
+    if (gUnknown_03006A30[this->parameter].unk28->unk23 != 170 && (u8)(this->unk41 & 0x80))
+    {
+        switch ((u8)(this->unk41 & 0x7F))
+        {
+        case 0:
+        case 4:
+            this->unk14++;
+            this->unk1C_0 = 1;
+            this->parameter = this->unk4C->form;
+            this->unk3C = 0;
+            BITU16_AT(this, 0x64) = 120;
+            play_sound(95);
+            sub_0800D6A4(0x103);
+            break;
+        default:
+            break;
+        }
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0805AC94.inc\"");
 
 void sub_0805AD20(struct Entity *this)
