@@ -881,7 +881,48 @@ void sub_0800EBD4(struct Struct0800EE2C *p)
     sub_0800EC08(p->unk8[3], p->unkD8[3]);
 }
 
-asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EC08.inc\"");
+
+extern u32 gUnknown_0202E150;
+
+// Writes n (clamped to 9999999) as decimal ASCII into s; returns the digit count
+u32 sub_0800EC08(u32 n, u8 *s)
+{
+    if (n > 999999) {
+        if (n > 9999999)
+            n = 9999999;
+        gUnknown_0202E150 = 7;
+    } else if (n > 99999) {
+        gUnknown_0202E150 = 6;
+    } else if (n > 9999) {
+        gUnknown_0202E150 = 5;
+    } else if (n > 999) {
+        gUnknown_0202E150 = 4;
+    } else if (n > 99) {
+        gUnknown_0202E150 = 3;
+    } else if (n > 9) {
+        gUnknown_0202E150 = 2;
+    } else {
+        gUnknown_0202E150 = 1;
+    }
+    switch (gUnknown_0202E150) {
+    case 7:
+        *s++ = (n % 10000000) / 1000000 | '0';
+    case 6:
+        *s++ = (n % 1000000) / 100000 | '0';
+    case 5:
+        *s++ = (n % 100000) / 10000 | '0';
+    case 4:
+        *s++ = (n % 10000) / 1000 | '0';
+    case 3:
+        *s++ = (n % 1000) / 100 | '0';
+    case 2:
+        *s++ = (n % 100) / 10 | '0';
+    }
+    s[0] = n % 10 | '0';
+    s[1] = 0;
+    return gUnknown_0202E150;
+}
+
 
 u32 sub_0800ED7C(struct Struct0800EE2C *p, u16 id)
 {

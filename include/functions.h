@@ -197,7 +197,7 @@ void sub_0800E69C(u32);
 void sub_0800EB08(u32);
 //sub_0800EB50();
 void sub_0800EBD4(struct Struct0800EE2C *);
-void sub_0800EC08(u32, u8 *);
+u32 sub_0800EC08(u32, u8 *);
 u32 sub_0800ED7C(struct Struct0800EE2C *, u16);
 u32 sub_0800EDB8(struct Struct0800EE2C *, u8 *);
 //sub_0800EDE4();
