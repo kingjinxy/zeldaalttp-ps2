@@ -1001,7 +1001,7 @@ extern struct Mask0202E158 gUnknown_0202E158;
 extern u32 gUnknown_0202E160[32];
 u8 sub_0800F190(u32);
 s32 sub_0800B830(s32);
-void sub_0800F0A0(struct Struct0800EE2C *, const u32 *);
+void sub_0800F0A0(struct Struct0800EE2C *, const void *);
 
 // Draws an 8x8 4bpp glyph at the reader's pixel column unk3: trims empty nibble columns (sub_0800F190),
 // shifts it into place and splits it across two tiles when it crosses a tile edge
@@ -1065,8 +1065,9 @@ extern const u8 *const gUnknown_08427474[];
 
 // Blits an 8x16 4bpp glyph (16 rows of 4 bytes) into the reader's buffer at pixel column unk3, mapping
 // each nibble through colour table unk4 (low nibbles at [0..15], high at [16..31])
-void sub_0800F0A0(struct Struct0800EE2C *p, const u8 *src)
+void sub_0800F0A0(struct Struct0800EE2C *p, const void *glyph)
 {
+    const u8 *src = glyph;
     const u8 *map = gUnknown_08427474[(u8)p->unk4];
     u8 *dst = (u8 *)p->unk8[0] + (p->unk3 >> 3) * 64;
     u8 off = p->unk3 & 7;
