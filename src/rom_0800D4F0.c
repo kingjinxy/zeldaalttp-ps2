@@ -434,7 +434,28 @@ void sub_0800E5EC(s8 n, u16 *p)
 }
 
 // Fills one 19-tile row for file n: tiles b, b+2, ... with high bytes from its name, or blank (15)
-asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E63C.inc\"");
+
+struct View0202A5E0 { u8 pad[100]; u8 names[4][28]; u8 unkD4[4]; };
+
+void sub_0800E63C(u16 *p, u8 n)
+{
+    s32 count = 19;
+    u16 b = ((struct View0202A5E0 *)&gUnknown_0202A5E0)->unkD4[n];
+    u8 j;
+
+    if (b == 0) {
+        do
+            *p++ = 15;
+        while (--count != 0);
+    } else {
+        j = 0;
+        do {
+            *p++ = (((struct View0202A5E0 *)&gUnknown_0202A5E0)->names[n][j++] << 8) | b;
+            b += 2;
+        } while (--count != 0);
+    }
+}
+
 
 
 void sub_0800E69C(u32 a)
