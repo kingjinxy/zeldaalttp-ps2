@@ -10344,7 +10344,40 @@ void sub_0805AED4(struct Entity *this)
 }
 
 
-asm(".include \"asm/non_matching/fs_game/sub_0805B01C.inc\"");
+
+void sub_0805B01C(struct Entity *this)
+{
+    u16 v;
+    struct MapDataB *m;
+
+    v = sub_08009308(this);
+    if (v != 0x4002)
+    {
+        switch (v)
+        {
+        case 0x400F:
+        case 0x4010:
+        case 0x4011:
+        case 0x4012:
+            this->direction = (v - 15) << 3;
+            this->unk2A = v - 15;
+            if (!sub_08003748(this, gUnknown_08003566, (u16)(this->x.HALF_U.HI + gUnknown_0842905C[(u8)(this->direction >> 2)]),
+                              (u16)(this->y.HALF_U.HI + gUnknown_0842905C[(u8)(this->direction >> 2) + 1])))
+            {
+                sub_08014658(BITU16_AT(this, 0x64), (u16)(((this->x.HALF.HI - gUnknown_03000450.unk18) >> 4) | ((this->y.HALF.HI - gUnknown_03000450.unk1A) >> 4 << 6)), this->unk50);
+                this->unk14++;
+                play_sound(21);
+            }
+            else
+            {
+                m = (struct MapDataB *)sub_08015DC0(this->unk50);
+                m->unk4[((this->x.HALF.HI - gUnknown_03000450.unk18) >> 4) | ((this->y.HALF.HI - gUnknown_03000450.unk1A) >> 4 << 6)].v = 0x400E;
+            }
+            break;
+        }
+    }
+}
+
 
 
 void sub_0805B1CC(struct Entity *this)
