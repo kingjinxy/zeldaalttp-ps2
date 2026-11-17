@@ -3508,7 +3508,30 @@ void sub_0802C6AC(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/file_select/sub_0802C6E8.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_0802C710.inc\"");
+struct View0201ED90 { u8 pad[8]; u32 unk8, unkC, unk10; };
+
+void sub_0802C710(struct Entity *this)
+{
+    gUnknown_03006C80.unk68[this->form].v++;
+    play_sound(143);
+    switch (gUnknown_03006C80.unk68[this->form].v) {
+    case 1:
+        sub_0800D6A4(0x301);
+        ((struct View0201ED90 *)&gUnknown_0201ED90)->unk8 = this->form + 1;
+        ((struct View0201ED90 *)&gUnknown_0201ED90)->unk10 = 500;
+        break;
+    case 2:
+    case 3:
+        sub_0800D6A4(0x302);
+        ((struct View0201ED90 *)&gUnknown_0201ED90)->unk8 = this->form + 1;
+        ((struct View0201ED90 *)&gUnknown_0201ED90)->unkC = (u16)(4 - gUnknown_03006C80.unk68[this->form].v);
+        break;
+    case 4:
+        ((struct { u8 pad[36]; u16 a[4]; } *)gUnknown_03000420)->a[this->form] = 15;
+        break;
+    }
+}
+
 
 asm(".include \"asm/non_matching/file_select/sub_0802C7A8.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802C800.inc\"");
