@@ -686,7 +686,28 @@ void sub_08013C04(const u16 *p)
     }
 }
 
-asm(".include \"asm/non_matching/file_select/sub_08013C50.inc\"");
+
+// Compacts 4-byte records in [a, b): moves the last used ones (u16 0 = unused) into the gaps
+void sub_08013C50(u32 *a, u32 *b)
+{
+    u32 v;
+
+    do
+        b--;
+    while (*(u16 *)b == 0 && b > a);
+    do { /* matching: the wrapper sets the register order (skill tip T12) */
+        for (; a < b; a++) {
+            v = *(u16 *)a;
+            if (v == 0) {
+                *a = *b;
+                *b = v;
+                while (*(u16 *)b == 0 && b > a)
+                    b--;
+            }
+        }
+    } while (0);
+}
+
 asm(".include \"asm/non_matching/file_select/sub_08013C8C.inc\"");
 
 asm(".include \"asm/non_matching/file_select/sub_08013D20.inc\"");
