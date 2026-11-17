@@ -18,6 +18,7 @@ u8 sub_08003B64(struct Entity *);
 void sub_080005F0(struct Entity *);
 void DoPlayerItemEntity(struct Entity *);
 void sub_08003DFC(u8);
+void sub_08002E70(struct Entity *, s32, u8);
 void sub_08008F48(u16, u16, u16);
 void sub_08008F3C(u8, u16, u16);
 void sub_08003B94(struct Entity *);

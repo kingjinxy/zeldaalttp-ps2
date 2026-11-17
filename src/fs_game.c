@@ -9250,7 +9250,56 @@ void sub_0805BA18(struct Entity *this)
     sub_08008DD8(this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0805BA68.inc\"");
+
+void sub_0805BA68(struct Entity *this)
+{
+    struct Entity *link = gUnknown_03006A30[this->parameter].unk28;
+    u8 dir = gUnknown_08140F6C[this->form];
+    s16 x, y, d;
+
+    if (U16_AT(this, 0x76) > U16_AT(this, 0x7C))
+    {
+        x = link->x.HALF_U.HI;
+        y = link->y.HALF_U.HI;
+        sub_08002E70(link, this->speed, dir);
+        if (x != link->x.HALF.HI || y != link->y.HALF.HI)
+        {
+            switch (this->form)
+            {
+            case 0:
+                d = link->y.HALF_U.HI - y;
+                break;
+            case 1:
+                d = x - link->x.HALF_U.HI;
+                break;
+            case 2:
+                d = y - link->y.HALF_U.HI;
+                break;
+            case 3:
+                d = link->x.HALF_U.HI - x;
+                break;
+            }
+            d <<= 8;
+            this->x.WORD += gUnknown_0813E4CC[dir << 3] * d;
+            this->y.WORD -= gUnknown_0813E4CC[(dir << 3) + 64] * d;
+            sub_0805BC44(this);
+            if (U16_AT(this, 0x76) <= U16_AT(this, 0x7C))
+            {
+                sub_08003DFC(18);
+            }
+            else
+            {
+                this->unk18--;
+                if (this->unk18 == 0)
+                {
+                    this->unk18 = 8;
+                    sub_08003DFC(139);
+                }
+            }
+        }
+    }
+}
+
 
 void sub_0805BC44(struct Entity *this)
 {
