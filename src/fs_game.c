@@ -2061,7 +2061,19 @@ void sub_0803D65C(u8 a, u16 n)
 }
 
 
-asm(".include \"asm/non_matching/fs_game/sub_0803D770.inc\"");
+void sub_0803D770(struct Struct03000488 *src, struct Entity *e)
+{
+    u8 *a;
+    u8 *b;
+
+    a = (u8 *)(e->unk1F_1 * 32 + (u32)gUnknown_03005E26);
+    ObjAffineSet((struct ObjAffineSrcData *)src, a, 1, 8);
+    b = a + 0x400;  // the second OAM buffer
+    *(u16 *)b = *(u16 *)a;
+    *(u16 *)(b + 8) = *(u16 *)(a + 8);
+    *(u16 *)(b + 16) = *(u16 *)(a + 16);
+    *(u16 *)(b + 24) = *(u16 *)(a + 24);
+}
 
 
 void sub_0803D7E8(struct Entity *this, const u16 *p, u8 n)
