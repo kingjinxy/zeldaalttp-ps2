@@ -954,7 +954,69 @@ const u8 *sub_0800EE50(u16 c)
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EEA8.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EEE0.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EF14.inc\"");
+#ifdef NONMATCHING
+extern u32 gUnknown_0202E160[32];
+u8 sub_0800F190(u32);
+s32 sub_0800B830(s32);
+void sub_0800F0A0(struct Struct0800EE2C *, const u32 *);
+
+// Draws an 8x8 4bpp glyph at the reader's pixel column unk3: trims empty nibble columns (sub_0800F190),
+// shifts it into place and splits it across two tiles when it crosses a tile edge
+void sub_0800EF34(struct Struct0800EE2C *p, const u32 *glyph)
+{
+    s8 d;
+    u8 s, s2, c, mode;
+    u8 i;
+    u32 *out;
+
+    if (p->unk2 <= p->unk3)
+        return;
+    if (sub_0800F190(*glyph) == 2)
+        return;
+    d = gUnknown_0202E158.lo - (p->unk3 & 7);
+    if (d >= 0) {
+        mode = d != 0;
+    } else {
+        d = sub_0800B830(d);
+        mode = (p->unk3 & 7) + gUnknown_0202E158.n > 8 ? 3 : 2;
+    }
+    switch (mode) {
+    case 1:
+        s = (u8)d << 2;
+        out = gUnknown_0202E160;
+        for (i = 16; i != 0; i--)
+            *out++ = (*glyph++ & gUnknown_0202E158.mask) >> s;
+        glyph = gUnknown_0202E160;
+        break;
+    case 2:
+        s = (u8)d << 2;
+        out = gUnknown_0202E160;
+        for (i = 16; i != 0; i--)
+            *out++ = (*glyph++ & gUnknown_0202E158.mask) << s;
+        glyph = gUnknown_0202E160;
+        break;
+    case 3:
+        c = 8 - (p->unk3 & 7);
+        s2 = (u8)(c + gUnknown_0202E158.lo) << 2;
+        gUnknown_0202E158.n -= c;
+        s = (u8)d << 2;
+        out = gUnknown_0202E160;
+        for (i = 16; i != 0; i--) {
+            out[0] = (*glyph & gUnknown_0202E158.mask) << s;
+            out[16] = (*glyph++ & gUnknown_0202E158.mask) >> s2;
+            out++;
+        }
+        sub_0800F0A0(p, gUnknown_0202E160);
+        glyph = gUnknown_0202E160 + 16;
+        p->unk3 = (p->unk3 + 7) & ~7;
+        break;
+    }
+    sub_0800F0A0(p, glyph);
+    p->unk3 += gUnknown_0202E158.n;
+}
+#else
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EF34.inc\"");
+#endif
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800F0A0.inc\"");
 #ifdef NONMATCHING
 struct Mask0202E158 { u8 unk0; u8 lo; u8 hi; u8 n; u32 mask; };
