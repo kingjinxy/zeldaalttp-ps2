@@ -767,7 +767,21 @@ void sub_080161F8(u16 a, u8 b)
 }
 
 
-asm(".include \"asm/non_matching/file_select/sub_0801620C.inc\"");
+
+void sub_0801620C(void)
+{
+    s32 n = gUnknown_03006C80.unk1;
+
+    if (n < 0)
+        return;
+    if (n > 2)
+        return;
+    gUnknown_03000450.unk8 = 12;
+    gUnknown_030004A0.bgConfig[3].bgcnt = gUnknown_08142374[19];
+    gUnknown_030004A0.dispCnt |= 0x800;
+    sub_08008D74();
+}
+
 
 asm(".include \"asm/non_matching/file_select/sub_0801624C.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08016288.inc\"");
