@@ -1862,7 +1862,12 @@ u16 sub_0803CE38(struct Entity *this)
 }
 
 
-asm(".include \"asm/non_matching/fs_game/sub_0803CE68.inc\"");
+u8 sub_0803CE68(u16 x, u16 y)
+{
+    u16 i = ((x >> 4) & 0x3F) + (u16)(y & 0x3F0) * 4;
+
+    return gUnknown_0201F020_fs.unk4[i];
+}
 
 
 u8 sub_0803CECC(struct Entity *a, struct Entity *b)
