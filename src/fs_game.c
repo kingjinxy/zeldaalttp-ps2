@@ -1133,7 +1133,37 @@ void sub_0803A544(void)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0803A5DC.inc\"");
+
+u8 sub_0803A5DC(struct Entity *this, struct Entity *a1)
+{
+    s16 hp;
+    s8 dmg;
+
+    if (this->type == 1)
+    {
+        dmg = a1->unk44 - (u8)gUnknown_03006A30[this->form].unk3E_2 >= 1 ? a1->unk44 - (u8)gUnknown_03006A30[this->form].unk3E_2 : 1;
+        hp = sub_0802C3F0(this, -dmg);
+        sub_08003E10(this, 195);
+    }
+    else
+    {
+        hp = this->unk45 - a1->unk44;
+        if (this->type == 3)
+        {
+            if (U8_AT(this, 0x6A) != 0)
+                sub_08003E10(this, 45);
+            else
+                sub_08003E10(this, 4);
+        }
+    }
+    if (hp <= 0)
+    {
+        this->unk3C = this->unk3C & 0x7F;
+        return 0;
+    }
+    return hp;
+}
+
 
 void sub_0803A6DC(struct Entity *a, struct Entity *b)
 {

@@ -1305,7 +1305,7 @@ u8 sub_0802C2DC(u8);
 //sub_0802C39C();
 //sub_0802C3C4();
 u32 sub_0802C3E0(u8);
-//sub_0802C3F0();
+s32 sub_0802C3F0(struct Entity *, s32);
 //sub_0802C4F8();
 //sub_0802C528();
 void sub_0802C53C(struct Entity *, s32);

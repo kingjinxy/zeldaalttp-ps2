@@ -776,7 +776,8 @@ struct Struct03006A30
     u8 unk3C;
     u8 filler3D;
     u8 unk3E_0 : 2;
-    u8 unk3E_2 : 6;
+    u8 unk3E_2 : 2;
+    u8 unk3E_4 : 4;
     s8 unk3F : 8;
     u8 filler40[0x50];
 };  // size = 0x90
