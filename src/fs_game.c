@@ -10646,7 +10646,17 @@ void sub_0805A9BC(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0805AC94.inc\"");
+void sub_0805AC94(struct Entity *this)
+{
+    u32 unused;
+
+    if ((u16)--BITU16_AT(this, 0x64) == 0xFFFF)
+    {
+        this->unk50 |= 0xC000;
+        this->unk14 = 2;
+    }
+    sub_0805AD74(this);
+}
 
 void sub_0805AD20(struct Entity *this)
 {
