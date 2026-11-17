@@ -746,7 +746,7 @@ struct Struct03006A30
 {
     u8 filler0[2];
     u8 unk2 : 8;
-    u8 filler3;
+    u8 unk3;
     u8 unk4;
     u8 unk5 : 8;
     u8 filler6;

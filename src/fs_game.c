@@ -5702,7 +5702,82 @@ void sub_0804B208(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0804B300.inc\"");
+
+void sub_0804B300(struct Entity *this)
+{
+    u8 i;
+    u8 idx;
+
+    this->unk18 = 0;
+    GetNextFrame(this);
+    if (sub_08003594(this, 0x2000))
+    {
+        sub_08002E64(this);
+    }
+    else if (this->unk45 != 0)
+    {
+        if (this->unk54->unk14 <= 3)
+        {
+            this->unk3C = 0;
+            this->unk45 = 0;
+            sub_08003870(this, 10);
+            return;
+        }
+        for (i = 0; i < gUnknown_03006C80.unk0; i++)
+        {
+            if (gUnknown_03006A30[i].unk3 != 0 && sub_08003624(gUnknown_03006A30[i].unk28, this, 11, 10))
+            {
+                this->direction = (gUnknown_03006A30[i].unk28->unk2A & 6) << 2;
+                this->speed = gUnknown_03006A30[i].unk28->speed;
+                this->unk18 = this->unk18 | 1 << (gUnknown_03006A30[i].unk28->unk2A >> 1);
+                sub_08002E64(this);
+            }
+        }
+        if (this->unk18 != 0)
+        {
+            if ((u8)(this->unk18 & 10) == 10)
+            {
+                this->unk45 = 0;
+                idx = sub_08003184(gUnknown_0813F884);
+            }
+            else if ((u8)(this->unk18 & 5) == 5)
+            {
+                this->unk45 = 0;
+                idx = sub_08003184(gUnknown_0813F884);
+            }
+            else
+            {
+                for (i = 0; i <= 3; i++)
+                {
+                    if (((this->unk18 >> i) & 1) && (u16)(this->unk2C & gUnknown_0813F878[i]))
+                    {
+                        this->unk45 = 0;
+                        idx = sub_08003184(gUnknown_0813F888);
+                    }
+                }
+            }
+            if (this->unk45 == 0)
+            {
+                this->unk3C = 0;
+                sub_0804B708(this, gUnknown_0813F880[idx]);
+                sub_08003870(this, 10);
+                sub_08003DFC(0xAC);
+            }
+        }
+    }
+    else if (this->unk23 == 10)
+    {
+        if ((u8)(this->unk29 & 0x80))
+            DeleteThisEntity(this);
+    }
+    else
+    {
+        this->unk3C = 0;
+        sub_08003870(this, 10);
+        sub_08003DFC(0xAC);
+    }
+}
+
 
 void sub_0804B5FC(struct Entity *this)
 {

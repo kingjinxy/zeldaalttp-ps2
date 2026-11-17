@@ -11,6 +11,9 @@ sub_08003170: @ 0x08003170
 _08003180:
 	eors r0, r0
 	mov pc, lr
+	.global sub_08003184
+	.thumb_func
+sub_08003184:
 _08003184:
 	push {r4, lr}
 	push {r0}
