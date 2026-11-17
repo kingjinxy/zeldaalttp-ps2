@@ -796,7 +796,25 @@ asm(".include \"asm/non_matching/rom2/sub_0800C41C.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800C4E8.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800C4FC.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800C54C.inc\"");
-asm(".include \"asm/non_matching/rom2/sub_0800C658.inc\"");
+// Link packet header: two id bytes and a checksum over 12 halfwords, then 5 words of data
+struct Packet0800C658 { u8 unk0; u8 unk1; u16 sum; u32 data[5]; };
+struct Struct02030790 { u8 unk0; u8 unk1; u8 unk2; u8 unk3; u8 unk4; u8 pad5[6]; u8 unkB; u8 padC[16]; struct Packet0800C658 *unk1C; };
+extern struct Struct02030790 gUnknown_02030790;
+
+void sub_0800C658(void *data)
+{
+    s32 sum = 0;
+    u32 i;
+
+    gUnknown_02030790.unk1C->unk0 = gUnknown_02030790.unkB;
+    gUnknown_02030790.unk1C->unk1 = gUnknown_02030790.unk2 ^ gUnknown_02030790.unk3;
+    gUnknown_02030790.unk1C->sum = sum;
+    CpuSet(data, gUnknown_02030790.unk1C->data, 0x04000005);
+    for (i = 0; i < 12; i++)
+        sum += ((u16 *)gUnknown_02030790.unk1C)[i];
+    gUnknown_02030790.unk1C->sum = ~sum - 14;
+    gUnknown_02030790.unk4 = 1;
+}
 asm(".include \"asm/non_matching/rom2/sub_0800C6A8.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800C75C.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800C7E8.inc\"");
