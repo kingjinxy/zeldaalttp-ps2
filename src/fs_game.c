@@ -4629,7 +4629,44 @@ u8 sub_08048850(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/fs_game/sub_0804894C.inc\"");
-asm(".include \"asm/non_matching/fs_game/sub_080489B0.inc\"");
+
+void sub_080489B0(struct Entity *this)
+{
+    u8 flags;
+    u8 m;
+
+    flags = 0;
+    if ((u8)(this->unk78.e->unk41 & 0x80) && (u16)(this->unk78.e->unk41 - 132) <= 159)
+    {
+        flags = flags | 16;
+        if (this->unk78.e->unk1E_4 - 7 == this->unk78.e->unk4C->form)
+            flags = flags | 1;
+    }
+    if ((u8)(this->unk7C.e->unk41 & 0x80) && (u16)(this->unk7C.e->unk41 - 132) <= 159)
+    {
+        flags = flags | 32;
+        if (this->unk7C.e->unk1E_4 - 7 == this->unk7C.e->unk4C->form)
+            flags = flags | 2;
+    }
+    if (flags != 0)
+    {
+        if ((u8)(flags & 3) == 3)
+        {
+            this->unk54->unk41 |= 0xFF;
+            this->unk54->unk3D = S8_AT(this->unk78.e->unk4C, 0x46) < 0 ? -this->unk78.e->unk4C->unk46 - 16 : this->unk78.e->unk4C->unk46 + 16;
+            this->unk58->unk3D = this->unk54->unk3D;
+            m = this->unk7C.e->unk4C->unk44 >= this->unk78.e->unk4C->unk44 ? this->unk7C.e->unk4C->unk44 : this->unk78.e->unk4C->unk44;
+            if (this->unk54->unk45 > m)
+                this->unk54->unk45 = this->unk54->unk45 - m;
+            else
+                this->unk54->unk45 = 0;
+            this->unk3E = 0;
+            sub_0804469C(this, this->unk74.b.unk74++, 0, 8);
+            sub_08003DFC(45);
+        }
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_08048BF4.inc\"");
 
 void sub_08048F70(struct Entity *this)
