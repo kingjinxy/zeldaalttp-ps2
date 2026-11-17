@@ -9397,7 +9397,20 @@ void sub_08056C80(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08056D40.inc\"");
+void sub_08056D40(struct Entity *this)
+{
+    s16 vofs = gUnknown_030004A0.bgConfig[0].vofs;
+
+    this->unk14 = 1;
+    if (gSubState == 4)
+    {
+        if (vofs < -112)
+            vofs += 8;
+    }
+    else if (vofs > -160)
+        vofs -= 8;
+    BITU16_AT(&gUnknown_030004A0, 0xC) = vofs;
+}
 
 void sub_08056DCC(struct Entity *this, u8 b)
 {
