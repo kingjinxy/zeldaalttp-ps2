@@ -68,6 +68,9 @@ player, linked in memory instead of by cable, each drawn into its own part of th
 - [ ] Track `NONMATCHING` functions here
 
 ## Phase 3: PC host (risk removal before the PS2)
+- Licence note (2026-11-17): FourSwordsRecomp and its engine GBARecomp (github.com/mstan/gbarecomp) are both
+  PolyForm Noncommercial 1.0.0. Their code is not copied into this port; their design docs are a reference
+  for the instance timeline, the link hub (DESIGN.md §9), booting straight into Four Swords (§2) and saves.
 - [ ] `PLATFORM_PC` build with GCC: hardware addresses (`REG_*`, VRAM, OAM, palette) through macros onto
       arrays; fixed-address RAM symbols become a struct per instance.
 - [ ] GBA layer: software PPU, timers, DMA, IRQ/VBlank, keypad, EEPROM, m4a output (SDL)
