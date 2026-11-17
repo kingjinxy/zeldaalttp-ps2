@@ -1562,7 +1562,27 @@ void sub_0801DCB8(struct Entity *this)
     sub_080098A0(this, gUnknown_0813AACC);
 }
 
-asm(".include \"asm/non_matching/file_select/sub_0801DCC8.inc\"");
+
+extern const u8 gUnknown_0813AC70[];
+struct Entity *sub_0804411C(struct Entity *, u8, u8);
+
+void sub_0801DCC8(struct Entity *this)
+{
+    struct Entity *e = sub_0804411C(this, 6, 0);
+
+    if (e != NULL) {
+        e->unk54 = this;
+        this->unk58 = e;
+        this->unk1C_0 = 1;
+        this->unk2E = 5;
+        this->unk3C |= 0x80;
+        this->unk48 = gUnknown_0813AC70;
+        sub_0801DF24(this);
+        this->unk2A = 0xFF;
+        this->direction = sub_0800099C() & 24;
+    }
+}
+
 asm(".include \"asm/non_matching/file_select/sub_0801DD28.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801DDA0.inc\"");
 

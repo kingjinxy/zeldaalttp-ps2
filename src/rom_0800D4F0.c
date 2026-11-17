@@ -415,7 +415,10 @@ void sub_0800E5EC(s8 n, u16 *p)
         p[21] = 104;
     }
 }
+
+// Fills one 19-tile row for file n: tiles b, b+2, ... with high bytes from its name, or blank (15)
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E63C.inc\"");
+
 
 void sub_0800E69C(u32 a)
 {
