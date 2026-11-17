@@ -8562,7 +8562,21 @@ u8 sub_08054974(struct Entity *this)
 }
 
 
-asm(".include \"asm/non_matching/fs_game/sub_08054A38.inc\"");
+// Entity kinds that keep 12 u16s at 0x60
+struct EntityU16x12 {
+    u8 filler0[0x50];
+    u16 unk50 : 16;
+    u8 filler52[0xE];
+    u16 unk60[12];
+};
+
+void sub_08054A38(struct Entity *this)
+{
+    u8 i;
+
+    for (i = 0; i <= 11; i++)
+        sub_08014658(0x10D, ((struct EntityU16x12 *)this)->unk60[i], this->unk50);
+}
 
 
 void sub_08054A8C(struct Entity *this)
