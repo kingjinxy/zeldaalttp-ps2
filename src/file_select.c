@@ -607,6 +607,7 @@ asm(".include \"asm/non_matching/file_select/sub_08013490.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080136D4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08013754.inc\"");
 
+
 void sub_080137DC(void)
 {
     u16 i;
@@ -712,7 +713,9 @@ asm(".include \"asm/non_matching/file_select/sub_08013C8C.inc\"");
 
 asm(".include \"asm/non_matching/file_select/sub_08013D20.inc\"");
 
+
 asm(".include \"asm/non_matching/file_select/sub_08013D54.inc\"");
+
 
 void sub_08013DE0(void)
 {
@@ -2264,7 +2267,31 @@ void sub_08025E24(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/file_select/sub_08025E54.inc\"");
+
+void sub_08025E54(struct Entity *this)
+{
+    u16 x0, y0;
+
+    if (this->speed <= 0x7FF)
+        this->speed += 32;
+    x0 = this->x.HALF.HI;
+    y0 = this->y.HALF.HI;
+    this->direction = ((this->unk54->unk2A << 3) - 8) & 24;
+    sub_0802614C(this);
+    if ((u16)(this->x.HALF.HI - x0 + 8) <= 16) {
+        this->x.HALF.HI = x0;
+        this->y.HALF.HI = y0;
+        this->unk14 = 6;
+        this->unk17 = 32;
+        this->unk54->unk18 |= 0x80;
+    } else {
+        this->direction = sub_08003F54(x0, y0, this->x.HALF.HI, this->y.HALF.HI);
+        this->x.HALF.HI = x0;
+        this->y.HALF.HI = y0;
+        sub_0803CC20(this);
+    }
+}
+
 
 void sub_08025EE0(struct Entity *this)
 {

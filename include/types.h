@@ -807,7 +807,8 @@ struct Struct0202A580
     u16 unk4;
     u8 unk6;
     u8 unk7;
-    u32 unk8;
+    u16 unk8;
+    u16 unkA;
 };  // 8 of them, cleared by sub_080137DC
 
 struct Struct03000450

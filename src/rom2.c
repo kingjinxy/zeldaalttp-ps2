@@ -798,7 +798,14 @@ asm(".include \"asm/non_matching/rom2/sub_0800C4FC.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800C54C.inc\"");
 // Link packet header: two id bytes and a checksum over 12 halfwords, then 5 words of data
 struct Packet0800C658 { u8 unk0; u8 unk1; u16 sum; u32 data[5]; };
-struct Struct02030790 { u8 unk0; u8 unk1; u8 unk2; u8 unk3; u8 unk4; u8 pad5[6]; u8 unkB; u8 padC[16]; struct Packet0800C658 *unk1C; };
+struct Struct02030790 {
+    u8 unk0, unk1, unk2, unk3, unk4, unk5, unk6, unk7, unk8, unk9, unkA, unkB;
+    u8 padC[8];
+    u32 unk14;
+    s32 unk18;
+    struct Packet0800C658 *unk1C, *unk20;  // swapped by sub_0800C75C
+    u32 unk24, unk28;  // swapped by sub_0800C75C
+};
 extern struct Struct02030790 gUnknown_02030790;
 
 void sub_0800C658(void *data)
@@ -817,6 +824,7 @@ void sub_0800C658(void *data)
 }
 asm(".include \"asm/non_matching/rom2/sub_0800C6A8.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800C75C.inc\"");
+
 asm(".include \"asm/non_matching/rom2/sub_0800C7E8.inc\"");
 
 extern u8 *(*const gUnknown_084273C8[])(u8 *);

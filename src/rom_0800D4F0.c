@@ -160,7 +160,7 @@ int sub_0800D890(void)
     return 0;
 }
 
-extern void sub_0800EB50(void *, u8);
+extern void sub_0800EB50(u8 *, u32);
 
 int sub_0800D894(void)
 {
@@ -402,6 +402,7 @@ void sub_0800E39C(struct Struct0800EE2C *p)
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E3B0.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E430.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E4EC.inc\"");
+
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E570.inc\"");
 // Draws an n-row frame top into tilemap p (rows go up by 32 tiles)
 void sub_0800E5EC(s8 n, u16 *p)
@@ -462,8 +463,8 @@ void sub_0800EB08(u32 n)
         break;
     }
 }
-
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EB50.inc\"");
+
 
 void sub_0800EBD4(struct Struct0800EE2C *p)
 {
