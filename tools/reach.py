@@ -20,6 +20,7 @@ ap.add_argument("--cut", nargs="*", default=["0x0800B69C"])
 ap.add_argument("--why", help="print the chain of edges from boot to this function")
 ap.add_argument("--coverage", action="append", default=[], help="mgba_run --coverage bitmap(s): report executed functions")
 ap.add_argument("--list-executed", help="with --coverage: write executed functions (addr name file size) here")
+ap.add_argument("--packed", help="tools/lz77_scan.py output: compressed ranges, whose words are never pointers")
 ap.add_argument("--list", help="write reachable functions (addr name file size) here")
 ap.add_argument("--classify", help="write every function (addr name file size class executed) here; class from "
                 "two walks, cutting the A Link to the Past (mode 13) or the Four Swords (mode 9) handler")
@@ -97,9 +98,17 @@ for a in starts:
         c = classify(w)
         if c and c != ("f", a):
             edges[("f", a)].add(c)
+packed = bytearray(0x800000 // 4)  # per ROM word: 1 = inside an LZ77 stream
+if args.packed:
+    for line in open(args.packed):
+        if line[0] != "#":
+            a, b = (int(x, 16) - ROM_BASE for x in line.split()[:2])
+            packed[a // 4:(b + 3) // 4] = b"\1" * ((b + 3) // 4 - a // 4)
 for s in data_starts:
     _, e = data_obj(s)
     for p in range(s & ~3, min(e, s + 0x100000) - 3, 4):
+        if packed[(p - ROM_BASE) // 4]:
+            continue
         c = classify(word(p))
         if c and c != ("d", s):
             edges[("d", s)].add(c)
