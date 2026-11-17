@@ -668,8 +668,8 @@ struct EntityBox {
 
 struct Struct03000488
 {
-    u16 unk0 : 16;
-    u16 unk2 : 16;
+    s16 unk0 : 16;  // signed scales, as ObjAffineSrcData (sub_0805C1F4's chained store needs it)
+    s16 unk2 : 16;
     u16 unk4 : 16;
 };
 

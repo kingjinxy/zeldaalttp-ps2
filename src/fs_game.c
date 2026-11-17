@@ -11278,7 +11278,26 @@ void sub_0805C0F0(struct Entity *this)
 }
 
 
-asm(".include \"asm/non_matching/fs_game/sub_0805C1F4.inc\"");
+void sub_0805C1F4(struct Entity *this)
+{
+    if (this->form == 0)
+        sub_080037EC(this, 3);
+    else
+        GetNextFrame(this);
+    if (this->unk17 != 0)
+    {
+        gUnknown_03000488.unk0 = gUnknown_03000488.unk2 = this->unk17 + 0x100;
+        gUnknown_03000488.unk4 = 0;
+        sub_0803D770(&gUnknown_03000488, this);
+        this->z.HALF_U.HI = (u8)(this->unk17 >> 4);
+        this->unk17 -= 4;
+    }
+    else
+    {
+        this->unk14++;
+        this->unk17 = 90;
+    }
+}
 
 
 void sub_0805C2D8(struct Entity *this)
