@@ -1207,7 +1207,35 @@ void sub_0803A030(void)
 }
 
 
+#ifdef NONMATCHING
+void sub_0803A20C(void)
+{
+    u32 song = -1;
+
+    if (gUnknown_03006C80.unk6E > 1)
+        return;
+    if (gUnknown_03006C80.unk5 != 0)
+        return;
+    if (gUnknown_03006C80.unk26 == 0x1A1)
+        return;
+    song = gUnknown_08427C14[gUnknown_03006C80.unk7];
+    if (gUnknown_03006C80.unk24 != 0)
+        song = 0x1A9;
+    if (gUnknown_03006C80.unk51 != 0)
+        song = 0x1AA;
+    if ((u32)gUnknown_03006C80.unk26 != (u16)song)
+    {
+        if (gUnknown_03006C80.unk26 != 0xFFFF)
+            play_sound(0x80080000);
+        else
+            song = (u16)song;
+        gUnknown_03006C80.unk26 = song;
+        play_sound(song);
+    }
+}
+#else
 asm(".include \"asm/non_matching/fs_game/sub_0803A20C.inc\"");
+#endif
 
 
 void sub_0803A2E8(void)
@@ -1942,7 +1970,23 @@ u8 sub_0803D010(struct Entity *this)
 }
 
 
+#ifdef NONMATCHING
+u8 sub_0803D134(struct Entity *this)
+{
+    u8 d;
+
+    if (gUnknown_03006A30[this->form].unkD == 0xFF)
+        return this->unk2A;
+    d = (gUnknown_03006A30[this->form].unkD & 0x1C) >> 2;
+    if ((d & 1) && !((d - (u32)(this->unk2A - 1)) & 4))
+        return this->unk2A;
+    this->unk1C_2 = d > 4;
+    this->unk2A = d & 6;
+    return this->unk2A;
+}
+#else
 asm(".include \"asm/non_matching/fs_game/sub_0803D134.inc\"");
+#endif
 
 
 u8 sub_0803D224(struct Entity *this)
@@ -10492,7 +10536,50 @@ void sub_08059AA8(struct Entity *this)
 
 
 
+#ifdef NONMATCHING
+void sub_08059BD0(struct Entity *this)
+{
+    if (this->unk54 != NULL)
+    {
+        this->x.HALF_U.HI = this->unk54->x.HALF_U.HI - gUnknown_03000450.unk20;
+        this->y.HALF_U.HI = this->unk54->y.HALF_U.HI - gUnknown_03000450.unk22;
+    }
+    else
+    {
+        this->x.HALF_U.HI = 120;
+        this->y.HALF_U.HI = 80;
+    }
+    if (S16_AT(this, 0x7E) < 0)
+    {
+        sub_0800CE74(this->x.HALF.HI, this->y.HALF.HI, 0, 0);
+        gUnknown_0202E1E4 = 1;
+        DeleteThisEntity(this);
+        return;
+    }
+    if (S16_AT(this, 0x7E) > 500)
+    {
+        sub_0800CE74(this->x.HALF.HI, this->y.HALF.HI, 500, 0);
+        gUnknown_0202E1E4 = 1;
+        DeleteThisEntity(this);
+        return;
+    }
+    BITU16_AT(this, 0x7E) = U16_AT(this, 0x7E) + S8_AT(this, 0x7D);
+    BITU8_AT(this, 0x7D) = U8_AT(this, 0x7D) + U8_AT(this, 0x7C);
+    if (S8_AT(this, 0x7D) > 16)
+        BITU8_AT(this, 0x7D) = 16;
+    if (S8_AT(this, 0x7D) < -16)
+        BITU8_AT(this, 0x7D) = 240;
+    BITU8_AT(this, 0x7B) = (U8_AT(this, 0x7B) + U8_AT(this, 0x7A)) & ~0;
+    BITU8_AT(this, 0x7A) = U8_AT(this, 0x7A) + U8_AT(this, 0x79);
+    if (S8_AT(this, 0x7A) > 16)
+        BITU8_AT(this, 0x7A) = 16;
+    if (S8_AT(this, 0x7A) < -16)
+        BITU8_AT(this, 0x7A) = 240;
+    sub_0800CE74(this->x.HALF.HI, this->y.HALF.HI, S16_AT(this, 0x7E), U8_AT(this, 0x7B));
+}
+#else
 asm(".include \"asm/non_matching/fs_game/sub_08059BD0.inc\"");
+#endif
 
 
 
@@ -12539,7 +12626,18 @@ void sub_080603C4(struct Entity *this)
 }
 
 
+#ifdef NONMATCHING
+// Sets the 2x2 tiles under the entity to tiles n..n+3
+void sub_0806041C(struct Entity *this, u16 n)
+{
+    sub_08014658(n, (this->x.HALF.HI - (gUnknown_03000450.unk18 + 16)) >> 4 | ((this->y.HALF.HI - (gUnknown_03000450.unk1A + 16)) >> 4) * 64, 0x8000);
+    sub_08014658(n + 1, (this->x.HALF.HI - gUnknown_03000450.unk18) >> 4 | ((this->y.HALF.HI - (gUnknown_03000450.unk1A + 16)) >> 4) * 64, 0x8000);
+    sub_08014658(n + 2, (this->x.HALF.HI - (gUnknown_03000450.unk18 + 16)) >> 4 | ((this->y.HALF.HI - gUnknown_03000450.unk1A) >> 4) * 64, 0x8000);
+    sub_08014658(n + 3, (this->x.HALF.HI - gUnknown_03000450.unk18) >> 4 | ((this->y.HALF.HI - gUnknown_03000450.unk1A) >> 4) * 64, 0x8000);
+}
+#else
 asm(".include \"asm/non_matching/fs_game/sub_0806041C.inc\"");
+#endif
 
 
 void sub_08060538(struct Entity *this)

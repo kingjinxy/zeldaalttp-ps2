@@ -788,7 +788,44 @@ void sub_0800C190(struct Struct03000520 *a)
 // Functions not decompiled yet are in asm/non_matching/rom2/, one .inc each (tools/asm_split.py from asm/rom2.s).
 
 asm(".INCLUDE \"macro.inc\"");
+#ifdef NONMATCHING
+extern u32 gUnknown_0201EDE0;
+
+// Fades the palettes picked by gUnknown_03000520.unkC from gPaletteBuf2 into gPaletteBuf1, weight k/256
+void sub_0800C1EC(u32 k)
+{
+    u16 *src = gPaletteBuf2;
+    u16 *dst = gPaletteBuf1;
+    u32 c = gUnknown_03000520.unk7 << 3;
+    u8 i = 0;
+    u32 mask = gUnknown_03000520.unkC;
+    u32 base = k * c;
+    u8 j;
+    u32 col, r, g, b;
+
+    do {
+        if (mask & (1 << i)) {
+            gUnknown_0201EDE0 |= 1 << i;
+            for (j = 16; j != 0; j--) {
+                col = *src;
+                r = (col & 31) << 3;
+                col >>= 5;
+                g = (col & 31) << 3;
+                col >>= 5;
+                b = (col & 31) << 3;
+                *dst = ((r * (256 - k) + base) >> 11) | (((g * (256 - k) + base) >> 11) << 5) | (((b * (256 - k) + base) >> 11) << 10);
+                src++;
+                dst++;
+            }
+        } else {
+            src += 16;
+            dst += 16;
+        }
+    } while (++i <= 31);
+}
+#else
 asm(".include \"asm/non_matching/rom2/sub_0800C1EC.inc\"");
+#endif
 
 asm(".include \"asm/non_matching/rom2/sub_0800C2B8.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800C328.inc\"");
@@ -810,7 +847,63 @@ struct Struct02030790 {
 extern struct Struct02030790 gUnknown_02030790;
 
 u8 sub_0800C6A8(u8 *);
+#ifdef NONMATCHING
+extern struct Struct02030790 gUnknown_02030790;
+
+u8 sub_0800C6A8(u8 *);
+
+// Link cable state machine; returns the status word (received mask, connection bits)
+u32 sub_0800C54C(u8 *dst)
+{
+    u32 siocnt = *(vu32 *)REG_ADDR_SIOCNT;
+    struct Struct02030790 *g = &gUnknown_02030790;
+    u32 r, s;
+
+    switch (g->unk1) {
+    case 0:
+        if (g->unk18 == 13) {
+            if ((siocnt & 0x88) != 8)
+                goto end;
+            if ((u8)(siocnt & 4) == 0) {
+                REG_IME = 0;
+                REG_IE &= ~0x80;
+                REG_IE |= 0x40;
+                REG_IME = 1;
+                ((vu8 *)REG_ADDR_SIOCNT)[1] &= ~0x40;
+                *(vu32 *)REG_ADDR_TM3CNT = 0xB72F;
+                REG_IF = 0xC0;
+                g->unk0 = siocnt & 0x88;
+            }
+        }
+        g->unk1 = 1;
+    case 1:
+        if (gUnknown_02030790.unk2 != 0) {
+            if (gUnknown_02030790.unk8 <= 7)
+                gUnknown_02030790.unk8++;
+            else
+                gUnknown_02030790.unk1 = 2;
+        }
+    case 2:
+        sub_0800C6A8(dst);
+    }
+end:
+    gUnknown_02030790.unkB++;
+    s = gUnknown_02030790.unk3;
+    r = gUnknown_02030790.unk2 << 8;
+    if (gUnknown_02030790.unk0 == 8)
+        r = 0x80 | r | s;
+    else
+        r = s | r;
+    if (gUnknown_02030790.unk7 != 0)
+        r |= 0x1000;
+    s = (gUnknown_02030790.unk8 >> 3) << 15;
+    if (((siocnt << 26) >> 30) > 3)
+        return 0x2000 | s | r;
+    return r | s;
+}
+#else
 asm(".include \"asm/non_matching/rom2/sub_0800C54C.inc\"");
+#endif
 
 
 void sub_0800C658(void *data)
@@ -827,9 +920,72 @@ void sub_0800C658(void *data)
     gUnknown_02030790.unk1C->sum = ~sum - 14;
     gUnknown_02030790.unk4 = 1;
 }
-asm(".include \"asm/non_matching/rom2/sub_0800C6A8.inc\"");
+#ifdef NONMATCHING
+extern u8 gUnknown_02030950[];  // code copied to EWRAM
 
+u8 sub_0800C6A8(u8 *dst)
+{
+    vu32 unused = 0;
+    u32 zero;
+    u8 *pkt;
+    s32 i;
+    u32 j;
+    s32 sum;
+    u8 ok = ((u8 (*)(void))gUnknown_02030950)();
+
+    gUnknown_02030790.unk3 = 0;
+    if (ok) {
+        for (i = 0; i <= 3; i++) {
+            pkt = gUnknown_02030790.unk2C + i * 28;
+            sum = 0;
+            for (j = 0; j <= 11; j++)
+                sum += ((u16 *)pkt)[j];
+            if ((s16)sum == -15) {
+                CpuSet(pkt + 4, dst + i * 20, 0x04000005);
+                gUnknown_02030790.unk3 |= 1 << i;
+            }
+            zero = 0;
+            CpuSet(&zero, pkt + 4, 0x05000005);
+        }
+    }
+    gUnknown_02030790.unk2 |= gUnknown_02030790.unk3;
+    return gUnknown_02030790.unk3;
+}
+#else
+asm(".include \"asm/non_matching/rom2/sub_0800C6A8.inc\"");
+#endif
+
+#ifdef NONMATCHING
+void sub_0800C75C(void)
+{
+    struct Struct02030790 *g = &gUnknown_02030790;
+    u32 t;
+
+    if (g->unk0 != 0) {
+        if (g->unk4 != 0 && g->unk1 != 0 && g->unk6 != 0) {
+            g->unk18 = -1;
+            t = g->unk28; g->unk28 = g->unk24; g->unk24 = t;
+            {
+                struct Packet0800C658 *q = g->unk20; g->unk20 = g->unk1C; g->unk1C = q;
+            }
+            g->unk4 = 0;
+            g->unk14 = 0;
+            g->unk7 = (*(vu32 *)REG_ADDR_SIOCNT << 25) >> 31;
+            *(vu16 *)(REG_ADDR_SIOCNT + 2) = 0xFEFE;
+            REG_SIOCNT |= 0x80;
+            REG_TM3CNT_H = 0xC0;
+        }
+    } else if (g->unk9 <= 3) {
+        g->unk9++;
+    } else {
+        REG_IME = g->unk0;
+        gUnknown_03007FF8 |= 0x80;
+        REG_IME = 1;
+    }
+}
+#else
 asm(".include \"asm/non_matching/rom2/sub_0800C75C.inc\"");
+#endif
 
 asm(".include \"asm/non_matching/rom2/sub_0800C7E8.inc\"");
 

@@ -4,6 +4,17 @@
 
 #include "sounds.h"
 
+#ifdef NONMATCHING
+// Declarations the NONMATCHING functions below share
+extern u8 gUnknown_0200B314;
+extern u8 gUnknown_02000430[];
+extern const u8 gUnknown_0813AAFC[];
+extern const u8 gUnknown_0813AB00[];
+extern const s8 gUnknown_0813D0D4[];
+extern const u8 gUnknown_084296C0[];
+extern const struct U32x3 gUnknown_084296F0[];
+#endif
+
 void (*const gUnknown_0842748C[])(void) =
 {
     sub_0800F9AC,
@@ -533,9 +544,91 @@ void sub_0801276C(u8 i)
 asm(".include \"asm/non_matching/file_select/sub_080127A8.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080127D4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08012800.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_08012824.inc\"");
+#ifdef NONMATCHING
+// Creates player n's entity at tile (tx, ty)
+void sub_08012824(u8 n, u8 tx, u8 ty)
+{
+    struct Entity *e = sub_080123E8();
 
+    if (e != NULL) {
+        e->type = 1;
+        e->subtype = 0;
+        e->form = n;
+        e->unk1F_6 = 2;
+        e->unk20 = n << 5;
+        e->unk3C = n | 0x80;
+        e->unk46 = 2;
+        e->unk1E_0 = n + 7;
+        e->unk1E_4 = n + 7;
+        e->unk1D_6 = 2;
+        e->x.HALF.HI = tx * 16 + 8;
+        e->y.HALF.HI = ty * 16 + 8;
+        e->unk2A = 4;
+        e->unk45 = gUnknown_03006C80.unk60[n].v;
+        sub_08012728(1, e);
+        gUnknown_03006A30[n].unk28 = e;
+    }
+}
+#else
+asm(".include \"asm/non_matching/file_select/sub_08012824.inc\"");
+#endif
+
+#ifdef NONMATCHING
+extern const u8 gUnknown_0842B8E4[];
+extern u8 gUnknown_03006D04[];
+void sub_08012824(u8, u8, u8);
+
+// Picks the players' start tiles (fixed, from the room's list, or its default, shuffled) and creates them
+void sub_080128EC(u8 *room)
+{
+    u8 pos[8];
+    const u8 *src;
+    u32 i, j;
+    u8 t;
+    u8 *p;
+    u8 n;
+
+    if (gUnknown_03006C80.unk2 != 0 && (gUnknown_03006C80.unk4F & 32)) {
+        src = gUnknown_0842B8E4 + (gUnknown_03006C80.unk4F & 15) * 8;
+        for (i = 0; i <= 7; i++)
+            pos[i] = *src++;
+        gUnknown_0201F000[0] |= 1;
+    } else {
+        src = *(const u8 **)(*(u8 **)(room + 20) + 24);
+        if (src != NULL) {
+            n = *src++;
+            src += (sub_0800099C() % n) * 8;
+        } else {
+            src = room + 12;
+        }
+        for (i = 0; i <= 7; i++)
+            pos[i] = *src++;
+        if (gUnknown_03006C80.unk2 == 0) {
+            p = &pos[6];
+            for (i = 3; i != 0; i--) {
+                j = sub_0800099C() % i;
+                t = p[0];
+                p[0] = pos[j * 2];
+                pos[j * 2] = t;
+                t = p[1];
+                p[1] = pos[j * 2 + 1];
+                pos[j * 2 + 1] = t;
+                p -= 2;
+            }
+        }
+    }
+    p = pos;
+    for (i = 0; i < gUnknown_03006C80.unk0; i++) {
+        sub_08012824(i, p[0], p[1]);
+        gUnknown_03006A30[i].unk28->unk45 = gUnknown_03006C80.unk60[i].v;
+        p += 2;
+    }
+    CpuSet(pos, gUnknown_03006D04, 4);
+    gUnknown_03000450.unk0 = gUnknown_03006A30[gLCDRegisterBuffer].unk28;
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_080128EC.inc\"");
+#endif
 
 u32 sub_08012A24(const u16 *p, u16 key)
 {
@@ -562,7 +655,19 @@ void sub_08012A50(u16 a, u16 b)
         sub_08008F78((sub_0800099C() & 1) ? s : 32, b, 0x4000);
 }
 
+#ifdef NONMATCHING
+void sub_08012A94(u16 a, u16 b)
+{
+    if (gUnknown_03006C80.unk1 == 3) {
+        if ((u16)(a - 189) <= 1)
+            sub_08008F78((sub_0800099C() & 0xFF) > 126 ? 177 : 187, b, 0x4000);
+        else if (a == 203 || a == 190)
+            sub_08008F78((sub_0800099C() & 0xFF) > 126 ? 191 : 201, b, 0x8000);
+    }
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_08012A94.inc\"");
+#endif
 
 void sub_08012B04(u16 a, u16 b)
 {
@@ -582,7 +687,33 @@ void sub_08012B44(u8 room)
         f(room);
 }
 
+#ifdef NONMATCHING
+void sub_08012B64(u8 k)
+{
+    u8 *p;
+    u8 i;
+    u32 n = 0;
+    u8 key = k << 5;
+
+    for (i = 0, p = (u8 *)gUnknown_02016350; i < 32; i++, p += 4)
+        if ((p[2] & 0xE0) == key && (p[2] & 31) == 7)
+            n++;
+    n = sub_0800099C() % n;
+    for (i = 0, p = (u8 *)gUnknown_02016350; i < 32; i++, p += 4) {
+        if ((p[2] & 0xE0) == key && (p[2] & 31) == 7) {
+            if (n == 0) {
+                p[2] &= 0xE0;
+                p[3] = 16;
+            } else {
+                p[2] = (p[2] & 0xE0) | 1;
+            }
+            n--;
+        }
+    }
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_08012B64.inc\"");
+#endif
 asm(".include \"asm/non_matching/file_select/sub_08012BE4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08012EB4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08012F20.inc\"");
@@ -629,17 +760,116 @@ void sub_08012FA8(void)
         CpuSet(&zero, gUnknown_020309E0, 0x05000020);
     }
 }
+#ifdef NONMATCHING
+void sub_0801303C(const u8 *src, const u8 *offs, u8 k)
+{
+    u8 *rec = (u8 *)gUnknown_02016350;
+    u8 i = 0;
+    u8 x, y;
+
+    while (*src != 0xFF) {
+        if (*(u16 *)rec == 0xFFFF) {
+            x = src[0];
+            y = src[1];
+            if (k != 0) {
+                x += offs[4 + (k - 1) * 2];
+                y += offs[4 + (k - 1) * 2 + 1];
+            }
+            *(u16 *)rec = x | (y << 6);
+            rec[2] = (src[2] & 31) | (k << 5);
+            rec[3] = src[3];
+            src += 4;
+        }
+        i++;
+        rec += 4;
+        if (i > 31)
+            break;
+    }
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_0801303C.inc\"");
+#endif
 
 asm(".include \"asm/non_matching/file_select/sub_080130D4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08013120.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080131C8.inc\"");
 
-asm(".include \"asm/non_matching/file_select/sub_080131FC.inc\"");
+#ifdef NONMATCHING
+struct Room08013120 { u16 unk0; u16 unk2; u32 *unk4; };
+struct Room08013120 *sub_08013120(const u8 *, u32);
+void sub_08015FE4(u16, u8, u8);
 
-asm(".include \"asm/non_matching/file_select/sub_080132B0.inc\"");
+void sub_080131FC(const u8 *a, u32 b)
+{
+    u8 i = 0;
+    u32 n;
+    struct Room08013120 *r;
+    const u8 *px, *py;
+
+    while (i < a[2]) {
+        r = sub_08013120(a, b);
+        n = i + 1;
+        gUnknown_02016330[n] = r->unk4;
+        px = &a[4 + i * 2];
+        py = &a[4 + i * 2 + 1];
+        sub_08015FE4(r->unk0, *px, *py);
+        i = n;
+        if (sub_08012F84(i, 0))
+            sub_08013C8C((u16 *)sub_08012F84(i, 0), *px, *py, n);
+        if (sub_08012F84(i, 1))
+            sub_08013C8C((u16 *)sub_08012F84(i, 1), *px, *py, n);
+        if (sub_08012F84(i, 3))
+            sub_0801303C((const u8 *)sub_08012F84(i, 3), a, i);
+    }
+}
+#else
+asm(".include \"asm/non_matching/file_select/sub_080131FC.inc\"");
+#endif
 
 struct Area080132B0 { u8 *unk0; u32 unk4; };
+
+#ifdef NONMATCHING
+extern u8 *const gUnknown_0842B8A8[];
+extern const u16 gUnknown_0842B8C0[];
+extern struct Area080132B0 *const gUnknown_0842AD08[];
+u8 sub_080131C8(void);
+u32 sub_080130D4(struct Area080132B0 *);
+
+// Picks the next room: fixed for special modes, otherwise the next in the shuffled order that fits
+struct Area080132B0 *sub_080132B0(void)
+{
+    u8 f, k, sel;
+    struct Area080132B0 *r;
+
+    if (gUnknown_03006C80.unk2 != 0) {
+        f = gUnknown_03006C80.unk4F;
+        if (f & 16) {
+            if (gUnknown_03006C80.unk0 > 1)
+                k = (gUnknown_03006C80.unk0 - 2) << 3;
+            else
+                k = 0;
+            return (struct Area080132B0 *)(gUnknown_0842B8A8[5] + (k + (f & 15)) * 8 + 8);
+        }
+        if (!(f & 32) && (f & 64))
+            return (struct Area080132B0 *)(gUnknown_0842B8A8[4] + (gUnknown_03006C80.unk0 * 2 - 5 + gUnknown_03006C80.unk4) * 8);
+        return (struct Area080132B0 *)gUnknown_0842B8A8[5];
+    }
+    if (gUnknown_03006C80.unk5 != 0)
+        return gUnknown_0842AD08[gUnknown_03006C80.unk1];
+    sel = sub_080131C8();
+    do {
+        do
+            gUnknown_03006C80.unk49 = (gUnknown_03006C80.unk49 + 1) & 63;
+        while (gUnknown_0202A720[gUnknown_03006C80.unk49] >= gUnknown_0842B8C0[gUnknown_03006C80.unk1]);
+        gUnknown_03006C80.unk48 = gUnknown_0202A720[gUnknown_03006C80.unk49];
+        r = (struct Area080132B0 *)(gUnknown_0842B8A8[gUnknown_03006C80.unk1] + gUnknown_03006C80.unk48 * 8);
+    } while ((r->unk4 >> 30) != sel || !sub_080130D4(r));
+    return r;
+}
+#else
+asm(".include \"asm/non_matching/file_select/sub_080132B0.inc\"");
+#endif
+
 struct Area080132B0 *sub_080132B0(void);
 void sub_080128EC(u8 *);
 void sub_08015DD8(u16);
@@ -673,8 +903,57 @@ void sub_080133D0(void)
 }
 
 asm(".include \"asm/non_matching/file_select/sub_08013490.inc\"");
+#ifdef NONMATCHING
+u16 *sub_080136D4(u16 tile, u16 w, u16 h)
+{
+    u16 n = w * h;
+    u16 *buf = sub_0800BD14((n + 1) * 2);
+    u16 *p;
+    u16 i, j;
+
+    if (buf == NULL)
+        return NULL;
+    buf[0] = n;
+    p = buf + 1;
+    for (j = 0; j < h; j++) {
+        for (i = 0; i < w; i++)
+            *p++ = tile++;
+        tile += 64 - w;
+    }
+    sub_08013490(buf + 1, n);
+    return buf;
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_080136D4.inc\"");
+#endif
+#ifdef NONMATCHING
+struct Struct0202A580 *sub_08013754(u16 a, u16 w, u16 h)
+{
+    u16 i;
+    u16 *buf;
+
+    for (i = 0; i < 8; i++)
+        if (gUnknown_0202A580[i].unk4 == a && gUnknown_0202A580[i].unk6 == w && gUnknown_0202A580[i].unk7 == h)
+            return &gUnknown_0202A580[i];
+    buf = sub_080136D4(a, w, h);
+    if (buf == NULL)
+        return NULL;
+    for (i = 0; i < 8; i++) {
+        if (gUnknown_0202A580[i].unk0 == 0) {
+            gUnknown_0202A580[i].unk0 = (u32)buf;
+            gUnknown_0202A580[i].unk4 = a;
+            gUnknown_0202A580[i].unk6 = w;
+            gUnknown_0202A580[i].unk7 = h;
+            gUnknown_0202A580[i].unk8 = 0;
+            return &gUnknown_0202A580[i];
+        }
+    }
+    sub_0800BE50((u8 *)buf);
+    return NULL;
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_08013754.inc\"");
+#endif
 
 
 void sub_080137DC(void)
@@ -726,7 +1005,40 @@ u32 sub_080138F0(u16 *p, u8 b)
     return 1;
 }
 
+#ifdef NONMATCHING
+u16 sub_08008E5C(u16);
+
+// Puts object record p (room b) into the first free 4-byte slot of [r, end): tile position, flags, id
+u32 sub_08013948(u16 *p, u8 b, u32 *r, u32 *end)
+{
+    u8 hi = p[1] >> 8;
+    u8 lo = p[1];
+    u16 f;
+    u16 v;
+
+    for (; r < end; r++) {
+        if (*(u16 *)r == 0) {
+            *(u16 *)r = (u16)((p[2] & 0x3FF) + gUnknown_0201EFF8[b][0]) >> 4
+                      | ((u16)((p[3] & 0x3FF) + gUnknown_0201EFF8[b][1]) >> 4) << 6;
+            f = p[2] & 0xC00;
+            if (f) {
+                *(u16 *)r |= f << 4;
+            } else {
+                v = *(u16 *)r;
+                *(u16 *)r = v | (sub_08008E5C(v) ? 0x8000 : 0x4000);
+            }
+            if (b)
+                *(u16 *)r |= 0x1000;
+            ((u8 *)r)[2] = hi;
+            ((u8 *)r)[3] = lo;
+            return 1;
+        }
+    }
+    return 0;
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_08013948.inc\"");
+#endif
 struct Rec08013A10 { u16 tile; u8 id; u8 unk3; };
 
 // For each of 48 records with id 0xFF: call sub_080144F0 on its tile and set bit 13
@@ -777,13 +1089,60 @@ void sub_08013C50(u32 *a, u32 *b)
         }
     } while (0);
 }
+#ifdef NONMATCHING
+extern u8 gUnknown_0202A760[];
+
+void sub_08013C8C(u16 *p, u16 b, u16 c, u8 room)
+{
+    struct Entity *e;
+
+    while (*p != 0xFFFF) {
+        if (sub_080138F0(p, room) && (e = sub_080123E8()) != NULL && sub_0800A148(e, (const u8 *)p, room)) {
+            e->unk52 = room;
+            if (e->type == 6) {
+                if (e->subtype == 33) {
+                    e->unk20 = sub_08013D54(e->form);
+                    gUnknown_0202A760[e->unk17 & 3] = e->form;
+                } else if (e->subtype == 45) {
+                    gUnknown_0202A760[e->unk17 & 3] = e->parameter;
+                }
+            }
+        }
+        p += 4;
+    }
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_08013C8C.inc\"");
+#endif
 
 
 asm(".include \"asm/non_matching/file_select/sub_08013D20.inc\"");
 
 
+#ifdef NONMATCHING
+u32 sub_08013D54(u8 id)
+{
+    u8 i;
+    u8 r;
+
+    if (gUnknown_0200B314 == 8)
+        return 0;
+    for (i = 0; i < gUnknown_0200B314; i++)
+        if (gUnknown_02000430[i] == id)
+            break;
+    if (i == gUnknown_0200B314) {
+        sub_080009F4((void *)(0x06015800 + gUnknown_0200B314 * 128), sub_0802C3C4(id), 128);
+        gUnknown_02000430[gUnknown_0200B314] = id;
+        r = gUnknown_0200B314 * 4 + 0xC0;
+        gUnknown_0200B314++;
+    } else {
+        r = i * 4 + 0xC0;
+    }
+    return r;
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_08013D54.inc\"");
+#endif
 
 
 void sub_08013DE0(void)
@@ -824,9 +1183,63 @@ s32 sub_080141AC(u8 i)
 
 
 
-asm(".include \"asm/non_matching/file_select/sub_080141E8.inc\"");
+#ifdef NONMATCHING
+extern const u16 gUnknown_08429A4C[][8];
+void sub_080141E8(void)
+{
+    u8 i, j;
+    s32 v;
+    const u16 *t;
 
+    for (i = 0; i < gUnknown_03006C80.unk0; i++) {
+        v = sub_080141AC(i);
+        t = gUnknown_08429A4C[gUnknown_03006C80.unk1];
+        j = 0;
+        while (*t <= v) {
+            j++;
+            t++;
+            if (j > 6)
+                break;
+        }
+        gUnknown_03006C80.unk54[i] = j > 7 ? 7 : j;
+    }
+}
+#else
+asm(".include \"asm/non_matching/file_select/sub_080141E8.inc\"");
+#endif
+
+#ifdef NONMATCHING
+extern const u8 *const gUnknown_08429D70[];
+
+void sub_0801424C(void)
+{
+    u8 k = gUnknown_03006C80.unk6 - 1;
+    u8 i;
+    u16 min;
+    u32 lvl;
+
+    for (i = 0; i < gUnknown_03006C80.unk0 && gUnknown_03006C80.unk28[i].unk5 == 63; i++)
+        ;
+    if (i == gUnknown_03006C80.unk0)
+        k++;
+    min = 0xFFFF;
+    for (i = 0; i < gUnknown_03006C80.unk0; i++)
+        if (gUnknown_03006C80.unk28[i].unk6 < min)
+            min = gUnknown_03006C80.unk28[i].unk6;
+    lvl = min;
+    if (min != 0) {
+        if (min <= 5)
+            lvl = 1;
+        else if (min <= 10)
+            lvl = 2;
+        else
+            lvl = 3;
+    }
+    gUnknown_03006C80.filler4D = gUnknown_08429D70[gUnknown_03006C80.unk1][k * 4 + lvl];
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_0801424C.inc\"");
+#endif
 asm(".include \"asm/non_matching/file_select/sub_080142F4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08014474.inc\"");
 
@@ -867,11 +1280,78 @@ void sub_08014658(u16 a, u16 b, u16 c)
 }
 
 asm(".include \"asm/non_matching/file_select/sub_080146D4.inc\"");
+#ifdef NONMATCHING
+extern u8 gUnknown_02016D90[];
+extern u8 gUnknown_020031D0[];
+struct MapBuf { u32 unk0; u16 tiles[0x1000]; u8 attrs[0x1000]; u16 unk3004[0x1000]; u16 unk5004[0x1000]; u16 blocks[0x800][4]; };
+extern const u8 gUnknown_0814AB24[];
+
+void sub_0801478C(u16 pos, u16 v)
+{
+    struct MapBuf *m = (struct MapBuf *)sub_08015DC0(v);
+    u16 t;
+    u32 off;
+    u16 *dst;
+    u16 *src;
+
+    t = m->tiles[pos] = m->unk3004[pos];
+    m->attrs[pos] = gUnknown_0814AB24[m->unk5004[t]];
+    off = (pos & 63) * 2 + (pos & 0xFC0) * 4;
+    if (v >> 14 == 2)
+        dst = (u16 *)gUnknown_020031D0 + off;
+    else
+        dst = (u16 *)gUnknown_02016D90 + off;
+    src = m->blocks[t];
+    dst[0] = src[0];
+    dst[1] = src[1];
+    dst[128] = src[2];
+    dst[129] = src[3];
+    gUnknown_02000028[gUnknown_03000204] = 1;
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_0801478C.inc\"");
+#endif
 
 
 struct GfxRec0801484C { u32 src; u8 *dst; s32 ctrl; };
+#ifdef NONMATCHING
+void LZ77UnCompVram(const void *, void *);
+void LZ77UnCompWram(const void *, void *);
+
+void sub_0801484C(const struct GfxRec0801484C *p, u8 keep)
+{
+    u8 *dst;
+    u32 src;
+    const u8 *s;
+
+    if (!keep) {
+        zero_memory(gUnknown_0200B320.unk4, 0x2000);
+        zero_memory((u8 *)gUnknown_0200B320.unk4 + 0x2000, 0x1000);
+    }
+    do {
+        dst = p->dst;
+        src = p->src;
+        while (!(REG_DISPSTAT & 1))
+            ;
+        if (dst != NULL) {
+            s = (const u8 *)gUnknown_03000BA4 + (src & 0x7FFFFFFF);
+            if (p->ctrl < 0) {
+                if ((u32)dst >> 24 == 6)
+                    LZ77UnCompVram(s, dst);
+                else
+                    LZ77UnCompWram(s, dst);
+            } else {
+                CpuSet(s, dst, ((u32)p->ctrl << 10) >> 11);
+            }
+        } else {
+            load_palette_from_gfx_group(src & 0x7FFFFFFF);
+        }
+        p++;
+    } while ((p - 1)->src & 0x80000000);
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_0801484C.inc\"");
+#endif
 
 
 extern u8 gUnknown_0202A500[];
@@ -911,11 +1391,77 @@ asm(".include \"asm/non_matching/file_select/sub_080156BC.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080157F8.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08015888.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08015964.inc\"");
+#ifdef NONMATCHING
+
+#define COPY_BLOCK                       \
+    b = m->blocks[*src];                 \
+    d[0] = b[0];                         \
+    d[1] = b[1];                         \
+    d2[0] = b[2];                        \
+    d2[1] = b[3];                        \
+    d2 += 2;                             \
+    d += 2;                              \
+    src++;
+
+// Draws the 64x64-tile map in m into d: each tile is a 2x2 block of 8x8 tiles
+void sub_080159F4(void *dst, void *map)
+{
+    u16 *d = dst;
+    struct MapBuf *m = map;
+    u16 *src = m->tiles;
+    u16 *d2;
+    u16 *b;
+    u16 i, j;
+
+    for (i = 0; i < 64; i++) {
+        d2 = d + 128;
+        for (j = 0; j < 16; j++) {
+            COPY_BLOCK
+            COPY_BLOCK
+            COPY_BLOCK
+            COPY_BLOCK
+        }
+        d += 128;
+    }
+}
+#undef COPY_BLOCK
+#else
 asm(".include \"asm/non_matching/file_select/sub_080159F4.inc\"");
+#endif
 asm(".include \"asm/non_matching/file_select/sub_08015AC4.inc\"");
 
 
+#ifdef NONMATCHING
+void sub_08015C64(void)
+{
+    u32 done = 0;
+    struct Struct02002440 *p = gUnknown_02002440;
+    u16 n = 8;
+    u32 *q;
+
+    do {
+        if (p->unk0 == NULL)
+            return;
+        if (--p->unk6 == 0) {
+            if (done) {
+                p->unk6 = 1;
+            } else {
+                if (gUnknown_03000520.unk0 == 0)
+                    sub_08015D04((const struct GfxLoad *)*(u32 *)p->unk0);
+                p->unk6 = sub_08015CD0((s32 *)p->unk0 + 1);
+                q = (u32 *)p->unk0;
+                p->unk0 = (const u16 *)(q + 2);
+                if (q[2] == 0)
+                    p->unk0 = (const u16 *)((u8 *)(q + 2) - (q + 2)[1] * 8);
+                done = 1;
+            }
+        }
+        p++;
+    } while (--n != 0);
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_08015C64.inc\"");
+#endif
 
 
 u16 sub_08015CD0(s32 *p)
@@ -1019,7 +1565,51 @@ void sub_08016084(void)
     gUnknown_0200B310 |= 0x200000;
 }
 
+#ifdef NONMATCHING
+extern const u8 gUnknown_0814AB24[];
+
+// Rebuilds both maps' tile attributes, then marks the room's edge row and column solid (0xFF)
+void sub_080160F8(void)
+{
+    struct MapBuf *m1 = (struct MapBuf *)&gUnknown_0201F020_fs;
+    struct MapBuf *m2 = (struct MapBuf *)&gUnknown_0200B320;
+    u16 *t1 = m1->tiles, *t2 = m2->tiles;
+    u8 *a1 = m1->attrs, *a2 = m2->attrs;
+    u8 *p1, *p2, *p3, *p4;
+    u16 i;
+
+    for (i = 0; i < 0x1000; i++) {
+        *a1++ = gUnknown_0814AB24[m1->unk5004[*t1++]];
+        *a2++ = gUnknown_0814AB24[m2->unk5004[*t2++ & 0x7FFF]];
+    }
+    p1 = m1->attrs + (gUnknown_03000450.unk28 >> 4);
+    p3 = m2->attrs + (gUnknown_03000450.unk28 >> 4);
+    p2 = m1->attrs + 63;
+    p4 = m2->attrs + 63;
+    for (i = 0; i < 64; i++) {
+        *p1 = 0xFF;
+        *p2 = 0xFF;
+        *p3 = 0xFF;
+        *p4 = 0xFF;
+        p1 += 64;
+        p2 += 64;
+        p3 += 64;
+        p4 += 64;
+    }
+    p1 = m1->attrs + ((gUnknown_03000450.unk2A & 0xFFF0) << 2);
+    p3 = m2->attrs + ((gUnknown_03000450.unk2A & 0xFFF0) << 2);
+    p2 = m1->attrs + 0xFC0;
+    p4 = m2->attrs + 0xFC0;
+    for (i = 0; i < 64; i++) {
+        *p1++ = 0xFF;
+        *p2++ = 0xFF;
+        *p3++ = 0xFF;
+        *p4++ = 0xFF;
+    }
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_080160F8.inc\"");
+#endif
 
 void sub_080161F8(u16 a, u8 b)
 {
@@ -1768,9 +2358,52 @@ void sub_0801DCC8(struct Entity *this)
 
 
 
-asm(".include \"asm/non_matching/file_select/sub_0801DD28.inc\"");
+#ifdef NONMATCHING
+void sub_0801DD28(struct Entity *this)
+{
+    u8 t;
 
+    sub_0801DEC0(this, 0);
+    t = --this->unk17;
+    if (t == 0) {
+        this->unk14 = 2;
+        this->unk17 = gUnknown_0813AAFC[sub_0800099C() & 3];
+        if (this->unk64 != 0)
+            this->direction = (sub_08009EA4(this, this->unk64) + 4) & 24;
+        else
+            this->direction = sub_0800099C() & 24;
+    } else if (this->unk64 == 0) {
+        this->unk64 = sub_08009E6C(this, gUnknown_0813AB00[t >> 4]);
+        this->direction = (sub_0803CECC(this, (struct Entity *)this->unk64) + 4) & 24;
+    }
+}
+#else
+asm(".include \"asm/non_matching/file_select/sub_0801DD28.inc\"");
+#endif
+
+#ifdef NONMATCHING
+void sub_0801DDA0(struct Entity *this)
+{
+    u32 r;
+
+    sub_0801DEC0(this, 16);
+    if (this->unk70.s.unk71 != 0)
+        this->unk70.s.unk71--;
+    if (sub_0800963C(this) == 0)
+        this->unk17 = 1;
+    this->unk17--;
+    if (this->unk70.s.unk71 == 0 && ((r = sub_0800997C(this, 16)) & 0x80)) {
+        this->unk14 = 3;
+        this->unk17 = 16;
+        this->unk18 = 1;
+        this->direction = (u8)r & 24;
+    } else if (this->unk17 == 0) {
+        sub_0801DF24(this);
+    }
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_0801DDA0.inc\"");
+#endif
 
 void sub_0801DE14(struct Entity *this)
 {
@@ -1906,7 +2539,42 @@ void sub_0801E590(struct Entity *this)
     sub_08003870(this, this->unk2A);
 }
 
+#ifdef NONMATCHING
+extern const u8 gUnknown_0813ADB4[];
+u32 sub_0800997C(struct Entity *, u32);
+struct Entity *sub_08009E0C(void);
+
+void sub_0801E5D8(struct Entity *this)
+{
+    u32 d;
+
+    if (sub_0800997C(this, 12) & 0x80) {
+        this->unk14 = 2;
+        this->unk17 = 30;
+        this->unk58 = sub_08009E0C();
+        this->direction = sub_0803CECC(this, this->unk58);
+        sub_08003870(this, 8);
+    } else {
+        if (--this->unk17 == 0) {
+            this->unk17 = gUnknown_0813ADB4[sub_0800099C() & 3];
+            if (sub_0800099C() & 31)
+                d = sub_0800099C();
+            else
+                d = sub_0803CECC(this, sub_08044594()) + 4;
+            this->direction = d & 24;
+            if (this->direction >> 3 != this->unk2A) {
+                this->unk2A = this->direction >> 3;
+                sub_08003870(this, this->unk2A);
+            }
+        }
+        if (sub_0800963C(this) == 0)
+            this->unk17 = 1;
+    }
+    GetNextFrame(this);
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_0801E5D8.inc\"");
+#endif
 
 void sub_0801E690(struct Entity *this)
 {
@@ -2365,7 +3033,32 @@ asm(".include \"asm/non_matching/file_select/sub_0802595C.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080259D8.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08025A40.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08025A60.inc\"");
+#ifdef NONMATCHING
+extern void (*const gUnknown_0813C5A0[])(struct Entity *);
+
+void sub_08025ACC(struct Entity *this)
+{
+    struct Entity *p;
+
+    if (this->unk54->unk45 != 0) {
+        gUnknown_0813C5A0[this->form](this);
+        p = this->unk54;
+        this->unk1F_6 = p->unk1F_6;
+        this->unk1D_6 = p->unk1D_6;
+        this->unk50 = p->unk50;
+        if (this->form != 0) {
+            if (this->unk58->unk14 != 7 && (u16)(gUnknown_03000E20.unk0 % 3) + 1 == this->form)
+                this->unk1C_0 = 1;
+            else
+                this->unk1C_0 = 0;
+        }
+    } else {
+        DeleteThisEntity(this);
+    }
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_08025ACC.inc\"");
+#endif
 
 void sub_08025B6C(struct Entity *this)
 {
@@ -2575,7 +3268,25 @@ void sub_08025FB8(struct Entity *this)
     sub_08003870(this, 1);
     sub_08025FF0(this);
 }
+#ifdef NONMATCHING
+extern const s8 gUnknown_0813C5E4[];
+extern const s8 gUnknown_0813C604[];
+
+void sub_08025FF0(struct Entity *this)
+{
+    struct Entity *p = this->unk54;
+
+    if (p->unk14 != 4) {
+        this->x.HALF.HI = gUnknown_0813C5E4[p->unk2A * 8 + p->unk29] + p->x.HALF.HI;
+        this->y.HALF.HI = gUnknown_0813C5E4[p->unk2A * 8 + p->unk29 + 1] + p->y.HALF.HI;
+    } else {
+        this->x.HALF.HI = gUnknown_0813C604[(p->unk29 & 15) + p->unk2A * 6] + p->x.HALF.HI;
+        this->y.HALF.HI = gUnknown_0813C604[(p->unk29 & 15) + p->unk2A * 6 + 1] + p->y.HALF.HI;
+    }
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_08025FF0.inc\"");
+#endif
 
 
 void sub_08026094(struct Entity *this)
@@ -2617,13 +3328,48 @@ void sub_080260E4(struct Entity *this)
 
 extern const s8 gUnknown_0813C624[];
 
+#ifdef NONMATCHING
+extern const s8 gUnknown_0813C624[];
+void sub_0802614C(struct Entity *this)
+{
+    s8 r = gUnknown_0813C624[this->direction];
+    struct Entity *parent = this->unk54;
+    s32 t;
+
+    this->x.HALF.HI = ((gUnknown_0813E4CC[this->direction * 8] * r) >> 8) + parent->x.HALF.HI;
+    t = ((r * gUnknown_0813E4CC[this->direction * 8 + 64]) >> 8) + 8;
+    this->y.HALF.HI = parent->y.HALF.HI - t;
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_0802614C.inc\"");
+#endif
 
 
+#ifdef NONMATCHING
+void sub_080261A0(struct Entity *this, u32 k)
+{
+    s8 r = (gUnknown_0813C624[this->direction] * (u8)k) / 16;
+    struct Entity *parent = this->unk54;
+
+    this->x.HALF.HI = ((gUnknown_0813E4CC[this->direction * 8] * r) >> 8) + parent->x.HALF.HI;
+    this->y.HALF.HI = parent->y.HALF.HI - (((r * gUnknown_0813E4CC[this->direction * 8 + 64]) >> 8) + 8);
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_080261A0.inc\"");
+#endif
 
 
+#ifdef NONMATCHING
+void sub_08026204(struct Entity *this)
+{
+    struct Entity *p = this->unk54;
+
+    this->x.HALF.HI = gUnknown_0813C644[this->direction][0] + p->x.HALF.HI;
+    this->y.HALF.HI = gUnknown_0813C644[this->direction][1] + p->y.HALF.HI;
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_08026204.inc\"");
+#endif
 
 
 void sub_08026244(struct Entity *this)
@@ -2860,7 +3606,26 @@ void sub_08026C3C(struct Entity *this)
     }
 }
 
+#ifdef NONMATCHING
+void sub_08026C50(struct Entity *this)
+{
+    u8 t = --this->unk17;
+
+    if (t == 0) {
+        if (this->parameter != 0xFF)
+            gUnknown_0201F000[this->unk52] |= gUnknown_08137B10[this->parameter & 31];
+        if (!(this->parameter & 0x80))
+            play_sound(16);
+        if (this->unk16 != 0) {
+            gUnknown_03006C80.unk26 = t;
+            sub_0803A20C();
+        }
+        DeleteThisEntity(this);
+    }
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_08026C50.inc\"");
+#endif
 
 u8 sub_08000A70(u16);
 
@@ -3015,7 +3780,35 @@ void sub_080270C0(struct Entity *this)
     sub_08003870(this, 0);
 }
 
+#ifdef NONMATCHING
+extern const u8 gUnknown_0813CD5C[];
+void sub_080272D0(struct Entity *);
+
+void sub_0802715C(struct Entity *this)
+{
+    u8 k;
+
+    if ((this->form & 0x80) && this->unk74.b.unk74 == 0
+        && (this->x.HALF.HI != this->unk78.h || this->y.HALF.HI != this->unk78.s2.unk7A)
+        && (gUnknown_08137B10[this->form & 31] & gUnknown_0201F000[this->unk52])) {
+        this->unk14++;
+        this->unk17 = 45;
+        this->unk74.b.unk74 = 1;
+        sub_08003870(this, 1);
+        return;
+    }
+    k = (this->unk60 & 0xF0) >> 4;
+    this->direction = gUnknown_0813CD5C[k];
+    if (this->direction != 0xFF)
+        sub_080272D0(this);
+    if (k != this->unk74.b.unk75 && (k & ~this->unk74.b.unk75))
+        sub_08003DFC(18);
+    this->unk74.b.unk75 = k;
+    sub_08003870(this, k + 1);
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_0802715C.inc\"");
+#endif
 
 
 void sub_0802721C(struct Entity *this)
@@ -3055,7 +3848,28 @@ void sub_08027298(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/file_select/sub_080272D0.inc\"");
+#ifdef NONMATCHING
+#define CHECK_PLAYER(n, bit)                                         \
+    if (this->unk60 & bit) {                                         \
+        struct Entity **pe = &gUnknown_03006A30[n].unk28;            \
+        if (sub_08003FB0(*pe))                                       \
+            sub_080003E0(this, *pe);                                 \
+        else                                                         \
+            this->unk60 ^= bit;                                      \
+    }
+
+void sub_080275F8(struct Entity *this)
+{
+    sub_08000694(this);
+    CHECK_PLAYER(0, 1)
+    CHECK_PLAYER(1, 2)
+    CHECK_PLAYER(2, 4)
+    CHECK_PLAYER(3, 8)
+}
+#undef CHECK_PLAYER
+#else
 asm(".include \"asm/non_matching/file_select/sub_080275F8.inc\"");
+#endif
 
 // Sets bit in unk2C when the tile at (dx, dy) from the entity isn't 66, 32 or 19-30
 #define WALL_AT(dx, dy, bit)                                               \
@@ -3230,7 +4044,50 @@ void sub_08028154(struct Entity *this)
     if (--this->unk68.w == (u32)-1)
         sub_08028170(this);
 }
+#ifdef NONMATCHING
+void sub_08028170(struct Entity *this)
+{
+    u16 *p, *q;
+    u16 v;
+
+    if (*this->unk78.p == 0xFFFF)
+        this->unk78.p = *(u16 **)&this->unk6C;
+    p = this->unk78.p;
+    v = *p;
+    if (v & 0x8000) {
+        this->unk15 = 4;
+        this->unk68.w = p[1];
+    } else {
+        this->direction = v;
+        q = p + 1;
+        this->unk15 = (u8)v >> 3;
+        switch (this->unk15) {
+        case 0:
+            *(u16 *)&this->unk74 = this->y.HALF.HI - p[1];
+            q++;
+            break;
+        case 1:
+            *(u16 *)&this->unk74 = p[1] + this->x.HALF.HI;
+            q++;
+            break;
+        case 2:
+            *(u16 *)&this->unk74 = p[1] + this->y.HALF.HI;
+            q++;
+            break;
+        case 3:
+            *(u16 *)&this->unk74 = this->x.HALF.HI - p[1];
+            q++;
+            break;
+        }
+        p = this->unk78.p;
+        if (*q != 0)
+            this->speed = *q;
+    }
+    this->unk78.p = p + 4;
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_08028170.inc\"");
+#endif
 
 asm(".include \"asm/non_matching/file_select/sub_08028200.inc\"");
 
@@ -3348,12 +4205,57 @@ void sub_08028BA8(struct Entity *this)
     }
 }
 
+#ifdef NONMATCHING
+void sub_08028BE8(struct Entity *this)
+{
+    struct Entity *e = sub_0804C8A8(15, 15, 0);
+    u32 r1, r2;
+    s32 x, y;
+
+    if (e != NULL) {
+        r1 = sub_0800099C();
+        r2 = sub_0800099C();
+        x = gUnknown_0813D0D4[this->form] + (r1 % (this->form + 2)) * 16 + (r2 & 7) - 4;
+        y = (sub_0800099C() & 31) - 16;
+        sub_0803D4A4(this, e, x << 16, y << 16);
+    }
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_08028BE8.inc\"");
+#endif
 
 extern const u8 gUnknown_0813D0D8[];
 void sub_08028BE8(struct Entity *);
 void sub_08028CD0(struct Entity *);
+#ifdef NONMATCHING
+void sub_08028C54(struct Entity *this, u8 *out)
+{
+    u8 v = ((u8 *)this->unk4C)[64];
+    u8 d;
+
+    if (v > 35)
+        return;
+    d = gUnknown_0813D0D8[v];
+    if (d == 0)
+        return;
+    *out = 8;
+    this->unk45 = d > this->unk45 ? 0 : this->unk45 - d;
+    if (this->unk45 != 0) {
+        if (this->unk60 == 0 && this->unk45 <= 49) {
+            sub_08028CD0(this);
+            this->unk60 = 1;
+        }
+        sub_08028BE8(this);
+    } else {
+        this->unk14++;
+        this->unk17 = 0;
+        this->unk18 = (this->form + 1) * 2;
+        this->unk3C &= 0x7F;
+    }
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_08028C54.inc\"");
+#endif
 
 asm(".include \"asm/non_matching/file_select/sub_08028CD0.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080291F8.inc\"");
@@ -3574,7 +4476,36 @@ void sub_0802B0F8(struct Entity *this)
     }
 }
 
+#ifdef NONMATCHING
+extern const u8 gUnknown_0813D5DC[];
+extern const s8 gUnknown_0813D5D4[];
+extern const u8 gUnknown_0813D5FC[];
+
+void sub_0802B148(struct Entity *this)
+{
+    u8 t;
+    struct Entity *e;
+
+    if (this->unk78.b != 0)
+        t = gUnknown_0813D5DC[sub_0800099C() & 15];
+    else
+        t = gUnknown_0813D5DC[sub_0800099C() & 31];
+    if (t == 0xFF) {
+        if (this->unk78.s.unk7A <= 2) {
+            this->unk78.s.unk7A++;
+            this->unk78.b = (this->unk78.b << 1) | 1;
+        }
+    } else {
+        e = sub_0804C8A8(0, t, 1);
+        if (e != NULL) {
+            sub_0803D4A4(this, e, gUnknown_0813D5D4[this->form * 2] << 16, gUnknown_0813D5D4[this->form * 2 + 1] << 16);
+            e->direction = (((this->form ^ 2) * 8 + gUnknown_0813D5FC[sub_0800099C() & 7]) & 31) | 0x80;
+        }
+    }
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_0802B148.inc\"");
+#endif
 
 void sub_0802B200(struct Entity *this)
 {
@@ -3615,7 +4546,24 @@ void sub_0802B608(void)
 
 asm(".include \"asm/non_matching/file_select/sub_0802B614.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802B698.inc\"");
+#ifdef NONMATCHING
+void sub_0802B6BC(void)
+{
+    u8 i;
+
+    zero_memory(&gUnknown_0202A770, 104);
+    gUnknown_02016328 = 0;
+    gUnknown_0202A770.unk0 = 0;
+    if (gUnknown_03006C80.unk1 == 2)
+        i = gUnknown_084296C0[(gUnknown_03006C80.unk3 + 3) * 8 + (sub_0800099C() & 7)];
+    else
+        i = gUnknown_084296C0[(gUnknown_03006C80.unk6 - 1) * 8 + (sub_0800099C() & 7)];
+    gUnknown_0202A770.unk58 = &gUnknown_084296F0[i];
+    *(struct U32x3 *)&gUnknown_0202A770.unk5C = *gUnknown_0202A770.unk58;
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_0802B6BC.inc\"");
+#endif
 
 
 void sub_0802B738(void)
@@ -3630,9 +4578,70 @@ void sub_0802B74C(void)
     if (gUnknown_03000E20.unk12 == 0)
         gUnknown_0813D678[gUnknown_0202A770.unk0]();
 }
-asm(".include \"asm/non_matching/file_select/sub_0802B778.inc\"");
+#ifdef NONMATCHING
+extern u8 gUnknown_0201EFF0;
+u32 sub_0802B820(u8);
 
+void sub_0802B778(void)
+{
+    if (gUnknown_02016328 != 0) {
+        if (--gUnknown_0202A770.unk8 == 0) {
+            if (sub_0802C148() > 7 && gUnknown_0201EFF0 <= 4) {
+                ((u32 *)&gUnknown_0202A770)[4] = (u32)gUnknown_03006A30[(sub_0800099C() % gUnknown_03006C80.unk0) & 3].unk28;
+                if (sub_0802B820(1) || sub_0802B820(0)) {
+                    gUnknown_0202A770.unk0++;
+                    return;
+                }
+            }
+            sub_0802BF30();
+        } else if (gUnknown_0202A770.unk8 == 1) {
+            gUnknown_0201EFF0 = 0;
+            gUnknown_03000208[0] |= 4;
+        }
+    }
+}
+#else
+asm(".include \"asm/non_matching/file_select/sub_0802B778.inc\"");
+#endif
+
+#ifdef NONMATCHING
+extern const u8 gUnknown_08429480[][16];
+
+u32 sub_0802B820(u8 room)
+{
+    struct Entity *e = (struct Entity *)((u32 *)&gUnknown_0202A770)[4];
+    u8 *p = (u8 *)sub_08012F84(room, 4);
+    u16 bx, by, x0, y0, dx, dy;
+    u8 k;
+
+    if (p == NULL)
+        return 0;
+    if (*p == 0xFF)
+        return 0;
+    bx = gUnknown_0201EFF8[room][0];
+    by = gUnknown_0201EFF8[room][1];
+    do {
+        x0 = bx + p[0] * 16;
+        y0 = by + p[1] * 16;
+        dx = e->x.HALF.HI - x0;
+        dy = e->y.HALF.HI - y0;
+        if (dx < p[2] * 16 && dy < p[3] * 16) {
+            if (gUnknown_03006C80.unk1 == 2)
+                k = gUnknown_03006C80.unk3;
+            else
+                k = gUnknown_03006C80.unk6 - 1;
+            if (p[4 + k] != 0) {
+                ((u32 *)&gUnknown_0202A770)[5] = (u32)gUnknown_08429480[p[4 + k]];
+                return 1;
+            }
+        }
+        p += 8;
+    } while (*p != 0xFF);
+    return 0;
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_0802B820.inc\"");
+#endif
 asm(".include \"asm/non_matching/file_select/sub_0802B8D4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802B964.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802B9D0.inc\"");
@@ -3698,8 +4707,36 @@ void sub_0802BFC4(void)
 }
 
 
-void sub_0802C1C0(struct Struct0202E110 *, u16);
+void sub_0802C1C0(struct Struct0202E110 *, u16, u8);
+#ifdef NONMATCHING
+u8 sub_0802C070(struct Entity *this, u16 id)
+{
+    struct Struct0202E110 *r;
+    u8 n, i;
+
+    for (r = gUnknown_0202A3F0; r < gUnknown_0202A3F0 + 43; r++)
+        if (r->unk2 == id)
+            goto found;
+    n = sub_0802C23C(id);
+    for (r = gUnknown_0202A3F0 + 8; r < gUnknown_0202A3F0 + 43; r++) {
+        if (r->unk1 == 0) {
+            for (i = 0; i < n; i++)
+                if (r[i].unk1 != 0)
+                    break;
+            if (i == n) {
+                sub_0802C1C0(r, id, n);
+                goto found;
+            }
+        }
+    }
+    return 0xFF;
+found:
+    sub_0802C180(this, r);
+    return 0;
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_0802C070.inc\"");
+#endif
 
 
 void sub_0802C0EC(struct Entity *this)
@@ -3747,10 +4784,45 @@ u8 sub_0802C148(void)
 }
 
 
+#ifdef NONMATCHING
+void sub_0802C180(struct Entity *this, struct Struct0202E110 *r)
+{
+    u8 n = r->unk0 & 63;
+    s32 c;
+
+    this->unk20 = n << 4;
+    this->unk1C_6 = (n << 4) >> 8;
+    this->unk53 = n;
+    c = *(u16 *)&r->unk2 >> 8;
+    while (c-- > 0) {
+        r->unk1++;
+        r++;
+    }
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_0802C180.inc\"");
+#endif
 
 
+#ifdef NONMATCHING
+void sub_0802C1C0(struct Struct0202E110 *r, u16 id, u8 n)
+{
+    u8 idx = r - gUnknown_0202A3F0;
+    u8 i;
+
+    for (i = 0; i < n; i++) {
+        r[i].unk0 = idx | 0x80;
+        r[i].unk1 = 0;
+        *(u16 *)&r[i].unk2 = 0;
+    }
+    *(u16 *)&r->unk2 = (n << 8) | (id & 0xFF);
+    if (*(vu16 *)REG_ADDR_DISPCNT & 0x80) {
+    }
+    ((const struct U32Pair **)gUnknown_02016C50)[idx] = gUnknown_0842AA54[id];
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_0802C1C0.inc\"");
+#endif
 
 u8 sub_0802C23C(u16 i)
 {
@@ -3802,7 +4874,41 @@ void sub_0802C2B8(u8 *p, u8 a, u8 n)
     } while (--n != 0);
 }
 
+#ifdef NONMATCHING
+extern const u32 gUnknown_08146DBC[];
+
+u8 sub_0802C2DC(u8 id)
+{
+    struct Struct0202E110 *r;
+    u8 i, j, n;
+
+    for (i = 0, r = gUnknown_0202E110; r < gUnknown_0202E110 + 16; r++, i++) {
+        if (r->unk1 == id) {
+            sub_0802C2B8((u8 *)r, id, r->unk2);
+            return i;
+        }
+    }
+    n = ((const u8 *)&gUnknown_08146DBC[id])[3] & 15;
+    for (i = 0, r = gUnknown_0202E110; r < gUnknown_0202E110 + 16; r++, i++) {
+        if (r->unk0 == 0) {
+            j = 0;
+            if (j < n) {
+                do
+                    j++;
+                while (j < n && r[j].unk0 == 0);
+            }
+            if (j == n) {
+                sub_0802C2B8((u8 *)r, id, n);
+                load_palette((u16 *)(gUnknown_03000030 + (gUnknown_08146DBC[id] & 0xFFFFFF)), i + 16, n);
+                return i;
+            }
+        }
+    }
+    return 0;
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_0802C2DC.inc\"");
+#endif
 
 void sub_0802C39C(u8 id)
 {
@@ -3828,7 +4934,51 @@ u32 sub_0802C3E0(u8 a)
     return gUnknown_0813D72C[a];
 }
 
+#ifdef NONMATCHING
+void sub_0802CF20(void);
+
+// Adds d to player this->form's counter (unk45, 0..8 per heart); a full party sets unk24 and plays a jingle
+s32 sub_0802C3F0(struct Entity *this, s32 arg)
+{
+    u16 d = arg;
+    u8 old = this->unk45;
+    u16 v = d + old;
+    u8 i;
+    u32 all;
+
+    if ((s16)d < 0 && (gUnknown_03006A30[this->form].unk7 & 0x80))
+        return old;
+    if ((s16)v >= gUnknown_03006C80.unk64[this->form].v * 8)
+        v = gUnknown_03006C80.unk64[this->form].v * 8;
+    else if ((s16)v < 0)
+        v = 0;
+    this->unk45 = v;
+    gUnknown_03006C80.unk60[this->form].v = v;
+    if ((s16)d < 0) {
+        gUnknown_03006C80.unk24 = 0;
+    } else {
+        all = 1;
+        sub_08003E10(this, 7);
+        if (gUnknown_03006C80.unk24 == 0) {
+            for (i = 0; i < gUnknown_03006C80.unk0; i++) {
+                if (gUnknown_03006C80.unk60[i].v != gUnknown_03006C80.unk64[i].v * 8) {
+                    all = 0;
+                    break;
+                }
+            }
+            if (all) {
+                gUnknown_03006C80.unk24 = 1;
+                play_sound(62);
+                sub_0800D6A4(1);
+            }
+        }
+    }
+    sub_0802CF20();
+    return this->unk45;
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_0802C3F0.inc\"");
+#endif
 asm(".include \"asm/non_matching/file_select/sub_0802C4F8.inc\"");
 
 s32 sub_0802C528(s32 a, s32 b, s32 max)
@@ -3881,7 +5031,34 @@ void sub_0802C710(struct Entity *this)
 
 
 asm(".include \"asm/non_matching/file_select/sub_0802C7A8.inc\"");
+#ifdef NONMATCHING
+void sub_0802C9B8(void);
+
+void sub_0802C800(void)
+{
+    u32 zero = 0;
+    u8 *o;
+
+    CpuSet(&zero, gUnknown_03000420, 0x0500000B);
+    gUnknown_03000420[0] = 1;
+    gUnknown_03000420[3] = 0;
+    gUnknown_03000420[2] = 1;
+    gUnknown_030004A0.bgConfig[0].bgcnt = gUnknown_08142374[18];
+    sub_0802C9B8();
+    zero_memory(&gUnknown_02030A70, 16);
+    o = (u8 *)&gUnknown_02030A70;
+    *(u16 *)&o[2] = (*(u16 *)&o[2] & 0xFFFFFE00) | 212;
+    o[0] = 10;
+    o[3] = (o[3] & 63) | 64;
+    *(u16 *)&o[4] = (*(u16 *)&o[4] & 0xFFFFFC00) | 744;
+    gUnknown_02030A70.unk5_4 = 4;
+    gUnknown_03000420[12] = 0xFF;
+    gUnknown_03000420[7] = -1;
+    sub_0802C89C();
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_0802C800.inc\"");
+#endif
 
 void sub_0802C89C(void)
 {
@@ -4015,10 +5192,69 @@ void sub_0802CF70(void)
 
 asm(".include \"asm/non_matching/file_select/sub_0802CFBC.inc\"");
 
+#ifdef NONMATCHING
+s32 sub_0800B830(s32);
+#define COUNTER (*(u32 *)&gUnknown_03000420[16])
+
+void sub_0802D104(void)
+{
+    u8 v = gUnknown_03006C80.unk24 & 0x7F;
+    u32 target;
+    s32 d;
+
+    if (gUnknown_03000420[13] != v) {
+        gUnknown_03000420[13] = v;
+        gUnknown_03000420[2] = 1;
+    }
+    target = gUnknown_03006C80.unk8;
+    d = sub_0800B830(target - COUNTER);
+    if (d == 0)
+        return;
+    if (d > 1000)
+        COUNTER += COUNTER < target ? 1000 : -1000;
+    else if (d > 100) {
+        if (COUNTER < target)
+            COUNTER += 100;
+        else
+            COUNTER -= 100;
+    } else if (d > 10) {
+        if (COUNTER < target)
+            COUNTER += 10;
+        else
+            COUNTER -= 10;
+    } else {
+        COUNTER = target;
+    }
+    gUnknown_03000420[2] = 1;
+}
+#undef COUNTER
+#else
 asm(".include \"asm/non_matching/file_select/sub_0802D104.inc\"");
+#endif
 
 
+#ifdef NONMATCHING
+void sub_0802D190(u16 v)
+{
+    u8 target;
+
+    if ((gUnknown_03000E20.unk0 & 3) == 0) {
+        gUnknown_03000420[9] = v;
+        target = gUnknown_03006730->unk28->unk45;
+        if (gUnknown_03000420[8] != target) {
+            gUnknown_03000420[2] = 1;
+            if (gUnknown_03000420[8] < target) {
+                if ((++gUnknown_03000420[8] & 7) == 0)
+                    play_sound(7);
+            } else {
+                gUnknown_03000420[8]--;
+            }
+        }
+    }
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_0802D190.inc\"");
+#endif
 
 
 void sub_0802D1E8(void)
@@ -4039,12 +5275,199 @@ void sub_0802D1E8(void)
 
 
 // Writes n as `digits` decimal digits ending at p, top half tile 32+d, bottom half 64+d one row down
-asm(".include \"asm/non_matching/file_select/sub_0802D228.inc\"");
+#ifdef NONMATCHING
+void sub_0802D228(u16 *p, u32 n, u8 digits, u16 attr)
+{
+    u32 d;
 
+    while (digits != 0) {
+        d = n % 10;
+        n /= 10;
+        p[0] = (d + 32) | attr;
+        p[32] = (d + 64) | attr;
+        digits--;
+        p--;
+    }
+}
+#else
+asm(".include \"asm/non_matching/file_select/sub_0802D228.inc\"");
+#endif
+
+#ifdef NONMATCHING
+extern u8 gUnknown_0202D13C[];
+void sub_0802D228(u16 *, u32, u8, u16);
+
+void sub_0802D280(void)
+{
+    u32 v = *(u32 *)&gUnknown_03000420[16];
+    u8 digits;
+    u8 *base;
+    u8 *q;
+    u16 t;
+
+    if (v > 99999)
+        v = 99999;
+    if (v <= 999)
+        digits = 3;
+    else if (v <= 9999)
+        digits = 4;
+    else
+        digits = 5;
+    base = (gUnknown_03000420[3] << 11) + gUnknown_0202D13C;
+    *(u16 *)(base + 1152) = 0;
+    *(u16 *)(base + 1216) = 0;
+    *(u16 *)(base + 1154) = 0;
+    *(u16 *)(base + 1218) = 0;
+    q = (gUnknown_03000420[3] << 11) + ((27 - digits) * 2 + (gUnknown_0202D13C - 44));
+    t = gUnknown_03000420[13] ? 83 : 0x101C;
+    *(u16 *)(q + 1152) = t;
+    *(u16 *)(q + 1154) = t + 1;
+    *(u16 *)(q + 1216) = t + 2;
+    *(u16 *)(q + 1218) = t + 3;
+    sub_0802D228((u16 *)((gUnknown_03000420[3] << 11) + (gUnknown_0202D13C + 12) + 1152), v, digits, 0x3000);
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_0802D280.inc\"");
+#endif
+#ifdef NONMATCHING
+extern u8 gUnknown_0202D140[];
+extern u8 gUnknown_0202D148[];
+void sub_0802D228(u16 *, u32, u8, u16);
+
+// Draws the signed counter at gUnknown_03000420[20] with a +/- sign tile
+void sub_0802D354(void)
+{
+    u16 *p;
+    u16 i;
+    s16 v;
+    u16 a;
+    u16 sign;
+    u8 digits;
+    u8 *q;
+
+    p = (u16 *)((gUnknown_03000420[3] << 11) + gUnknown_0202D140 + 1024);
+    for (i = 0; i <= 5; i++) {
+        p[0] = 0;
+        p[32] = 0;
+        p++;
+    }
+    if (*(s32 *)&gUnknown_03000420[20] != 0) {
+        v = *(s32 *)&gUnknown_03000420[20];
+        sign = (~v >> 31) & 0x1000;
+        a = v < 0 ? -v : v;
+        if ((s16)a <= 9)
+            digits = 1;
+        else if ((s16)a <= 99)
+            digits = 2;
+        else if ((s16)a <= 999)
+            digits = 3;
+        else
+            digits = 4;
+        sub_0802D228((u16 *)((gUnknown_03000420[3] << 11) + gUnknown_0202D148 + 1024), (s16)a, digits, sign);
+        q = (gUnknown_03000420[3] << 11) + ((28 - digits) * 2 + (gUnknown_0202D148 - 56));
+        if (*(s32 *)&gUnknown_03000420[20] > 0) {
+            *(u16 *)(q + 1024) = 0x1030;
+            *(u16 *)(q + 1088) = 0x1050;
+        } else {
+            *(u16 *)(q + 1024) = 49;
+            *(u16 *)(q + 1088) = 81;
+        }
+    }
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_0802D354.inc\"");
+#endif
+#ifdef NONMATCHING
+extern u8 gUnknown_0202D130[];
+extern u8 gUnknown_0202D12E[];
+
+// Draws the meter gUnknown_03000420[8] (8 per heart) as gUnknown_03000420[9] hearts in rows of 10
+void sub_0802D428(void)
+{
+    u16 *p = (u16 *)((gUnknown_03000420[3] << 11) + gUnknown_0202D130 + 64);
+    u16 v = gUnknown_03000420[8];
+    u16 i, k;
+    s32 t;
+
+    for (i = 0; i < gUnknown_03000420[9]; i++) {
+        k = i % 10;
+        if ((s16)v > 8) {
+            p[k] = 16;
+            p[k + 32] = 22;
+        } else if ((s16)v > 0) {
+            p[k] = (s16)v == 1 ? 19 : 20 - (s16)v / 2;
+            p[k + 32] = 22;
+        } else {
+            p[k] = 20;
+            p[k + 32] = 22;
+        }
+        t = (v << 16) - (8 << 16);
+        v = t >> 16;
+        if (t < 0)
+            v = 0;
+        if (i == 9)
+            p = (u16 *)((gUnknown_03000420[3] << 11) + gUnknown_0202D130 + 128);
+    }
+    p = (u16 *)((gUnknown_03000420[3] << 11) + gUnknown_0202D12E + 64);
+    p[0] = 21;
+    if (gUnknown_03000420[9] > 10)
+        p[32] = 21;
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_0802D428.inc\"");
+#endif
+#ifdef NONMATCHING
+extern u8 gUnknown_0202D112[];
+extern u8 gUnknown_0202D144[];
+extern const u16 gUnknown_084277BC[];
+
+void sub_0802D514(void)
+{
+    u16 *p;
+    const u16 *s = gUnknown_084277BC;
+
+    p = (u16 *)((gUnknown_03000420[3] << 11) + gUnknown_0202D112 + 64);
+    if (gUnknown_03006C80.unk4 <= 8) {
+        p[0] = 0x1058;
+        p[1] = 0x1059;
+        p[2] = 0x105E;
+        p = (u16 *)((gUnknown_03000420[3] << 11) + gUnknown_0202D112 + 128);
+        p[0] = 0x105A;
+        p[1] = 0x105B;
+        p[2] = 0x105F;
+        p[3] = 0x1057;
+    } else {
+        p[0] = 0x1058;
+        p[1] = 0x1059;
+        p[2] = 0x105C;
+        p[3] = 0x105E;
+        p = (u16 *)((gUnknown_03000420[3] << 11) + gUnknown_0202D112 + 128);
+        p[0] = 0x105A;
+        p[1] = 0x105B;
+        p[2] = 0x105D;
+        p[3] = 0x105F;
+        p[4] = 0x1057;
+    }
+    p = (u16 *)((gUnknown_03000420[3] << 11) + gUnknown_0202D144);
+    p[0] = s[0];
+    p[1] = s[1];
+    p[2] = s[2];
+    p = (u16 *)((gUnknown_03000420[3] << 11) + gUnknown_0202D144 + 64);
+    p[0] = s[3];
+    p[1] = s[4];
+    p[2] = s[5];
+    p = (u16 *)((gUnknown_03000420[3] << 11) + gUnknown_0202D144 + 128);
+    p[0] = s[6];
+    p[1] = s[7];
+    p[2] = s[8];
+    p = (u16 *)((gUnknown_03000420[3] << 11) + gUnknown_0202D144 + 192);
+    p[0] = s[9];
+    p[1] = s[10];
+    p[2] = s[11];
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_0802D514.inc\"");
+#endif
 asm(".include \"asm/non_matching/file_select/sub_0802D620.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802D67C.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802D6F0.inc\"");
