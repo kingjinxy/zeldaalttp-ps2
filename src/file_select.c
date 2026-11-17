@@ -625,7 +625,23 @@ void sub_080138BC(void)
     CpuSet(&b, gUnknown_02003110, 0x05000030);
 }
 
-asm(".include \"asm/non_matching/file_select/sub_080138F0.inc\"");
+
+u32 sub_08013948(u16 *, u8, u32 *, u32 *);
+
+u32 sub_080138F0(u16 *p, u8 b)
+{
+    u32 type = (*p >> 9) & 15;
+    u8 id = *p;
+
+    if (type == 6) {
+        if (id == 92 && sub_08013948(p, b, gUnknown_0201EF30, gUnknown_0201EF30 + 48) != 0)
+            return 0;
+        if (id == 8 && sub_08013948(p, b, gUnknown_02003110, gUnknown_02003110 + 48) != 0)
+            return 0;
+    }
+    return 1;
+}
+
 asm(".include \"asm/non_matching/file_select/sub_08013948.inc\"");
 struct Rec08013A10 { u16 tile; u8 id; u8 unk3; };
 
@@ -727,7 +743,30 @@ asm(".include \"asm/non_matching/file_select/sub_08014658.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080146D4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801478C.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801484C.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_08014900.inc\"");
+
+extern u8 gUnknown_0202A500[];
+void sub_08014958(u8 *);
+void sub_08014E60(u8 *);
+
+void sub_08014900(void)
+{
+    u8 *p = gUnknown_0202A500;
+    u16 i;
+
+    for (i = 0; i < gUnknown_02000004; i++, p += 8) {
+        switch (p[3]) {
+        case 1:
+            sub_08014958(p);
+            break;
+        case 2:
+            sub_08014E60(p);
+            break;
+        }
+    }
+    gUnknown_02000004 = 0;
+    gUnknown_02016324 = 0;
+}
+
 asm(".include \"asm/non_matching/file_select/sub_08014958.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08014E60.inc\"");
 
@@ -1523,7 +1562,23 @@ void sub_0801DE14(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/file_select/sub_0801DE44.inc\"");
+
+void sub_0801DE44(struct Entity *this)
+{
+    if (this->unk18 & 2) {
+        GetNextFrame(this);
+        if (this->unk29 & 0x20) {
+            this->unk18 &= ~2;
+            this->unk29 &= 0xF;
+        }
+    }
+    if (this->unk18 & 0x80) {
+        this->unk14 = 5;
+        this->unk2A = 0xFF;
+        sub_0801DEC0(this, 0);
+    }
+}
+
 
 void sub_0801DE9C(struct Entity *this)
 {
@@ -2149,7 +2204,18 @@ void sub_08026754(struct Entity *this)
     gUnknown_0813CBE0[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/file_select/sub_0802676C.inc\"");
+
+extern const u8 gUnknown_0813CBF0[];
+
+void sub_0802676C(struct Entity *this)
+{
+    this->unk14++;
+    this->unk3C = 0;
+    this->unk48 = gUnknown_0813CBF0;
+    this->unk7C.h = (this->x.HALF.HI - gUnknown_03000450.unk18) >> 4 | ((this->y.HALF.HI - gUnknown_03000450.unk1A) >> 4) << 6;
+    this->unk78.s2.unk7A = sub_0800932C(this->unk7C.h, this->unk50);
+}
+
 asm(".include \"asm/non_matching/file_select/sub_080267C4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080268D8.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08026958.inc\"");
@@ -2356,7 +2422,22 @@ void sub_08027C98(struct Entity *this)
 asm(".include \"asm/non_matching/file_select/sub_08027CB0.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08027D40.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08027DF0.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_08027F44.inc\"");
+
+extern void (*const gUnknown_0813CE80[])(struct Entity *);
+
+void sub_08027F44(struct Entity *this)
+{
+    if (this->unk70.w != 0) {
+        if (--this->unk70.w == 0) {
+            DeleteThisEntity(this);
+            return;
+        }
+        if (this->unk70.w <= 15)
+            this->unk1C_0 = (gUnknown_03000E20.unk0 & 2) >> 1;
+    }
+    gUnknown_0813CE80[this->unk14](this);
+}
+
 asm(".include \"asm/non_matching/file_select/sub_08027F98.inc\"");
 
 void sub_08028050(struct Entity *this)
@@ -2945,7 +3026,10 @@ void sub_0802D1E8(void)
     }
 }
 
+
+// Writes n as `digits` decimal digits ending at p, top half tile 32+d, bottom half 64+d one row down
 asm(".include \"asm/non_matching/file_select/sub_0802D228.inc\"");
+
 asm(".include \"asm/non_matching/file_select/sub_0802D280.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802D354.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802D428.inc\"");

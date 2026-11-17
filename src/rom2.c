@@ -818,7 +818,18 @@ void sub_0800C658(void *data)
 asm(".include \"asm/non_matching/rom2/sub_0800C6A8.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800C75C.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800C7E8.inc\"");
-asm(".include \"asm/non_matching/rom2/sub_0800C8E4.inc\"");
+
+extern u8 *(*const gUnknown_084273C8[])(u8 *);
+
+void sub_0800C8E4(void)
+{
+    u8 *p = gUnknown_03006630 + ((gUnknown_03000204 ^ 1) << 7);
+
+    while (p < (u8 *)gUnknown_03005E08)
+        p = gUnknown_084273C8[*p](p + 1);
+    gUnknown_03005E08 = gUnknown_03006630 + ((gUnknown_03000204 ^ 1) << 7);
+}
+
 
 const u8 *sub_0800C940(const u8 *p)
 {
