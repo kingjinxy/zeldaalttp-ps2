@@ -3361,7 +3361,29 @@ void sub_08044198(struct Entity *this, struct Entity *a, struct Entity *b)
 
 asm(".include \"asm/non_matching/fs_game/sub_08044240.inc\"");
 
-asm(".include \"asm/non_matching/fs_game/sub_08044594.inc\"");
+// A random player whose entity is active (unk45) and who isn't holding R, searching from a random start
+struct Entity *sub_08044594()
+{
+    struct Struct03006A30 *p;
+    s8 i;
+    s8 step;
+    s8 n;
+
+    i = sub_0800099C() % gUnknown_03006C80.unk0;
+    step = (sub_0800099C() & 1) ? 1 : -1;
+    for (n = 0; n < gUnknown_03006C80.unk0; n++)
+    {
+        p = &gUnknown_03006A30[i];
+        if (!(gUnknown_03000940[i] & 0x400) && p->unk28->unk45 != 0)
+            return p->unk28;
+        i = i + step;
+        if (i == gUnknown_03006C80.unk0)
+            i = 0;
+        if (i == -1)
+            i = gUnknown_03006C80.unk0;
+    }
+    return gUnknown_03006A30[0].unk28;
+}
 
 
 void sub_0804469C(struct Entity *this, u8 n, s16 x, s16 y)
