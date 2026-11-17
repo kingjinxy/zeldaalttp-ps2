@@ -9747,7 +9747,9 @@ void sub_08059AA8(struct Entity *this)
     this->unk14++;
 }
 
+
 asm(".include \"asm/non_matching/fs_game/sub_08059BD0.inc\"");
+
 
 void sub_08059E34(struct Entity *this)
 {
