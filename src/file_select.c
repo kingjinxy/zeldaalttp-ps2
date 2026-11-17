@@ -534,6 +534,7 @@ asm(".include \"asm/non_matching/file_select/sub_080127A8.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080127D4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08012800.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08012824.inc\"");
+
 asm(".include \"asm/non_matching/file_select/sub_080128EC.inc\"");
 
 u32 sub_08012A24(const u16 *p, u16 key)
@@ -2921,7 +2922,15 @@ void sub_0802782C(struct Entity *this)
     WALL_AT(24, 20, 0x4000)
 }
 
-asm(".include \"asm/non_matching/file_select/sub_080278E8.inc\"");
+
+void sub_080278E8(struct Entity *this)
+{
+    WALL_AT(-25, -21, 0x200)
+    WALL_AT(-25, -5, 0x200)
+    WALL_AT(-25, 4, 0x400)
+    WALL_AT(-25, 20, 0x400)
+}
+
 
 void sub_080279AC(struct Entity *this)
 {
