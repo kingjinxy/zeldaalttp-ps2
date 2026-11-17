@@ -5414,7 +5414,7 @@ extern const u8 gUnknown_084287A4[];
 extern const u8 gUnknown_084287B4[];
 //extern gUnknown_084287B7;
 //extern gUnknown_084287D0;
-//extern gUnknown_084287E0;
+extern const u32 gUnknown_084287E0[];
 //extern gUnknown_084287F0;
 extern const s8 gUnknown_0842882C[];
 //extern gUnknown_0842883C;
