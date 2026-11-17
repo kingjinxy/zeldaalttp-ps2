@@ -3110,7 +3110,39 @@ void sub_08027F44(struct Entity *this)
     gUnknown_0813CE80[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/file_select/sub_08027F98.inc\"");
+
+extern const void *const gUnknown_0813CF70[];
+extern const u16 gUnknown_0813CE8C[];
+
+void sub_08027F98(struct Entity *this)
+{
+    u16 *p;
+    u16 t;
+    u32 lo;
+
+    this->unk5E_0 = 1;
+    this->unk2E = 0;
+    this->unk48 = gUnknown_0813CF70[this->form];
+    this->speed = 256;
+    this->unk14++;
+    p = (u16 *)sub_08012F84(this->unk52, this->parameter);
+    this->unk78.p = p;
+    *(u16 **)&this->unk6C = p;
+    this->unk70.w = 0;
+    if (*p == 0xFFFE) {
+        this->unk70.w = p[1];
+        this->unk78.p = p + 2;
+        *(u16 **)&this->unk6C = p + 2;
+    }
+    this->unk60 = this->unk17 ? sub_08013D20(this->unk17) : 0;
+    t = gUnknown_0813CE8C[gUnknown_03006C80.unk1 * 2 + 1];
+    lo = t & 15;
+    ((u8 *)this)[30] = (t << 4) | lo;
+    sub_0802C070(this, gUnknown_0813CE8C[gUnknown_03006C80.unk1 * 2]);
+    sub_08028170(this);
+    sub_08003870(this, this->form);
+}
+
 
 void sub_08028050(struct Entity *this)
 {
