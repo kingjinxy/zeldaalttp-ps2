@@ -408,7 +408,7 @@ void sub_0801424C(void);
 //sub_080142F4();
 //sub_08014474();
 void sub_080144A0(void);
-void sub_080144F0(u8, u16, u16);
+void sub_080144F0(u16, u16, u16);
 //sub_080145B4();
 //sub_080145D8();
 void sub_08014658(u16, u16, u16);

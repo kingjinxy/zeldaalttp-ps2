@@ -627,7 +627,20 @@ void sub_080138BC(void)
 
 asm(".include \"asm/non_matching/file_select/sub_080138F0.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08013948.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_08013A10.inc\"");
+struct Rec08013A10 { u16 tile; u8 id; u8 unk3; };
+
+// For each of 48 records with id 0xFF: call sub_080144F0 on its tile and set bit 13
+void sub_08013A10(void)
+{
+    struct Rec08013A10 *p;
+
+    for (p = (struct Rec08013A10 *)gUnknown_0201EF30; p < (struct Rec08013A10 *)gUnknown_0201EF30 + 48; p++) {
+        if (p->id == 0xFF) {
+            sub_080144F0(310, p->tile & 0xFFF, p->tile & 0xC000);
+            p->tile |= 0x2000;
+        }
+    }
+}
 asm(".include \"asm/non_matching/file_select/sub_08013A60.inc\"");
 
 void sub_08013C04(const u16 *p)
