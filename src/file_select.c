@@ -634,7 +634,6 @@ asm(".include \"asm/non_matching/file_select/sub_080130D4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08013120.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080131C8.inc\"");
 
-struct Room08013120 { u16 unk0; u16 unk2; u32 *unk4; };
 asm(".include \"asm/non_matching/file_select/sub_080131FC.inc\"");
 
 asm(".include \"asm/non_matching/file_select/sub_080132B0.inc\"");
