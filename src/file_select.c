@@ -894,9 +894,40 @@ u16 *sub_08015DC0(u16 a)
 }
 
 asm(".include \"asm/non_matching/file_select/sub_08015DD8.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_08015F74.inc\"");
+
+extern u8 gUnknown_02038000[];
+extern u8 gUnknown_0203A000[];
+extern void *const gUnknown_08146090[];
+void sub_0801484C(void *, u32);
+void sub_0800BAE4(void *, void *, u32, u32);
+void sub_080160F8(void);
+
+void sub_08015F74(u16 n)
+{
+    zero_memory(gUnknown_02038000, 0x4000);
+    sub_0801484C(gUnknown_08146090[n], 0);
+    sub_0800BAE4(gUnknown_0201F020_fs.unk4, gUnknown_02038000, gUnknown_03000450.unk28 >> 4, (gUnknown_03000450.unk2A >> 4) | 0x8000);
+    sub_0800BAE4(gUnknown_0200B320.unk4, gUnknown_0203A000, gUnknown_03000450.unk28 >> 4, (gUnknown_03000450.unk2A >> 4) | 0x8000);
+    sub_080160F8();
+}
+
 asm(".include \"asm/non_matching/file_select/sub_08015FE4.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_08016084.inc\"");
+
+extern u8 gUnknown_02016D90[];
+extern u8 gUnknown_020031D0[];
+extern u8 gUnknown_02016470[];
+void sub_080159F4(void *, void *);
+
+void sub_08016084(void)
+{
+    CpuSet(gUnknown_0201F020_fs.unk4, (u8 *)gUnknown_0201F020_fs.unk4 + 0x3000, 0x04000800);
+    CpuSet(gUnknown_0200B320.unk4, (u8 *)gUnknown_0200B320.unk4 + 0x3000, 0x04000800);
+    sub_080159F4(gUnknown_02016D90, &gUnknown_0201F020_fs);
+    sub_080159F4(gUnknown_020031D0, &gUnknown_0200B320);
+    CpuFastSet(gUnknown_02016470, gUnknown_02016470 + 512, 8);
+    gUnknown_0200B310 |= 0x200000;
+}
+
 asm(".include \"asm/non_matching/file_select/sub_080160F8.inc\"");
 
 void sub_080161F8(u16 a, u8 b)

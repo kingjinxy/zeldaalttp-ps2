@@ -819,6 +819,7 @@ struct Struct03000450
     u16 unk22;
     u8 filler24[4];
     u16 unk28;
+    u16 unk2A;
 };
 
 struct Struct08429004
