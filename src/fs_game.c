@@ -1399,7 +1399,20 @@ u8 sub_0803BD78(struct Entity *this, struct Entity *other, u8 c)
     return 1;
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0803BE8C.inc\"");
+
+u32 sub_0803BE8C(struct Entity *this, struct Entity *a1, u8 a2)
+{
+    this->unk42 = a1->unk46;
+    this->unk3D = (u8)(a1->unk46 & 0x80) ? a1->unk46 + S8_AT(a1, 0x46) / 4 : -a1->unk46 - S8_AT(a1, 0x46) / 4;
+    if (this->type == 8 && gUnknown_03006A30[this->form].unk28->unk3D == 0)
+        gUnknown_03006A30[this->form].unk28->unk3D = 0x80;
+    a1->unk42 = this->unk46;
+    a1->unk3D = (u8)(this->unk46 & 0x80) ? this->unk46 + S8_AT(this, 0x46) / 4 : -this->unk46 - S8_AT(this, 0x46) / 4;
+    if (a1->type == 8 && gUnknown_03006A30[a1->form].unk28->unk3D == 0)
+        gUnknown_03006A30[a1->form].unk28->unk3D = 0x80;
+    return 1;
+}
+
 
 u8 sub_0803C070(struct Entity *this, struct Entity *other, u8 d)
 {

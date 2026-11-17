@@ -1769,7 +1769,7 @@ u8 sub_0803B99C(struct Entity *, struct Entity *, u8);
 //sub_0803BBF0();
 u8 sub_0803BC5C(struct Entity *, struct Entity *, u8);
 u8 sub_0803BD78(struct Entity *, struct Entity *, u8);
-//sub_0803BE8C();
+u32 sub_0803BE8C(struct Entity *, struct Entity *, u8);
 u8 sub_0803C070(struct Entity *, struct Entity *, u8);
 u8 sub_0803C1A4(struct Entity *, struct Entity *, u8);
 //sub_0803C2EC();
