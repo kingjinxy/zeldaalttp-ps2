@@ -5619,7 +5619,36 @@ void sub_0804E4E4(struct Entity *this)
     gUnknown_08428920[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_0804E50C.inc\"");
+
+void sub_0804E50C(struct Entity *this)
+{
+    struct MapDataB *m;
+
+    this->unk14++;
+    this->unk1C_0 = 1;
+    this->unk48 = gUnknown_084289A0;
+    this->speed = 0x80;
+    BITU16_AT(this, 0x36) = this->y.HALF_U.HI - 1;
+    BITU8_AT(this, 0x1A) = 0;
+    this->unk1B = 11;
+    this->unk1C_6 = 3;
+    this->unk20 = 240;
+    sub_08003870(this, 5);
+    m = (struct MapDataB *)sub_08015DC0(this->unk50);
+    BITU16_AT(this, 0x68) = m->unk4[((this->x.HALF.HI - gUnknown_03000450.unk18) >> 4) | ((this->y.HALF.HI - gUnknown_03000450.unk1A) >> 4 << 6)].v;
+    if (U16_AT(this, 0x68) == 0x4002)
+    {
+        DeleteThisEntity(this);
+    }
+    else
+    {
+        BITU8_AT(this, 0x6A) = m->unk2004[((this->x.HALF.HI - gUnknown_03000450.unk18) >> 4) | ((this->y.HALF.HI - gUnknown_03000450.unk1A) >> 4 << 6)].v;
+        m->unk4[((this->x.HALF.HI - gUnknown_03000450.unk18) >> 4) | ((this->y.HALF.HI - gUnknown_03000450.unk1A) >> 4 << 6)].v = 0x4002;
+        m->unk2004[((this->x.HALF.HI - gUnknown_03000450.unk18) >> 4) | ((this->y.HALF.HI - gUnknown_03000450.unk1A) >> 4 << 6)].v = 29;
+        sub_08008D90(this);
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_0804E6FC.inc\"");
 
 void sub_0804E9B4(struct Entity *this)
