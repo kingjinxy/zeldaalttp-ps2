@@ -579,7 +579,9 @@ void sub_08034678(struct Entity *this)
 
 asm(".include \"asm/non_matching/game_select/sub_08034690.inc\"");
 asm(".include \"asm/non_matching/game_select/sub_080346F8.inc\"");
+
 asm(".include \"asm/non_matching/game_select/sub_0803472C.inc\"");
+
 
 void sub_0803478C(struct Entity *this)
 {

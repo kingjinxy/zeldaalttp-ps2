@@ -8,7 +8,7 @@ u32 sub_0800099C(void);
 u16 sub_0800963C(struct Entity *);
 void sub_08008D74(void);
 void sub_080009F4(void *, u32, u32);  // hand-written copy (dest, src, size)
-void sub_08009664(struct Entity *);
+u16 sub_08009664(struct Entity *);
 u8 sub_08003F1C(struct Entity *, s32);  // hand-written, after the table at the start of sub_08003EDC
 void sub_0800238C(struct Entity *, struct Entity *);
 void sub_08008DD8(struct Entity *);

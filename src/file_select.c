@@ -1710,7 +1710,22 @@ void sub_0801E690(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/file_select/sub_0801E6C0.inc\"");
+
+void sub_0801E6C0(struct Entity *this)
+{
+    if (sub_08009664(this) == 0)
+        this->unk17 = 1;
+    GetNextFrame(this);
+    if (--this->unk17 != 0) {
+        if ((this->unk17 & 7) == 0)
+            sub_080040C4(this, sub_0803CECC(this, this->unk58));
+    } else {
+        this->unk14 = 4;
+        this->unk17 = 16;
+        sub_08003870(this, this->unk2A + 4);
+    }
+}
+
 
 void sub_0801E724(struct Entity *this)
 {
@@ -2413,7 +2428,20 @@ void sub_08026EEC(struct Entity *this)
 asm(".include \"asm/non_matching/file_select/sub_08026F04.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08026F80.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08027034.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_0802705C.inc\"");
+
+extern void (*const gUnknown_0813CD38[])(struct Entity *);
+void sub_080275F8(struct Entity *);
+
+void sub_0802705C(struct Entity *this)
+{
+    if (this->unk74.b.unk74 != 0 && (gUnknown_08137B10[this->form & 31] & gUnknown_0201F000[this->unk52]) == 0)
+        this->unk74.b.unk74 = 0;
+    if (this->unk14 != 4)
+        sub_080275F8(this);
+    gUnknown_0813CD38[this->unk14](this);
+    this->unk60 = 0;
+}
+
 asm(".include \"asm/non_matching/file_select/sub_080270C0.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802715C.inc\"");
 
@@ -2835,7 +2863,25 @@ void sub_0802BF30(void)
     gUnknown_0202A770.unk8 = gUnknown_0202A770.unk5C + (sub_0800099C() & (n - 1)) - (n >> 1);
 }
 
-asm(".include \"asm/non_matching/file_select/sub_0802BF60.inc\"");
+
+extern u8 gUnknown_02016C50[];
+
+void sub_0802BF60(void)
+{
+    u8 i;
+
+    zero_memory(gUnknown_0202A3F0, 256);
+    zero_memory(gUnknown_02016C50, 256);
+    for (i = 0; i < 8; i++) {
+        gUnknown_0202A3F0[i].unk0 |= 0xFF;
+        gUnknown_0202A3F0[i].unk1 |= 0xFF;
+    }
+    for (i = 43; i < 64; i++) {
+        gUnknown_0202A3F0[i].unk0 |= 0xFF;
+        gUnknown_0202A3F0[i].unk1 |= 0xFF;
+    }
+}
+
 asm(".include \"asm/non_matching/file_select/sub_0802BFC4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802C070.inc\"");
 
