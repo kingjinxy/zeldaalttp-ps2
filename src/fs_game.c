@@ -12053,7 +12053,81 @@ void sub_08060F44(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_080610F0.inc\"");
+
+void sub_080610F0(struct Entity *this)
+{
+    u8 i;
+    u8 *cnt;
+    u8 *pf;
+    u32 unused;
+    struct Entity **pe;
+    u16 a;
+    u16 b;
+    u16 t;
+    struct Struct03006A30 *g;
+
+    cnt = (u8 *)this + 0x64;
+    g = gUnknown_03006A30;
+    for (i = 0; i <= 3 && g->unk28 != NULL; i++, g++, cnt++)
+    {
+        if (!(g->unk2 & 0x80) & !(g->unk36 & 0x1000))
+        {
+            if ((u8)sub_08003C84(this, g->unk28))
+            {
+                sub_080074C0(g->unk28);
+                if (!(g->unk1B & 0x40) & !(g->unk36 & 0x80))
+                {
+                    if ((u8)(this->unk2A & 0xFB))
+                    {
+                        a = this->x.HALF_U.HI;
+                        b = g->unk28->x.HALF_U.HI;
+                    }
+                    else
+                    {
+                        a = g->unk28->y.HALF_U.HI;
+                        b = this->y.HALF_U.HI;
+                    }
+                    if (this->unk2A > 3)
+                    {
+                        t = a;
+                        a = b;
+                        b = t;
+                    }
+                    if (a < b)
+                    {
+                        pf = (u8 *)this + 0x17;
+                        pe = (struct Entity **)((u8 *)this->unk58 + 0x64);
+                    }
+                    else
+                    {
+                        pf = (u8 *)this + 0x18;
+                        pe = (struct Entity **)((u8 *)this->unk58 + 0x68);
+                    }
+                    if (*pf == 0xFF && (u8)(g->unk28->unk2A >> 1) == (u8)(g->unkD >> 3))
+                    {
+                        if ((*cnt = *cnt + 1) > 10)
+                        {
+                            g->unk2 = 0x81;
+                            g->unk28->unk10 = 0x18000;
+                            g->unk28->direction |= 0xFF;
+                            *cnt = 0;
+                            *pe = g->unk28;
+                            *pf = g->unk28->form;
+                            g->unk36 = g->unk36 & 0xFFFB;
+                            g->unk36 = g->unk36 | 0x1000;
+                        }
+                        break;
+                    }
+                    *cnt = 0;
+                }
+            }
+        }
+    }
+    if (this->unk23 != this->unk2A)
+        sub_08003870(this, this->unk2A);
+    sub_08062CB8(this);
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_08061364.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_080618B4.inc\"");
 asm(".include \"asm/non_matching/fs_game/sub_08062020.inc\"");

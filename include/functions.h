@@ -46,7 +46,7 @@ void sub_08002E64(struct Entity *);
 void sub_08003E24(struct Entity *);
 u8 sub_08003F54(s16, s16, s16, s16);
 bool32 sub_08003594(struct Entity *, s32);  // tmc: GravityUpdate
-void sub_08003C84(struct Entity *, struct Entity *);
+u8 sub_08003C84(struct Entity *, struct Entity *);
 u16 sub_08008F58(u16, u16);
 u8 sub_080093C8(u16, u16);
 u8 sub_08003F4C(struct Entity *, struct Entity *);
@@ -2497,7 +2497,7 @@ void sub_08061364(struct Entity *);
 //sub_08062020();
 void sub_08062B0C(struct Entity *);
 u8 sub_08062BFC(struct Entity *, struct Entity *, u8);
-//sub_08062CB8();
+void sub_08062CB8(struct Entity *);
 //sub_08062D10();
 void sub_08062D38(struct Entity *);
 void sub_08062DD4(struct Entity *);
