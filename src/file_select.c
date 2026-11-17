@@ -1070,7 +1070,38 @@ void sub_08016EA8(struct Entity *this)
 
 
 
-asm(".include \"asm/non_matching/file_select/sub_08016EF0.inc\"");
+
+u32 sub_0800997C(struct Entity *, u32);
+
+void sub_08016EF0(struct Entity *this)
+{
+    u32 r;
+    u8 d;
+
+    if (this->unk18 == 0) {
+        r = sub_0800997C(this, 12);
+        d = r;
+        if (r & 0x80) {
+            this->unk14 = 3;
+            this->unk17 = 16;
+            this->speed = 416;
+            this->direction = d & 24;
+            this->unk2A = this->direction >> 3;
+            sub_08003870(this, this->unk2A + 4);
+            return;
+        }
+    } else {
+        this->unk18--;
+    }
+    if (this->unk17 == 0) {
+        this->unk14 = 1;
+    } else {
+        this->unk17--;
+        sub_0800963C(this);
+        GetNextFrame(this);
+    }
+}
+
 
 
 void sub_08016F5C(struct Entity *this)
