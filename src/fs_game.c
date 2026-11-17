@@ -3354,7 +3354,16 @@ void sub_0804469C(struct Entity *this, u8 n, s16 x, s16 y)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_080447C8.inc\"");
+void sub_080447C8(struct Entity *this)
+{
+    u32 unused;
+
+    sub_080095A4(this);
+    gUnknown_0813ED84[sub_080098DC(this)](this);
+    sub_08008D90(this);
+    this->unk1F_6 = 1;
+    this->unk1D_6 = 1;
+}
 
 void sub_0804482C(struct Entity *this)
 {

@@ -328,6 +328,8 @@ u16 sub_0800934C(struct Entity *, s16, s16);
 u8 sub_080017EC(struct Entity *, u32, u16, u16);
 void sub_08009FB8(struct Entity *);
 void sub_08008D90(struct Entity *);
+void sub_080095A4(struct Entity *);
+u8 sub_080098DC(struct Entity *);
 void sub_08009FCC(struct Entity *);
 u8 sub_08000AAC(const u8 *, u16);
 struct Entity *sub_08012410(struct Entity *);
