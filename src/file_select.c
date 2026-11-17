@@ -751,7 +751,6 @@ s32 sub_080141AC(u8 i)
 }
 
 
-extern const u16 gUnknown_08429A4C[][8];
 
 asm(".include \"asm/non_matching/file_select/sub_080141E8.inc\"");
 
