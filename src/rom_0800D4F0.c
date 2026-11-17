@@ -515,4 +515,24 @@ asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800F408.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800F4C4.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800F68C.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800F76C.inc\"");
-asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800F7B4.inc\"");
+
+// Draws glyph c (two halves above 0x2FF) into the text reader; returns how far unk3 advanced
+u16 sub_0800F7B4(u16 c, struct Struct0800EE2C *p)
+{
+    u8 *glyph;
+    u8 start;
+
+    if (p->unk2 <= p->unk3)
+        return 0;
+    glyph = (u8 *)sub_0800EE50(c);
+    start = p->unk3;
+    if (c > 0x2FF) {
+        sub_0800EF34(p, glyph);
+        glyph += 64;
+    }
+    sub_0800EF34(p, glyph);
+    if (p->unk3 > p->unk2)
+        p->unk3 = p->unk2;
+    return p->unk3 - start;
+}
+

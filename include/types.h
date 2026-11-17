@@ -738,7 +738,7 @@ struct Struct0800EE2C
     u8 unk0;
     u8 unk1;
     u8 unk2;
-    u8 filler3;
+    u8 unk3;  // current column (sub_0800F7B4)
     u16 unk4;
     u16 unk6;  // text id (sub_0800ED7C)
     u32 unk8[4];  // passed with unkD8[i] to sub_0800EC08 (sub_0800EBD4)
