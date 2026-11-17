@@ -751,12 +751,18 @@ struct Struct0800EE2C
     u8 unkF9;
 };
 
+struct U32x3
+{
+    u32 v[3];
+};
+
 struct Struct0202A770
 {
     u8 unk0;
     u8 filler1[7];
     u16 unk8;
-    u8 fillerA[0x52];
+    u8 fillerA[0x4E];
+    const struct U32x3 *unk58;  // a 12-byte record of gUnknown_084296F0, copied to unk5C (sub_0802B6BC)
     u16 unk5C;
     u8 filler5E[8];
     u8 unk66;
