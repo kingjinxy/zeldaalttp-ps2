@@ -2387,7 +2387,78 @@ void sub_080407E0(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08040890.inc\"");
+
+void sub_08040890(struct Entity *this)
+{
+    struct Entity *e;
+
+    if (gUnknown_03000C00 == 0 || this->unk14 == 0)
+    {
+    if (U16_AT(this, 0x64) != 0)
+    {
+        sub_08041088(this);
+    }
+    else
+    {
+        gUnknown_0813EAFC[this->unk14](this);
+        GetNextFrame(this);
+        if (this->unk14 != 3)
+        {
+            if (this->unk17 != 0)
+            {
+                this->unk17--;
+                if (this->unk17 == 0)
+                {
+                    this->unk18 = 80;
+                    this->unk60 = 0;
+                    this->unk1D_0 = 2;
+                    sub_08003B94(this);
+                    gUnknown_03000488.unk0 = 256;
+                    gUnknown_03000488.unk2 = 256;
+                    gUnknown_03000488.unk4 = 0;
+                    sub_0803D770(&gUnknown_03000488, this);
+                }
+            }
+            else if (this->unk18 != 0)
+            {
+                this->unk18--;
+                if (this->unk18 == 0)
+                {
+                    if (this->unk14 == 2 && this->unk15 == 1)
+                        gUnknown_03006A30[this->parameter].unk5 = 0;
+                    sub_08003BCC(this);
+                    this->unk14 = 3;
+                    this->unk48 = gUnknown_0842873C;
+                    this->unk2E = 0;
+                    this->unk17 = 15;
+                    this->unk1C_0 = 0;
+                    e = sub_080123E8();
+                    if (e != NULL)
+                    {
+                        e->subtype = 32;
+                        e->type = 6;
+                        e->form = this->form;
+                        e->x.WORD = this->x.WORD;
+                        e->y.WORD = this->y.WORD;
+                        e->z.WORD = this->z.WORD;
+                        e->unk50 = this->unk50;
+                        e->unk1F_6 = this->unk1F_6;
+                        sub_08012728(6, e);
+                    }
+                    sub_08053564(this, 3);
+                    sub_08041328(this);
+                }
+                else
+                {
+                    sub_08041200(this);
+                }
+            }
+        }
+    }
+    }
+    sub_08003688(this);
+}
+
 
 void sub_08040B10(struct Entity *this)
 {
