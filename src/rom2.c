@@ -827,7 +827,15 @@ void sub_0800CA38(void)
 {
 }
 
-asm(".include \"asm/non_matching/rom2/sub_0800CA3C.inc\"");
+
+void sub_0800CA3C(void)
+{
+    gUnknown_030004A0.dispCnt &= 0xDFFF;
+    gUnknown_03000BC0.unk0 = 0;
+    DmaStop(0);
+    sub_0800CA38();
+}
+
 asm(".include \"asm/non_matching/rom2/sub_0800CA84.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800CAD4.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800CBBC.inc\"");

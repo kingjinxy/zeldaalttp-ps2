@@ -402,7 +402,23 @@ asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E80C.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E950.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EA38.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EAA4.inc\"");
-asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EB08.inc\"");
+
+void sub_0800EB08(u32 n)
+{
+    switch (n)
+    {
+    case 0:
+        sub_080009F4((void *)0x0600D300, (u32)gUnknown_02002490, 0x680);
+        break;
+    case 1:
+        sub_080009F4((void *)0x0600D980, (u32)gUnknown_02002490, 0x680);
+        break;
+    case 2:
+        sub_080009F4((void *)0x0600CD40, (u32)gUnknown_02002B90, 0x4C0);
+        break;
+    }
+}
+
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EB50.inc\"");
 
 void sub_0800EBD4(struct Struct0800EE2C *p)

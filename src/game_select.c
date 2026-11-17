@@ -650,7 +650,18 @@ void sub_08034C44(struct Entity *this)
     gUnknown_0813DCA8[this->unk14](this);
 }
 
-asm(".include \"asm/non_matching/game_select/sub_08034C5C.inc\"");
+
+void sub_08034C5C(struct Entity *this)
+{
+    struct MapData *m;
+
+    this->unk14 = 1;
+    m = (struct MapData *)sub_08015DC0(this->unk50);
+    this->unk7C.p = &m->unk4[((this->x.HALF.HI - gUnknown_03000450.unk18) >> 4) |
+                             (((this->y.HALF.HI - gUnknown_03000450.unk1A) >> 4) << 6)];
+    this->unk78.h = *this->unk7C.p;
+}
+
 
 void sub_08034CA0(struct Entity *this)
 {
