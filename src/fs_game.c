@@ -2147,7 +2147,43 @@ void sub_08040D60(struct Entity *this)
     gUnknown_08428728[this->unk15](this);
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08040D90.inc\"");
+
+void sub_08040D90(struct Entity *this)
+{
+    struct Entity *e;
+    struct Entity *link = gUnknown_03006A30[this->parameter].unk28;
+
+    this->unk15++;
+    if ((u8)(this->unk17 | this->unk18) == 0)
+    {
+        this->unk1C_0 = 1;
+        this->unk17 = 240;
+        this->unk40 = 22;
+        this->unk44 = 10;
+        this->unk46 = 12;
+        this->unk3C = 8;
+        this->unk48 = gUnknown_08428744;
+        this->unk3F = 11;
+        this->unk20 = 206;
+        this->unk1C_6 = 3;
+        this->unk1E_0 = this->unk1E_4 = 1;
+        this->unk1B = 9;
+        BITU8_AT(this, 0x1A) = 0;
+        sub_08003870(this, 5);
+        e = sub_080123E8();
+        if (e != NULL)
+        {
+            e->unk54 = this;
+            e->subtype = 4;
+            e->type = 8;
+            BITU16_AT(e, 0x64) = 1;
+            e->form |= 0xFF;
+            sub_08012728(2, e);
+        }
+    }
+    sub_0800238C(this, link);
+}
+
 
 void sub_08040F78(struct Entity *this)
 {
