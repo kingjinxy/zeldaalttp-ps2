@@ -12959,7 +12959,20 @@ void sub_08063524(struct Entity *this)
 
 asm(".include \"asm/non_matching/fs_game/sub_080637F4.inc\"");
 
-asm(".include \"asm/non_matching/fs_game/sub_08063C5C.inc\"");
+struct Entity *sub_08063C5C(u8 n)
+{
+    struct Entity *e = sub_0804C8A8(0x56, n, 0);
+
+    if (e != NULL)
+    {
+        e->unk1E_4 = e->unk1E_0 = n + 7;
+        e->unk20 = n * 32;
+        e->unk2A = 4;
+        e->unk1D_6 = 2;
+        gUnknown_03006A30[n].unk28 = e;
+    }
+    return e;
+}
 
 
 void sub_08063D28(u8 a, u8 b, u8 c)
