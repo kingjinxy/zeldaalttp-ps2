@@ -33,6 +33,9 @@ sub_08003EDC: @ 0x08003EDC
 	asrs r6, r2, #0x14
 	movs r4, r2
 	movs r0, r0
+	.global sub_08003F1C
+	.thumb_func
+sub_08003F1C:  @ code after the 0x40-byte table that starts sub_08003EDC
 	ldr r2, [r0, #0x38]
 	ldr r3, [r0, #0x10]
 	subs r2, r2, r3

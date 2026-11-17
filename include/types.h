@@ -738,8 +738,31 @@ struct Struct0800EE2C
     u8 unk0;
     u8 unk1;
     u8 unk2;
-    u8 filler3[0x1D];
+    u8 filler3;
+    u32 unk4;
+    u32 unk8[4];  // passed with unkD8[i] to sub_0800EC08 (sub_0800EBD4)
+    u8 filler18[8];
     u8 *unk20[8];
+    u8 filler40[0x98];
+    u8 unkD8[4][8];
+    u8 unkF8;  // a counter (sub_0800E39C)
+    u8 unkF9;
+};
+
+struct Struct0202A770
+{
+    u8 unk0;
+    u8 filler1[7];
+    u16 unk8;
+    u8 fillerA[0x52];
+    u16 unk5C;
+    u8 filler5E[8];
+    u8 unk66;
+};
+
+struct U32x8
+{
+    u32 v[8];
 };
 
 struct EntityLinks

@@ -378,14 +378,7 @@ asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E1D4.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E240.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E324.inc\"");
 
-// Bytes 0xF8 (a counter) and 0xF9 of the struct sub_0800E39C is given
-struct Struct0800E39C {
-    u8 filler0[0xF8];
-    u8 unkF8;
-    u8 unkF9;
-};
-
-void sub_0800E39C(struct Struct0800E39C *p)
+void sub_0800E39C(struct Struct0800EE2C *p)
 {
     p->unkF8++;
     p->unkF9 = 0;
@@ -411,7 +404,15 @@ asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EA38.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EAA4.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EB08.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EB50.inc\"");
-asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EBD4.inc\"");
+
+void sub_0800EBD4(struct Struct0800EE2C *p)
+{
+    sub_0800EC08(p->unk8[0], p->unkD8[0]);
+    sub_0800EC08(p->unk8[1], p->unkD8[1]);
+    sub_0800EC08(p->unk8[2], p->unkD8[2]);
+    sub_0800EC08(p->unk8[3], p->unkD8[3]);
+}
+
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EC08.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800ED7C.inc\"");
 

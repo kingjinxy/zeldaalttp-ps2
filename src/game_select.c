@@ -651,7 +651,20 @@ void sub_08034C44(struct Entity *this)
 }
 
 asm(".include \"asm/non_matching/game_select/sub_08034C5C.inc\"");
-asm(".include \"asm/non_matching/game_select/sub_08034CA0.inc\"");
+
+void sub_08034CA0(struct Entity *this)
+{
+    struct Entity *e;
+
+    if (this->unk78.h != *this->unk7C.p)
+    {
+        e = sub_0804C8A8(0, this->form, 1);
+        if (e != NULL)
+            sub_0803D3D0(this, e);
+        DeleteThisEntity(this);
+    }
+}
+
 
 void sub_08034CD4(struct Entity *this)
 {

@@ -558,7 +558,17 @@ void sub_08013804(void)
 
 asm(".include \"asm/non_matching/file_select/sub_08013824.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801386C.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_080138BC.inc\"");
+
+void sub_080138BC(void)
+{
+    u32 a, b;
+
+    a = 0;
+    CpuSet(&a, gUnknown_0201EF30, 0x05000030);
+    b = 0;
+    CpuSet(&b, gUnknown_02003110, 0x05000030);
+}
+
 asm(".include \"asm/non_matching/file_select/sub_080138F0.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08013948.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08013A10.inc\"");
@@ -566,7 +576,9 @@ asm(".include \"asm/non_matching/file_select/sub_08013A60.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08013C04.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08013C50.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08013C8C.inc\"");
+
 asm(".include \"asm/non_matching/file_select/sub_08013D20.inc\"");
+
 asm(".include \"asm/non_matching/file_select/sub_08013D54.inc\"");
 
 void sub_08013DE0(void)
@@ -623,7 +635,14 @@ asm(".include \"asm/non_matching/file_select/sub_08015964.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080159F4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08015AC4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08015C64.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_08015CD0.inc\"");
+
+u16 sub_08015CD0(s32 *p)
+{
+    if (*p < 0)
+        return gUnknown_081382A0[(u8)*p][sub_0800099C() & 7];
+    return *p;
+}
+
 asm(".include \"asm/non_matching/file_select/sub_08015D04.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08015D50.inc\"");
 
@@ -1357,7 +1376,19 @@ void sub_0801E494(struct Entity *this)
 asm(".include \"asm/non_matching/file_select/sub_0801E4AC.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801E590.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801E5D8.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_0801E690.inc\"");
+
+void sub_0801E690(struct Entity *this)
+{
+    GetNextFrame(this);
+    if (--this->unk17 == 0)
+    {
+        this->unk14 = 3;
+        this->unk17 = 120;
+        this->speed = 0x1C0;
+        sub_08003870(this, 8);
+    }
+}
+
 asm(".include \"asm/non_matching/file_select/sub_0801E6C0.inc\"");
 
 void sub_0801E724(struct Entity *this)
@@ -1381,7 +1412,20 @@ void sub_0801E750(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/file_select/sub_0801E76C.inc\"");
+
+void sub_0801E76C(struct Entity *this)
+{
+    sub_08009664(this);
+    switch (sub_08003F1C(this, 0x1800))
+    {
+    case 0:
+        this->unk14 = 7;
+        this->unk17 = 150;
+    case 1:
+        sub_08003DFC(49);
+    }
+}
+
 asm(".include \"asm/non_matching/file_select/sub_0801E7A0.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801E80C.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801E83C.inc\"");
@@ -1762,11 +1806,45 @@ asm(".include \"asm/non_matching/file_select/sub_08025B84.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08025C78.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08025CEC.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08025DB8.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_08025E24.inc\"");
+
+void sub_08025E24(struct Entity *this)
+{
+    sub_08026244(this);
+    if (--this->unk17 == 0)
+    {
+        this->unk14 = 5;
+        this->speed = 0x400;
+        this->unk54->unk18 |= 2;
+    }
+}
+
 asm(".include \"asm/non_matching/file_select/sub_08025E54.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08025EE0.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_08025F34.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_08025F68.inc\"");
+
+void sub_08025F34(struct Entity *this)
+{
+    sub_08026204(this);
+    if (--this->unk17 == 0)
+    {
+        this->unk14 = 8;
+        this->unk17 = 4;
+        this->unk2E = 8;
+        this->unk3C |= 0x80;
+    }
+}
+
+
+void sub_08025F68(struct Entity *this)
+{
+    sub_080261A0(this, this->unk17 >> 3);
+    this->direction = (this->direction - 1) & 31;
+    if ((s8)++this->unk17 < 0)
+    {
+        this->unk14 = 1;
+        this->unk54->unk18 = 0;
+    }
+}
+
 
 void sub_08025FA0(struct Entity *this)
 {
@@ -2123,7 +2201,7 @@ void sub_0802B738(void)
 void sub_0802B74C(void)
 {
     if (gUnknown_03000E20.unk12 == 0)
-        gUnknown_0813D678[gUnknown_0202A770]();
+        gUnknown_0813D678[gUnknown_0202A770.unk0]();
 }
 
 asm(".include \"asm/non_matching/file_select/sub_0802B778.inc\"");
@@ -2142,7 +2220,15 @@ asm(".include \"asm/non_matching/file_select/sub_0802BC74.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802BCE4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802BD58.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802BE4C.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_0802BF30.inc\"");
+
+void sub_0802BF30(void)
+{
+    u8 n = gUnknown_0202A770.unk66;
+
+    gUnknown_0202A770.unk0 = 0;
+    gUnknown_0202A770.unk8 = gUnknown_0202A770.unk5C + (sub_0800099C() & (n - 1)) - (n >> 1);
+}
+
 asm(".include \"asm/non_matching/file_select/sub_0802BF60.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802BFC4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802C070.inc\"");
@@ -2219,7 +2305,18 @@ void sub_0802C934(void)
     gUnknown_03000420[2] = 1;
 }
 
-asm(".include \"asm/non_matching/file_select/sub_0802C940.inc\"");
+
+void sub_0802C940(void)
+{
+    if (gUnknown_03000420[2] != 0)
+    {
+        gUnknown_03000420[2] = 0;
+        gUnknown_030004A0.bgConfig[0].unk6 = 1;
+        gUnknown_030004A0.bgConfig[0].mapBuf = gBG0Buffer + (gUnknown_03000420[3] << 11);
+        gUnknown_03000420[3] ^= 1;
+    }
+}
+
 asm(".include \"asm/non_matching/file_select/sub_0802C974.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802C9B8.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802CA70.inc\"");
