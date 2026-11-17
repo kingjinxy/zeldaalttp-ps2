@@ -377,14 +377,32 @@ asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E094.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E1D4.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E240.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E324.inc\"");
-asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E39C.inc\"");
+
+// Bytes 0xF8 (a counter) and 0xF9 of the struct sub_0800E39C is given
+struct Struct0800E39C {
+    u8 filler0[0xF8];
+    u8 unkF8;
+    u8 unkF9;
+};
+
+void sub_0800E39C(struct Struct0800E39C *p)
+{
+    p->unkF8++;
+    p->unkF9 = 0;
+}
+
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E3B0.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E430.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E4EC.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E570.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E5EC.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E63C.inc\"");
-asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E69C.inc\"");
+
+void sub_0800E69C(u32 a)
+{
+    gUnknown_02000010.unk0.asNotBitfield.unk0 = gTextbox.unk0 = a;
+}
+
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E6B0.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E78C.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800E80C.inc\"");
@@ -398,7 +416,18 @@ asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EC08.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800ED7C.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EDB8.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EDE4.inc\"");
-asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EDF0.inc\"");
+
+u32 sub_0800EDF0(u8 *p)
+{
+    if (p[2] == 0)
+    {
+        p[0] = 0;
+        return 0;
+    }
+    p[2]--;
+    return 1;
+}
+
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EE08.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EE2C.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800EE50.inc\"");

@@ -727,7 +727,11 @@ struct Struct0202A7E0
 struct Struct03000450
 {
     struct Entity *unk0;  // the entity the camera follows? (sub_0806527C)
-    u8 filler4[0x14];
+    u8 unk4;
+    u8 unk5;
+    u8 unk6;
+    u8 filler7[0xF];
+    u16 unk16;
     u16 unk18;  // scroll x? subtracted from entity x before >> 4 (tile)
     u16 unk1A;  // scroll y?
     u8 filler1C[4];

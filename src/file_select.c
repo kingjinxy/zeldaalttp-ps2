@@ -508,7 +508,13 @@ asm(".include \"asm/non_matching/file_select/sub_0801484C.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08014900.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08014958.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08014E60.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_080152E0.inc\"");
+
+void sub_080152E0(void)
+{
+    gUnknown_02000004 = 0;
+    gUnknown_02016324 = 0;
+}
+
 asm(".include \"asm/non_matching/file_select/sub_080152F4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080156BC.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080157F8.inc\"");
@@ -520,7 +526,13 @@ asm(".include \"asm/non_matching/file_select/sub_08015C64.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08015CD0.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08015D04.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08015D50.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_08015D8C.inc\"");
+
+void sub_08015D8C(void)
+{
+    gUnknown_03000450.unk6 = 1;
+    gUnknown_03000450.unk4 = 0;
+}
+
 asm(".include \"asm/non_matching/file_select/sub_08015D9C.inc\"");
 
 void sub_08015DBC(void)
@@ -533,7 +545,13 @@ asm(".include \"asm/non_matching/file_select/sub_08015F74.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08015FE4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08016084.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_080160F8.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_080161F8.inc\"");
+
+void sub_080161F8(u16 a, u8 b)
+{
+    gUnknown_03000450.unk16 = a;
+    gUnknown_03000450.unk5 = b & 3;
+}
+
 asm(".include \"asm/non_matching/file_select/sub_0801620C.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801624C.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08016288.inc\"");
@@ -1149,7 +1167,15 @@ asm(".include \"asm/non_matching/file_select/sub_0801DE14.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801DE44.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801DE9C.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0801DEC0.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_0801DF24.inc\"");
+
+void sub_0801DF24(struct Entity *this)
+{
+    this->unk14 = 1;
+    this->unk17 = 60;
+    this->unk18 = 0;
+    this->unk64 = 0;
+}
+
 asm(".include \"asm/non_matching/file_select/sub_0801DF34.inc\"");
 
 void sub_0801DF78(struct Entity *this)
@@ -1634,7 +1660,16 @@ asm(".include \"asm/non_matching/file_select/sub_08026ACC.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08026B80.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08026BD4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08026C00.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_08026C3C.inc\"");
+
+void sub_08026C3C(struct Entity *this)
+{
+    if (((u16 *)&this->unk60)[1] == 0)
+    {
+        this->unk14 = 5;
+        this->unk17 = 60;
+    }
+}
+
 asm(".include \"asm/non_matching/file_select/sub_08026C50.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08026CC0.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08026D60.inc\"");
@@ -1854,7 +1889,13 @@ void sub_0802B608(void)
 asm(".include \"asm/non_matching/file_select/sub_0802B614.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802B698.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802B6BC.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_0802B738.inc\"");
+
+void sub_0802B738(void)
+{
+    gUnknown_02016328 = 1;
+    sub_0802BF30();
+}
+
 asm(".include \"asm/non_matching/file_select/sub_0802B74C.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802B778.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802B820.inc\"");
@@ -1887,10 +1928,25 @@ asm(".include \"asm/non_matching/file_select/sub_0802C2B8.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802C2DC.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802C39C.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802C3C4.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_0802C3E0.inc\"");
+
+u32 sub_0802C3E0(u8 a)
+{
+    return gUnknown_0813D72C[a];
+}
+
 asm(".include \"asm/non_matching/file_select/sub_0802C3F0.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802C4F8.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_0802C528.inc\"");
+
+s32 sub_0802C528(s32 a, s32 b, s32 max)
+{
+    a += b;
+    if (a < 0)
+        return 0;
+    if (a > max)
+        return max;
+    return a;
+}
+
 asm(".include \"asm/non_matching/file_select/sub_0802C53C.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802C6AC.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802C6E8.inc\"");
@@ -1900,7 +1956,12 @@ asm(".include \"asm/non_matching/file_select/sub_0802C800.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802C89C.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802C8E4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802C8F8.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_0802C934.inc\"");
+
+void sub_0802C934(void)
+{
+    gUnknown_03000420[2] = 1;
+}
+
 asm(".include \"asm/non_matching/file_select/sub_0802C940.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802C974.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802C9B8.inc\"");
@@ -1932,12 +1993,17 @@ asm(".include \"asm/non_matching/file_select/sub_0802D858.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802D8C0.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802D8E4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_0802D954.inc\"");
-asm(".include \"asm/non_matching/file_select/sub_0802D970.inc\"");
+
+void sub_0802D970(void)
+{
+    gUnknown_0201EF18[5] = 1;
+}
+
 asm(".include \"asm/non_matching/file_select/sub_0802D97C.inc\"");
 
 void sub_0802D988(void)
 {
-    gUnknown_084277D4[gUnknown_0201EF18]();
+    gUnknown_084277D4[gUnknown_0201EF18[0]]();
 }
 
 asm(".include \"asm/non_matching/file_select/sub_0802D9A8.inc\"");

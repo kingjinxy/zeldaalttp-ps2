@@ -11,7 +11,7 @@ struct Weird
 #define unk3000000 (*(struct Weird *)0x03000000)
 
 extern u8 gUnknown_02000000[];
-//extern gUnknown_02000004;
+extern u8 gUnknown_02000004;
 extern struct Struct0201ED90 gUnknown_02000010;
 extern u8 gUnknown_02000028[];
 //extern gUnknown_0200002C;
@@ -688,8 +688,8 @@ extern u8 gUnknown_02010990;
 //extern gUnknown_020109BC;
 //extern gUnknown_020109D0;
 //extern gUnknown_020109F0;
-//extern gUnknown_02016324;
-//extern gUnknown_02016328;
+extern u8 gUnknown_02016324;
+extern u8 gUnknown_02016328;
 //extern gUnknown_02016330;
 //extern gUnknown_02016350;
 extern u16 gPaletteBuf2[];
@@ -739,7 +739,7 @@ extern struct Struct0202A5E0 gTextbox;
 //extern gUnknown_0201EEC4;
 extern u8 gUnknown_0201EF00[];
 extern u32 gPaletteBuf2Bitmask;
-extern u8 gUnknown_0201EF18;
+extern u8 gUnknown_0201EF18[];
 //extern gUnknown_0201EF30;
 //extern gUnknown_0201EFF0;
 extern u16 gUnknown_0201EFF8[][2];
@@ -1672,7 +1672,7 @@ extern void (*const gUnknown_0813D5C8[])(struct Entity *);
 //extern gUnknown_0813D678;
 //extern gUnknown_0813D68C;
 //extern gUnknown_0813D6AC;
-//extern gUnknown_0813D72C;
+extern const u8 gUnknown_0813D72C[];
 //extern gUnknown_0813D73D;
 //extern gUnknown_0813D760;
 //extern gUnknown_0813D778;
