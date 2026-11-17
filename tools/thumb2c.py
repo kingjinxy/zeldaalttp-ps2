@@ -39,6 +39,8 @@ ROM = open(os.path.join(ROOT, "baserom.gba"), "rb").read()
 VALUE_NAMES = {}  # address -> data or function symbol, for words read straight from the ROM
 NAME_ADDRS = {}
 EXTRA = set()  # called addresses inside other functions
+TRAPS = []  # instructions translated as gba_bad_insn traps
+ROM_PTRS = set()  # odd ROM words that may be code pointers
 ALL_TR = set()  # every translated entry point (called through gba_cpu, not the C ABI)
 
 
@@ -47,6 +49,29 @@ def rom_word(a):
     if not 0 <= o <= len(ROM) - 4:
         raise Unsupported(f"read outside the ROM at {a:#x}")
     return int.from_bytes(ROM[o:o + 4], "little")
+
+
+_DIS = {}
+
+
+def thumb_disasm(start, end):
+    """[(address, size, mnemonic, operands, text)] for ROM bytes start..end, decoded as Thumb by objdump."""
+    key = (start, end)
+    if key not in _DIS:
+        txt = subprocess.run(["arm-none-eabi-objdump", "-D", "-b", "binary", "-m", "arm", "-M", "force-thumb",
+                              "--adjust-vma=0x08000000", f"--start-address={start:#x}", f"--stop-address={end:#x}",
+                              os.path.join(ROOT, "baserom.gba")], capture_output=True, text=True).stdout
+        res = []
+        for line in txt.splitlines():
+            m = re.match(r"^\s*([0-9a-f]+):\t([0-9a-f ]+?)\s*\t(\S+)\s*(.*)$", line)
+            if not m:
+                continue
+            a, hexb, mnem, rest = int(m.group(1), 16), m.group(2).replace(" ", ""), m.group(3), m.group(4)
+            rest = re.split(r"\s[@;]", rest)[0].strip()
+            rest = re.sub(r"\s*<[^>]*>", "", rest)
+            res.append((a, len(hexb) // 2, mnem.lower(), split_ops(rest) if rest else [], f"{mnem} {rest}"))
+        _DIS[key] = res
+    return _DIS[key]
 
 
 def addr_names():
@@ -160,6 +185,7 @@ class Func:
         self.externs = set()
         self.cur = None
         self.prev = None
+        self.traps = []
         self.pool = {}       # label -> C expression of the first word stored there
         self.tables = {}     # label -> [labels] for jump tables
         self.used_labels = set()
@@ -177,10 +203,15 @@ class Func:
                 a += 1
             self.addr[k] = a
             a += it[1] if it[0] == "data" else (4 if it[1] == "bl" else 2)
+        items = self.decode_bytes(items)
         # second entry points that other code calls by address get a label (and their own C function)
         new_items, new_addr = [], {}
         for k, it in enumerate(items):
             a = self.addr.get(k)
+            if it[0] == "insn" and a in ROM_PTRS and a not in names:
+                names[a] = f"sub_{a:08X}"
+                EXTRA.add(a)
+                ALL_TR.add(names[a])
             if it[0] == "insn" and a in EXTRA and names.get(a) not in entries:
                 new_items.append(("label", names[a]))
                 entries.append(names[a])
@@ -208,6 +239,56 @@ class Func:
                 i = j
             else:
                 i += 1
+
+    def decode_bytes(self, items):
+        """Runs of .byte (code the disassembly left as bytes) become instructions, decoded from the ROM."""
+        out, addr, k = [], {}, 0
+        while k < len(items):
+            it, a = items[k], self.addr.get(k)
+            if it[0] == "data" and it[1] == 1 and a is not None and a % 2 == 0:
+                j = k
+                while j < len(items) and items[j][0] == "data" and items[j][1] == 1:
+                    j += 1
+                end = a + (j - k)
+                if end - a >= 2:
+                    pos = a
+                    for ia, size, mnem, ops, text in thumb_disasm(a, end):
+                        if ia != pos or ia + size > end:
+                            break
+                        addr[len(out)] = ia
+                        out.append(("insn", mnem, ops, text, "decoded"))
+                        pos += size
+                    for q in range(k + (pos - a), j):  # bytes left over stay data
+                        addr[len(out)] = self.addr[q]
+                        out.append(items[q])
+                    k = j
+                    continue
+            if a is not None:
+                addr[len(out)] = a
+            out.append(it)
+            k += 1
+        self.addr = addr
+        # branch targets inside this function become labels
+        by_addr = {v: i for i, v in addr.items()}
+        targets = {}
+        for i, it in enumerate(out):
+            if it[0] == "insn" and it[1].startswith("b") and it[1] not in ("bl", "bx") and it[2]:
+                m = re.fullmatch(r"0x([0-9a-fA-F]+)", it[2][0])
+                if m and int(m.group(1), 16) in by_addr:
+                    t = int(m.group(1), 16)
+                    targets[t] = f"_{t:08X}"
+                    out[i] = (it[0], it[1], [targets[t]] + it[2][1:], it[3])
+        existing = {it[1] for it in out if it[0] == "label"}
+        final, faddr = [], {}
+        for i, it in enumerate(out):
+            a = addr.get(i)
+            if a in targets and targets[a] not in existing:
+                final.append(("label", targets[a]))
+            if a is not None:
+                faddr[len(final)] = a
+            final.append(it[:4] if it[0] == "insn" else it)
+        self.addr = faddr
+        return final
 
     def sym(self, name):
         if name in self.labels:
@@ -450,7 +531,8 @@ class Func:
             raise Unsupported("falls through at an unknown address")
         a += 4 if op == "bl" else 2
         if a not in self.names or self.names[a] not in ALL_TR:
-            raise Unsupported(f"falls through into {a:#x}")
+            self.traps.append(f"{a:08X} falls through into an unknown function")
+            return f"gba_bad_insn(0x{a:08X}u); SAVE_REGS; return;"
         self.externs.add(("tr", self.names[a]))
         return f"{{ SAVE_REGS; {self.names[a]}_tr(); return; }}  /* falls through into the next function */"
 
@@ -461,7 +543,15 @@ class Func:
             if it[0] == "label":
                 out.append(("label", it[1]))
             elif it[0] == "insn":
-                out.append(("code", self.insn(it[1], it[2], it[3]), it[3]))
+                try:
+                    code = self.insn(it[1], it[2], it[3])
+                except Unsupported as e:
+                    # one instruction the translator can't handle (often data decoded as code): a trap
+                    if self.cur is None:
+                        raise
+                    self.traps.append(f"{self.cur:08X} {e}")
+                    code = f"gba_bad_insn(0x{self.cur:08X}u); SAVE_REGS; return;"
+                out.append(("code", code, it[3]))
                 self.prev = it
         ft = self.fall_through()
         if ft:
@@ -495,6 +585,7 @@ def translate_inc(path, names, local_funcs, report):
             raise Unsupported("no entry point")
         func = Func(entries, items, names, local_funcs)
         body = func.body()
+        TRAPS.extend(f"{os.path.basename(path)[:-4]}: {t}" for t in func.traps)
     except Unsupported as e:
         stem = os.path.basename(path)[:-4]
         report.append(f"{path}: {e}")
@@ -531,6 +622,12 @@ def main():
             if a not in names:
                 EXTRA.add(a)
                 names[a] = f"sub_{a:08X}"
+    # code pointers stored in the ROM (function tables): odd words in the code range become entry points
+    # where an instruction starts there (Func adds the label); others are ignored
+    for o in range(0, len(ROM) - 3, 4):
+        w = int.from_bytes(ROM[o:o + 4], "little")
+        if w & 1 and 0x08000000 <= w < 0x08200000 and (w & ~1) not in names:
+            ROM_PTRS.add(w & ~1)
     for inc in glob.glob(os.path.join(ROOT, "asm", "non_matching", "*", "*.inc")):
         try:
             ALL_TR.update(parse_inc(inc)[0])
@@ -583,7 +680,9 @@ def main():
         f"{{ return gba_enter({f}_tr, a, b, c, d); }}" for f in sorted(wanted - defined)]
     open(os.path.join(outdir, "missing_tr.c"), "w").write("\n".join(miss) + "\n")
     open(os.path.join(outdir, "report.txt"), "w").write("\n".join(report) + "\n")
-    print(f"{total} asm files, {bad} not translated (see {outdir}/report.txt)")
+    open(os.path.join(outdir, "traps.txt"), "w").write("\n".join(TRAPS) + "\n")
+    print(f"{total} asm files, {bad} not translated (see {outdir}/report.txt), {len(TRAPS)} trap instructions "
+          f"(traps.txt)")
 
 
 if __name__ == "__main__":

@@ -54,6 +54,8 @@ void gba_call_ptr(u32 addr);
 #define SYM(name) ((u32)(uintptr_t)(name))
 #endif
 void gba_bad_jump(u32 target);
+// An instruction thumb2c could not translate (tools: traps.txt); fatal if it ever runs
+void gba_bad_insn(u32 addr);
 
 void gba_swi(u32 n, u32 *r0, u32 *r1, u32 *r2, u32 *r3);
 u32 gba_untranslated(const char *name);

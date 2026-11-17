@@ -17,7 +17,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ENTITY = {}
 for line in open(os.path.join(ROOT, "include", "entity.h")):
     m = re.match(r"\s*/\* 0x([0-9A-Fa-f]+) \*/\s+(?:const\s+)?(?:struct\s+)?\w+\*?\s*\*?\s*(\w+)", line)
-    if m and not m.group(2).startswith(("filler", "union")):
+    if m and "union" not in line and not m.group(2).startswith("filler"):
         ENTITY.setdefault(int(m.group(1), 16), m.group(2))
 ENTITY.update({0x30: "x.HALF.LO", 0x32: "x.HALF.HI", 0x34: "y.HALF.LO", 0x36: "y.HALF.HI", 0x38: "z.HALF.LO",
                0x3A: "z.HALF.HI"})
@@ -102,6 +102,8 @@ def fmt(e, prec=99):
         return str(v) if v < 10 else (f"-{-(v - (1 << 32))}" if v >= 0xFFFF0000 else hex(v))
     if op in ("var", "sym"):
         return e.a[0]
+    if op == "frame":
+        return f"&v{e.a[0]}"
     if op == "call":
         return f"{e.a[0]}({', '.join(fmt(x) for x in e.a[1])})"
     if op == "load":
@@ -226,6 +228,15 @@ def draft(path):
                     regs[rd] = E("var", slot_name(off))
                 continue
             addr = R(inner[0]) if len(inner) == 1 else simplify(E("+", R(inner[0]), val(inner[1])))
+            if addr.op == "frame":  # a local addressed through a register
+                v = E("var", slot_name(addr.a[0]))
+                if op.startswith("st"):
+                    out.append(f"    {v.a[0]} = {fmt(R(rd))};")
+                    fresh.clear()
+                else:
+                    regs[rd] = v
+                    fresh.add(rd)
+                continue
             if op.startswith("st"):
                 v = R(rd)
                 # bitfield write: (load(addr) & mask) | value  ->  addr = value
@@ -280,7 +291,12 @@ def draft(path):
                 ops = [ops[0], ops[0], ops[1]]
             a, b = val(ops[1]), val(ops[2])
             if op == "add" and ops[1] == "r7":
-                regs[rd] = E("var", "&" + slot_name(b.a[0]))
+                regs[rd] = E("frame", b.a[0])
+                fresh.add(rd)
+                continue
+            if op == "add" and a.op == "frame" and is_c(b):
+                regs[rd] = E("frame", a.a[0] + b.a[0])
+                fresh.add(rd)
                 continue
             if op == "lsr" and a.op == "<<" and is_c(a.a[1]) and is_c(b):
                 k, j = a.a[1].a[0], b.a[0]

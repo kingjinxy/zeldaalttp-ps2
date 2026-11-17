@@ -28,6 +28,7 @@ u32 tr_missing(const char *name) {
 }
 
 u32 gba_untranslated(const char *name) { return tr_missing(name); }
+void gba_bad_insn(u32 addr) { tr_abort("untranslated instruction at %08X", addr); }
 void gba_bad_jump(u32 target) { tr_abort("jump to %08X outside its table", target); }
 
 void *tr_ptr(u32 a, int write) {

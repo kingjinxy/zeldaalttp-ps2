@@ -10,6 +10,9 @@ sub_08001B40: @ 0x08001B40
 	adds r4, #1
 	ldrsb r3, [r3, r4]
 	pop {r4}
+	.thumb_func
+	.global sub_08001B54
+sub_08001B54: @ entry point: x and y from r2/r3 plus the entity position
 	push {r4}
 	movs r4, #0x32
 	ldrh r4, [r0, r4]

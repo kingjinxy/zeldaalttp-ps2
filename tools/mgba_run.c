@@ -384,9 +384,17 @@ static void traceStep(struct GBA *gba, struct ARMCore *cpu) {
 		}
 		return;
 	}
+	static uint32_t prevPc;
+	uint32_t prev = prevPc;
+	prevPc = pc;
 	if (!thumb || pc - 0x08000000 >= 0x800000) return;
 	uint8_t c = traceCount[(pc - 0x08000000) >> 1];
 	if (!c || c > traceMax) return;
+	// only calls: a BL just before (lr = the next instruction) or a bx (the _call_via_rN veneers);
+	// entry points inside functions are also reached by plain branches
+	uint16_t prevInsn = GBAView16(cpu, prev);
+	if (!((cpu->gprs[ARM_LR] & ~1u) == prev + 2 && (prevInsn & 0xF800) == 0xF800) && (prevInsn & 0xFF80) != 0x4700)
+		return;
 	if (cpu->cpsr.priv != MODE_SYSTEM && cpu->cpsr.priv != MODE_USER) return;
 	snprintf(tr.path, sizeof tr.path, "%s/%08X_%u.gz", traceDir, pc, c - 1);
 	tr.f = gzopen(tr.path, "wb1");

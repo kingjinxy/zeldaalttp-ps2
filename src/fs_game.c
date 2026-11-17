@@ -2599,7 +2599,25 @@ void sub_080434D8(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08043614.inc\"");
+
+void sub_08043614(struct Entity *this, struct Entity *a1)
+{
+    this->unk2A = a1->unk2A & 14;
+    if ((u8)(this->unk2A & 2) != 0)
+        this->unk1C_2 = a1->unk1C_2 ^ 1;
+    else
+        this->unk1C_2 = a1->unk1C_2;
+    if (a1->unk23 > 155 && a1->unk23 <= 159)
+        this->frameIdx = a1->frameIdx + 248;
+    else
+        this->frameIdx |= 0xFF;
+    BITU8_AT(this->unk48, 0) = gUnknown_0813EC48[((u8)(this->unk2A >> 1) << 2)];
+    BITU8_AT(this->unk48, 1) = gUnknown_0813EC48[((u8)(this->unk2A >> 1) << 2) + 1];
+    BITU8_AT(this->unk48, 6) = gUnknown_0813EC48[((u8)(this->unk2A >> 1) << 2) + 2];
+    BITU8_AT(this->unk48, 7) = gUnknown_0813EC48[((u8)(this->unk2A >> 1) << 2) + 3];
+    sub_08001B54(this, 0, gUnknown_0813EC38[(u8)(this->unk2A & 14)], gUnknown_0813EC38[(u8)(this->unk2A & 14) + 1]);
+}
+
 
 void sub_080437F8(struct Entity *this)
 {
