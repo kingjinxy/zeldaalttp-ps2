@@ -12345,7 +12345,60 @@ void sub_08063384(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/fs_game/sub_08063524.inc\"");
+
+void sub_08063524(struct Entity *this)
+{
+    struct Entity *e;
+
+    if ((u16)(gUnknown_03006A30[this->unk58->form].unk36 & 0x1000))
+    {
+        gUnknown_03006A30[this->unk58->form].unk36 = gUnknown_03006A30[this->unk58->form].unk36 & 0xF7FF;
+        gUnknown_03000450.unk0 = this->unk58;
+        DeleteThisEntity(this);
+    }
+    else if ((u16)(gUnknown_03006A30[this->unk58->form].unk36 & 0x800))
+    {
+        if ((u8)(this->unk41 & 0x80))
+        {
+            switch ((u8)(this->unk41 & 0x7F))
+            {
+            case 4:
+            case 8:
+            case 12:
+            case 16:
+            case 19:
+                gUnknown_03006A30[this->unk58->form].unk36 = gUnknown_03006A30[this->unk58->form].unk36 & 0xF7FF;
+                if (gLCDRegisterBuffer == this->unk58->form)
+                    gUnknown_03000450.unk0 = this->unk58;
+                DeleteThisEntity(this);
+                break;
+            case 0:
+                if (!(u16)(gUnknown_03006A30[this->unk4C->form].unk36 & 0x1880) && gUnknown_03006A30[this->unk4C->form].unk28->unk3D == 0)
+                {
+                    e = sub_0804C8A8(85, 0, 0);
+                    if (e != NULL)
+                    {
+                        e->unk58 = this->unk4C;
+                        gUnknown_03006A30[this->unk4C->form].unk36 = gUnknown_03006A30[this->unk4C->form].unk36 | 0x800;
+                        gUnknown_03006A30[this->unk4C->form].unkC = 13;
+                    }
+                }
+                break;
+            }
+        }
+        else
+        {
+            this->unk50 = this->unk58->unk50;
+        }
+    }
+    else
+    {
+        if (gLCDRegisterBuffer == this->unk58->form)
+            gUnknown_03000450.unk0 = this->unk58;
+        DeleteThisEntity(this);
+    }
+}
+
 asm(".include \"asm/non_matching/fs_game/sub_080637F4.inc\"");
 
 asm(".include \"asm/non_matching/fs_game/sub_08063C5C.inc\"");
