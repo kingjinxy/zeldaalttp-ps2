@@ -1772,7 +1772,7 @@ u8 sub_0803BD78(struct Entity *, struct Entity *, u8);
 u32 sub_0803BE8C(struct Entity *, struct Entity *, u8);
 u8 sub_0803C070(struct Entity *, struct Entity *, u8);
 u8 sub_0803C1A4(struct Entity *, struct Entity *, u8);
-//sub_0803C2EC();
+u32 sub_0803C2EC(struct Entity *, struct Entity *, u8);
 //sub_0803C50C();
 u8 sub_0803C72C(struct Entity *, struct Entity *, u8);
 u32 sub_0803C810(struct Entity *, struct Entity *, u8);
