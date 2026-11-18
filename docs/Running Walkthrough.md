@@ -575,3 +575,49 @@ What went wrong:
 
 State: 119 NONMATCHING functions. The fs_walk replay check gives 155 ok, 5 fail (the known I/O read and void
 return cases).
+
+## Step 21: translating the long tail mechanically (2026-11-18)
+
+The user chose machine translation for what remains, with hand-written C kept for code the port has to change.
+`tools/asm2c.py` turns each agbcc Thumb function into C:
+- registers are `u32` locals;
+- N/Z/C/V are computed only where a later branch reads them;
+- the stack is a local array laid out like the original frame, with incoming stack arguments copied in;
+- memory goes through the `R8`…`W32` macros in `include/auto.h`, so the port can remap addresses;
+- jump tables become `switch`;
+- calls use the C ABI (r0-r3, plus the first stack words for callees with more than 4 arguments).
+
+Nothing in `src/` changes. In `make NONMATCHING=1 AUTO_C=1` each object's compiler output is scanned for the
+asm includes still in it. Those are translated into `src/auto/NAME.c` (generated, ignored by git) and compiled
+into section `.text.auto`, which is linked at 0x08800000. The remaining asm keeps its relative layout.
+`AUTO_C_FILES` and `AUTO_C_SKIP` limit the translation, for bisecting.
+
+What broke, and the rule each problem added (asm2c's `pinned_functions`, which keeps functions as asm):
+- Short branches from kept asm into translated functions went out of range: branch targets stay asm, and the
+  translated code moved out of `.text`.
+- Calls and branches into the middle of a function, and functions split over two files or running off their end.
+- Hand-written asm: unified-syntax mnemonics, lowercase macros, raw `.byte` code reached by control flow (which
+  the first version silently translated as empty functions), and pops below the entry stack pointer.
+- Code outside the C calling convention: inputs in r4/r5 (the sound engine), and callers that keep using r1-r3 or
+  r12 after a call, e.g. `mov r12, lr; bl X; bx r12`.
+- Layout-bound code:
+  - hard-coded `.4byte 0x0800xxxx` addresses into rom1, which keep all of rom1 as asm;
+  - `label+offset` pointers such as `_0800C4E4+0x305` (a function pointer to sub_0800C7E8);
+  - raw `ldr rX, [pc, #N]` reads.
+- The sound engine's command table mixes hand-written and compiled handlers, so the whole table stays asm.
+- The worst bug: depth analysis didn't follow jump tables, so every switch lost its case bodies. Code that no
+  path reaches now fails the function instead of being dropped.
+
+Checking:
+- `tools/check_nonmatching.sh` takes `AUTO_C=1` and `TRACE_MAX`.
+- `mgba_run --replay` counts code at 0x08800000+ as code addresses, and skips r0 when it equals the return
+  address (the `pop {r0}; bx r0` of a void function).
+- Final run: 604 ok, 14 fail. The fails are the EEPROM save functions (EEPROM state isn't restored) and the
+  2 known I/O cases.
+
+Linked whole-game screenshots don't work as a check here:
+- The untranslated NONMATCHING build already drifts from the original by frame 2000.
+- Subsets of the translation give results that aren't monotonic (A+B fails, a superset of A+B passes).
+- That is timing between the two linked GBAs, the same limit noted in step 19.
+
+State: 5,102 of 5,753 asm functions translate; 651 stay asm (listed in the planning doc).

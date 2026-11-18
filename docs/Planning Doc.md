@@ -66,6 +66,13 @@ player, linked in memory instead of by cable, each drawn into its own part of th
 - [ ] ARM functions and RAM-copied code rewritten in C (matching not required; marked `NONMATCHING`)
 - [ ] Shiftable ROM (code can grow or move): every `.INCBIN` region that holds pointers becomes labelled data, so it can link anywhere.
 - [ ] Track `NONMATCHING` functions here
+- [x] Mechanical translation of the remaining agbcc asm (`tools/asm2c.py`, `make NONMATCHING=1 AUTO_C=1`, user
+      decision 2026-11-18): 5,102 of 5,753 asm functions become C in that build; replay check 604 ok, 14 fail
+      (EEPROM, I/O). Linked whole-game screenshots aren't a valid check for moved code (timing).
+- [ ] The 651 kept as asm: rom1's hand-written engine (layout-bound: hard-coded addresses into it), the m4a
+      sound engine and its command table, code entered past its start, register-convention callees.
+      These need hand-written C (tmc / pret m4a as references).
+- [ ] More replay coverage: only ~130 translated functions run in fs_walk; longer recordings.
 
 ## Phase 3: PC host (risk removal before the PS2)
 - Licence note (2026-11-17): FourSwordsRecomp and its engine GBARecomp (github.com/mstan/gbarecomp) are both
