@@ -7710,7 +7710,38 @@ void sub_0804F738(struct Entity *this)
     gUnknown_0813FE60[this->unk14](this);
 }
 
+#ifdef NONMATCHING
+extern const void *const gUnknown_0813FEAC[];
+void sub_0804FF80(u16, struct Entity *);
+
+// Block of (form + 1) x (form + 1) tiles (form 1-3; others one tile): centres itself, marks its tiles
+// (sub_0804FF80) and plays the appear sound
+void sub_0804F760(struct Entity *this)
+{
+    u16 pos;
+    u32 off;
+    u32 n, x, y;
+
+    this->unk1C_0 = 1;
+    this->unk5E_0 = 0;
+    this->unk14 = 1;
+    this->unk17 = 0x20;
+    this->speed = 0x80;
+    pos = ((this->x.HALF.HI - gUnknown_03000450.unk18) >> 4) | (((this->y.HALF.HI - gUnknown_03000450.unk1A) >> 4) * 64);
+    off = this->form * 8;
+    this->x.HALF.HI += off;
+    this->y.HALF.HI += off;
+    this->unk48 = gUnknown_0813FEAC[this->form];
+    sub_08003870(this, this->form == 1 ? 1 : 0);
+    n = this->form >= 1 && this->form <= 3 ? this->form + 1 : 1;
+    for (y = 0; y < n; y++)
+        for (x = 0; x < n; x++)
+            sub_0804FF80((u16)(pos + y * 64 + x), this);
+    sub_08003DFC(0x15);
+}
+#else
 asm(".include \"asm/non_matching/fs_game/sub_0804F760.inc\"");
+#endif
 
 void sub_0804FB34(struct Entity *this)
 {
