@@ -1617,8 +1617,9 @@ struct PushRecord {
 };
 extern struct PushRecord gUnknown_0202A030[8];
 u16 sub_080094CC(u16, u16);
-void sub_08014958(u32 *p)
+void sub_08014958(u8 *bp)
 {
+    u32 *p = (u32 *)bp;
     u32 w = p[0];
     u8 dir = (w >> 16) & 7;
     u16 tile = w & 0xFFF;
@@ -4380,9 +4381,14 @@ void sub_08027298(struct Entity *this)
 // Moving platform (8 directions, diagonals move along two axes): steps each axis with collision against
 // the map (unk50's tile data) and carries the players standing on it (bits 0-3 of unk60).
 void sub_08002E84(struct Entity *, s32, u32, u16);
+void sub_080276CC(struct Entity *);
+void sub_0802782C(struct Entity *);
+void sub_08027780(struct Entity *);
+void sub_080278E8(struct Entity *);
 static void sub_080272D0_axis(struct Entity *this, u16 *map, u32 riders, u32 axis)
 {
-    static void (*const sFns[4])() = { sub_080276CC, sub_0802782C, sub_08027780, sub_080278E8 };
+    static void (*const sFns[4])(struct Entity *, u16 *) = {
+        (void *)sub_080276CC, (void *)sub_0802782C, (void *)sub_08027780, (void *)sub_080278E8 };
     u16 *old = (u16 *)&this->unk7C;
     u16 dist;
     u32 i;
