@@ -906,7 +906,70 @@ void sub_080133D0(void)
     sub_080131FC(a, b);
 }
 
+#ifdef NONMATCHING
+// Shuffles n halfwords in place: interleaves the two halves into gUnknown_02038000, splits that into four
+// runs (A, B, C forward/backward, D backward from the end) and merges them back in one of four random orders
+void sub_08013490(u16 *list, u16 n)
+{
+    u16 *tmp = (u16 *)gUnknown_02038000;
+    u16 *s1, *s2, *d;
+    u16 c1, c2;
+    u16 *pa, *pb, *pc, *pd;
+    u16 na, nb, nc, nd, q, rem;
+
+    if (n == 0)
+        return;
+    c1 = (n >> 1) + (n & 1);
+    c2 = n >> 1;
+    s1 = list;
+    s2 = list + c1;
+    d = tmp;
+    do {
+        *d++ = *s1++;
+        c1--;
+        if (c2) {
+            *d++ = *s2++;
+            c2--;
+        }
+    } while (c1);
+
+    q = n >> 2;
+    na = nb = nc = nd = q;
+    rem = n & 3;
+    if (rem >= 1) na++;
+    if (rem >= 2) nb++;
+    if (rem >= 3) nc++;
+    pa = tmp;
+    pc = tmp + na + nb;
+    pb = pc - 1;
+    pd = tmp + n - 1;
+    d = list;
+#define TAKE_A  { *d++ = *pa++; na--; }
+#define TAKE_B  if (nb) { *d++ = *pb--; nb--; }
+#define TAKE_C  if (nc) { *d++ = *pc++; nc--; }
+#define TAKE_D  if (nd) { *d++ = *pd--; nd--; }
+    switch (sub_0800099C() & 3) {
+    case 0:
+        do { TAKE_A TAKE_B TAKE_C TAKE_D } while (na);
+        break;
+    case 1:
+        do { TAKE_D TAKE_C TAKE_B TAKE_A } while (na);
+        break;
+    case 2:
+        do { TAKE_C TAKE_A TAKE_D TAKE_B } while (na);
+        break;
+    case 3:
+        do { TAKE_B TAKE_D TAKE_A TAKE_C } while (na);
+        break;
+    }
+#undef TAKE_A
+#undef TAKE_B
+#undef TAKE_C
+#undef TAKE_D
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_08013490.inc\"");
+#endif
 #ifdef NONMATCHING
 u16 *sub_080136D4(u16 tile, u16 w, u16 h)
 {
