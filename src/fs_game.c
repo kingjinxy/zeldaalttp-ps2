@@ -8141,7 +8141,47 @@ u8 sub_0805039C(struct Entity *this)
     return this->unk7C.s.unk7E;
 }
 
+#ifdef NONMATCHING
+// Draws a 2-tile-high door/gate piece by facing (parameter & 3): 6 tiles at unk78 and, when unk7C isn't
+// 0xFFFF, the matching 6 tiles at unk7C (the next 12 entries of the table, or the previous ones for 2-3).
+// Each tile goes to layer 1 (0x4000) or layer 2 (0x8000).
+extern const u16 *const gUnknown_08140830[];
+void sub_08050444(struct Entity *this)
+{
+    static const s8 sOff[4][2][6] = {
+        { { -65, -64, -63, -1, 0, 1 }, { -1, 0, 1, 63, 64, 65 } },
+        { { -64, -63, 0, 1, 64, 65 }, { -65, -64, -1, 0, 63, 64 } },
+        { { -1, 0, 1, 63, 64, 65 }, { -65, -64, -63, -1, 0, 1 } },
+        { { -65, -64, -1, 0, 63, 64 }, { -64, -63, 0, 1, 64, 65 } },
+    };
+    static const u8 sTop[4][2][6] = {  // 1: layer 2
+        { { 1, 1, 1, 0, 0, 0 }, { 0, 0, 0, 1, 1, 1 } },
+        { { 0, 1, 0, 1, 0, 1 }, { 1, 0, 1, 0, 1, 0 } },
+        { { 0, 0, 0, 1, 1, 1 }, { 1, 1, 1, 0, 0, 0 } },
+        { { 1, 0, 1, 0, 1, 0 }, { 0, 1, 0, 1, 0, 1 } },
+    };
+    u16 *h = (u16 *)&this->unk7C;
+    u32 side = this->parameter & 3;
+    const u16 *src = gUnknown_08140830[gUnknown_03006C80.unk1] + h[1] * 24 + side * 6;
+    u16 pos = *(u16 *)((u8 *)this + 0x78);
+    u32 g, i;
+
+    for (g = 0; g < 2; g++)
+    {
+        if (g == 1)
+        {
+            if (h[0] == 0xFFFF)
+                return;
+            pos = h[0];
+            src += side < 2 ? 12 : -12;
+        }
+        for (i = 0; i < 6; i++)
+            sub_08014658(src[i], pos + sOff[side][g][i], sTop[side][g][i] ? 0x8000 : 0x4000);
+    }
+}
+#else
 asm(".include \"asm/non_matching/fs_game/sub_08050444.inc\"");
+#endif
 asm(".include \"asm/non_matching/fs_game/sub_08050B50.inc\"");
 
 void sub_080515C0(struct Entity *this)
