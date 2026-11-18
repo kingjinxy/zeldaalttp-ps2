@@ -44,7 +44,7 @@ print(len(names), "NONMATCHING functions")
 EOF
 ./tools/mgba_run "$OUT/m.gba" "$FRAMES" --players 2 --save0 recordings/start_linked/save0.sav \
     --save1 recordings/start_linked/save1.sav --inputs "$INPUTS" --trace "$OUT/tr" --trace-list "$OUT/list.txt" \
-    --trace-max 3 >/dev/null 2>&1 || true
+    --trace-max ${TRACE_MAX:-3} >/dev/null 2>&1 || true
 echo "$(ls "$OUT/tr" | sed 's/_.*//' | sort -u | wc -l) functions ran"
 ./tools/mgba_run --replay "$OUT/nm.gba" "$OUT/map.txt" "$OUT"/tr/*.gz > "$OUT/replay.txt" 2>&1 || true
 grep -v " ok$" "$OUT/replay.txt"

@@ -222,6 +222,14 @@ class Func:
                     elif mn.startswith("b") and mn[1:] in COND:
                         if ops[0] in lab:
                             work.append((lab[ops[0]], dep))
+                    elif mn == "mov" and reg(ops[0]) == "pc" and reg(ops[1]) != "lr":
+                        prev = s.prev_ins(i)
+                        if not (prev and prev[1] == "pop"):  # jump table: follow every case
+                            for c in s.table_cases(i):
+                                if c not in lab:
+                                    raise Fail("jump table target " + c)
+                                work.append((lab[c], dep))
+                        break
                     elif mn in ("bx",) or (mn == "mov" and reg(ops[0]) == "pc"):
                         break
                 i += 1
@@ -229,6 +237,9 @@ class Func:
 
     def translate(s):
         d = s.depths()
+        dead = [it[3] for i, it in enumerate(s.items) if it[0] == "ins" and d[i] is None and it[1] not in ("b", "nop")]
+        if dead:  # code no path reaches (an entry we don't see?): don't drop it silently
+            raise Fail("unreachable code: " + dead[0])
         maxd = max(x for x in d if x is not None)
         # incoming stack arguments: sp-relative loads reaching at or above the entry sp
         nargs = 0
@@ -533,6 +544,19 @@ class Func:
                 return None
         return None
 
+    def table_cases(s, i):
+        seq = [j for j in range(i - 1, max(-1, i - 8), -1) if s.items[j][0] == "ins"][:4]
+        if len(seq) < 4 or s.items[seq[2]][1] != "ldr":
+            raise Fail("jump table shape")
+        lab = s.items[seq[2]][2][1].strip()
+        if lab not in s.pool:
+            raise Fail("jump table pool")
+        cases, j = [], s.pool[lab] + 1
+        while j < len(s.items) and s.items[j][0] == "word":
+            cases.append(s.items[j][1].strip())
+            j += 1
+        return cases
+
     def jumptable(s, i, r):
         """lsl rA, rK, #2; ldr rB, =table; add rA, rA, rB; ldr rA, [rA]; mov pc, rA  ->  switch (rK)"""
         seq = [j for j in range(i - 1, max(-1, i - 8), -1) if s.items[j][0] == "ins"][:4]
@@ -653,7 +677,7 @@ def pinned_functions(incs):
         if m:
             starts[p] = int(m.group(1), 16)
     order = sorted(starts, key=starts.get)
-    import os
+    import os, glob
     for p in order:  # hard-coded code addresses (.4byte 0x08xxxxxx) need their whole object laid out as before
         for v in re.findall(r"(?m)^\s*\.4byte\s+(0x0?8[0-9a-fA-F]{6})\s*$", open(p).read()):
             a = int(v, 16) & ~1
@@ -662,6 +686,15 @@ def pinned_functions(incs):
                 if o:
                     g = os.path.dirname(o)
                     pins.update(q for q in incs if os.path.dirname(q) == g)
+    byfunc = {funcnames[q]: starts[q] for q in starts if q in funcnames}
+    srcs = incs + glob.glob("data/*.s") + glob.glob("asm/*.s")
+    for p in srcs:  # sym+offset (other than a jump table's +4): everything from sym to the target keeps its place
+        for sym, off in re.findall(r"\b(_08[0-9A-Fa-f]{6}|[A-Za-z]\w*)\s*\+\s*(0x[0-9a-fA-F]+|\d+)\b", open(p).read()):
+            n = int(off, 0)
+            a = int(sym[1:], 16) if sym.startswith("_08") else byfunc.get(sym)
+            if a is None or (n == 4 and sym.startswith("_08")):
+                continue
+            pins.update(q for q in order if a - 4 <= starts[q] <= a + n)
     for p in order:  # raw pc-relative reads (ldr rX, [pc, #N] / add rX, pc, #N) span fixed distances: keep all
         t = open(p).read()  # functions from here to the target
         for n in re.findall(r"(?m)^\s*(?:ldr\s+\w+,\s*\[pc,\s*#|add\s+\w+,\s*pc,\s*#)(\w+)", t):
@@ -695,8 +728,11 @@ def pinned_functions(incs):
     for p in incs:
         if set(re.findall(r"(?m)^\s*bl\s+(\w+)", open(p).read())) & oddnames:
             pins.add(p)
+    hand = set()
     for p in incs:  # hand-written asm (unified syntax; agbcc never emits it) may not follow the C calling convention
         t = open(p).read()
+        if hand_written(t):
+            hand.add(p)
         if (re.search(r"(?m)^\s*(movs|lsls|lsrs|asrs|rors|adds|adcs|subs|sbcs|ands|orrs|eors|bics|mvns|negs|muls|rsbs)\s", t)
                 or re.search(r"(?m)^\s*(thumb_func_start|THUMB_FUNC_START_NOALIGN)\b", t)):
             pins.add(p)
@@ -735,7 +771,65 @@ def pinned_functions(incs):
             o = owner.get(sym)
             if o and (sym != funcnames.get(o) or off):
                 pins.add(o)
+    # functions hand-written asm calls or takes the address of: it may rely on more than the C convention
+    for p in hand:
+        for sym in set(re.findall(r"\b(sub_[0-9A-Fa-f]{8}|[A-Za-z]\w+)\b", open(p).read())):
+            if sym in byname and byname[sym] != p:
+                pins.add(byname[sym])
+    # pointer tables (runs of .4byte sym) holding a hand-written function: the same caller runs them all
+    handnames = {funcnames[p] for p in hand if p in funcnames}
+    for f in glob.glob("data/*.s") + incs:
+        run = []
+        for l in open(f).read().splitlines() + [""]:
+            m = re.match(r"\s*\.4byte\s+(\w+)\s*$", l)
+            if m:
+                run.append(m.group(1))
+                continue
+            if set(run) & handnames:
+                pins.update(byname[x] for x in run if x in byname)
+            run = []
+    # callers reading r1-r3/r12 after `bl X` before writing them rely on X leaving them alone: keep X asm
+    for p in incs:
+        lines = [l.split("@")[0].strip() for l in open(p)]
+        for k, l in enumerate(lines):
+            m = re.match(r"bl\s+(\w+)\s*$", l)
+            if not m or m.group(1) not in byname:
+                continue
+            live = {"r1", "r2", "r3", "r12"}
+            for l2 in lines[k + 1:k + 12]:
+                if re.match(r"[\w.]+:\s*$", l2) or not l2:
+                    continue  # falling through a label
+                if l2.startswith("."):
+                    break
+                mm = re.match(r"(\w+)(?:\.n)?\s*(.*)", l2)
+                mn, ops = mm.group(1).lower(), [o.strip() for o in re.split(r",(?![^{\[]*[}\]])", mm.group(2))] if mm.group(2) else []
+                rr = lambda o: {ALIAS.get(x, x) for x in re.findall(r"\b(r1[0-2]|r[0-9]|ip)\b", o.lower())}
+                if mn in ("bl", "b", "bx", "pop") or mn.startswith("b") and mn[1:] in COND:
+                    used = set().union(*[rr(o) for o in ops]) if ops else set()
+                    if used & live and mn in ("bx",):
+                        pins.add(byname[m.group(1)])
+                    break
+                if mn.startswith(("str", "cmp", "cmn", "tst", "push")):
+                    srcs, dst = set().union(*[rr(o) for o in ops]), set()
+                elif ops:
+                    dst = rr(ops[0]) if not mn.startswith("ldm") else set()
+                    srcs = set().union(*[rr(o) for o in ops[1:]]) if len(ops) > 1 else set()
+                    if len(ops) == 2 and mn not in ("mov", "mvn", "neg") and not mn.startswith("ld"):
+                        srcs |= dst
+                    if mn.startswith("ldr") and ops and "[" in ",".join(ops[1:]):
+                        srcs = set().union(*[rr(o) for o in ops[1:]])
+                else:
+                    srcs, dst = set(), set()
+                if srcs & live:
+                    pins.add(byname[m.group(1)])
+                    break
+                live -= dst
     return pins
+
+
+def hand_written(t):
+    return bool(re.search(r"(?m)^\s*(movs|lsls|lsrs|asrs|rors|adds|adcs|subs|sbcs|ands|orrs|eors|bics|mvns|negs|muls|rsbs)\s", t)
+                or re.search(r"(?m)^\s*(thumb_func_start|THUMB_FUNC_START_NOALIGN)\b", t))
 
 
 def main():
