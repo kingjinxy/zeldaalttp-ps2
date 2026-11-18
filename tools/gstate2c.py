@@ -216,7 +216,7 @@ def main():
     for n, _ in tables:
         out.append("extern u8 %s__base[];" % n)
         out.append("void gs_%s(u32);" % n)
-        out.append("void %s(void);  /* gs wrapper */" % n)
+        out.append("void %s(void);  /* gstate wrapper */" % n)
     out += [""] + bodies + [""]
     if tables or failed:  # gstate_enter: the caller's registers in, the global-state code's registers out (gstate.h gstate_enter_c)
         out += ["void gstate_enter_c_%s(void (*fn)(u32), u32 *f) { gstate_enter_c(fn, f); }" % tag,
