@@ -968,7 +968,111 @@ u16 sub_08038DB8(void)
     return gUnknown_0842ACC4[gUnknown_03006C80.unk0][i];
 }
 
+#ifdef NONMATCHING
+// Stage clear sequence (gSubState 0-6): timed steps, result effects, then leaves to the next main state.
+void sub_08038D50(void);
+void sub_08137AFC(void);
+void sub_08008ED8(void);
+void sub_08038E44(void)
+{
+    u8 i;
+    u16 v;
+
+    switch (gSubState)
+    {
+    case 0:
+        gUnknown_03000208[0] = 1;
+        gUnknown_03000E20.unk2 = 60;
+        gSubState++;
+        break;
+    case 1:
+        if (--gUnknown_03000E20.unk2 == 0xFFFF)
+        {
+            gUnknown_03000E20.unk2 = 60;
+            if (gUnknown_03006C80.unk2 != 0 && gUnknown_03006C80.unk4 == 0)
+                gSubState = 3;
+            else
+            {
+                sub_08038D50();
+                gSubState++;
+            }
+        }
+        break;
+    case 2:
+        if (--gUnknown_03000E20.unk2 == 0xFFFF)
+        {
+            v = sub_08038DB8();
+            gUnknown_03000E20.unk2 = 60;
+            gUnknown_03006C80.unk24 |= 0x80;
+            for (i = 0; i < gUnknown_03006C80.unk0; i++)
+                sub_0802C53C(gUnknown_03006A30[i].unk28, v);
+            gUnknown_03006C80.unk24 &= 0x7F;
+            if (gUnknown_03006C80.unk2 != 0 && gUnknown_03006C80.unk4F == 0x4F)
+                sub_0804C8A8(0x51, 0, 0);
+            else if (gUnknown_03006C80.unk3 == 2 && gUnknown_03006C80.unk4 <= 10)
+                sub_0804C8A8(0x51, 0, 0);
+            else if (gUnknown_03006C80.unk5 == 0 && gUnknown_03006C80.unk2 == 0)
+                sub_0804C8A8(0x51, 0, 0);
+            gSubState++;
+        }
+        break;
+    case 3:
+        if (--gUnknown_03000E20.unk2 == 0xFFFF)
+        {
+            gUnknown_03006C80.unk6E = 3;
+            gSubState++;
+        }
+        break;
+    case 4:
+        if (gUnknown_03006C80.unk6E == 4)
+        {
+            play_sound(26);
+            for (i = 0; i < gUnknown_03006C80.unk0; i++)
+                if (gUnknown_03006A30[i].unk28 != NULL)
+                    gUnknown_03006A30[i].unk28->unk1C_0 = 0;
+            gSubState++;
+        }
+        break;
+    case 5:
+        if (gUnknown_03000520.unk0 == 0)
+        {
+            gUnknown_03006C80.unk6E = 5;
+            sub_0800C0B0(1, 8);
+            gSubState++;
+        }
+        break;
+    case 6:
+        if (gUnknown_03000520.unk0 != 0)
+            break;
+        gUnknown_03006C80.unk20 += gUnknown_03006C80.unk1C;
+        if (gUnknown_03006C80.unk4F == 0x80)
+            set_main_state(5);
+        else if (sub_08039D64() == 0)
+        {
+            gUnknown_03005050 = 1;
+            gSubState = 0;
+        }
+        else if (gUnknown_03006C80.unk7 == 2 || gUnknown_03006C80.unk2 != 0)
+            set_main_state(7);
+        else
+            set_main_state(4);
+        sub_0801239C();
+        sub_080123BC();
+        sub_0800BFBC();
+        return;
+    }
+    sub_08137AFC();
+    sub_08015D9C();
+    sub_08015C64();
+    sub_08008ED8();
+    sub_0802CD3C();
+    sub_0802BFC4();
+    sub_0803F284();
+    sub_08000BAC();
+}
+#else
 asm(".include \"asm/non_matching/fs_game/sub_08038E44.inc\"");
+#endif
 asm(".include \"asm/non_matching/fs_game/sub_08039288.inc\"");
 
 u8 sub_08039650(void)
