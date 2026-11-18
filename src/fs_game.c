@@ -7987,7 +7987,7 @@ void sub_0804FB34(struct Entity *this)
 // (sub_08003B64 is 0)
 void sub_0804FB80(struct Entity *this)
 {
-    static const u16 slice[3][3] = {
+    static const NM_RODATA u16 slice[3][3] = {
         { 0, 0x143, 0x140 },      // top: corner (unk60), edge, corner
         { 0x145, 0x147, 0x146 },  // middle rows
         { 0x141, 0x144, 0x142 },  // bottom
@@ -8155,13 +8155,13 @@ void sub_08050444(struct Entity *this)
 // groups: 2 also draws the tiles at unk7C, 1 only those at unk78
 static void sub_08050444_draw(struct Entity *this, const u16 *const *tables, u32 groups)
 {
-    static const s8 sOff[4][2][6] = {
+    static const NM_RODATA s8 sOff[4][2][6] = {
         { { -65, -64, -63, -1, 0, 1 }, { -1, 0, 1, 63, 64, 65 } },
         { { -64, -63, 0, 1, 64, 65 }, { -65, -64, -1, 0, 63, 64 } },
         { { -1, 0, 1, 63, 64, 65 }, { -65, -64, -63, -1, 0, 1 } },
         { { -65, -64, -1, 0, 63, 64 }, { -64, -63, 0, 1, 64, 65 } },
     };
-    static const u8 sTop[4][2][6] = {  // 1: layer 2
+    static const NM_RODATA u8 sTop[4][2][6] = {  // 1: layer 2
         { { 1, 1, 1, 0, 0, 0 }, { 0, 0, 0, 1, 1, 1 } },
         { { 0, 1, 0, 1, 0, 1 }, { 1, 0, 1, 0, 1, 0 } },
         { { 0, 0, 0, 1, 1, 1 }, { 1, 1, 1, 0, 0, 0 } },

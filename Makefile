@@ -115,7 +115,7 @@ tidy:
 
 # Link ELF file
 ldscript_nm.txt: ldscript.txt
-	python3 -c "import re,sys; s=open('ldscript.txt').read(); m=[l for l in s.splitlines(True) if re.search(r'libgcc.a:(dp|fp)-bit.o', l)]; s=''.join(l for l in s.splitlines(True) if l not in m); s=s.replace(chr(9)+'.rodata :', chr(9)+'.rodata 0x08137B04 :', 1); i=s.index('.rodata 0x08137B04'); j=s.index('} = 0', i)+len('} = 0'); s=s[:j]+chr(10)+chr(10)+chr(9)+'.text_softfloat :'+chr(10)+chr(9)+'{'+chr(10)+''.join(m)+chr(9)+'}'+s[j:]; open('ldscript_nm.txt','w').write(s)"
+	python3 -c "import re,sys; s=open('ldscript.txt').read(); m=[l for l in s.splitlines(True) if re.search(r'libgcc.a:(dp|fp)-bit.o', l)]; s=''.join(l for l in s.splitlines(True) if l not in m); s=s.replace(chr(9)+'.rodata :', chr(9)+'.rodata 0x08137B04 :', 1); i=s.index('.rodata 0x08137B04'); j=s.index('} = 0', i)+len('} = 0'); s=s[:j]+chr(10)+chr(10)+chr(9)+'.text_softfloat :'+chr(10)+chr(9)+'{'+chr(10)+''.join(m)+chr(9)+chr(9)+'*(.rodata.nm);'+chr(10)+chr(9)+'}'+s[j:]; open('ldscript_nm.txt','w').write(s)"
 
 $(ELF): $(OFILES) $(LDSCRIPT)
 	$(LD) -T $(LDSCRIPT) -Map $(MAP) $(LIB) -o $@

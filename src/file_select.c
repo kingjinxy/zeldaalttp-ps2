@@ -4888,8 +4888,8 @@ void sub_08028CD0(struct Entity *this)
 
 static void sub_08028CD0_draw(struct Entity *this, const u16 *src)
 {
-    static const s8 sLeft[4] = { -1, -2, -2, -3 };
-    static const s8 sRight[4] = { 2, 2, 3, 3 };
+    static const NM_RODATA s8 sLeft[4] = { -1, -2, -2, -3 };
+    static const NM_RODATA s8 sRight[4] = { 2, 2, 3, 3 };
     u16 *cam = (u16 *)&gUnknown_03000450;
     s32 x, y, row, col;
     u16 pos;

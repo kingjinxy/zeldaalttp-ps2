@@ -11,4 +11,7 @@
 #include "variables.h"
 #include "functions.h"
 
+// Constant tables of NONMATCHING C: kept out of .rodata, whose layout the NONMATCHING build keeps fixed
+#define NM_RODATA __attribute__((section(".rodata.nm")))
+
 #endif  // GUARD_GLOBAL_H
