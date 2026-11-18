@@ -8146,7 +8146,14 @@ u8 sub_0805039C(struct Entity *this)
 // 0xFFFF, the matching 6 tiles at unk7C (the next 12 entries of the table, or the previous ones for 2-3).
 // Each tile goes to layer 1 (0x4000) or layer 2 (0x8000).
 extern const u16 *const gUnknown_08140830[];
+static void sub_08050444_draw(struct Entity *, const u16 *const *, u32);
 void sub_08050444(struct Entity *this)
+{
+    sub_08050444_draw(this, gUnknown_08140830, 2);
+}
+
+// groups: 2 also draws the tiles at unk7C, 1 only those at unk78
+static void sub_08050444_draw(struct Entity *this, const u16 *const *tables, u32 groups)
 {
     static const s8 sOff[4][2][6] = {
         { { -65, -64, -63, -1, 0, 1 }, { -1, 0, 1, 63, 64, 65 } },
@@ -8162,11 +8169,11 @@ void sub_08050444(struct Entity *this)
     };
     u16 *h = (u16 *)&this->unk7C;
     u32 side = this->parameter & 3;
-    const u16 *src = gUnknown_08140830[gUnknown_03006C80.unk1] + h[1] * 24 + side * 6;
+    const u16 *src = tables[gUnknown_03006C80.unk1] + h[1] * 24 + side * 6;
     u16 pos = *(u16 *)((u8 *)this + 0x78);
     u32 g, i;
 
-    for (g = 0; g < 2; g++)
+    for (g = 0; g < groups; g++)
     {
         if (g == 1)
         {
@@ -8182,7 +8189,18 @@ void sub_08050444(struct Entity *this)
 #else
 asm(".include \"asm/non_matching/fs_game/sub_08050444.inc\"");
 #endif
+#ifdef NONMATCHING
+// sub_08050444 with two table sets (parameter bit 2); parameter 4-7 draw only the tiles at unk78.
+extern const u16 *const gUnknown_08140820[];
+extern const u16 *const gUnknown_08140840[];
+void sub_08050B50(struct Entity *this)
+{
+    sub_08050444_draw(this, (this->parameter & 4) ? gUnknown_08140820 : gUnknown_08140840,
+                      (this->parameter & 4) ? 1 : 2);
+}
+#else
 asm(".include \"asm/non_matching/fs_game/sub_08050B50.inc\"");
+#endif
 
 void sub_080515C0(struct Entity *this)
 {
