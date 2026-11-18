@@ -579,6 +579,8 @@ static int replay(int argc, char **argv) {
 		if (newPc == oldPc && mapAddr(oldPc | 1, 1) == (oldPc | 1)) {
 			// not in the map: same address in both builds only if nothing moved there; report it
 		}
+		ARMSetPrivilegeMode(cpu, (enum PrivilegeMode) (r0[16] & 0x1F));  // a hung replay can leave another mode banked in
+		cpu->cpsr.t = (r0[16] >> 5) & 1;
 		for (int k = 0; k < 15; k++) cpu->gprs[k] = (r0[k] >> 24) == 0x08 && k != 14 ? mapAddr(r0[k], 1) : r0[k];
 		cpu->gprs[ARM_LR] = r0[14];  // the old caller's address: we stop there before executing it
 		cpu->cpsr.packed = r0[16] | 0x80;  // IRQs masked
@@ -596,8 +598,14 @@ static int replay(int argc, char **argv) {
 		}
 		const char *name = strrchr(argv[t], '/') ? strrchr(argv[t], '/') + 1 : argv[t];
 		if (!done) {  // gs.h's gs_bad stores the address it couldn't run at 0x0203C0F0
-			uint32_t bad; memcpy(&bad, (uint8_t *) gba->memory.wram + 0x3C0F0, 4);
-			printf("%s FAIL did not return (pc %08X, gs_bad %08X)\n", name, cpu->gprs[15], bad); fail++; continue;
+			uint32_t bad[2]; memcpy(bad, (uint8_t *) gba->memory.wram + 0x3C0F0, 8);
+			printf("%s FAIL did not return (pc %08X%s, gs_bad %08X lr %08X)\n", name, cpu->gprs[15], cpu->cpsr.t ? " thumb" : " arm", bad[0], bad[1]); fail++;
+			if (getenv("GS_RING")) {  // the last GS function entries (include/gs.h GS_TRACE)
+				uint32_t ring[1 + 192]; memcpy(ring, (uint8_t *) gba->memory.wram + 0x3C200, sizeof ring);
+				for (int q = 0; q < 64; q++) { int k = (ring[0] + q) % 64;
+					if (ring[1 + 3 * k]) printf("  gs %08X sp %08X lr %08X\n", ring[1 + 3 * k], ring[2 + 3 * k], ring[3 + 3 * k]); }
+			}
+			continue;
 		}
 		mapWords((uint8_t *) gba->memory.wram, 0x40000, 0);
 		mapWords((uint8_t *) gba->memory.iwram, 0x8000, 0);

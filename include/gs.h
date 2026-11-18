@@ -15,19 +15,24 @@ struct GsCpu {
 #define GS_BAD_ADDR (*(volatile u32 *)0x0203C0F0)  // set when gs_run meets an address it can't run
 #define GS_MAGIC_RET 0xFFFFFFF1u  // lr of a wrapper call: returning there ends the GS code
 
+// debugging: every GS function entry appends (address, sp, lr) to a 64-entry ring at 0x0203C200
+#define GS_RING ((volatile u32 *)0x0203C200)
+#define GS_TRACE(a) do { u32 i_ = GS_RING[0] % 64; GS_RING[1 + 3 * i_] = (a); GS_RING[2 + 3 * i_] = gCpu.r[13]; \
+    GS_RING[3 + 3 * i_] = lr; GS_RING[0] = i_ + 1; } while (0)
+
 struct GsEntry {
     u32 addr;
     void (*fn)(u32);
     u32 off;
 };
 
-#define GS_LOCALS u32 r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, sp, lr, n, z, c, v
+#define GS_LOCALS u32 r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, lr, n, z, c, v
 #define GS_LOAD() (r0 = gCpu.r[0], r1 = gCpu.r[1], r2 = gCpu.r[2], r3 = gCpu.r[3], r4 = gCpu.r[4], \
     r5 = gCpu.r[5], r6 = gCpu.r[6], r7 = gCpu.r[7], r8 = gCpu.r[8], r9 = gCpu.r[9], r10 = gCpu.r[10], \
-    r11 = gCpu.r[11], r12 = gCpu.r[12], sp = gCpu.r[13], lr = gCpu.r[14], n = gCpu.n, z = gCpu.z, c = gCpu.c, v = gCpu.v)
+    r11 = gCpu.r[11], r12 = gCpu.r[12], lr = gCpu.r[14], n = gCpu.n, z = gCpu.z, c = gCpu.c, v = gCpu.v)
 #define GS_STORE() (gCpu.r[0] = r0, gCpu.r[1] = r1, gCpu.r[2] = r2, gCpu.r[3] = r3, gCpu.r[4] = r4, \
     gCpu.r[5] = r5, gCpu.r[6] = r6, gCpu.r[7] = r7, gCpu.r[8] = r8, gCpu.r[9] = r9, gCpu.r[10] = r10, \
-    gCpu.r[11] = r11, gCpu.r[12] = r12, gCpu.r[13] = sp, gCpu.r[14] = lr, gCpu.n = n, gCpu.z = z, gCpu.c = c, gCpu.v = v)
+    gCpu.r[11] = r11, gCpu.r[12] = r12, gCpu.r[14] = lr, gCpu.n = n, gCpu.z = z, gCpu.c = c, gCpu.v = v)
 
 // a jump to t: inside this function (base, size) continue there, else return with gCpu.pc = t
 #define GS_JUMP_IN(base, size, t) do { u32 tt_ = (t) & ~1u; \
@@ -66,6 +71,11 @@ static void gs_run(u32 a)
 {
     const struct GsEntry *f;
     u32 b = a & ~1u;
+    {  // ring trace (GS_TRACE): gs_run targets get bit 30 set
+        u32 i_ = GS_RING[0] % 64;
+        GS_RING[1 + 3 * i_] = a | 0x40000000u, GS_RING[2 + 3 * i_] = gCpu.r[13], GS_RING[3 + 3 * i_] = gCpu.r[14];
+        GS_RING[0] = i_ + 1;
+    }
     f = gs_find(__gstable_start, __gstable_end, b);
     if (!f)
         f = gs_find(__gstablew_start, __gstablew_end, b);
@@ -73,8 +83,11 @@ static void gs_run(u32 a)
         f->fn(f->off);
         return;
     }
-    if (b < 0x02000000u || b >= 0x0A000000u)
+    if (!(b < 0x4000u || (b >= 0x08000000u && b < 0x08137B04u) || (b >= 0x08800000u && b < 0x0A000000u) ||
+          (b >= 0x03000000u && b < 0x03008000u) || (b >= 0x02000000u && b < 0x02040000u))) {
+        W32(0x0203C0F4u, gCpu.r[14]);  // lr: who jumped there
         gs_bad(a);
+    }
     // C (or native) code: the C calling convention, then return to lr
     {
         u32 s = gCpu.r[13];

@@ -180,6 +180,12 @@ def main():
                 taken.add((sv + w(data, o)) & ~1)
     for v, n in mine:
         taken |= {v + e for e in extra.get(n, ())}
+    if obj.endswith("rom1.main.o"):  # rom1 sits at its original address (right after crt0): raw Thumb pointers
+        base = 0x08000000 + int(readelf(["-SW"], "asm/crt0.o").split(".text")[1].split()[3], 16)
+        for o in range(0, len(data) - 3, 4):
+            x = w(data, o)
+            if x & 1 and base <= x - 1 < base + len(data):
+                taken.add(x - 1 - base)
     ranges = []
     for v, n in mine:
         ranges.append((v, next((x for x in starts if x > v), len(data)), n))
@@ -189,7 +195,8 @@ def main():
             taken |= translate(data, relocs, v, end, n, taken, gsnames, set(), set(), tag)[2]
         except Fail:
             pass
-    out = ['#include "gs.h"', ""]
+    # sp always lives in gCpu: entries from C code or interrupts build their frames below it
+    out = ['#include "gs.h"', "#define sp (gCpu.r[13])", ""]
     decls, swis, tables, bodies, failed = set(), set(), [], [], []
     for v, end, n in ranges:
         try:
@@ -301,10 +308,10 @@ def flow(data, relocs, start, end, work, ins, targets, entries, ext, rets):
                     work.append(d["target"] - start)
                 if k == "b":
                     break
-            if k == "bl" and d["sym"] is None and start <= d["target"] < end:  # long branch inside
+            if k == "bl" and d["sym"] is None and start <= d["target"] < end:
+                # a call to a helper inside (or agbcc's far jump: then what follows may not decode)
                 targets.add(d["target"] - start)
                 work.append(d["target"] - start)
-                break
             if k == "bl":
                 targets.add(o + 4 - start)  # return point: a local entry (a return can resume here)
                 if o + 4 - start not in entries:
@@ -328,7 +335,7 @@ def finish(data, relocs, start, end, name, gsnames, decls, swis, tag, ins, targe
             rets.discard(x), entries.discard(x), targets.discard(x)
     B = "((u32)%s__base)" % name
     lines = ["", "void gs_%s(u32 e)" % name, "{", "    GS_LOCALS;", "    GS_LOAD();",
-             "dispatch:", "    switch (e) {"]
+             "dispatch:", "    GS_TRACE(%s + e);" % B, "    switch (e) {"]
     for e in sorted(entries):
         lines.append("    case 0x%X: goto L_%X;" % (e, e))
     lines += ["    default: gs_bad(%s + e); return;" % B, "    }"]

@@ -10,6 +10,7 @@ cd "$(dirname "$0")/.."
 OUT=$(realpath -m "$1"); INPUTS=$(realpath "$2"); FRAMES=$3
 mkdir -p "$OUT"; rm -rf "$OUT/tr"; mkdir "$OUT/tr"
 env -u AUTO_C make -j8 FS_ONLY=1 zeldaalttp.gba >/dev/null 2>&1; cp zeldaalttp.gba "$OUT/m.gba"; cp zeldaalttp.elf "$OUT/m.elf"
+[ -n "$AUTO_C" ] && rm -rf src/auto  # generated per object: start clean
 make -j8 FS_ONLY=1 NONMATCHING=1 ${AUTO_C:+AUTO_C=1} zeldaalttp_nm.gba >/dev/null 2>&1; cp zeldaalttp_nm.gba "$OUT/nm.gba"; cp zeldaalttp_nm.elf "$OUT/nm.elf"
 env -u AUTO_C make -j8 compare >/dev/null 2>&1 || true
 # .rodata must keep its layout (data holds absolute addresses into it); NONMATCHING tables use NM_RODATA
