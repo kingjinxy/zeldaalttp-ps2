@@ -26,7 +26,8 @@
 // closing the window stops. Replay with
 //   mgba_run ROM N --players 2 --start DIR --inputs0 DIR/inputs0 --inputs1 DIR/inputs1
 // Keys: GBA 0: WASD, F=A G=B R=L T=R 1=Start 2=Select. GBA 1: arrows, /=A .=B ;=L '=R Enter=Start
-// RShift=Select.
+// RShift=Select. A game controller (d-pad or left stick, A, B, shoulders or triggers = L/R, Start, Back = Select)
+// drives one GBA at a time, framed in yellow; L3 (clicking the left stick) switches it to the other GBA.
 // Inputs file: lines "FRAME KEYS", KEYS = '-' or letters A B s(elect) S(tart) R L U D r(ight) l(eft);
 // held from FRAME until the next line. Output files: DIR/pP_fNNNNN.png. Output lines start with "pP ".
 //
@@ -413,8 +414,19 @@ static void onFrame(void *context) {
 static int present(SDL_Renderer *ren, SDL_Texture **tex) {
 	static Uint64 next;
 	SDL_Event e;
-	while (SDL_PollEvent(&e))
+	// a game controller drives one GBA at a time; L3 (left stick click) switches it to the other
+	static SDL_GameController *pad;
+	static int padGba;
+	while (SDL_PollEvent(&e)) {
 		if (e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)) return 0;
+		if (e.type == SDL_CONTROLLERDEVICEADDED && !pad) pad = SDL_GameControllerOpen(e.cdevice.which);
+		if (e.type == SDL_CONTROLLERDEVICEREMOVED && pad &&
+		    e.cdevice.which == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(pad))) {
+			SDL_GameControllerClose(pad);
+			pad = NULL;
+		}
+		if (e.type == SDL_CONTROLLERBUTTONDOWN && e.cbutton.button == SDL_CONTROLLER_BUTTON_LEFTSTICK) padGba ^= 1;
+	}
 	const Uint8 *k = SDL_GetKeyboardState(NULL);
 	static const SDL_Scancode map[2][10] = {
 		// A, B, Select, Start, Right, Left, Up, Down, R, L (GBA_KEY_* order)
@@ -427,6 +439,22 @@ static int present(SDL_Renderer *ren, SDL_Texture **tex) {
 		int bits = 0;
 		for (int b = 0; b < 10; b++)
 			if (k[map[i][b]]) bits |= 1 << b;
+		if (pad && i == padGba) {
+			static const SDL_GameControllerButton pb[10] = {
+				SDL_CONTROLLER_BUTTON_A, SDL_CONTROLLER_BUTTON_B, SDL_CONTROLLER_BUTTON_BACK, SDL_CONTROLLER_BUTTON_START,
+				SDL_CONTROLLER_BUTTON_DPAD_RIGHT, SDL_CONTROLLER_BUTTON_DPAD_LEFT, SDL_CONTROLLER_BUTTON_DPAD_UP,
+				SDL_CONTROLLER_BUTTON_DPAD_DOWN, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, SDL_CONTROLLER_BUTTON_LEFTSHOULDER };
+			for (int b = 0; b < 10; b++)
+				if (SDL_GameControllerGetButton(pad, pb[b])) bits |= 1 << b;
+			int ax = SDL_GameControllerGetAxis(pad, SDL_CONTROLLER_AXIS_LEFTX);
+			int ay = SDL_GameControllerGetAxis(pad, SDL_CONTROLLER_AXIS_LEFTY);
+			if (ax > 16000) bits |= 1 << 4;
+			if (ax < -16000) bits |= 1 << 5;
+			if (ay < -16000) bits |= 1 << 6;
+			if (ay > 16000) bits |= 1 << 7;
+			if (SDL_GameControllerGetAxis(pad, SDL_CONTROLLER_AXIS_TRIGGERRIGHT) > 16000) bits |= 1 << 8;
+			if (SDL_GameControllerGetAxis(pad, SDL_CONTROLLER_AXIS_TRIGGERLEFT) > 16000) bits |= 1 << 9;
+		}
 		liveKeys[i] = bits;
 		SDL_UpdateTexture(tex[i], NULL, players[i].pixels, players[i].w * sizeof(color_t));
 	}
@@ -434,6 +462,14 @@ static int present(SDL_Renderer *ren, SDL_Texture **tex) {
 	for (int i = 0; i < 2; i++) {
 		SDL_Rect r = { i * 240, 0, 240, 160 };
 		SDL_RenderCopy(ren, tex[i], NULL, &r);
+	}
+	if (pad) {  // a yellow frame around the GBA the controller drives
+		SDL_SetRenderDrawColor(ren, 255, 220, 0, 255);
+		for (int t = 0; t < 2; t++) {
+			SDL_Rect r = { padGba * 240 + t, t, 240 - 2 * t, 160 - 2 * t };
+			SDL_RenderDrawRect(ren, &r);
+		}
+		SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
 	}
 	SDL_RenderPresent(ren);
 	Uint64 freq = SDL_GetPerformanceFrequency(), now = SDL_GetPerformanceCounter();
@@ -694,7 +730,7 @@ int main(int argc, char **argv) {
 			if (!(rec[i] = fopen(path, "w"))) { perror(path); return 1; }
 			setvbuf(rec[i], NULL, _IOLBF, 0);
 		}
-		if (SDL_Init(SDL_INIT_VIDEO)) { fprintf(stderr, "SDL: %s\n", SDL_GetError()); return 1; }
+		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER)) { fprintf(stderr, "SDL: %s\n", SDL_GetError()); return 1; }
 		win = SDL_CreateWindow("mgba_run: GBA 1 (WASD) | GBA 2 (arrows)", SDL_WINDOWPOS_CENTERED,
 		                       SDL_WINDOWPOS_CENTERED, 240 * 2 * 2, 160 * 2, SDL_WINDOW_RESIZABLE);
 		ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
