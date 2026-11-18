@@ -13011,3 +13011,538 @@ Replay check is clean: 155 ok, and the 5 fails are only the expected ones. The 1
 
 - tool `Bash`: Update docs and commit
 
+- tool `Bash`: Archive conversation and check for removed lines
+
+- tool `Bash`: Commit archive
+
+- tool `ToolSearch`: 
+
+- tool `PushNotification`: 
+
+## Claude
+
+I converted 10 more Four Swords functions to equivalent C, so 119 functions now have C under `#ifdef NONMATCHING`. In the latest run of the call-by-call check (fs_walk inputs, two linked GBAs), 155 replayed calls match the original, up from 133. The only 5 failures are the known false failures: sub_0800C54C reads hardware registers and sub_0800C75C returns nothing. `make compare` still prints `zeldaalttp.gba: OK` and everything is committed.
+
+**New C this stretch:**
+- **Player bookkeeping** (sub_0803E114): the per-frame update.
+- **Moving platforms** (sub_08028200, sub_080272D0): they carry the players standing on them; the second one also moves diagonally.
+- **Stage clear sequence** (sub_08038E44).
+- **Held item following its carrier** (sub_08040074).
+- **Block pushing** (sub_08014958): the block moves once enough players push it together.
+- **Tile drawing** (sub_08028CD0, sub_080291F8, sub_08050444, sub_08050B50): each pair was the same unrolled code with different tables, so each pair now shares one table-driven loop.
+
+**Two problems found and fixed:**
+- **Build errors I missed.** I was searching the build output for the word "error", but the compiler's "undeclared" and "conflicting types" messages don't contain it. The NONMATCHING build failed for two commits before I noticed. I now check make's exit status instead.
+- **Shifted data in the NONMATCHING build.** A small table in my C for sub_080272D0 was placed in the game's fixed data area. That moved all the data after it by 16 bytes, which caused 21 call mismatches in functions that had passed before. Tables in NONMATCHING C now carry an `NM_RODATA` marker (in `include/global.h`) that puts them after the fixed data. `tools/check_nonmatching.sh` now stops if the fixed data area changes size.
+
+The walkthrough (Step 20), the planning doc count and the conversation archive are updated. 5,753 asm files are still in `asm/non_matching`, 119 of them with C under NONMATCHING. Next is the rest of the queue of Four Swords functions that run in the fs_walk recording, then the remaining code.
+
+## User
+
+Do you have any other ideas for speeding up this process?
+
+## Claude
+
+Yes. At roughly 10 functions an hour, the 5,600 or so left would take hundreds of hours, so only a change of approach makes a real difference. Here are the options, biggest gain first:
+
+1. **Auto-translate the long tail instead of writing it by hand.** The port needs C that runs, not readable C. A tool can turn each remaining asm function into mechanical C, with registers as variables and memory accesses as plain reads and writes. Every GBA static recompiler does this, `reference/FourSwordsRecomp` included. Hand-written C would then only be needed where the port has to change behaviour: rendering, input, link cable/multiplayer, sound, saves. The rest could be translated in days instead of months, and the replay check would validate it too. **This is the one I'd recommend.** It changes the plan's goal from "decompile everything" to "decompile what matters, translate the rest", so it's your call.
+
+2. **Drop A Link to the Past.** Much of the 5,753 is likely A Link to the Past code that the Four Swords port never runs. I can measure how much of it Four Swords actually reaches and leave the rest. That could remove a large share of the work, depending on what the measurement shows.
+
+3. **Better first drafts.** Ghidra's decompiler, run headless, could write the first draft of each function, with my scripts fixing up struct names and signatures. Ghidra downloads from GitHub, so that fits your rules. I'd expect it to roughly double the rate on the bigger functions.
+
+4. **Bigger batches.** I currently build, check and commit one function at a time. I could commit about 10 at a time and run the replay check once per batch. That's a modest gain of maybe 1.5×.
+
+5. **Parallel agents.** Several agents could each work on one source file in its own git worktree. That gives close to linear speedup, but it costs far more usage and the merges need care. I'd only do this if you approve.
+
+Options 2 and 4 are safe and I can start on them now. Option 1 is the big lever: tell me if you want me to prototype the translator on a handful of functions and show you what its C looks like.
+
+## User
+
+How would you do 2?
+
+## Claude
+
+I'd measure which functions Four Swords actually reaches, from the code side and from the recorded play side, then reorder the work around that.
+
+1. **Find where Four Swords starts.** From the main menu the game jumps into Four Swords through one entry point. `reference/FourSwordsRecomp` boots Four Swords on its own, so its docs give that entry point and the per-frame and interrupt handlers.
+
+2. **Static reachability.** Starting from those entry points, follow every `bl` call and every function-pointer table in ROM. The `.4byte` function pointers are already marked by `tools/split_incbin_ptrs.py`. Anything never reached counts as A Link to the Past or menu code. Tables shared between the two games make this an overestimate, which is the safe direction.
+
+3. **Dynamic coverage.** Play Four Swords in `tools/mgba_run`, linked, from the start_linked saves:
+   - the inputs we already have (`tools/fs_walk.inputs`);
+   - longer recordings later: several stages, bosses, a game over, saving.
+
+   Log every function entered, with a small coverage mode added to mgba_run's existing trace hooks. These functions are confirmed needed and go to the front of the queue.
+
+4. **Sort the queue into three tiers:**
+   - executed in recordings (do first);
+   - reachable but not yet seen (do next);
+   - unreachable (skip).
+
+5. **Spot-check.** The port has to boot and run correctly in the long recordings with the skipped functions left out. In the PS2 build they can be stubs that log if they're ever called, so a wrong guess shows up loudly instead of silently.
+
+Steps 2 and 3 are each a small script plus about an hour of runs. Until the count is in, I can't say how much this saves.
+
+## User
+
+Let's try auto translating the long tail.
+
+## Claude
+
+I'll start with a prototype: a translator script, a handful of functions, a build, and a replay check. First a look at the inputs it has to handle.
+
+- tool `Bash`: Survey asm inc files and Makefile rules
+
+- tool `Bash`: Inspect inc format, directives, special forms
+
+- tool `Bash`: See what .byte lines are
+
+## Claude
+
+Some functions keep data tables inside their code and read them PC-relatively. The prototype will leave those as asm and handle them later. Writing the translator now.
+
+- tool `Bash`: Survey operand forms and non-local branch targets
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/tools/asm2c.py
+
+- tool `Bash`: Fix translator, add auto.h, try two functions
+
+- tool `Bash`: Show NONMATCHING parts of Makefile
+
+- tool `Bash`: Switch translator to .s mode without ELF dependency
+
+- tool `Bash`: Add AUTO_C rule and try on rom2
+
+- tool `Bash`: Check rom2 auto build result
+
+## Claude
+
+rom2 translated (11 of 12) and compiled. Now the whole game.
+
+- tool `Bash`: Build the full NM+AUTO_C ROM
+
+- tool `Bash`: Inspect errors and skip reasons
+
+- tool `Bash`: Example skip reasons
+
+- tool `Bash`: Add global pinning and shared pools
+
+- tool `Bash`: Rebuild full AUTO_C ROM
+
+- tool `Bash`: Handle mid-function calls and rebuild
+
+- tool `Bash`: Find the .size reference
+
+- tool `Bash`: Search for size directives referencing it
+
+- tool `Bash`: Pin split functions, rename builtins, rebuild
+
+- tool `Bash`: Also scan C sources for label references
+
+- tool `Bash`: Make objects depend on translator; rebuild
+
+- tool `Bash`: Find who references _08002424
+
+- tool `Bash`: Show relocation overflow messages
+
+- tool `Read`: /home/alex/Documents/zeldaalttp-ps2/tools/asm2c.py
+
+- tool `Bash`: Pin short-branch targets; rebuild
+
+## Claude
+
+Down to 2 link errors, both short branches from files I wasn't scanning. Fixing.
+
+- tool `Bash`: Locate the two offending branches
+
+- tool `Bash`: Inspect the tail branch and alias use
+
+- tool `Bash`: Find the branch form
+
+- tool `Bash`: Handle offset and absolute branch targets; rebuild
+
+## Claude
+
+Translated code shouldn't sit between the remaining asm functions, because that pushes their short branches out of range. I'll move all translated code into its own section, linked after the data.
+
+- tool `Bash`: Place auto code in its own section; locate abs target
+
+- tool `Bash`: See the end of the preceding function
+
+- tool `Bash`: Symbolize the absolute branch; rebuild
+
+- tool `Bash`: Find the link error
+
+## Claude
+
+The translated code is about 1.4 MB and collides with the FS_ONLY boot code at 0x08700000. I'll place it at 0x08800000 instead, so the NONMATCHING ROM grows past 8 MB, which is fine for testing.
+
+- tool `Bash`: Move auto section to 0x08800000; rebuild
+
+## Claude
+
+It links: a 9.8 MB ROM with 5,248 functions translated to C and 393 still in asm. Now the real test is whether they behave the same. I'll extend the replay check to cover the translated functions.
+
+- tool `Bash`: Teach the check script about AUTO_C
+
+- tool `Bash`: Run replay check with translations
+
+- tool `Bash`: See where the check stopped
+
+- tool `Bash`: Run the FS_ONLY matching build
+
+- tool `Bash`: Rerun the check with tracing
+
+- tool `Bash`: See matching FS_ONLY build status
+
+- tool `Bash`: Show tail of build output
+
+- tool `Bash`: Rerun the check
+
+- tool `Bash`: Reproduce matching build failure after AUTO build
+
+- tool `Bash`: Reproduce compare-then-FS_ONLY sequence
+
+## Claude
+
+The script failed because the `AUTO_C=1` environment variable leaked into its matching builds. Fixing that.
+
+- tool `Bash`: Fix env leak; rerun check
+
+## Claude
+
+All 511 replayed calls fail, so something systematic is wrong. Looking at the failure types.
+
+- tool `Bash`: Categorize failures
+
+- tool `Bash`: Find the code-address equality rule in mgba_run
+
+- tool `Bash`: Read replay comparison code
+
+- tool `Bash`: Widen code range, print words; find build cmd
+
+- tool `Bash`: Find mgba_run build command
+
+- tool `Bash`: Rebuild mgba_run and replay
+
+- tool `Bash`: Show r0 failures
+
+- tool `Bash`: Find return address handling in replay
+
+- tool `Bash`: Skip r0 for void epilogues and replay
+
+## Claude
+
+452 ok, 59 fail. Several failures are hand-written asm that passes values in r4-r8, outside the C calling convention. The translator should leave those, and their callers, as asm.
+
+- tool `Bash`: Look at nonstandard function prologues
+
+- tool `Bash`: Count unified-syntax (hand asm) functions per group
+
+- tool `Bash`: Pin hand-written asm; rerun check
+
+## Claude
+
+409 ok, 36 fail. What's left are real translation bugs, so I'll go through them one at a time, starting with sub_08133E98.
+
+- tool `Bash`: Show sub_08133E98 asm
+
+- tool `Bash`: Inspect the odd sub_08133E98 file
+
+## Claude
+
+sub_08133E98 is a single instruction that falls through into the next function. Any function whose code runs off its end needs to stay asm along with its successor. Adding that rule.
+
+- tool `Bash`: Pin fall-through functions
+
+- tool `Bash`: Rerun check
+
+- tool `Bash`: Find the NM build error
+
+- tool `Bash`: Show the Python traceback
+
+- tool `Bash`: Fix ordering bug; rerun check
+
+## Claude
+
+410 ok, 29 fail, across 11 functions. Next: sub_08134320 always returns 0x26.
+
+- tool `Bash`: Compare asm and translation of sub_08134320
+
+- tool `Bash`: Add ABI check; rerun
+
+- tool `Bash`: Count translations; inspect sub_08067A30
+
+- tool `Bash`: Inspect callee sub_08067CBC
+
+- tool `Bash`: Sizes and kinds of failing functions
+
+- tool `Bash`: Inspect sub_0802E764 and translation
+
+- tool `Bash`: Inspect sub_0802FAEC and its failure
+
+## Claude
+
+Status: 5,086 functions translated. The replay shows 399 calls matching and 24 failing, across 9 functions. I'm tracking down the remaining translation bugs.
+
+- tool `Bash`: Find sub_08137AFC
+
+## Claude
+
+I'll bisect by source file. A new `AUTO_C_FILES` variable limits the translation to the named files.
+
+- tool `Bash`: Add AUTO_C_FILES filter to Makefile
+
+- tool `Bash`: Bisect: translate one object at a time
+
+- tool `Bash`: Show sub_08068108 asm
+
+- tool `Bash`: Show the checksum helpers
+
+- tool `Bash`: Show sub_08067CBC callees
+
+## Claude
+
+The rom3 failures go through sub_08135DC4, which reads the EEPROM save chip. The replay doesn't restore EEPROM state, so those are probably false failures. Bisecting the rest.
+
+- tool `Bash`: Bisect over remaining object groups
+
+- tool `Bash`: Find stack setup in crt0
+
+- tool `Bash`: Look at memory layout and stack init
+
+- tool `Bash`: Read crt0 and end of EWRAM symbols
+
+- tool `Bash`: Check IWRAM layout around the failing addresses
+
+- tool `Bash`: IWRAM symbols before 0x6A58 and at the end
+
+## Claude
+
+gUnknown_03005E60 sits in the OAM buffer, so it's real sprite data, not stack. I'll bisect further by leaving groups out.
+
+- tool `Bash`: Bisect combinations with file_select and rom2a
+
+- tool `Bash`: Narrow the culprit group
+
+## Claude
+
+rom1 is the culprit: its roughly 50 compiler-generated functions that do get translated. Listing them.
+
+- tool `Bash`: List translated rom1 functions
+
+- tool `Bash`: Build rom1 auto and list functions
+
+- tool `Bash`: Show the 12 translated rom1 functions
+
+- tool `Bash`: Tighten hand-asm detection; recheck rom1
+
+- tool `Bash`: Full check again
+
+- tool `Bash`: Revert broad rule; test rom1 alone
+
+- tool `Bash`: Bisect within rom1 using AUTO_C_SKIP
+
+- tool `Bash`: Test with no rom1 function translated
+
+- tool `Bash`: Translate one rom1 function at a time
+
+- tool `Bash`: Pin pc-relative spans; test rom1
+
+- tool `Bash`: Count raw code-address constants in asm
+
+- tool `Bash`: Which code addresses are hard-coded
+
+- tool `Bash`: The fs_game hard-coded address
+
+- tool `Bash`: Pin groups with hard-coded addresses; full check
+
+- tool `Bash`: Per-file counts and code-address constants
+
+- tool `Bash`: Pin entire rom1 group; full check
+
+## Claude
+
+The check passes now: 336 ok, 8 fail. The fails are the 2 known I/O cases plus the EEPROM save functions, which the replay can't restore. 3,938 functions translate. Looking at why the rest stay asm.
+
+- tool `Bash`: Count pinned functions per group
+
+- tool `Bash`: Histogram of translation failures
+
+## Claude
+
+1,234 functions were rejected for "code bytes", but most of those `.byte` lines are just alignment padding between literal pools. I'll reject only bytes that control flow can actually reach.
+
+- tool `Bash`: Only reject reachable code bytes
+
+## Claude
+
+5,168 functions translate now; 585 stay asm. Next is the 51 jump tables in a shape the translator doesn't recognize yet.
+
+- tool `Bash`: Look at an unrecognized jump table
+
+## Claude
+
+That table indexes with the same register the shift overwrites (`lsl r0, r0, #2`). Jump tables also need to be found before the code around them is translated. Restructuring that part.
+
+- tool `Bash`: Pre-scan jump tables; retry
+
+- tool `Bash`: Handle bl long-branches; full check; compare
+
+## Claude
+
+409 ok, 10 fail. One new failure, sub_080369B4; the rest are the EEPROM and known cases.
+
+- tool `Bash`: Inspect sub_080369B4 failure
+
+## Claude
+
+sub_080369B4 reads the link-cable register (0x04000128), so it's another I/O case the replay can't restore. Committing the translator.
+
+- tool `Bash`: Commit translator prototype
+
+## Claude
+
+Committed. Next is a whole-game test: does the AUTO_C ROM boot and play?
+
+- tool `Bash`: mgba_run options
+
+- tool `Bash`: Run both ROMs with screenshots
+
+- tool `Bash`: Make side-by-side comparisons
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/shots/cmp_p0_f01000.png
+
+## Claude
+
+The translated ROM boots: frame 300 matches pixel for pixel. By frame 1000, though, the screen is blank where the original shows the stage-select map. Bisecting with the screenshot as the test.
+
+- tool `Bash`: Bisect blank screen by object groups
+
+- tool `Bash`: Baseline with no translation, then rom4 alone
+
+- tool `Bash`: Test each object alone
+
+## Claude
+
+Three objects break it on their own: rom5, fs_game and rom2. rom2 and fs_game have only a few translated functions each, so I'll start there.
+
+- tool `Bash`: List translated functions in rom2 and fs_game
+
+- tool `Bash`: Test rom2 functions one at a time
+
+- tool `Bash`: Inspect sub_0800C4E8 and sub_0800C4FC
+
+- tool `Bash`: Pin label+offset ranges; retest culprits
+
+## Claude
+
+rom2 is fixed. Now fs_game, one function at a time.
+
+- tool `Bash`: Find the breaking fs_game translation
+
+## Claude
+
+The breakage is sub_080369B4, the link-cable state machine. Reading its translation.
+
+- tool `Bash`: Read translation of sub_080369B4
+
+- tool `Bash`: Rebuild and read translation
+
+## Claude
+
+Found a serious bug: depth analysis doesn't follow jump-table targets, so every switch's case bodies were dropped as unreachable. Fixing.
+
+- tool `Bash`: Follow jump-table cases in depth analysis
+
+## Claude
+
+Adding a guard as well: any unreachable instruction other than a stray branch now fails the function instead of being silently dropped.
+
+- tool `Bash`: Guard against dropped code
+
+- tool `Bash`: Retest fs_game, rom5 and everything
+
+## Claude
+
+fs_game passes now. rom5 still breaks; it has about 150 translated functions, so I'll binary-search them.
+
+- tool `Bash`: Bisect rom5 translations
+
+- tool `Bash`: Inspect sub_08134550
+
+- tool `Bash`: Test sub_08134550 alone; find its references
+
+- tool `Bash`: How sub_08134940 uses the pointer
+
+- tool `Bash`: Pin functions referenced by hand asm; retest rom5
+
+- tool `Bash`: Look at the sound command table and hand asm files
+
+## Claude
+
+That's the sound engine's command table, which mixes hand-written handlers with compiled ones. Rule: a pointer table holding any hand-written function keeps all of its functions as asm.
+
+- tool `Bash`: Pin tables with hand-written entries; retest
+
+- tool `Bash`: Bisect rom5 again
+
+- tool `Bash`: Check pinning of 08134550 and inspect 08134590
+
+- tool `Bash`: Pin callees whose caller-saved regs are relied on
+
+- tool `Bash`: See the callers of sub_08134590
+
+- tool `Bash`: Scan past labels; retest
+
+- tool `Bash`: Full translation screenshots at several frames
+
+- tool `Bash`: Side-by-side at frame 2000
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/shots/cmp2000.png
+
+## Claude
+
+Progress: the fully translated ROM now matches the original through frame 1000. By frame 2000, though, it has gone back to the file-select screen while the original is in a stage. Bisecting that.
+
+- tool `Bash`: Bisect frame-2000 divergence by groups
+
+- tool `Bash`: Baseline NM build at frame 2000
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/shots/cmpnone2000.png
+
+- tool `Bash`: Compare full translation against untranslated NM build
+
+- tool `Bash`: Side-by-side GBA 1 at frame 1500
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/shots/cmp_p1_1500.png
+
+## Claude
+
+With full translation, GBA 1 ends up on the title screen while the untranslated build has it in the stage, and GBA 0 is identical in both. Finding when GBA 1 diverges.
+
+- tool `Bash`: Find frame where GBA 1 diverges
+
+## Claude
+
+GBA 1 diverges between frames 1300 and 1400. I'll bisect against the untranslated build with GBA 1's screen at frame 1400.
+
+- tool `Bash`: Bisect GBA 1 divergence by groups
+
+- tool `Bash`: Test the two halves
+
+- tool `Bash`: Narrow the combination
+
+- tool `Bash`: Final replay check with more samples
+
+## Claude
+
+Final check: 604 ok, 14 fail. The fails are only the EEPROM save functions and the 2 known I/O cases. Committing and updating the docs.
+
+- tool `Bash`: Commit translator fixes
+
+- tool `Bash`: Read planning doc decomp section
+
+- tool `Bash`: Update planning doc and walkthrough
+
