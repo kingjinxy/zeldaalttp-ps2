@@ -49,7 +49,7 @@ player, linked in memory instead of by cable, each drawn into its own part of th
 - [x] Four Swords game code `0x0803668C`–`0x080668E4` (915 functions) is `-O0` (frame pointer in r7); it is
       `src/fs_game.c`, built without `-O2`. Four `-O2` functions inside it need their own file when decompiled.
 - [ ] Executed functions first (`reach.py --coverage ... --list-executed`): 144 of 657 done (fs_game: 41 of 156)
-- [ ] fs_game: 873 of 915 done (6 deferred); all code: 5,754 asm files left in asm/non_matching, of which ~82 also have equivalent C under NONMATCHING
+- [ ] fs_game: 873 of 915 done (6 deferred); all code: 5,754 asm files left in asm/non_matching, of which 119 also have equivalent C under NONMATCHING
 - [x] Disassemble the code still `.INCBIN`: 15 blobs, 34 KB in the code range (rom1 mostly, rom5 m4a ARM
       part); includes ARM code copied to RAM and Thumb code such as `0x08009924` (tmc `ShowNPCDialogue`)
 - [ ] m4a: our version sits between pokeruby's (2002, most sizes equal) and tmc's; for the port, pret's m4a C

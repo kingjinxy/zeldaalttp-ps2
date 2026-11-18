@@ -555,3 +555,23 @@ draft generator for the regular -O0 Four Swords code, to speed up matching decom
   function's r0, a link function that reads SIO registers (I/O isn't restored), and top-level loops that
   read timers. No difference in the NONMATCHING functions themselves.
 - `make NONMATCHING=1 NONMATCHING_EXCLUDE="src/x.c ..."` builds all NONMATCHING C but those files' (bisecting).
+
+## Step 20: more NONMATCHING C, and keeping .rodata fixed (2026-11-17)
+
+Added as NONMATCHING C: the player bookkeeping sub_0803E114, the moving platforms sub_08028200 and sub_080272D0
+(the 8-way one steps one or two axes through a shared helper), the stage clear sequence sub_08038E44, the held
+item sub_08040074, the multi-player block push sub_08014958, the 3-row tile blocks sub_08028CD0/sub_080291F8 and
+the door tiles sub_08050444/sub_08050B50 (two sets of near-identical unrolled code each, so each pair shares one
+table-driven helper).
+
+What went wrong:
+- `make NONMATCHING=1 objects | grep error` missed "undeclared" and "conflicting types" messages. Check make's
+  exit status instead.
+- The replay check then showed 21 new failures in functions that had passed. In the NONMATCHING build
+  file_select.o's .rodata was 16 bytes larger: sub_080272D0's static table of function pointers. That shifted all
+  the fixed data after it. Static tables in NONMATCHING C now carry `NM_RODATA` (include/global.h), which puts
+  them in `.rodata.nm`. The generated ldscript_nm.txt links that section after .rodata, next to the soft-float
+  code. tools/check_nonmatching.sh now stops when the two builds' .rodata sizes differ.
+
+State: 119 NONMATCHING functions. The fs_walk replay check gives 155 ok, 5 fail (the known I/O read and void
+return cases).
