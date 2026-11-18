@@ -8143,7 +8143,58 @@ void sub_08052C0C(struct Entity *this)
     this->unk14++;
 }
 
+#ifdef NONMATCHING
+// The other players' off-screen arrows: Select toggles them (bit per player in gUnknown_03006C80 +0x6D);
+// for each other player outside the view (camera x - 16 .. +256, y - 16 .. +176) stores its direction
+// (0 up, 1 up-right, ... 7 up-left; 0xFF on screen) in this +0x68 and its index among arrows that way
+// (+0x6C counts per direction) in this +0x78
+void sub_08052CE4(struct Entity *this)
+{
+    u8 *e = (u8 *)this;
+    u8 *flags = (u8 *)&gUnknown_03006C80 + 0x6D;
+    s32 i;
+    u32 dir;
+    struct Entity *p;
+    s32 left, right, top, bottom;
+
+    this->x.HALF.HI = gUnknown_03000450.unk20 + 0x68;
+    this->y.HALF.HI = gUnknown_03000450.unk22 + 0x50;
+    if (gUnknown_03005E10[gLCDRegisterBuffer] & 4) {
+        *flags ^= 1 << gLCDRegisterBuffer;
+        if (!((*flags >> gLCDRegisterBuffer) & 1))
+            sub_0804C938(0x2E, 0, 0xFF);
+    }
+    if ((*flags >> gLCDRegisterBuffer) & 1) {
+        for (i = 0; i <= 3; i++)
+            e[0x68 + i] |= 0xFF;
+        return;
+    }
+    for (i = 0; i <= 7; i++)
+        e[0x6C + i] = 0;
+    for (i = 0; i < gUnknown_03006C80.unk0; i++) {
+        if (i == gLCDRegisterBuffer)
+            continue;
+        p = gUnknown_03006A30[i].unk28;
+        left = (s16)gUnknown_03000450.unk20 - 0x10;
+        right = (s16)gUnknown_03000450.unk20 + 0x100;
+        top = (s16)gUnknown_03000450.unk22 - 0x10;
+        bottom = (s16)gUnknown_03000450.unk22 + 0xB0;
+        if (p->y.HALF.HI < top)
+            dir = p->x.HALF.HI < left ? 7 : p->x.HALF.HI > right ? 1 : 0;
+        else if (p->y.HALF.HI > bottom)
+            dir = p->x.HALF.HI < left ? 5 : p->x.HALF.HI > right ? 3 : 4;
+        else
+            dir = p->x.HALF.HI < left ? 6 : p->x.HALF.HI > right ? 2 : 0xFF;
+        e[0x68 + i] = dir;
+        if (dir != 0xFF) {
+            e[0x78 + i] = e[0x6C + dir];
+            e[0x6C + dir]++;
+        }
+    }
+}
+#else
 asm(".include \"asm/non_matching/fs_game/sub_08052CE4.inc\"");
+#endif
 
 void sub_08053028(struct Entity *this)
 {
