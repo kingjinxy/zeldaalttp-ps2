@@ -13257,7 +13257,83 @@ void sub_0806075C(struct Entity *this)
     }
 }
 
+#ifdef NONMATCHING
+extern const s8 gUnknown_08141A00[][2];
+extern const s8 gUnknown_08141A08[][2];
+
+// Effect attached to player form's weapon (parameter 0: charge sparkle while unk1B & 1; parameter 1: lasts
+// while unk21 >= 0x50): follows the owner at an offset per facing, drifting outward, flickers, and spawns
+// sparks. Deviation: the original keeps running on stale locals after DeleteThisEntity; this returns.
+void sub_080608F8(struct Entity *this)
+{
+    struct Struct03006A30 *p = &gUnknown_03006A30[this->form];
+    struct Entity *owner = p->unk28;
+    const s8 (*offs)[2];
+
+    if (p->unk4 == 0) {
+        DeleteThisEntity(this);
+        return;
+    }
+    this->z.HALF.HI = owner->z.HALF.HI;
+    if (this->parameter != 0) {
+        if (((u8 *)p)[0x21] > 0x4F) {
+            this->unk1C_0 = 1;
+            offs = gUnknown_08141A08;
+        } else {
+            if (((u8 *)p)[0x21] != 0)
+                this->unk1C_0 = 0;
+            else
+                DeleteThisEntity(this);
+            return;
+        }
+    } else {
+        if (!(p->unk1B & 1)) {
+            DeleteThisEntity(this);
+            return;
+        }
+        offs = gUnknown_08141A00;
+    }
+    GetNextFrame(this);
+    if (this->unk17 != 0) {
+        this->unk17--;
+        if ((this->unk17 & 3) == 0)
+            (*(u16 *)&this->unk64)++;
+    } else if (((u8 *)this)[0x6A] != 0) {
+        if ((gUnknown_03000E20.unk0 & 0x1F) == 0)
+            sub_0804CB38(this, 7, 0);
+    } else {
+        sub_08003DFC(0x1B);
+        sub_0804CB38(this, 0x12, 0);
+        ((u8 *)this)[0x6A]++;
+    }
+    this->unk1D_6 = owner->unk1D_6;
+    this->x.HALF.HI = offs[this->unk2A][0] + owner->x.HALF.HI;
+    this->y.HALF.HI = offs[this->unk2A][1] + owner->y.HALF.HI;
+    switch (this->unk2A) {
+    case 0:
+        this->y.HALF.HI -= *(u16 *)&this->unk64;
+        break;
+    case 1:
+        this->x.HALF.HI += *(u16 *)&this->unk64;
+        break;
+    case 2:
+        this->y.HALF.HI += *(u16 *)&this->unk64;
+        break;
+    case 3:
+        this->x.HALF.HI -= *(u16 *)&this->unk64;
+        break;
+    }
+    if ((u8)--this->unk18 == 0xFF) {
+        this->unk18 = 6;
+        this->direction ^= 0x10;
+    }
+    sub_0803CC20(this);
+    if (this->parameter == 0 && (p->unk1B & 0x40))
+        this->unk14++;
+}
+#else
 asm(".include \"asm/non_matching/fs_game/sub_080608F8.inc\"");
+#endif
 
 void sub_08060CF0(struct Entity *this)
 {
