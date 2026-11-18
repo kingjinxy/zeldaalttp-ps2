@@ -1144,7 +1144,101 @@ u8 sub_0800F190(u32 m)
 #else
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800F190.inc\"");
 #endif
+#ifdef NONMATCHING
+// Next character of the text: handles control codes 0-15 (0 end/next string, 2 inline table string,
+// 3 jump to text id, 7 colour, 12 inline string, 13-15 extended character sets); returns the character
+// (> 0xFF for extended ones) or 2 for a bad table index
+u16 sub_0800F22C(struct Struct0800EE2C *p)
+{
+    u16 c;
+    u16 n;
+    u16 skip;
+    u8 i;
+    u8 b;
+    u8 *buf;
+
+next:
+    skip = 0;
+    c = (u8)sub_0800EE2C(p);
+    switch (c) {
+    case 0:
+        if (sub_0800EDF0((u8 *)p))
+            goto next;
+        break;
+    case 1:
+    case 4:
+    case 5:
+    case 6:
+    case 8:
+    case 9:
+    case 10:
+    case 11:
+        break;
+    case 7:
+        *(u8 *)&p->unk4 = sub_0800EE2C(p) & 127;
+        break;
+    case 2: {
+        s32 k = sub_0800EE2C(p) & 127;
+        u8 *t;
+
+        *(u8 *)&p->unk4 = k;
+        if (k > 3 || k < 0)
+            return 2;
+        t = (u8 *)p->unk8[1];
+        if (t != NULL) {
+            if (p->unk3 != 0)
+                t += k * 8;
+            sub_0800EDB8(p, t);
+        }
+        goto next;
+    }
+    case 3:
+        c = (sub_0800EE2C(p) & 127) | (p->unk6 & 0xFF00);
+        p->unk0 = 0;
+        p->unk2 = 0;
+        sub_0800ED7C(p, c);
+        goto next;
+    case 12:
+        b = sub_0800EE2C(p);
+        skip = b >> 4;
+        n = (b & 15) - 1;
+        buf = (u8 *)&p->unk8[2];
+        i = 0;
+        while (n != 0xFFFF) {
+            buf[i++] = sub_0800EE2C(p);
+            n--;
+        }
+        buf[i] = 0;
+        if (p->unk1 == 0)
+            goto next;
+        while ((s16)--skip != -1)
+            sub_0800EE2C(p);
+        sub_0800EDB8(p, buf);
+        goto next;
+    case 13:
+        b = sub_0800EE2C(p);
+        c = ((b & 0xC0) << 6) | 0x400 | (b & 63);
+        break;
+    case 14:
+        c = (u8)sub_0800EE2C(p) | 0x300;
+        break;
+    case 15:
+        c = (u8)sub_0800EE2C(p) | 0x100;
+        if (c > 0x180)
+            c &= 127;
+        c += 256;
+        break;
+    default:
+        c += 256;
+        break;
+    }
+    if (skip)
+        goto next;
+    return c;
+}
+#else
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800F22C.inc\"");
+#endif
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800F408.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800F4C4.inc\"");
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800F68C.inc\"");
