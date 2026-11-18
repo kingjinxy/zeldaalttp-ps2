@@ -348,7 +348,34 @@ bool32 sub_08037554(void)
     return gUnknown_03000FC0.unk8 == 2;
 }
 
+#ifdef NONMATCHING
+// Records this GBA's keys (with 0x400 while gUnknown_02000010 & 0x7F) into the link key history at the
+// current frame, publishes the last four frames' keys and the frame number in gUnknown_03000FC0 (+0x26..+0x30),
+// copies the 20-byte packet, and marks the other players' previous slot 0xC000 (not yet received)
+void sub_08037574(void)
+{
+    u8 *g = (u8 *)&gUnknown_03000FC0;
+    u16 k = gHeldKeys;
+    s32 i;
+
+    if ((u8)(*(u8 *)&gUnknown_02000010 & 0x7F))
+        k |= 0x400;
+    gUnknown_0200B1D0[gLCDRegisterBuffer][gUnknown_03000494 & 15].v = k;
+    *(u16 *)(g + 0x26) = k;
+    *(u16 *)(g + 0x28) = gUnknown_0200B1D0[gLCDRegisterBuffer][(gUnknown_03000494 - 1) & 15].v;
+    *(u16 *)(g + 0x2A) = gUnknown_0200B1D0[gLCDRegisterBuffer][(gUnknown_03000494 - 2) & 15].v;
+    *(u16 *)(g + 0x2C) = gUnknown_0200B1D0[gLCDRegisterBuffer][(gUnknown_03000494 - 3) & 15].v;
+    *(u16 *)(g + 0x2E) = gUnknown_0200B1D0[gLCDRegisterBuffer][(gUnknown_03000494 - 4) & 15].v;
+    *(s32 *)(g + 0x30) = gUnknown_03000494++;
+    g[0x25] = 1;
+    CpuSet(gUnknown_03000FE4, gUnknown_03000FD0, 0x04000005);
+    for (i = 0; i <= 3; i++)
+        if (i != gLCDRegisterBuffer)
+            gUnknown_0200B1D0[i][(gUnknown_03000494 - 1) & 15].v = 0xC000;
+}
+#else
 asm(".include \"asm/non_matching/fs_game/sub_08037574.inc\"");
+#endif
 
 void sub_08037750(void)
 {
