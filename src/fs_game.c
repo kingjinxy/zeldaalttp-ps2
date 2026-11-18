@@ -2483,7 +2483,60 @@ void sub_0803F710(struct Entity *this)
     sub_08003688(this);
 }
 
+#ifdef NONMATCHING
+extern const u8 gUnknown_0813E8BC[];
+extern const u8 gUnknown_0813E8BF[];
+void sub_0803FAE8(struct Entity *);
+void sub_0803FEAC(struct Entity *);
+
+// Sets up player form's weapon entity (deleted unless the player is attacking, unk4, or unk2 & 0x20):
+// copies the owner's layer, palette and facing, then either the charged state (unk2 & 0x20) or the normal
+// swing with a random swing sound
+void sub_0803F74C(struct Entity *this)
+{
+    struct Struct03006A30 *p = &gUnknown_03006A30[this->form];
+    struct Entity *owner = p->unk28;
+
+    if (p->unk4 == 0 && !(p->unk2 & 0x20)) {
+        DeleteThisEntity(this);
+        return;
+    }
+    p->unk2C = this;
+    p->unkF &= 2;
+    this->unk1C_0 = 1;
+    this->unk1B = 0x60;
+    this->unk1E_0 = 3;
+    this->unk46 = 12;
+    this->unk3C = (owner->unk3C + 1) | 0x20;
+    this->unk5C = owner->unk5C;
+    this->unk48 = sub_0800BD14(8);
+    this->unk40 = 4;
+    this->unk3F = 3;
+    this->unk42 = 0;
+    this->unk3D = 0;
+    this->unk41 = 0;
+    this->unk14++;
+    this->unk20 = owner->unk20;
+    this->unk1C_6 = owner->unk1C_6;
+    this->unk2A = owner->unk2A & 14;
+    sub_0800238C(this, owner);
+    if (p->unk2 & 0x20) {
+        this->unk3C &= 0x7F;
+        this->parameter = 2;
+        this->unk44 = p->unk3E_0 * 2 + 8;
+        this->unk40 = 0x18;
+        this->unk14++;
+        sub_0803FEAC(this);
+    } else {
+        this->unk44 = p->unk3E_0 * 2 + 4;
+        sub_0803FAE8(this);
+        sub_08003E10(gUnknown_03006A30[this->form].unk28, gUnknown_0813E8BF[sub_08003184(gUnknown_0813E8BC)]);
+    }
+    sub_080005F0(this);
+}
+#else
 asm(".include \"asm/non_matching/fs_game/sub_0803F74C.inc\"");
+#endif
 asm(".include \"asm/non_matching/fs_game/sub_0803FAE8.inc\"");
 
 void sub_0803FEAC(struct Entity *this)
