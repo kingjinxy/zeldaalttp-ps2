@@ -2537,7 +2537,72 @@ void sub_0803F74C(struct Entity *this)
 #else
 asm(".include \"asm/non_matching/fs_game/sub_0803F74C.inc\"");
 #endif
+#ifdef NONMATCHING
+extern const s8 gUnknown_0813EABC[][2];
+void sub_08040074(struct Entity *, struct Entity *);
+void sub_0803F0E4(struct Entity *);
+void sub_0804055C(struct Entity *);
+
+// Player weapon swing: deleted when no longer the owner's weapon or the attack ended; charged spin
+// (unk1B: 0x20 flashes, 0x40 bigger), moves with the owner; with an upgraded sword (unk3E levels 1-2) a
+// sword beam (object 15, form 0x14 or 0x12) spawns at the blade tip on the swing's beam frame
+void sub_0803FAE8(struct Entity *this)
+{
+    struct Struct03006A30 *p = &gUnknown_03006A30[this->form];
+    struct Entity *owner = p->unk28;
+    struct Entity *e;
+
+    if (p->unk2C != this) {
+        sub_08000620(this);
+        sub_0800BE50((u8 *)this->unk48);
+        DeleteThisEntity(this);
+        return;
+    }
+    if (p->unk4 == 0) {
+        p->unk2C = NULL;
+        p->unk1B = 0;
+        sub_08000620(this);
+        sub_0800BE50((u8 *)this->unk48);
+        DeleteThisEntity(this);
+        return;
+    }
+    if (p->unk4 & 0x80)
+        sub_08003E10(p->unk28, 0x14);
+    if (p->unk1B != 0) {
+        this->unk40 = 12;
+        if (p->unk1B & 0x20)
+            this->unk1E_0 ^= 3;
+        if (p->unk1B & 0x40) {
+            this->unk44 = p->unk3E_0 * 2 + 8;
+            this->unk40 = 8;
+        }
+    }
+    sub_08040074(this, owner);
+    sub_0803F0E4(this);
+    sub_0804055C(this);
+    if (p->unk1B != 0) {
+        if (owner->unk29 & 0x20)
+            sub_08003E10(p->unk28, 0x1C);
+        return;
+    }
+    if (p->unk3E_0 == 0 || !(owner->unk29 & 0x40))
+        return;
+    e = sub_080123E8();
+    if (e == NULL)
+        return;
+    e->type = 6;
+    e->subtype = 15;
+    e->form = p->unk3E_0 == 1 ? 0x14 : 0x12;
+    if (this->unk1C_2)
+        e->x.HALF.HI = this->x.HALF.HI - gUnknown_0813EABC[this->frameIdx][0];
+    else
+        e->x.HALF.HI = gUnknown_0813EABC[this->frameIdx][0] + this->x.HALF.HI;
+    e->y.HALF.HI = gUnknown_0813EABC[this->frameIdx][1] + this->y.HALF.HI;
+    sub_08012728(6, e);
+}
+#else
 asm(".include \"asm/non_matching/fs_game/sub_0803FAE8.inc\"");
+#endif
 
 void sub_0803FEAC(struct Entity *this)
 {
