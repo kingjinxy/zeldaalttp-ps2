@@ -4234,7 +4234,55 @@ void sub_08027298(struct Entity *this)
     }
 }
 
+#ifdef NONMATCHING
+// Moving platform (8 directions, diagonals move along two axes): steps each axis with collision against
+// the map (unk50's tile data) and carries the players standing on it (bits 0-3 of unk60).
+void sub_08002E84(struct Entity *, s32, u32, u16);
+static void sub_080272D0_axis(struct Entity *this, u16 *map, u32 riders, u32 axis)
+{
+    static void (*const sFns[4])() = { sub_080276CC, sub_0802782C, sub_08027780, sub_080278E8 };
+    u16 *old = (u16 *)&this->unk7C;
+    u16 dist;
+    u32 i;
+
+    sFns[axis](this, map);
+    sub_08002E84(this, this->speed, axis * 8, this->unk2C);
+    switch (axis)
+    {
+    case 0: dist = (u8)(old[1] - this->y.HALF.HI) << 8; break;
+    case 1: dist = (u8)(this->x.HALF.HI - old[0]) << 8; break;
+    case 2: dist = (u8)(this->y.HALF.HI - old[1]) << 8; break;
+    default: dist = (u8)(old[0] - this->x.HALF.HI) << 8; break;
+    }
+    if (dist == 0)
+        return;
+    for (i = 0; i < 4; i++)
+        if ((riders >> i) & 1)
+            sub_08002E70(gUnknown_03006A30[i].unk28, dist, axis * 8);
+}
+
+void sub_080272D0(struct Entity *this)
+{
+    u16 *map = sub_08015DC0(this->unk50);
+    u16 *old = (u16 *)&this->unk7C;
+    u32 riders, dir;
+
+    old[0] = this->x.HALF.HI;
+    old[1] = this->y.HALF.HI;
+    this->unk2C = 0;
+    riders = this->unk60 & 15;
+    if (riders == 0)
+        return;
+    dir = this->direction >> 2;
+    if (dir > 7)
+        return;
+    sub_080272D0_axis(this, map, riders, dir >> 1);
+    if (dir & 1)
+        sub_080272D0_axis(this, map, riders, ((dir >> 1) + 1) & 3);
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_080272D0.inc\"");
+#endif
 #ifdef NONMATCHING
 #define CHECK_PLAYER(n, bit)                                         \
     if (this->unk60 & bit) {                                         \
