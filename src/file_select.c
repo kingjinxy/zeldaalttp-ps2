@@ -4476,7 +4476,43 @@ void sub_08028170(struct Entity *this)
 asm(".include \"asm/non_matching/file_select/sub_08028170.inc\"");
 #endif
 
+#ifdef NONMATCHING
+// Moving platform: carries the players standing on it (bits 0-3 of unk60) by the distance it moved.
+void sub_08028200(struct Entity *this)
+{
+    u32 riders = this->unk60 & 15;
+    u16 *old = (u16 *)&this->unk7C;
+    u32 dir, i;
+    u16 dist;
+
+    old[0] = this->x.HALF.HI;
+    old[1] = this->y.HALF.HI;
+    dir = this->direction >> 3;
+    if (dir > 3)
+        return;
+    sub_0803CC20(this);
+    switch (dir)
+    {
+    case 0: dist = (u8)(old[1] - this->y.HALF.HI) << 8; break;
+    case 1: dist = (u8)(this->x.HALF.HI - old[0]) << 8; break;
+    case 2: dist = (u8)(this->y.HALF.HI - old[1]) << 8; break;
+    default: dist = (u8)(old[0] - this->x.HALF.HI) << 8; break;
+    }
+    if (dist == 0)
+        return;
+    for (i = 0; i < 4; i++)
+    {
+        if ((riders >> i) & 1)
+        {
+            struct Entity *p = gUnknown_03006A30[i].unk28;
+            if (sub_08003FB0(p))
+                sub_08002E70(p, dist, dir * 8);
+        }
+    }
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_08028200.inc\"");
+#endif
 
 void sub_08028508(struct Entity *this)
 {
