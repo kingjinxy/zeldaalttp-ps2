@@ -4633,7 +4633,38 @@ void sub_0802A490(struct Entity *this)
     }
 }
 
-asm(".include \"asm/non_matching/file_select/sub_0802A4EC.inc\"");
+
+extern const u8 gUnknown_0813D49E[];
+
+// Counts the players standing on this switch (sub_08000580's mask): starts from the mask's bit count, then
+// for each player in the mask, one fewer if busy (unk36 & 0x90), one more if carrying a player (type 1) the
+// switch's flags don't cover
+#define PLAYER(k)                                                                          \
+    if (m & (1 << (k))) {                                                                  \
+        gUnknown_03006A30[k].unk3F = gUnknown_0813D49E[this->unk2A];                       \
+        if (gUnknown_03006A30[k].unk36 & 0x90) {                                           \
+            n--;                                                                           \
+        } else {                                                                           \
+            struct Entity *c = *(struct Entity **)&gUnknown_03006A30[k].unk28->unk6C;      \
+            if (c != NULL && c->unk58->type == 1                                           \
+                && !(gUnknown_08137B10[c->unk58->form] & m))                               \
+                n++;                                                                       \
+        }                                                                                  \
+    }
+
+u8 sub_0802A4EC(struct Entity *this)
+{
+    u8 m = sub_08000580(this);
+    u8 n = sub_08000A40(m);
+
+    PLAYER(0)
+    PLAYER(1)
+    PLAYER(2)
+    PLAYER(3)
+    return n;
+}
+#undef PLAYER
+
 
 void sub_0802A6A4(struct Entity *this)
 {
