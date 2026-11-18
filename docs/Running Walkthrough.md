@@ -527,3 +527,31 @@ draft generator for the regular -O0 Four Swords code, to speed up matching decom
   sub_0800E80C), and a missing third argument (sub_0802C070 to sub_0802C1C0). Implicit declarations hide
   these, so calls from NONMATCHING code get prototypes and are checked against the asm's registers.
 - The permuter queues were stopped: with equivalent C as the goal they no longer pay.
+
+## Step 19: making the NONMATCHING build run, and checking it call by call (2026-11-17)
+
+- A NONMATCHING ROM built, but showed a blank screen: once C changes a function's size, everything
+  after it moves, and the remaining asm and data pointed at the old addresses.
+  - `tools/symbolize_asm.py`: absolute ROM addresses in branches and pool words of the asm (~1,900) become
+    symbol+offset from the matching ELF. A `.4byte` against a Thumb function symbol gets bit 0 set by the
+    linker, so even words use plain labels (local `_0801...` labels only in their own file, an extra
+    `sub_0812CC58_addr` label where needed; a label right after `THUMB_FUNC_START` becomes the function
+    symbol because of `.thumb_func`, so it goes after the function's own label).
+  - `tools/split_incbin_ptrs.py`: the data `.INCBIN` slices hold ~5,800 Thumb function pointers (handler
+    tables); each word equal to a function's address + 1 becomes `.4byte name`.
+  - `ldscript_nm.txt` (generated for NONMATCHING builds): `.rodata` fixed at its original address
+    (0x08137B04, data blobs point into it) and libgcc's soft float moved after it for slack.
+  - `make compare` stays OK after each step (the symbols resolve to the same addresses).
+- Result: the NONMATCHING ROM boots and plays. Screens match the original at the title screen, but in Four
+  Swords differ by a few pixels after some seconds even when the only change is a function that never runs:
+  moved code changes cycle timing, and with two linked GBAs and timer-based randomness the games diverge.
+  So whole-game comparison can't validate NONMATCHING C.
+- Per-function check instead: `mgba_run --replay ROM MAP TRACE.gz...` loads each call recorded by
+  `mgba_run --trace` on the original ROM (registers and all memory at entry and at return) into the
+  NONMATCHING ROM, maps function pointers in RAM to the moved code, runs the function at its new address
+  with IRQs masked until it returns, and compares r0, r4-r11, sp and RAM/VRAM/OAM/palette (I/O and the
+  callee's stack excluded). `tools/check_nonmatching.sh OUT tools/fs_walk.inputs 3921` does all of it.
+- First run: 179 calls of 63 functions on the Four Swords walk: 166 identical; the rest are a void
+  function's r0, a link function that reads SIO registers (I/O isn't restored), and top-level loops that
+  read timers. No difference in the NONMATCHING functions themselves.
+- `make NONMATCHING=1 NONMATCHING_EXCLUDE="src/x.c ..."` builds all NONMATCHING C but those files' (bisecting).
