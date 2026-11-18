@@ -3329,7 +3329,64 @@ void sub_08043A34(struct Entity *this)
 }
 
 
+#ifdef NONMATCHING
+extern const u16 gUnknown_08138C20[][8];
+extern const u16 *const gUnknown_081390E0[];
+
+// Initialises an enemy from its record (by subtype; 0xFFFF picks a per-form table): sprite tile or a
+// palette slot (sub_0802C070), palette, then size/hitbox, health, speed and other stats
+void sub_08043B94(struct Entity *this)
+{
+    const u16 *rec;
+    u8 k;
+
+    if (this->unk19 & 1)
+        return;
+    rec = gUnknown_08138C20[this->subtype];
+    if (rec[0] == 0xFFFF)
+        rec = gUnknown_081390E0[rec[1]] + this->form * 8;
+    if (rec[0] != 0) {
+        if (rec[0] & 0x8000) {
+            this->unk20 = rec[0];
+            this->unk1C_6 = (rec[0] & 0x300) >> 8;
+        } else if (sub_0802C070(this, rec[0])) {
+            return;
+        }
+    }
+    rec++;
+    if (rec[0] & 0x8000) {
+        if (rec[0] != 0x80FF) {
+            this->unk1E_4 = rec[0] & 15;
+            this->unk1E_0 = rec[0] & 15;
+        }
+    } else {
+        k = sub_0802C2DC(rec[0]);
+        this->unk1E_4 = k;
+        this->unk1E_0 = k & 15;
+    }
+    rec++;
+    this->unk19 = 1;
+    this->unk1B = rec[0];
+    rec++;
+    this->unk3C = ((rec[0] & 0x8000) >> 8) | 9;
+    this->unk40 = rec[0];
+    this->unk46 = (rec[0] & 0x7F00) >> 8;
+    rec++;
+    this->unk44 = rec[0] >> 8;
+    this->unk45 = rec[0];
+    rec++;
+    if (this->speed == 0)
+        this->speed = rec[0];
+    rec++;
+    this->unk3F = rec[0];
+    rec++;
+    this->unk5C = rec[0];
+    this->unk23 = 0;
+    sub_08008DD8(this);
+}
+#else
 asm(".include \"asm/non_matching/fs_game/sub_08043B94.inc\"");
+#endif
 
 u8 sub_08043EA4(u8 a)
 {
