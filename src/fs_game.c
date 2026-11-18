@@ -2802,7 +2802,93 @@ void sub_0803FEAC(struct Entity *this)
     }
 }
 
+#ifdef NONMATCHING
+// Held item following its parent (a1): copies frame and facing, hands over knockback, ends when released.
+extern const s8 gUnknown_0813E8DC[];
+extern const u8 gUnknown_0813E918[];
+void sub_08040074(struct Entity *this, struct Entity *a1)
+{
+    struct Struct03006A30 *pl;
+    struct Entity *e;
+    u8 *hb;
+    u16 k;
+
+    this->frameIdx = a1->frameIdx - 37;
+    pl = &gUnknown_03006A30[this->form];
+    if (pl->unk1B & 0x40)
+        this->unk1C_2 = 0;
+    else if (a1->unk2A & 2)
+        this->unk1C_2 = a1->unk1C_2 ^ 1;
+    else
+        this->unk1C_2 = a1->unk1C_2;
+    if (this->unk41 & 0x80)
+    {
+        if (a1->unk3D == 0 || a1->unk3D == 0x81)
+        {
+            a1->unk3D = this->unk3D;
+            a1->unk3E = this->unk3E;
+            a1->unk42 = this->unk42;
+            this->unk42 = 0;
+            this->unk3E = 0;
+            this->unk3D = 0;
+        }
+        if (pl->unk1B != 0)
+        {
+            switch (this->unk41 & 0x7F)
+            {
+            case 0x34:
+            case 0x3F:
+                break;
+            case 0x0C:
+            case 0x26:
+                pl->unk1B |= 8;
+                a1->unk42 = 2;
+                e = sub_080123E8();
+                if (e != NULL)
+                {
+                    e->type = 6;
+                    e->subtype = 15;
+                    e->form = 16;
+                    e->x.HALF.HI = gUnknown_0813E8DC[this->unk2A] + this->x.HALF.HI;
+                    e->y.HALF.HI = gUnknown_0813E8DC[this->unk2A + 1] + this->y.HALF.HI;
+                    sub_08012728(6, e);
+                }
+                if (!(pl->unk1B & 0x20))
+                    pl->unk1B &= 0xFE;
+                break;
+            default:
+                if (!(pl->unk1B & 0xC0))
+                {
+                    pl->unk1B = 0;
+                    pl->unk4 = 0;
+                    pl->unk2C = NULL;
+                    sub_08000620(this);
+                    sub_0800BE50((u8 *)this->unk48);
+                    DeleteThisEntity(this);
+                }
+                break;
+            }
+        }
+    }
+    if (this->unk3D != 0)
+    {
+        if ((s8)this->unk3D > 0)
+            this->unk3D--;
+        else
+            this->unk3D++;
+    }
+    k = (a1->frameIdx - 37) * 4;
+    hb = (u8 *)this->unk48;
+    hb[0] = gUnknown_0813E918[k];
+    hb[1] = gUnknown_0813E918[k + 1];
+    hb[6] = gUnknown_0813E918[k + 2];
+    hb[7] = gUnknown_0813E918[k + 3];
+    if (this->unk1C_2)
+        hb[0] = -hb[0];
+}
+#else
 asm(".include \"asm/non_matching/fs_game/sub_08040074.inc\"");
+#endif
 
 void sub_0804055C(struct Entity *this)
 {
