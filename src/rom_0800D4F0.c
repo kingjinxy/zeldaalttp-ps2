@@ -371,7 +371,119 @@ void sub_0800DBE0(struct Struct0202A5E0 *a)
 
 asm(".INCLUDE \"macro.inc\"");
 
+#ifdef NONMATCHING
+extern const u8 gUnknown_08427424[];
+extern const u32 gUnknown_08137D68[];
+u16 sub_0800F22C(struct Struct0800EE2C *);
+void sub_0800DFC4(u8 *, u8);
+void sub_0800EB50(u8 *, u32);
+u32 sub_0800EE08(u8 *);
+u16 sub_0800F7B4(u16, struct Struct0800EE2C *);
+
+// One step of the text box p: reads the next character (reader at +24); control codes change state and
+// return 0, other characters are drawn (reader at +88) and return how far the column advanced
+u16 sub_0800DCDC(u8 *p)
+{
+    u16 c = sub_0800F22C((struct Struct0800EE2C *)(p + 24));
+    u8 k, v;
+    s8 n;
+    u16 r;
+
+    switch (c) {
+    case 0:
+        if (p[27] != 2 && gUnknown_02000000[0] == 1) {
+            p[249] = 6;
+            gUnknown_02000000[0] = 2;
+            gUnknown_0201EF00[0] = 2;
+        } else {
+            p[249] = 2;
+        }
+        return 0;
+    case 2:
+        k = p[28];
+        if (k >= 8) {
+            if (k <= 11)
+                sub_0800EB50(p, k - 8);
+            else if (k <= 20 && k >= 16)
+                p[1] = k - 16;
+        }
+        return 0;
+    case 5:
+        if (gUnknown_02000000[0] != 1) {
+            zero_memory(gUnknown_02000000, 4);
+            zero_memory(gUnknown_0201EF00, 20);
+            gUnknown_02000000[0] = 1;
+            gUnknown_0201EF00[0] = 1;
+        }
+        v = sub_0800EE08(p);
+        n = gUnknown_0201EF00[2];
+        if (n <= 3) {
+            gUnknown_0201EF00[12 + n] = v;
+            p[91] = (p[91] + 7) & ~7;
+            gUnknown_0201EF00[4 + (s8)gUnknown_0201EF00[2]] = p[91] >> 3;
+            p[91] += 8;
+            gUnknown_0201EF00[8 + (s8)gUnknown_0201EF00[2]] = p[263] ? 2 : 0;
+            gUnknown_0201EF00[2]++;
+        }
+        return 0;
+    case 6:
+        v = sub_0800EE08(p);
+        if (v == 255)
+            p[254] = 1;
+        else
+            p[261] = v;
+        return 0;
+    case 7:
+        sub_0800DFC4(p, gUnknown_08427424[p[28]]);
+        return 0;
+    case 10:
+        if (p[27] != 2)
+            p[250] = 2;
+        else
+            p[263] = 3;
+        if (p[263] == 0)
+            p[264] = 1;
+        else if (p[263] == 2)
+            p[249] = 5;
+        else
+            p[249] = 4;
+        p[263] = (p[263] ^ 1) | 2;
+        p[91] = 0;
+        p[257] = 0;
+        return 0;
+    case 11:
+        p[260] = sub_0800EE08(p);
+        return 0;
+    }
+    if (c <= 255)
+        return 0;
+    if (c > 0x3FF) {
+        p[256] = p[255] | 0x80;
+        sub_0800DFC4(p, ((c & 0xF000) >> 8) | 0x81);
+        p[257] = 0;
+    } else if (c == 288) {
+        p[257] += 4;
+    } else {
+        p[257] = 1;
+        if (p[255] & 0x80) {
+            sub_0800DFC4(p, p[255] & 63);
+            p[255] = 0;
+        }
+    }
+    r = sub_0800F7B4(c, (struct Struct0800EE2C *)(p + 88));
+    if (p[27] == 2) {
+        p[260] = 120;
+        p[212] = 106;
+        p[213] = 107;
+    } else if (c != 288 && p[1] != 0 && (s8)p[262] == 0) {
+        p[262] = 4;
+        play_sound(gUnknown_08137D68[p[1]]);
+    }
+    return r;
+}
+#else
 asm(".include \"asm/non_matching/rom_0800D4F0/sub_0800DCDC.inc\"");
+#endif
 #ifdef NONMATCHING
 void sub_0800DFC4(u8 *p, u8 f)
 {
