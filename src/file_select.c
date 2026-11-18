@@ -1606,7 +1606,149 @@ void sub_08014900(void)
     gUnknown_02016324 = 0;
 }
 
+#ifdef NONMATCHING
+// Players pushing a big block: finds the block's edge tiles next to the pusher, checks the tiles beyond are
+// free, and counts pushers per block (gUnknown_0202A030, 8 records); when enough push, spawns the moving
+// block (object 7) and puts the pushers into their pushing state.
+struct PushRecord {
+    u8 mode, dir, need, count;
+    u16 layer, tile;
+    struct Entity *pushers[4];
+};
+extern struct PushRecord gUnknown_0202A030[8];
+u16 sub_080094CC(u16, u16);
+void sub_08014958(u32 *p)
+{
+    u32 w = p[0];
+    u8 dir = (w >> 16) & 7;
+    u16 tile = w & 0xFFF;
+    u32 layer = w & 0xC000;
+    struct Entity *ent = (struct Entity *)p[1];
+    u16 *map = sub_08015DC0(layer);
+    u16 *t = map + 2 + tile;
+    u16 lyr = ent->unk50;
+    u32 mode, n, i, found, edge, step, u;
+    s32 run, side;
+    u16 v, k;
+    u8 *free;
+    struct PushRecord *rec;
+    struct Entity *e;
+
+    switch (dir >> 1)
+    {
+    case 0: edge = 0x141; run = -1;  side = -64; break;
+    case 1: edge = 0x141; run = 64;  side = -64; break;
+    case 2: edge = 0x140; run = 1;   side = -1;  break;
+    case 3: edge = 0x140; run = -64; side = -1;  break;
+    default: return;
+    }
+    for (i = 0; i < 3; i++)
+    {
+        if (sub_080094CC(*t, lyr) == edge)
+            break;
+        t += run;
+    }
+    n = 1;
+    t += side;
+    u = sub_080094CC(*t, lyr);
+    if (u == (side == -64 ? 0x145 : 0x143))
+    {
+        n = 2;
+        t += side;
+        if (sub_080094CC(*t, lyr) == u)
+        {
+            n = 3;
+            t += side;
+        }
+    }
+    tile = t - (map + 2);
+    v = sub_0800932C(tile, layer);
+    switch (dir >> 1)
+    {
+    case 0:
+        if ((u16)(v - 0x13A) > 1) return;
+        free = (u8 *)map + tile + 0x1FC4; step = 1; break;
+    case 1:
+        if (v != 0x13E && v != 0x13A) return;
+        free = (u8 *)map + tile + n + 0x2005; step = 64; break;
+    case 2:
+        if (v != 0x13C && v != 0x13B) return;
+        free = (u8 *)map + tile + (n + 1) * 64 + 0x2004; step = 1; break;
+    default:
+        if (v != 0x13D && v != 0x13A) return;
+        free = (u8 *)map + tile + 0x2003; step = 64; break;
+    }
+    for (i = 0; i <= n; i++)
+        if (free[i * step])
+            return;
+    mode = (dir >> 1) + 1;
+
+    found = 0;
+    rec = gUnknown_0202A030;
+    for (i = 0; i < gUnknown_02016324; i++, rec++)
+    {
+        if (rec->mode == mode && rec->tile == tile)
+        {
+            found = 1;
+            break;
+        }
+    }
+    if (found)
+    {
+        if (rec->pushers[1] == NULL)
+            rec->pushers[1] = ent;
+        else if (rec->pushers[2] == NULL)
+            rec->pushers[2] = ent;
+        else if (rec->pushers[3] == NULL)
+            rec->pushers[3] = ent;
+        if (rec->need != ++rec->count)
+            return;
+        e = sub_080123E8();
+        if (e == NULL)
+            return;
+        e->type = 6;
+        e->subtype = 7;
+        e->form = n;
+        e->direction = dir * 4;
+        e->x.HALF.HI = (tile & 63) * 16 + 8;
+        e->y.HALF.HI = ((tile & 0xFC0) >> 2) + 8;
+        e->unk50 = layer;
+        e->unk60 = sub_0800932C(tile, layer);
+        sub_08012728(6, e);
+        for (k = 0; k < 4; k++)
+        {
+            struct Entity *q = rec->pushers[k];
+            if (q != NULL && q->type == 1)
+            {
+                u8 *pl = (u8 *)&gUnknown_03006A30[q->form];
+                pl[6] = 0xA1;
+                pl[12] = 5;
+                q->x.HALF.LO = 0;
+                q->y.HALF.LO = 0;
+                q->direction = dir * 4;
+            }
+        }
+        return;
+    }
+    i = gUnknown_02016324;
+    if (i > 7)
+        return;
+    gUnknown_02016324 = i + 1;
+    rec = &gUnknown_0202A030[i];
+    rec->mode = mode;
+    rec->dir = dir;
+    rec->need = n;
+    rec->count = 0;
+    rec->layer = layer;
+    rec->tile = tile;
+    rec->pushers[0] = ent;
+    rec->pushers[1] = NULL;
+    rec->pushers[2] = NULL;
+    rec->pushers[3] = NULL;
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_08014958.inc\"");
+#endif
 asm(".include \"asm/non_matching/file_select/sub_08014E60.inc\"");
 
 void sub_080152E0(void)
