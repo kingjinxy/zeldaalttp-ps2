@@ -3209,7 +3209,63 @@ void sub_08042DB0(struct Entity *this)
     sub_08042F5C(this);
 }
 
+#ifdef NONMATCHING
+extern const void *const gUnknown_08428764[];
+void sub_08000740(struct Entity *);
+
+// Player weapon, each frame: hands its hit state to the owner, refreshes its animation when the owner
+// asks (unk3 & 0x80), applies hit effects, and is deleted when the owner stops attacking; then copies the
+// owner's frame (sword frames 0xA9-0xCF) or hides itself
+void sub_08042F5C(struct Entity *this)
+{
+    struct Struct03006A30 *p = &gUnknown_03006A30[this->form];
+    struct Entity *owner = p->unk28;
+
+    if (owner->unk3D == 0 || owner->unk3D == 0x81) {
+        owner->unk3D = this->unk3D;
+        owner->unk3E = this->unk3E;
+        owner->unk42 = this->unk42;
+        this->unk42 = 0;
+        this->unk3E = 0;
+        this->unk3D = 0;
+    }
+    if (p->unk3 != 0 && this == p->unk2C) {
+        if (p->unk3 & 0x80) {
+            this->unk48 = gUnknown_08428764[owner->unk2A >> 1];
+            p->unk3 &= 0x7F;
+            this->unk3C = (owner->unk3C + 1) | 0x20;
+            sub_08000740(this);
+        } else if (this->unk41 & 0x80) {
+            if (((u8 *)this)[0x65] == 0) {
+                sub_08003E10(owner, 0x1E);
+                ((u8 *)this)[0x65] = 8;
+            }
+            if (!(this->unk41 & 0x7F) && gUnknown_03006A30[this->unk4C->form].unk1E != 0) {
+                gUnknown_03006A30[this->unk4C->form].unk1E = 0;
+                this->unk4C->unk3D = 0;
+            }
+        }
+    } else {
+        this->unk17 = 0;
+        this->unk1E_0 = 3;
+        sub_08000620(this);
+        this->unk3C = 0;
+        gUnknown_03006A30[this->form].unk2C = NULL;
+        DeleteThisEntity(this);
+    }
+    if (owner->unk1B == 0 && owner->frameIdx <= 0xCF && owner->frameIdx > 0xA8) {
+        this->unk1C_2 = owner->unk1C_2;
+        this->unk1C_3 = owner->unk1C_3;
+        this->frameIdx = owner->frameIdx + 0x57;
+        this->unk29 = owner->unk29;
+        this->filler2F = owner->filler2F;
+    } else {
+        this->frameIdx |= 0xFF;
+    }
+}
+#else
 asm(".include \"asm/non_matching/fs_game/sub_08042F5C.inc\"");
+#endif
 
 void sub_080432FC(struct Entity *this)
 {
