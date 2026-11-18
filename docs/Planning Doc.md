@@ -69,7 +69,7 @@ player, linked in memory instead of by cable, each drawn into its own part of th
 - [x] Mechanical translation of the remaining agbcc asm (`tools/asm2c.py`, `make NONMATCHING=1 AUTO_C=1`, user
       decision 2026-11-18): 5,102 of 5,753 asm functions become C in that build; replay check 604 ok, 14 fail
       (EEPROM, I/O). Linked whole-game screenshots aren't a valid check for moved code (timing).
-- [x] Global-state translation for the rest (`tools/gs2c.py`, include/gs.h, 2026-11-18): 603 functions run as C
+- [x] Global-state translation for the rest (`tools/gstate2c.py`, include/gstate.h, 2026-11-18): 603 functions run as C
       on one global CPU state; their asm stays assembled as renamed copies, so layout and embedded data hold.
       Of the 5,753 asm functions: 5,010 C-ABI C, 603 global-state C, 112 NONMATCHING C, 28 native
       (ARM code, and 24 that don't decode or jump into code copied to RAM). Replay: 1,325 ok, 24 fail.

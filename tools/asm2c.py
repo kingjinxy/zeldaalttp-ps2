@@ -845,8 +845,8 @@ def nonmatching_c_incs():
     return out
 
 
-def gs_list(outp):
-    """asm2c.py --gs-list OUT: the functions of the build that get global-state C (tools/gs2c.py): those the
+def gstate_list(outp):
+    """asm2c.py --gs-list OUT: the functions of the build that get global-state C (tools/gstate2c.py): those the
     C-ABI translation can't take, minus ARM code (stays native) and those with NONMATCHING C. Lines "NAME" and
     "NAME OFFSET" (an entry other code jumps to). Honours AUTO_C_FILES and AUTO_C_SKIP (those stay native)."""
     import glob, os
@@ -878,7 +878,7 @@ def gs_list(outp):
             except Fail:
                 pass
         gs.append(p)
-    # entries: labels of a GS function that other code names, sym+offset targets, hard-coded addresses
+    # entries: labels of a global-state function that other code names, sym+offset targets, hard-coded addresses
     order = sorted(starts, key=starts.get)
     def owner(a):
         best = None
@@ -920,8 +920,8 @@ def gs_list(outp):
     print("asm2c: %d functions for global-state C" % len(gs), file=sys.stderr)
 
 
-def gs_copy(p, gsnames):
-    """src/auto/gs/NAME.inc: the asm of a GS function with every GS function name renamed NAME__asm (except
+def gstate_copy(p, gsnames):
+    """src/auto/gstate/NAME.inc: the asm of a global-state function with every global-state function name renamed NAME__asm (except
     plain data pointers, which go to the C wrapper) and a NAME__base data label at its start"""
     import os
     t = open(p).read()
@@ -936,17 +936,17 @@ def gs_copy(p, gsnames):
         out.append(l2)
         if re.match(r"%s__asm:" % name, l2):
             out.append(".global %s__base\n%s__base:" % (name, name))
-    os.makedirs("src/auto/gs", exist_ok=True)
-    q = "src/auto/gs/%s.inc" % name
+    os.makedirs("src/auto/gstate", exist_ok=True)
+    q = "src/auto/gstate/%s.inc" % name
     open(q, "w").write("\n".join(out) + "\n")
     return q
 
 
 def main():
     # asm2c.py OUT.c INC...  |  asm2c.py --s FILE.s OUT.c [--gs LIST]: translate the asm includes left in FILE.s
-    # (compiler output) and remove the translated ones from it; with LIST, GS functions become renamed copies
+    # (compiler output) and remove the translated ones from it; with LIST, global-state functions become renamed copies
     if sys.argv[1] == "--gs-list":
-        return gs_list(sys.argv[2])
+        return gstate_list(sys.argv[2])
     if sys.argv[1] == "--s":
         sfile, outp = sys.argv[2], sys.argv[3]
         st = open(sfile).read()
@@ -1013,8 +1013,8 @@ def main():
                 return ""
             n = os.path.basename(p)[:-4]
             if n in gsnames or (gsnames and re.search(r"\b(%s)\b" % "|".join(gsnames), open(p).read())):
-                # GS functions, and native asm naming them (its branches keep reaching the copies)
-                return '.include "%s"\n' % gs_copy(p, gsnames)
+                # global-state functions, and native asm naming them (its branches keep reaching the copies)
+                return '.include "%s"\n' % gstate_copy(p, gsnames)
             return m.group(0)
         st = re.sub(r'^\s*\.include\s+"(asm/non_matching/[^"]+\.inc)"\s*\n', repl, st, flags=re.M)
         open(sfile, "w").write(st)

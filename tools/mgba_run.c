@@ -597,10 +597,10 @@ static int replay(int argc, char **argv) {
 			core->step(core);
 		}
 		const char *name = strrchr(argv[t], '/') ? strrchr(argv[t], '/') + 1 : argv[t];
-		if (!done) {  // gs.h's gs_bad stores the address it couldn't run at 0x0203C0F0
+		if (!done) {  // gstate.h's gstate_bad stores the address it couldn't run at 0x0203C0F0
 			uint32_t bad[2]; memcpy(bad, (uint8_t *) gba->memory.wram + 0x3C0F0, 8);
-			printf("%s FAIL did not return (pc %08X%s, gs_bad %08X lr %08X)\n", name, cpu->gprs[15], cpu->cpsr.t ? " thumb" : " arm", bad[0], bad[1]); fail++;
-			if (getenv("GS_RING")) {  // the last GS function entries (include/gs.h GS_TRACE)
+			printf("%s FAIL did not return (pc %08X%s, gstate_bad %08X lr %08X)\n", name, cpu->gprs[15], cpu->cpsr.t ? " thumb" : " arm", bad[0], bad[1]); fail++;
+			if (getenv("GSTATE_RING")) {  // the last global-state function entries (include/gstate.h GSTATE_TRACE)
 				uint32_t ring[1 + 3072]; memcpy(ring, (uint8_t *) gba->memory.wram + 0x3C200, sizeof ring);
 				for (int q = 0; q < 1024; q++) { int k = (ring[0] + q) % 1024;
 					if (ring[1 + 3 * k]) printf("  gs %08X sp %08X lr %08X\n", ring[1 + 3 * k], ring[2 + 3 * k], ring[3 + 3 * k]); }
@@ -629,7 +629,7 @@ static int replay(int argc, char **argv) {
 			for (size_t i = 0; i < m[k].len; i++) {
 				uint32_t addr = m[k].base + i;
 				if (addr >= sp0 - 0x1000 && addr < sp0) continue;  // the callee's stack frame
-				if (addr >= 0x0203C000 && addr < 0x02040000) continue;  // gs2c's CPU state and stack (include/gs.h)
+				if (addr >= 0x0203C000 && addr < 0x02040000) continue;  // gstate2c's CPU state and stack (include/gstate.h)
 				if (m[k].got[i] != m[k].exp[i]) {
 					size_t w = i & ~3u;
 					uint32_t gv, ev;

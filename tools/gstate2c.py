@@ -1,17 +1,17 @@
-# gs2c.py OBJ.o NAMES OUT.c: "global state" translation for the functions asm2c.py can't turn into C-ABI C
+# gstate2c.py OBJ.o NAMES OUT.c: "global state" translation for the functions asm2c.py can't turn into C-ABI C
 # (hand-written asm, register conventions, code entered past its start, layout-bound code).
 # The functions stay assembled in OBJ.o as copies named NAME__asm (data and layout unchanged); this decodes the
-# Thumb machine code of those copies and writes C that runs it on one global CPU state (gs.h, at a fixed EWRAM
+# Thumb machine code of those copies and writes C that runs it on one global CPU state (gstate.h, at a fixed EWRAM
 # address):
 # - void gs_NAME(u32 entry): registers are locals synced with gCpu around calls and jumps; `entry` is the offset
 #   it is entered at (0, or a label other code jumps to).
 # - u32 NAME(u32 r0..r3, 4 stack words): the C-ABI wrapper that other code and data pointers use.
 # - calls and returns keep real return addresses in lr; a return sets gCpu.pc and every caller frame checks it,
 #   so code that returns past its caller unwinds right.
-# - indirect jumps and calls go through gs_run(addr): a table (.gstable) maps wrapper addresses and copy
+# - indirect jumps and calls go through gstate_run(addr): a table (.gstatetable) maps wrapper addresses and copy
 #   addresses to entries; other addresses are C functions.
-# NAMES: one function name per line (all GS functions of the build; those in OBJ are translated).
-# shortcut: wrappers pass 4 stack words to the GS code whatever the callee takes (extra words are garbage).
+# NAMES: one function name per line (all global-state functions of the build; those in OBJ are translated).
+# shortcut: wrappers pass 4 stack words to the global-state code whatever the callee takes (extra words are garbage).
 import re, struct, subprocess, sys
 
 CONDS = ["eq", "ne", "cs", "cc", "mi", "pl", "vs", "vc", "hi", "ls", "ge", "lt", "gt", "le"]
@@ -196,7 +196,7 @@ def main():
         except Fail:
             pass
     # sp always lives in gCpu: entries from C code or interrupts build their frames below it
-    out = ['#include "gs.h"', "#define sp (gCpu.r[13])", ""]
+    out = ['#include "gstate.h"', "#define sp (gCpu.r[13])", ""]
     decls, swis, tables, bodies, failed, sizes = set(), set(), [], [], [], {}
     for v, end, n in ranges:
         try:
@@ -208,40 +208,40 @@ def main():
         tables.append((n, entries))
         sizes[n] = end - v
     for k in sorted(swis):  # BIOS calls: r0-r3 from gCpu, swi, back
-        out.append('asm(".thumb\\n.align 1\\n.global gs_swi_%s_%X\\n.thumb_func\\ngs_swi_%s_%X:\\n'
+        out.append('asm(".thumb\\n.align 1\\n.global gstate_swi_%s_%X\\n.thumb_func\\ngstate_swi_%s_%X:\\n'
                    'push {r4, lr}\\nldr r4, =0x0203C000\\nldmia r4!, {r0-r3}\\nsub r4, #16\\nswi 0x%X\\n'
                    'stmia r4!, {r0-r3}\\npop {r4}\\npop {r0}\\nbx r0\\n.pool");' % (tag, k, tag, k, k))
-        out.append("void gs_swi_%s_%X(void);" % (tag, k))
+        out.append("void gstate_swi_%s_%X(void);" % (tag, k))
     out += sorted(decls)
     for n, _ in tables:
         out.append("extern u8 %s__base[];" % n)
         out.append("void gs_%s(u32);" % n)
         out.append("void %s(void);  /* gs wrapper */" % n)
     out += [""] + bodies + [""]
-    if tables or failed:  # gs_enter: the caller's registers in, the GS code's registers out (gs.h gs_enter_c)
-        out += ["void gs_enter_c_%s(void (*fn)(u32), u32 *f) { gs_enter_c(fn, f); }" % tag,
-                'asm(".thumb\\n.align 1\\n.thumb_func\\ngs_enter_%s:\\n'
+    if tables or failed:  # gstate_enter: the caller's registers in, the global-state code's registers out (gstate.h gstate_enter_c)
+        out += ["void gstate_enter_c_%s(void (*fn)(u32), u32 *f) { gstate_enter_c(fn, f); }" % tag,
+                'asm(".thumb\\n.align 1\\n.thumb_func\\ngstate_enter_%s:\\n'
                 'push {r0-r3}\\nmov r0, r8\\nmov r1, r9\\nmov r2, r10\\nmov r3, r11\\npush {r0-r3}\\n'
-                'push {r5-r7}\\nmov r0, r4\\nmov r1, sp\\nbl gs_enter_c_%s\\npop {r5-r7}\\npop {r0-r3}\\n'
+                'push {r5-r7}\\nmov r0, r4\\nmov r1, sp\\nbl gstate_enter_c_%s\\npop {r5-r7}\\npop {r0-r3}\\n'
                 'mov r8, r0\\nmov r9, r1\\nmov r10, r2\\nmov r11, r3\\nldr r0, [sp, #20]\\nmov r12, r0\\n'
                 'pop {r0-r3}\\npop {r4}\\nadd sp, #4\\nbx r12");' % (tag, tag)]
     for n, _ in tables:  # the C-visible NAME: transparent for registers (hand-written callers keep working)
         out.append('asm(".thumb\\n.align 2\\n.global %s\\n.thumb_func\\n%s:\\npush {r4, lr}\\n'
-                   'ldr r4, 1f\\nbl gs_enter_%s\\n.align 2\\n1: .4byte gs_%s");' % (n, n, tag, n))
+                   'ldr r4, 1f\\nbl gstate_enter_%s\\n.align 2\\n1: .4byte gs_%s");' % (n, n, tag, n))
     if tables:
-        out.append("const struct GsEntry gGsTable_%s[] __attribute__((section(\".gstable\"))) = {" % tag)
+        out.append("const struct GstateEntry gGstateTable_%s[] __attribute__((section(\".gstatetable\"))) = {" % tag)
         for n, entries in tables:
             for e in sorted(x for x in entries if x < sizes[n]):  # the end is the next function's start
                 out.append("    { (u32)%s__base + 0x%X, gs_%s, 0x%X }," % (n, e, n, e))
         out.append("};")
-        out.append("const struct GsEntry gGsTableW_%s[] __attribute__((section(\".gstablew\"))) = {" % tag)
+        out.append("const struct GstateEntry gGstateTableW_%s[] __attribute__((section(\".gstatetablew\"))) = {" % tag)
         for n, _ in tables:
             out.append("    { (u32)%s, gs_%s, 0 }," % (n, n))
         out.append("};")
-    # functions that didn't decode (ARM inside): NAME runs the copy natively, as before; GS callers reach it
+    # functions that didn't decode (ARM inside): NAME runs the copy natively, as before; global-state callers reach it
     # through the C calling convention
     for n, e in failed:  # the copy gets its own name back as a second label, then OBJ is assembled again
-        q = "src/auto/gs/%s.inc" % n
+        q = "src/auto/gstate/%s.inc" % n
         t = open(q).read()
         if "\n%s:\n" % n not in t:
             t = t.replace("\n%s__base:" % n, "\n%s__base:\n.global %s\n.thumb_func\n%s:" % (n, n, n), 1)
@@ -258,8 +258,8 @@ def main():
                 "    gCpu.r[15] = gCpu.r[14];", "}"]
     open(outc, "w").write("\n".join(out) + "\n")
     for n, e in failed:
-        print("gs2c: kept native %s: %s" % (n, e), file=sys.stderr)
-    print("gs2c: %d functions in global-state C, %d native" % (len(tables), len(failed)), file=sys.stderr)
+        print("gstate2c: kept native %s: %s" % (n, e), file=sys.stderr)
+    print("gstate2c: %d functions in global-state C, %d native" % (len(tables), len(failed)), file=sys.stderr)
 
 
 def translate(data, relocs, start, end, name, taken, gsnames, decls, swis, tag):
@@ -342,11 +342,11 @@ def finish(data, relocs, start, end, name, gsnames, decls, swis, tag, ins, targe
         if x not in decoded and x != size:
             rets.discard(x), entries.discard(x), targets.discard(x)
     B = "((u32)%s__base)" % name
-    lines = ["", "void gs_%s(u32 e)" % name, "{", "    GS_LOCALS;", "    GS_LOAD();",
-             "dispatch:", "    GS_TRACE(%s + e);" % B, "    switch (e) {"]
+    lines = ["", "void gs_%s(u32 e)" % name, "{", "    GSTATE_LOCALS;", "    GSTATE_LOAD();",
+             "dispatch:", "    GSTATE_TRACE(%s + e);" % B, "    switch (e) {"]
     for e in sorted(entries):
         lines.append("    case 0x%X: goto L_%X;" % (e, e))
-    lines += ["    default: gs_bad(%s + e); return;" % B, "    }"]
+    lines += ["    default: gstate_bad(%s + e); return;" % B, "    }"]
     for o in sorted(ins):
         rel = o - start
         if rel in targets or rel in entries:
@@ -355,17 +355,17 @@ def finish(data, relocs, start, end, name, gsnames, decls, swis, tag, ins, targe
         nxt = o + ins[o]["n"]
         if nxt not in ins and not terminal(ins[o]) and not (ins[o]["k"] == "bl" and nxt - start in rets and nxt < end):
             # falls through to code not decoded: a following function (shared code)
-            lines += ["    GS_STORE(); gs_run(%s %s); return;" % (B, soff(nxt - start))]
+            lines += ["    GSTATE_STORE(); gstate_run(%s %s); return;" % (B, soff(nxt - start))]
     for x in sorted((targets | entries) - {o - start for o in ins}):
         # a label we didn't decode (the end of the function: code running on into the next one)
-        lines += ["L_%X:" % x, "    GS_STORE(); gs_run(%s %s); return;" % (B, soff(x))]
+        lines += ["L_%X:" % x, "    GSTATE_STORE(); gstate_run(%s %s); return;" % (B, soff(x))]
     lines.append("}")
     text = "\n".join(lines)
-    text = text.replace("GS_JUMP(", "GS_JUMP_IN(%s, 0x%X, " % (B, size))
-    text = text.replace("GS_RETURNED(", "GS_RETURNED_IN(%s, 0x%X, " % (B, size))
-    for m in re.findall(r"gs_swi_TAG_([0-9A-F]+)\(\)", text):
+    text = text.replace("GSTATE_JUMP(", "GSTATE_JUMP_IN(%s, 0x%X, " % (B, size))
+    text = text.replace("GSTATE_RETURNED(", "GSTATE_RETURNED_IN(%s, 0x%X, " % (B, size))
+    for m in re.findall(r"gstate_swi_TAG_([0-9A-F]+)\(\)", text):
         swis.add(int(m, 16))
-    text = text.replace("gs_swi_TAG_", "gs_swi_%s_" % tag)
+    text = text.replace("gstate_swi_TAG_", "gstate_swi_%s_" % tag)
     # entries reached from other functions are table entries; return points only need the local switch
     return text.split("\n"), entries, ext
 
@@ -445,11 +445,11 @@ def emit(d, o, rel, start, end, B, name, gsnames, decls, data):
     if k == "hi":
         op, rd, rm = d["op"], d["d"], d["m"]
         src = pcv if rm == 15 else R[rm]
-        if op == "bx":  # bit 0 clear: ARM state, run natively (gs_run)
-            return ["{ u32 t = %s; if (!(t & 1)) { GS_STORE(); gCpu.r[15] = t; return; } GS_JUMP(t); }" % src]
+        if op == "bx":  # bit 0 clear: ARM state, run natively (gstate_run)
+            return ["{ u32 t = %s; if (!(t & 1)) { GSTATE_STORE(); gCpu.r[15] = t; return; } GSTATE_JUMP(t); }" % src]
         if op in ("mov", "add") and rd == 15:
             t = src if op != "add" else "(%s + %s)" % (pcv, src)
-            return ["{ u32 t = %s; GS_JUMP(t); }" % t]
+            return ["{ u32 t = %s; GSTATE_JUMP(t); }" % t]
         if op == "mov":
             return ["%s = %s;" % (R[rd], src)]
         if op == "add":
@@ -489,7 +489,7 @@ def emit(d, o, rel, start, end, B, name, gsnames, decls, data):
         out, n = [], len(d["regs"])
         for i, r in enumerate(d["regs"]):
             if r == 15:
-                out.append("{ u32 t = R32(sp + %d); sp += %d; GS_JUMP(t); }" % (4 * i, 4 * n))
+                out.append("{ u32 t = R32(sp + %d); sp += %d; GSTATE_JUMP(t); }" % (4 * i, 4 * n))
                 return out
             out.append("%s = R32(sp + %d);" % (R[r], 4 * i))
         out.append("sp += %d;" % (4 * n))
@@ -504,13 +504,13 @@ def emit(d, o, rel, start, end, B, name, gsnames, decls, data):
         out.append("}")
         return out
     if k == "swi":
-        return ["GS_STORE(); gs_swi_TAG_%X(); GS_LOAD();" % d["imm"]]
+        return ["GSTATE_STORE(); gstate_swi_TAG_%X(); GSTATE_LOAD();" % d["imm"]]
     if k in ("b", "bcc") and d["target"] is None:
         sym, off = d["sym"], d["symoff"]
         base = sym[:-5] if sym.endswith("__asm") else sym
         tgt = "(u32)%s__base" % base if base in gsnames else "(u32)%s" % sym
         decls.add("extern u8 %s__base[];" % base if base in gsnames else "extern u8 %s[];" % sym)
-        j = "{ GS_STORE(); gs_run(%s %s); return; }" % (tgt, soff(off))
+        j = "{ GSTATE_STORE(); gstate_run(%s %s); return; }" % (tgt, soff(off))
         return ["if (%s) %s" % (COND_C[d["cond"]], j)] if k == "bcc" else [j]
     if k == "bcc":
         return ["if (%s) %s" % (COND_C[d["cond"]], jump_to(d["target"], start, end, B))]
@@ -522,22 +522,22 @@ def emit(d, o, rel, start, end, B, name, gsnames, decls, data):
         if sym is None and start <= t < end:
             return ["lr = %s; goto L_%X;" % (ret, t - start)]
         if sym is None:
-            return ["lr = %s; GS_STORE(); gs_run(%s %s); GS_LOAD(); GS_RETURNED(%s);" % (ret, B, soff(t - start), ret)]
+            return ["lr = %s; GSTATE_STORE(); gstate_run(%s %s); GSTATE_LOAD(); GSTATE_RETURNED(%s);" % (ret, B, soff(t - start), ret)]
         m = re.fullmatch(r"_call_via_(\w+)", sym)
         if m:
             reg = {"ip": "r12", "sl": "r10", "sb": "r9", "fp": "r11"}.get(m.group(1), m.group(1))
-            return ["lr = %s; GS_STORE(); gs_run(%s); GS_LOAD(); GS_RETURNED(%s);" % (ret, reg, ret)]
+            return ["lr = %s; GSTATE_STORE(); gstate_run(%s); GSTATE_LOAD(); GSTATE_RETURNED(%s);" % (ret, reg, ret)]
         off = sx(((h(data, o) & 0x7FF) << 12) | ((h(data, o + 2) & 0x7FF) << 1), 23) + 4  # REL addend + 4
         base = sym[:-5] if sym.endswith("__asm") else sym
         if off and base in gsnames:
             decls.add("extern u8 %s__base[];" % base)
-            return ["lr = %s; GS_STORE(); gs_run((u32)%s__base + 0x%X); GS_LOAD(); GS_RETURNED(%s);" % (ret, base, off, ret)]
+            return ["lr = %s; GSTATE_STORE(); gstate_run((u32)%s__base + 0x%X); GSTATE_LOAD(); GSTATE_RETURNED(%s);" % (ret, base, off, ret)]
         if off:
             decls.add("extern u8 %s[];" % sym)
-            return ["lr = %s; GS_STORE(); gs_run((u32)%s + 0x%X); GS_LOAD(); GS_RETURNED(%s);" % (ret, sym, off, ret)]
+            return ["lr = %s; GSTATE_STORE(); gstate_run((u32)%s + 0x%X); GSTATE_LOAD(); GSTATE_RETURNED(%s);" % (ret, sym, off, ret)]
         if base in gsnames:
             decls.add("void gs_%s(u32);" % base)
-            return ["lr = %s; GS_STORE(); gs_%s(0); GS_LOAD(); GS_RETURNED(%s);" % (ret, base, ret)]
+            return ["lr = %s; GSTATE_STORE(); gs_%s(0); GSTATE_LOAD(); GSTATE_RETURNED(%s);" % (ret, base, ret)]
         decls.add("u32 %s();" % sym)
         return ["lr = %s; r0 = %s(r0, r1, r2, r3, R32(sp), R32(sp + 4), R32(sp + 8), R32(sp + 12));" % (ret, sym)]
     raise Fail("emit " + k)
@@ -550,7 +550,7 @@ def soff(x):
 def jump_to(t, start, end, B):
     if start <= t < end:
         return "goto L_%X;" % (t - start)
-    return "{ GS_STORE(); gs_run(%s %s); return; }" % (B, soff(t - start))
+    return "{ GSTATE_STORE(); gstate_run(%s %s); return; }" % (B, soff(t - start))
 
 
 main()

@@ -625,17 +625,17 @@ State: 5,102 of 5,753 asm functions translate; 651 stay asm (listed in the plann
 ## Step 22: global-state translation for the asm asm2c can't take (2026-11-18)
 
 The user chose to write our own recompiler-style mode instead of copying FourSwordsRecomp's code
-(PolyForm Noncommercial). `tools/gs2c.py` plus `include/gs.h`:
-- **Renamed copies.** Every function asm2c refuses stays assembled as a copy, `src/auto/gs/NAME.inc`, with GS
+(PolyForm Noncommercial). `tools/gstate2c.py` plus `include/gstate.h`:
+- **Renamed copies.** Every function asm2c refuses stays assembled as a copy, `src/auto/gstate/NAME.inc`, with global-state
   names renamed `NAME__asm` and a `NAME__base` label. Layout, pools, embedded tables and hard-coded
   addresses all stay valid; rom1 stays at its original address.
-- **Translation from machine code.** gs2c decodes the Thumb code of the assembled copies (its own decoder,
+- **Translation from machine code.** gstate2c decodes the Thumb code of the assembled copies (its own decoder,
   so raw `.byte` code decodes too) and writes `void gs_NAME(u32 entry)`. That code runs on `gCpu`, the
   registers and flags at 0x0203C000. Registers are locals synced around calls; sp always lives in gCpu.
 - **Calls and returns.** lr holds real return addresses. A return sets `gCpu.pc`, and each caller frame checks
-  it, so code that returns past its caller unwinds right. Jumps elsewhere go through `gs_run`: a binary search
+  it, so code that returns past its caller unwinds right. Jumps elsewhere go through `gstate_run`: a binary search
   of two address-sorted tables (copy entries, and wrappers), otherwise a C call.
-- **Entry stubs.** `NAME` is a register-transparent asm stub. Real r0-r11 go into gCpu, and the GS code's
+- **Entry stubs.** `NAME` is a register-transparent asm stub. Real r0-r11 go into gCpu, and the global-state code's
   r0-r11 come back. gCpu is saved around the call (interrupts), and a trampoline runs on until the magic
   return address comes back.
 - **Natives.** ARM code, and functions that don't decode or jump into code copied to RAM (the m4a mixer at
@@ -652,8 +652,8 @@ Bugs found by the replay check, roughly in order:
 
 The replay also needed fixes:
 - a privilege-mode reset per call, because one hang in the BIOS cascaded into later calls;
-- skipping the GS state area;
-- a 1024-entry ring trace of GS entries and `gs_run` targets (`GS_RING=1 mgba_run --replay ...`).
+- skipping the global-state state area;
+- a 1024-entry ring trace of global-state entries and `gstate_run` targets (`GSTATE_RING=1 mgba_run --replay ...`).
 
 State. Of the 5,753 asm functions:
 - 5,010 C-ABI C;
