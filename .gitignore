@@ -30,3 +30,4 @@ baserom.gba.pal
 .cppflags
 tools/mgba_run
 build/
+ldscript_nm.txt

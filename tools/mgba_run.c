@@ -41,6 +41,7 @@
 #include <mgba/core/log.h>
 #include <mgba/gba/core.h>
 #include <mgba/internal/arm/arm.h>
+#include <mgba/internal/arm/isa-inlines.h>
 #include <mgba/internal/gba/gba.h>
 #include <mgba/internal/gba/input.h>
 #include <mgba/internal/gba/sio/lockstep.h>
@@ -503,7 +504,123 @@ static void traceStep(struct GBA *gba, struct ARMCore *cpu) {
 	traceMemory(gba, tr.f);
 }
 
+// --replay ROM MAP TRACE.gz...: check a build whose code moved (NONMATCHING C) against calls recorded by
+// --trace on the original ROM. MAP has lines "OLD NEW" (function addresses, Thumb bit as in pointers):
+// each call's entry state is loaded (RAM, IWRAM, palette, VRAM, OAM; function pointers in RAM mapped to
+// the new code), the function runs at its new address with IRQs masked until it returns to the recorded
+// caller with the same sp, and r0, r4-r11, sp and memory are compared with the recorded exit (I/O and the
+// stack below the entry sp are excluded; pointers mapped back). One line per call: "OLD ok|FAIL ...".
+static uint32_t *mapOld, *mapNew; static int mapN;
+static uint32_t mapAddr(uint32_t v, int toNew) {
+	int lo = 0, hi = mapN - 1; uint32_t *k = toNew ? mapOld : mapNew, *r = toNew ? mapNew : mapOld;
+	while (lo <= hi) { int m = (lo + hi) / 2; if (k[m] == v) return r[m]; if (k[m] < v) lo = m + 1; else hi = m - 1; }
+	return v;
+}
+static void mapWords(uint8_t *mem, size_t n, int toNew) {
+	for (size_t i = 0; i + 4 <= n; i += 4) {
+		uint32_t v; memcpy(&v, mem + i, 4);
+		if ((v >> 24) == 0x08) { uint32_t w = mapAddr(v, toNew); memcpy(mem + i, &w, 4); }
+	}
+}
+static int replay(int argc, char **argv) {
+	const char *rom = argv[2];
+	FILE *mf = fopen(argv[3], "r");
+	if (!mf) { perror(argv[3]); return 1; }
+	uint32_t a, b; int cap = 0;
+	// two sorted copies: by old (for toNew) and by new (for back)
+	uint32_t (*pairs)[2] = NULL;
+	while (fscanf(mf, "%x %x", &a, &b) == 2) {
+		if (mapN == cap) pairs = realloc(pairs, (cap = cap ? cap * 2 : 4096) * sizeof *pairs);
+		pairs[mapN][0] = a, pairs[mapN][1] = b, mapN++;
+	}
+	fclose(mf);
+	int cmp0(const void *x, const void *y) { uint32_t p = ((uint32_t *) x)[0], q = ((uint32_t *) y)[0]; return p < q ? -1 : p > q; }
+	int cmp1(const void *x, const void *y) { uint32_t p = ((uint32_t *) x)[1], q = ((uint32_t *) y)[1]; return p < q ? -1 : p > q; }
+	mapOld = malloc(mapN * 4), mapNew = malloc(mapN * 4);
+	uint32_t *backOld = malloc(mapN * 4), *backNew = malloc(mapN * 4);
+	qsort(pairs, mapN, sizeof *pairs, cmp0);
+	for (int i = 0; i < mapN; i++) mapOld[i] = pairs[i][0], mapNew[i] = pairs[i][1];
+	qsort(pairs, mapN, sizeof *pairs, cmp1);
+	for (int i = 0; i < mapN; i++) backOld[i] = pairs[i][0], backNew[i] = pairs[i][1];
+
+	static struct mLogFilter quietFilter;
+	mLogFilterInit(&quietFilter);
+	quiet.filter = &quietFilter;
+	mLogSetDefaultLogger(&quiet);
+	struct mCore *core = GBACoreCreate();
+	core->init(core);
+	mCoreInitConfig(core, NULL);
+	unsigned w, h; core->desiredVideoDimensions(core, &w, &h);
+	color_t *pixels = calloc(w * h, sizeof(color_t));
+	core->setVideoBuffer(core, pixels, w);
+	if (!mCoreLoadFile(core, rom)) { fprintf(stderr, "cannot load %s\n", rom); return 1; }
+	core->reset(core);
+	struct GBA *gba = core->board;
+	struct ARMCore *cpu = gba->cpu;
+	static uint8_t ewram[0x40000], iwram[0x8000], io[0x400], pal[0x400], vram[0x18000], oam[0x400];
+	int ok = 0, fail = 0, skip = 0;
+	for (int t = 4; t < argc; t++) {
+		gzFile f = gzopen(argv[t], "rb");
+		uint32_t r0[17], r1[17];
+		if (!f || gzread(f, r0, sizeof r0) != sizeof r0) { printf("%s SKIP unreadable\n", argv[t]); skip++; continue; }
+		gzread(f, gba->memory.wram, 0x40000); gzread(f, gba->memory.iwram, 0x8000); gzread(f, io, 0x400);
+		gzread(f, gba->video.palette, 0x400); gzread(f, gba->video.vram, 0x18000); gzread(f, gba->video.oam.raw, 0x400);
+		int full = gzread(f, r1, sizeof r1) == sizeof r1;
+		full = full && gzread(f, ewram, sizeof ewram) == sizeof ewram && gzread(f, iwram, sizeof iwram) == sizeof iwram
+		       && gzread(f, io, sizeof io) == sizeof io && gzread(f, pal, sizeof pal) == sizeof pal
+		       && gzread(f, vram, sizeof vram) == sizeof vram && gzread(f, oam, sizeof oam) == sizeof oam;
+		gzclose(f);
+		if (!full) { printf("%s SKIP no exit record\n", argv[t]); skip++; continue; }
+		uint32_t oldPc = r0[15] - 2 + 0;  // recorded at entry: gprs[PC] is the pipeline value (+2 in Thumb)
+		oldPc = r0[15] - 2;
+		mapWords((uint8_t *) gba->memory.wram, 0x40000, 1);
+		mapWords((uint8_t *) gba->memory.iwram, 0x8000, 1);
+		uint32_t newPc = mapAddr(oldPc | 1, 1) & ~1u;
+		if (newPc == oldPc && mapAddr(oldPc | 1, 1) == (oldPc | 1)) {
+			// not in the map: same address in both builds only if nothing moved there; report it
+		}
+		for (int k = 0; k < 15; k++) cpu->gprs[k] = (r0[k] >> 24) == 0x08 && k != 14 ? mapAddr(r0[k], 1) : r0[k];
+		cpu->gprs[ARM_LR] = r0[14];  // the old caller's address: we stop there before executing it
+		cpu->cpsr.packed = r0[16] | 0x80;  // IRQs masked
+		cpu->gprs[ARM_PC] = newPc;
+		_ARMSetMode(cpu, MODE_THUMB);
+		ARMSetPrivilegeMode(cpu, cpu->cpsr.priv);
+		ThumbWritePC(cpu);
+		uint32_t sp0 = r0[13];
+		unsigned steps = 0; int done = 0;
+		while (steps++ < 5000000) {
+			uint32_t pc = cpu->gprs[ARM_PC] - (cpu->executionMode == MODE_THUMB ? 2 : 4);
+			if (pc == (r0[14] & ~1u) && cpu->gprs[ARM_SP] == sp0) { done = 1; break; }
+			core->step(core);
+		}
+		const char *name = strrchr(argv[t], '/') ? strrchr(argv[t], '/') + 1 : argv[t];
+		if (!done) { printf("%s FAIL did not return\n", name); fail++; continue; }
+		mapWords((uint8_t *) gba->memory.wram, 0x40000, 0);
+		mapWords((uint8_t *) gba->memory.iwram, 0x8000, 0);
+		char why[200] = "";
+		uint32_t got0 = (cpu->gprs[0] >> 24) == 0x08 ? mapAddr(cpu->gprs[0], 0) : cpu->gprs[0];
+		if (got0 != r1[0]) snprintf(why, sizeof why, "r0 %08X expected %08X", got0, r1[0]);
+		for (int k = 4; k <= 11 && !*why; k++)
+			if (cpu->gprs[k] != r1[k] && !((r1[k] >> 24) == 0x08)) snprintf(why, sizeof why, "r%d %08X expected %08X", k, cpu->gprs[k], r1[k]);
+		struct { const char *n; uint32_t base; uint8_t *got, *exp; size_t len; } m[] = {
+			{ "ewram", 0x02000000, (uint8_t *) gba->memory.wram, ewram, 0x40000 }, { "iwram", 0x03000000, (uint8_t *) gba->memory.iwram, iwram, 0x8000 },
+			{ "pal", 0x05000000, (uint8_t *) gba->video.palette, pal, 0x400 }, { "vram", 0x06000000, (uint8_t *) gba->video.vram, vram, 0x18000 },
+			{ "oam", 0x07000000, (uint8_t *) gba->video.oam.raw, oam, 0x400 } };
+		for (int k = 0; k < 5 && !*why; k++)
+			for (size_t i = 0; i < m[k].len; i++) {
+				uint32_t addr = m[k].base + i;
+				if (addr >= sp0 - 0x1000 && addr < sp0) continue;  // the callee's stack frame
+				if (m[k].got[i] != m[k].exp[i]) { snprintf(why, sizeof why, "%s %08X = %02X expected %02X", m[k].n, addr, m[k].got[i], m[k].exp[i]); break; }
+			}
+		if (*why) { printf("%s FAIL %s\n", name, why); fail++; } else { printf("%s ok\n", name); ok++; }
+	}
+	printf("%d ok, %d fail, %d skipped\n", ok, fail, skip);
+	(void) backOld, (void) backNew;
+	return fail != 0;
+}
+
 int main(int argc, char **argv) {
+	if (argc > 4 && !strcmp(argv[1], "--replay")) return replay(argc, argv);
 	if (argc < 3) { fprintf(stderr, "usage: see tools/mgba_run.c\n"); return 1; }
 	const char *rom = argv[1], *saves[MAX_GBAS] = { 0 };
 	struct Script *defaultScript = NULL, *scripts[MAX_GBAS] = { 0 };

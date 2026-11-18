@@ -1057,7 +1057,73 @@ void sub_08013A10(void)
         }
     }
 }
+#ifdef NONMATCHING
+struct TileRec { u16 h; u8 a; u8 b; };  // h: tile position (bits 0-11), layer (14-15), room (12), done (13)
+void sub_08013C04(const u16 *);
+void sub_0801478C(u16, u16);
+void sub_08013C50(u32 *, u32 *);
+
+// Applies pending tile changes whose flags (gUnknown_0201F000[room]) are all set, and spawns pending objects
+void sub_08013A60(void)
+{
+    struct TileRec *r;
+    u32 m;
+    u16 h;
+    u32 changed;
+
+    changed = 0;
+    for (r = (struct TileRec *)gUnknown_0201EF30; r < (struct TileRec *)gUnknown_0201EF30 + 48; r++) {
+        if (r->h == 0)
+            break;
+        if (!(r->h & 0x2000)) {
+            m = sub_08013D20(r->a);
+            if (r->a == 0xFF || (gUnknown_0201F000[(r->h & 0x1000) >> 12] & m) == m) {
+                r->a = 0xFF;
+                sub_080144F0(310, r->h & 0xFFF, r->h & 0xC000);
+                sub_08013C04(&r->h);
+                r->h |= 0x2000;
+            }
+        }
+        if (r->b != 0xFF) {
+            m = sub_08013D20(r->b);
+            h = r->h;
+            if ((gUnknown_0201F000[(h & 0x1000) >> 12] & m) == m) {
+                r->b = 0xFF;
+                sub_0801478C(h & 0xFFF, h & 0xC000);
+                sub_08013C04(&r->h);
+            }
+            if (*(u16 *)&r->a == 0xFFFF)
+                r->h = 0;
+            changed = 1;
+        }
+    }
+    if (changed)
+        sub_08013C50(gUnknown_0201EF30, gUnknown_0201EF30 + 48);
+
+    changed = 0;
+    for (r = (struct TileRec *)gUnknown_02003110; r < (struct TileRec *)gUnknown_02003110 + 48; r++) {
+        struct Entity *e;
+
+        if (r->h == 0)
+            break;
+        m = sub_08013D20(r->a);
+        if ((gUnknown_0201F000[(r->h & 0x1000) >> 12] & m) == m) {
+            e = sub_0804C8A8(8, r->a, r->b | 0x80);
+            if (e != NULL) {
+                e->x.HALF.HI = ((r->h & 63) << 4) | 8;
+                e->y.HALF.HI = ((r->h & 0xFC0) >> 2) | 8;
+                e->unk52 = (r->h & 0x1000) >> 12;
+            }
+            r->h = 0;
+            changed = 1;
+        }
+    }
+    if (changed)
+        sub_08013C50(gUnknown_02003110, gUnknown_02003110 + 48);
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_08013A60.inc\"");
+#endif
 
 void sub_08013C04(const u16 *p)
 {
