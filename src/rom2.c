@@ -1060,7 +1060,64 @@ void sub_0800CA84(u32 a, u32 b)
 asm(".include \"asm/non_matching/rom2/sub_0800CAD4.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800CBBC.inc\"");
 asm(".include \"asm/non_matching/rom2/sub_0800CCAC.inc\"");
+#ifdef NONMATCHING
+extern u8 gUnknown_02038000[];
+void sub_0800D0A8(s16, s16, s16, s16, s16);
+
+// Window 0 as a triangle around (cx, cy), radius r, rotated by angle a: each edge is rasterised into the
+// scanline table (3 x per line), then each line's leftmost/rightmost x becomes that line's WIN0H value
+void sub_0800CE74(u32 cx_, u32 cy_, u32 r_, u32 a_)
+{
+    s16 cx = cx_, cy = cy_, r = r_, a = a_;
+    u16 fill;
+    s16 x0, y0, x1, y1, x2, y2;
+    u32 k;
+    s16 *line;
+    u8 *out;
+    s32 i;
+    s16 p, q, s, t;
+
+    fill = 0xFFFF;
+    CpuSet(&fill, gUnknown_02038000, 0x010001E0);
+    k = (a - 64) & 255;
+    x0 = cx + ((gUnknown_0813E4CC[k + 64] * r) >> 8);
+    y0 = cy + ((gUnknown_0813E4CC[k] * r) >> 8);
+    k = (a + 104) & 255;
+    x1 = cx + ((gUnknown_0813E4CC[k + 64] * r) >> 8);
+    y1 = cy + ((gUnknown_0813E4CC[k] * r) >> 8);
+    k = (a - 232) & 255;
+    x2 = cx + ((gUnknown_0813E4CC[k + 64] * r) >> 8);
+    y2 = cy + ((gUnknown_0813E4CC[k] * r) >> 8);
+    sub_0800D0A8(x0, y0, x1, y1, 0);
+    sub_0800D0A8(x0, y0, x2, y2, 1);
+    sub_0800D0A8(x1, y1, x2, y2, 2);
+    zero_memory(gUnknown_0202A0F0[gUnknown_03000204], 320);
+    line = (s16 *)gUnknown_02038000;
+    out = (u8 *)gUnknown_0202A0F0[gUnknown_03000204];
+    for (i = 160; i > 0; i--, out += 2) {
+        p = *line++;
+        q = *line++;
+        s = *line++;
+        if (p > q) { t = p; p = q; q = t; }
+        if (p > s) { t = p; p = s; s = t; }
+        if (q > s) { t = q; q = s; s = t; }
+        if (p != -1) {
+            out[0] = s;
+            out[1] = p;
+        } else if (q != p) {
+            out[0] = s;
+            out[1] = q;
+        } else if (s != p) {
+            out[1] = p;
+            out[0] = p;
+        }
+    }
+    gUnknown_030004A0.win0h = gUnknown_0202A0F0[gUnknown_03000204][0];
+    gUnknown_03000BC0.src = gUnknown_0202A0F0[gUnknown_03000204];
+}
+#else
 asm(".include \"asm/non_matching/rom2/sub_0800CE74.inc\"");
+#endif
 
 extern u8 gUnknown_02038000[];
 
