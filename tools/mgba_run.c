@@ -601,8 +601,8 @@ static int replay(int argc, char **argv) {
 			uint32_t bad[2]; memcpy(bad, (uint8_t *) gba->memory.wram + 0x3C0F0, 8);
 			printf("%s FAIL did not return (pc %08X%s, gs_bad %08X lr %08X)\n", name, cpu->gprs[15], cpu->cpsr.t ? " thumb" : " arm", bad[0], bad[1]); fail++;
 			if (getenv("GS_RING")) {  // the last GS function entries (include/gs.h GS_TRACE)
-				uint32_t ring[1 + 192]; memcpy(ring, (uint8_t *) gba->memory.wram + 0x3C200, sizeof ring);
-				for (int q = 0; q < 64; q++) { int k = (ring[0] + q) % 64;
+				uint32_t ring[1 + 3072]; memcpy(ring, (uint8_t *) gba->memory.wram + 0x3C200, sizeof ring);
+				for (int q = 0; q < 1024; q++) { int k = (ring[0] + q) % 1024;
 					if (ring[1 + 3 * k]) printf("  gs %08X sp %08X lr %08X\n", ring[1 + 3 * k], ring[2 + 3 * k], ring[3 + 3 * k]); }
 			}
 			continue;

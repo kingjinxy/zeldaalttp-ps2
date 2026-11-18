@@ -69,9 +69,12 @@ player, linked in memory instead of by cable, each drawn into its own part of th
 - [x] Mechanical translation of the remaining agbcc asm (`tools/asm2c.py`, `make NONMATCHING=1 AUTO_C=1`, user
       decision 2026-11-18): 5,102 of 5,753 asm functions become C in that build; replay check 604 ok, 14 fail
       (EEPROM, I/O). Linked whole-game screenshots aren't a valid check for moved code (timing).
-- [ ] The 651 kept as asm: rom1's hand-written engine (layout-bound: hard-coded addresses into it), the m4a
-      sound engine and its command table, code entered past its start, register-convention callees.
-      These need hand-written C (tmc / pret m4a as references).
+- [x] Global-state translation for the rest (`tools/gs2c.py`, include/gs.h, 2026-11-18): 603 functions run as C
+      on one global CPU state; their asm stays assembled as renamed copies, so layout and embedded data hold.
+      Of the 5,753 asm functions: 5,010 C-ABI C, 603 global-state C, 112 NONMATCHING C, 28 native
+      (ARM code, and 24 that don't decode or jump into code copied to RAM). Replay: 1,325 ok, 24 fail.
+- [ ] Remaining fails are the m4a player chain (MPlayMain recursion through callbacks), EEPROM and I/O. The
+      m4a mixer, EEPROM, link cable and BIOS calls get a PS2 platform layer (pret m4a as reference).
 - [ ] More replay coverage: only ~130 translated functions run in fs_walk; longer recordings.
 
 ## Phase 3: PC host (risk removal before the PS2)

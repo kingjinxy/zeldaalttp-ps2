@@ -15,9 +15,9 @@ struct GsCpu {
 #define GS_BAD_ADDR (*(volatile u32 *)0x0203C0F0)  // set when gs_run meets an address it can't run
 #define GS_MAGIC_RET 0xFFFFFFF1u  // lr of a wrapper call: returning there ends the GS code
 
-// debugging: every GS function entry appends (address, sp, lr) to a 64-entry ring at 0x0203C200
+// debugging: every GS function entry appends (address, sp, lr) to a 1024-entry ring at 0x0203C200
 #define GS_RING ((volatile u32 *)0x0203C200)
-#define GS_TRACE(a) do { u32 i_ = GS_RING[0] % 64; GS_RING[1 + 3 * i_] = (a); GS_RING[2 + 3 * i_] = gCpu.r[13]; \
+#define GS_TRACE(a) do { u32 i_ = GS_RING[0] % 1024; GS_RING[1 + 3 * i_] = (a); GS_RING[2 + 3 * i_] = gCpu.r[13]; \
     GS_RING[3 + 3 * i_] = lr; GS_RING[0] = i_ + 1; } while (0)
 
 struct GsEntry {
@@ -72,7 +72,7 @@ static void gs_run(u32 a)
     const struct GsEntry *f;
     u32 b = a & ~1u;
     {  // ring trace (GS_TRACE): gs_run targets get bit 30 set
-        u32 i_ = GS_RING[0] % 64;
+        u32 i_ = GS_RING[0] % 1024;
         GS_RING[1 + 3 * i_] = a | 0x40000000u, GS_RING[2 + 3 * i_] = gCpu.r[13], GS_RING[3 + 3 * i_] = gCpu.r[14];
         GS_RING[0] = i_ + 1;
     }

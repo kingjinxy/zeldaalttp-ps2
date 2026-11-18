@@ -197,7 +197,7 @@ def main():
             pass
     # sp always lives in gCpu: entries from C code or interrupts build their frames below it
     out = ['#include "gs.h"', "#define sp (gCpu.r[13])", ""]
-    decls, swis, tables, bodies, failed = set(), set(), [], [], []
+    decls, swis, tables, bodies, failed, sizes = set(), set(), [], [], [], {}
     for v, end, n in ranges:
         try:
             body, entries, _ = translate(data, relocs, v, end, n, taken, gsnames, decls, swis, tag)
@@ -206,6 +206,7 @@ def main():
             continue
         bodies += body
         tables.append((n, entries))
+        sizes[n] = end - v
     for k in sorted(swis):  # BIOS calls: r0-r3 from gCpu, swi, back
         out.append('asm(".thumb\\n.align 1\\n.global gs_swi_%s_%X\\n.thumb_func\\ngs_swi_%s_%X:\\n'
                    'push {r4, lr}\\nldr r4, =0x0203C000\\nldmia r4!, {r0-r3}\\nsub r4, #16\\nswi 0x%X\\n'
@@ -230,7 +231,7 @@ def main():
     if tables:
         out.append("const struct GsEntry gGsTable_%s[] __attribute__((section(\".gstable\"))) = {" % tag)
         for n, entries in tables:
-            for e in sorted(entries):
+            for e in sorted(x for x in entries if x < sizes[n]):  # the end is the next function's start
                 out.append("    { (u32)%s__base + 0x%X, gs_%s, 0x%X }," % (n, e, n, e))
         out.append("};")
         out.append("const struct GsEntry gGsTableW_%s[] __attribute__((section(\".gstablew\"))) = {" % tag)
@@ -327,6 +328,13 @@ def flow(data, relocs, start, end, work, ins, targets, entries, ext, rets):
 
 
 def finish(data, relocs, start, end, name, gsnames, decls, swis, tag, ins, targets, entries, ext, rets):
+    for o, d in ins.items():  # jumps into code copied to RAM (the m4a mixer) carry all registers: stay native
+        if d["k"] == "ldr_pc":
+            v = w(data, ((o + 4) & ~3) + d["imm"])
+            if 0x02000000 <= v < 0x02040000 or 0x03000000 <= v < 0x03008000:
+                if v & 1 or (v & 3) == 0 and 0x03000000 <= v and any(x["k"] == "hi" and x["op"] == "bx" for x in ins.values()):
+                    if v & 1:
+                        raise Fail("jumps into Thumb code in RAM (%08X)" % v)
     size = end - start
     decoded = {o - start for o in ins}
     # return points that didn't decode (calls that don't return, data after them) aren't entries
@@ -437,7 +445,9 @@ def emit(d, o, rel, start, end, B, name, gsnames, decls, data):
     if k == "hi":
         op, rd, rm = d["op"], d["d"], d["m"]
         src = pcv if rm == 15 else R[rm]
-        if op == "bx" or (op in ("mov", "add") and rd == 15):
+        if op == "bx":  # bit 0 clear: ARM state, run natively (gs_run)
+            return ["{ u32 t = %s; if (!(t & 1)) { GS_STORE(); gCpu.r[15] = t; return; } GS_JUMP(t); }" % src]
+        if op in ("mov", "add") and rd == 15:
             t = src if op != "add" else "(%s + %s)" % (pcv, src)
             return ["{ u32 t = %s; GS_JUMP(t); }" % t]
         if op == "mov":
