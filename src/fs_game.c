@@ -2342,7 +2342,47 @@ void sub_0803E048(struct Entity *this)
         sub_080074C0(this);
 }
 
+#ifdef NONMATCHING
+// Per-frame player bookkeeping: counts down the players' timers (unk14, entity +0x72, +0x8A), resets the
+// per-frame flags, updates each player (sub_08003130), advances an active +0x70 counter; then sub_0801276C(1)
+extern u8 gUnknown_03000838;
+void sub_0803E114(void)
+{
+    u32 i;
+    struct Struct03006A30 *p;
+    u8 *e;
+
+    gUnknown_03000838 = 0;
+    for (i = 0; i < gUnknown_03006C80.unk0; i++) {
+        p = &gUnknown_03006A30[i];
+        if (p->unk28 == NULL)
+            continue;
+        e = (u8 *)p->unk28;
+        if (p->unk14 != 0)
+            p->unk14--;
+        if (p->unk1A != 0)
+            sub_080074C0(p->unk28);
+        if (*(u16 *)(e + 0x72) != 0)
+            (*(u16 *)(e + 0x72))--;
+        if (((u8 *)p)[0x8A] != 0)
+            ((u8 *)p)[0x8A]--;
+        p->unk7 &= 0x7F;
+        e[0x41] &= 0x7F;
+        ((u8 *)p)[0x34] = 0;
+        p->unk1A = 0;
+        p->unk27 = 0;
+        p->unkA &= 0xF;
+        p->unk36 &= 0xFFFD;
+        p->unkF &= 0xEF;
+        sub_08003130(p->unk28);
+        if (e[0x70] != 0)
+            e[0x70]++;
+    }
+    sub_0801276C(1);
+}
+#else
 asm(".include \"asm/non_matching/fs_game/sub_0803E114.inc\"");
+#endif
 asm(".include \"asm/non_matching/fs_game/sub_0803E518.inc\"");
 
 void sub_0803F0E4(struct Entity *this)
