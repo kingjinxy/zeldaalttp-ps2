@@ -3487,7 +3487,57 @@ void sub_08044198(struct Entity *this, struct Entity *a, struct Entity *b)
     }
 }
 
+#ifdef NONMATCHING
+// Pushable object: each player next to it (within 12 px on an axis, same layer) facing it pushes from its
+// side; pushes from opposite sides cancel. Each remaining push moves it by speed in that cardinal
+// direction (sub_08002E70), and a diagonal push also nudges it 0x80 toward the side it came from
+void sub_08044240(struct Entity *this, u32 speed_)
+{
+    u16 speed = speed_;
+    u8 dirs[4];
+    u8 n, i, j, d4;
+    struct Struct03006A30 *s;
+    struct Entity *p;
+    u8 d;
+
+    n = 0;
+    i = 0;
+    dirs[0] = dirs[1] = dirs[2] = dirs[3] = 0xFF;
+    do {
+        s = &gUnknown_03006A30[i];
+        p = s->unk28;
+        if ((((u8 *)s)[15] & ~0xD2) && ((this->unk50 & p->unk50) >> 14)
+            && ((u16)(p->x.HALF.HI - this->x.HALF.HI + 12) <= 24 || (u16)(p->y.HALF.HI - this->y.HALF.HI + 12) <= 24)) {
+            d = sub_0803CECC(this, p);
+            if (((d + 20) & 0x18) >> 2 == p->unk2A)
+                dirs[n++] = d;
+        }
+    } while (++i < gUnknown_03006C80.unk0);
+    if (n == 0)
+        return;
+    for (i = 0; i < n - 1; i++)
+        for (j = i + 1; j < n; j++)
+            if (((dirs[i] + 20) & 0x18) == ((dirs[j] + 4) & 0x18)) {
+                dirs[i] = 0xFF;
+                dirs[j] = 0xFF;
+                n -= 2;
+            }
+    for (i = 0; i < gUnknown_03006C80.unk0; i++) {
+        if (dirs[i] == 0xFF)
+            continue;
+        d4 = (dirs[i] + 4) & 0x18;
+        sub_08002E70(this, speed, d4);
+        if (dirs[i] & 7) {
+            if (((dirs[i] - d4) & 31) > 15)
+                sub_08002E70(this, 0x80, (d4 - 8) & 0x18);
+            else
+                sub_08002E70(this, 0x80, (d4 + 8) & 0x18);
+        }
+    }
+}
+#else
 asm(".include \"asm/non_matching/fs_game/sub_08044240.inc\"");
+#endif
 
 // A random player whose entity is active (unk45) and who isn't holding R, searching from a random start
 struct Entity *sub_08044594()
