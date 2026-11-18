@@ -9218,7 +9218,56 @@ void sub_08055460(struct Entity *this)
     sub_08055688(this);
 }
 
+#ifdef NONMATCHING
+void sub_08055A08(struct Entity *);
+
+// Item handed to player unk47 (1-4): spawns the pickup effect above that player, makes the player hold it
+// (state 8), swaps the player's item (unk1C) with this one's form and updates the HUD palette
+void sub_08055688(struct Entity *this)
+{
+    struct Struct03006A30 *p;
+    struct Entity *e;
+    u8 k;
+
+    if (this->parameter != 0) {
+        if ((u8)--this->unk17 == 0xFF)
+            DeleteThisEntity(this);
+        return;
+    }
+    this->unk20 = sub_08013D54(this->form);
+    if (this->filler47 == 0)
+        return;
+    p = &gUnknown_03006A30[this->filler47 - 1];
+    e = sub_080123E8();
+    if (e != NULL) {
+        e->form = this->form;
+        e->subtype = 0x21;
+        e->type = 6;
+        e->parameter = 1;
+        e->x.HALF.HI = p->unk28->x.HALF.HI;
+        *(u32 *)&e->y = *(u32 *)&p->unk28->y + 1;
+        e->z.HALF.HI = -20;
+        e->unk50 = this->unk50;
+        e->unk1F_6 = this->unk1F_6;
+        sub_08012728(6, e);
+    }
+    p->unkC = 8;
+    ((u8 *)p)[0x38] = 1;
+    p->unkB &= 0x7F;
+    p->unk36 |= 1;
+    this->unk17 = p->unk1C;
+    p->unk1C = this->form;
+    gUnknown_03006C80.unk58[p->unk28->form].v = this->form;
+    sub_08055A08(p->unk28);
+    this->form = this->unk17;
+    k = sub_0802C3E0(this->form);
+    this->unk1E_0 = k & 15;
+    this->unk1E_4 = k;
+    this->filler47 = 0;
+}
+#else
 asm(".include \"asm/non_matching/fs_game/sub_08055688.inc\"");
+#endif
 
 void sub_08055A08(struct Entity *this)
 {
