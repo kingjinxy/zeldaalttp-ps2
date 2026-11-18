@@ -3,14 +3,15 @@
 # Builds the FS_ONLY ROM from asm and with NONMATCHING C, traces the NONMATCHING functions (up to 3 calls
 # each) while 2 linked GBAs play INPUTS from the recordings/start_linked saves, then replays each call in the
 # NONMATCHING build (mgba_run --replay). Leaves the matching build in place afterwards.
+# AUTO_C=1 tools/check_nonmatching.sh ...: the same with the asm2c translations, which are checked too.
 # Known false failures: void functions (r0), functions reading I/O or timers (not restored by the replay).
 set -e
 cd "$(dirname "$0")/.."
 OUT=$(realpath -m "$1"); INPUTS=$(realpath "$2"); FRAMES=$3
 mkdir -p "$OUT"; rm -rf "$OUT/tr"; mkdir "$OUT/tr"
-make -j8 FS_ONLY=1 zeldaalttp.gba >/dev/null 2>&1; cp zeldaalttp.gba "$OUT/m.gba"; cp zeldaalttp.elf "$OUT/m.elf"
-make -j8 FS_ONLY=1 NONMATCHING=1 zeldaalttp_nm.gba >/dev/null 2>&1; cp zeldaalttp_nm.gba "$OUT/nm.gba"; cp zeldaalttp_nm.elf "$OUT/nm.elf"
-make -j8 compare >/dev/null 2>&1 || true
+env -u AUTO_C make -j8 FS_ONLY=1 zeldaalttp.gba >/dev/null 2>&1; cp zeldaalttp.gba "$OUT/m.gba"; cp zeldaalttp.elf "$OUT/m.elf"
+make -j8 FS_ONLY=1 NONMATCHING=1 ${AUTO_C:+AUTO_C=1} zeldaalttp_nm.gba >/dev/null 2>&1; cp zeldaalttp_nm.gba "$OUT/nm.gba"; cp zeldaalttp_nm.elf "$OUT/nm.elf"
+env -u AUTO_C make -j8 compare >/dev/null 2>&1 || true
 # .rodata must keep its layout (data holds absolute addresses into it); NONMATCHING tables use NM_RODATA
 rs() { arm-none-eabi-readelf -SW "$1" | awk '$2==".rodata"{print $6}'; }
 [ "$(rs "$OUT/m.elf")" = "$(rs "$OUT/nm.elf")" ] || { echo ".rodata size differs: $(rs "$OUT/m.elf") vs $(rs "$OUT/nm.elf")"; exit 1; }
@@ -34,6 +35,10 @@ for c in glob.glob("src/*.c") + glob.glob("src/*/*.c"):
         e1, e2 = s.find("\n#else\n", b.end()), s.find("\n#endif", b.end())
         if e1 != -1 and (e2 == -1 or e1 < e2):
             names |= set(re.findall(r"^\w[^\n;]*?\b(\w+)\([^;{]*\)\n\{", s[b.end():e1], re.M))
+import os
+if os.environ.get("AUTO_C"):
+    for c in glob.glob("src/auto/*.c"):
+        names |= set(re.findall(r"^u32 (\w+)\(u32 r0", open(c).read(), re.M))
 open(out + "/list.txt", "w").write("".join(f"{m[k] & ~1:08X}\n" for k in sorted(names) if k in m))
 print(len(names), "NONMATCHING functions")
 EOF

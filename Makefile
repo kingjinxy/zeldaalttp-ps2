@@ -19,6 +19,8 @@ AS       := $(DEVKITARM)/bin/arm-none-eabi-as
 LD       := $(DEVKITARM)/bin/arm-none-eabi-ld
 OBJCOPY  := $(DEVKITARM)/bin/arm-none-eabi-objcopy
 
+empty :=
+space := $(empty) $(empty)
 CC1FLAGS := -mthumb-interwork -Wimplicit -Wparentheses -O2
 CPPFLAGS := -Itools/agbcc/include -iquote include -nostdinc -undef
 ASFLAGS  := -mcpu=arm7tdmi -mthumb-interwork -Iasminclude
@@ -36,6 +38,13 @@ ifneq ($(NONMATCHING),)
 endif
 # make NONMATCHING=1 NONMATCHING_EXCLUDE="src/rom2.c ...": all NONMATCHING C except those files' (bisecting
 # a bad build; one file alone can outgrow its asm and overlap .rodata)
+# make NONMATCHING=1 AUTO_C=1: also replace the remaining asm functions with C translated by tools/asm2c.py
+# (src/auto/, generated per object; functions it can't translate stay asm)
+ifneq ($(AUTO_C),)
+  CPPFLAGS += -DAUTO_C
+  # AUTO_C_FILES="rom2 rom3": translate only these objects' asm (bisecting a problem)
+  CPPFLAGS += $(if $(AUTO_C_FILES),-DAUTO_C_FILES_$(words $(AUTO_C_FILES))_$(subst $(space),_,$(subst /,_,$(AUTO_C_FILES))))
+endif
 ifneq ($(NONMATCHING_EXCLUDE),)
   CPPFLAGS += -DNONMATCHING_EXCLUDE_SOME
 endif
@@ -115,7 +124,7 @@ tidy:
 
 # Link ELF file
 ldscript_nm.txt: ldscript.txt
-	python3 -c "import re,sys; s=open('ldscript.txt').read(); m=[l for l in s.splitlines(True) if re.search(r'libgcc.a:(dp|fp)-bit.o', l)]; s=''.join(l for l in s.splitlines(True) if l not in m); s=s.replace(chr(9)+'.rodata :', chr(9)+'.rodata 0x08137B04 :', 1); i=s.index('.rodata 0x08137B04'); j=s.index('} = 0', i)+len('} = 0'); s=s[:j]+chr(10)+chr(10)+chr(9)+'.text_softfloat :'+chr(10)+chr(9)+'{'+chr(10)+''.join(m)+chr(9)+chr(9)+'*(.rodata.nm);'+chr(10)+chr(9)+'}'+s[j:]; open('ldscript_nm.txt','w').write(s)"
+	python3 -c "import re,sys; s=open('ldscript.txt').read(); m=[l for l in s.splitlines(True) if re.search(r'libgcc.a:(dp|fp)-bit.o', l)]; s=''.join(l for l in s.splitlines(True) if l not in m); s=s.replace(chr(9)+'.rodata :', chr(9)+'.rodata 0x08137B04 :', 1); i=s.index('.rodata 0x08137B04'); j=s.index('} = 0', i)+len('} = 0'); s=s[:j]+chr(10)+chr(10)+chr(9)+'.text_softfloat 0x08800000 :'+chr(10)+chr(9)+'{'+chr(10)+''.join(m)+chr(9)+chr(9)+'*(.rodata.nm);'+chr(10)+chr(9)+chr(9)+'*(.text.auto);'+chr(10)+chr(9)+'}'+s[j:]; open('ldscript_nm.txt','w').write(s)"
 
 $(ELF): $(OFILES) $(LDSCRIPT)
 	$(LD) -T $(LDSCRIPT) -Map $(MAP) $(LIB) -o $@
@@ -130,10 +139,23 @@ $(ELF): $(OFILES) $(LDSCRIPT)
 # Functions not decompiled yet: asm/non_matching/NAME/*.inc, included by src/NAME.c (tools/asm_split.py)
 .SECONDEXPANSION:
 # Every header, coarsely: SCANINC isn't in this repo, and a stale object hides a header change.
-src/%.o: src/%.c $(CPPFLAGS_STAMP) $$(wildcard asm/non_matching/$$*/*.inc) $(wildcard include/*.h include/gba/*.h)
+src/%.o: src/%.c $(CPPFLAGS_STAMP) $(if $(AUTO_C),tools/asm2c.py) $$(wildcard asm/non_matching/$$*/*.inc) $(wildcard include/*.h include/gba/*.h)
 	$(CPP) $(CPPFLAGS) $< | $(CC1) $(CC1FLAGS) -o src/$*.s
 	echo '.ALIGN 2, 0' >> src/$*.s
+ifneq ($(AUTO_C),)
+	@mkdir -p src/auto
+	if [ -z "$(AUTO_C_FILES)" ] || echo " $(AUTO_C_FILES) " | grep -q " $* "; then \
+		python3 tools/asm2c.py --s src/$*.s src/auto/$(subst /,_,$*).c; \
+	else echo '#include "auto.h"' > src/auto/$(subst /,_,$*).c; fi
+	$(CPP) -Itools/agbcc/include -iquote include -nostdinc -undef src/auto/$(subst /,_,$*).c | $(CC1) -mthumb-interwork -O2 -o src/auto/$(subst /,_,$*).s
+	echo '.ALIGN 2, 0' >> src/auto/$(subst /,_,$*).s
+	$(AS) $(ASFLAGS) src/auto/$(subst /,_,$*).s -o src/auto/$(subst /,_,$*).o
+	$(OBJCOPY) --rename-section .text=.text.auto src/auto/$(subst /,_,$*).o
+	$(AS) $(ASFLAGS) src/$*.s -o src/$*.main.o
+	$(LD) -r src/$*.main.o src/auto/$(subst /,_,$*).o -o src/$*.o
+else
 	$(AS) $(ASFLAGS) src/$*.s -o src/$*.o
+endif
 
 # Assembly source code
 asm/%.o: asm/%.s

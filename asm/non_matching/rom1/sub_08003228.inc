@@ -91,7 +91,7 @@ _080032B0:
 	lsrs r3, r2, #32
 	ldr r0, [sp, #928]
 	lsrs r3, r2, #32
-	beq.n 0x8003224
+	beq.n _08003224
 	lsrs r3, r2, #32
 	ldr r1, [sp, #96]
 	lsrs r3, r2, #32

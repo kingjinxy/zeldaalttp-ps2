@@ -601,8 +601,11 @@ static int replay(int argc, char **argv) {
 		uint32_t got0 = (cpu->gprs[0] >> 24) == 0x08 ? mapAddr(cpu->gprs[0], 0) : cpu->gprs[0];
 		// a code address that moved (a return address, a pointer inside a function) can't be mapped exactly:
 		// two different values that are both ROM code addresses count as equal
-#define CODEADDR(v) ((v) >= 0x08000000 && (v) < 0x08137B04)
-		if (got0 != r1[0] && !(CODEADDR(got0) && CODEADDR(r1[0])))
+// (NONMATCHING builds also put code after the data, from 0x08800000)
+#define CODEADDR(v) (((v) >= 0x08000000 && (v) < 0x08137B04) || ((v) >= 0x08800000 && (v) < 0x0A000000))
+		// r0 equal to the return address: a void function's `pop {r0}; bx r0` epilogue, nothing returned
+		int voidRet = (r1[0] | 1) == (r0[14] | 1);
+		if (!voidRet && got0 != r1[0] && !(CODEADDR(got0) && CODEADDR(r1[0])))
 			snprintf(why, sizeof why, "r0 %08X expected %08X", got0, r1[0]);
 		for (int k = 4; k <= 11 && !*why; k++)
 			if (cpu->gprs[k] != r1[k] && !((r1[k] >> 24) == 0x08)) snprintf(why, sizeof why, "r%d %08X expected %08X", k, cpu->gprs[k], r1[k]);
@@ -619,7 +622,7 @@ static int replay(int argc, char **argv) {
 					uint32_t gv, ev;
 					memcpy(&gv, m[k].got + w, 4), memcpy(&ev, m[k].exp + w, 4);
 					if (CODEADDR(gv) && CODEADDR(ev)) { i = w + 3; continue; }
-					snprintf(why, sizeof why, "%s %08X = %02X expected %02X", m[k].n, addr, m[k].got[i], m[k].exp[i]);
+					snprintf(why, sizeof why, "%s %08X = %02X expected %02X (word %08X expected %08X)", m[k].n, addr, m[k].got[i], m[k].exp[i], gv, ev);
 					break;
 				}
 			}
