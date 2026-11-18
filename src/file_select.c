@@ -4870,7 +4870,30 @@ void sub_08028C54(struct Entity *this, u8 *out)
 asm(".include \"asm/non_matching/file_select/sub_08028C54.inc\"");
 #endif
 
+#ifdef NONMATCHING
+// Draws a 3-row block of map tiles (4-7 wide by form) from gUnknown_0813D238[form] around the entity.
+extern const u16 *const gUnknown_0813D238[];
+void sub_08028CD0(struct Entity *this)
+{
+    static const s8 sLeft[4] = { -1, -2, -2, -3 };
+    static const s8 sRight[4] = { 2, 2, 3, 3 };
+    const u16 *src = gUnknown_0813D238[this->form];
+    u16 *cam = (u16 *)&gUnknown_03000450;
+    s32 x, y, row, col;
+    u16 pos;
+
+    if (this->form > 3)
+        return;
+    x = (s16)this->x.HALF.HI - (cam[12] + ((this->form & 1) ? 0 : 8));
+    y = (s16)this->y.HALF.HI - cam[13];
+    pos = (x >> 4) | ((y >> 4) << 6);
+    for (row = -1; row <= 1; row++)
+        for (col = sLeft[this->form]; col <= sRight[this->form]; col++)
+            sub_08014658(*src++, pos + row * 64 + col, this->unk50);
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_08028CD0.inc\"");
+#endif
 asm(".include \"asm/non_matching/file_select/sub_080291F8.inc\"");
 
 extern const u8 gUnknown_0813D0FC[];
