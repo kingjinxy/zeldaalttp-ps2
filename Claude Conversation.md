@@ -11837,3 +11837,1177 @@ Committed. Time for a docs checkpoint. Counting the NONMATCHING functions:
 
 - tool `Bash`: grep -h -A3 "^#ifdef NONMATCHING$" src/*.c | grep -c "sub_\|^[a-z].*(" ; grep -c "^#ifdef NONMATCHING$" src/*.c | awk -F: '{s+=$2} END {print s}'; find asm/non_
 
+## Claude
+
+About 82 functions are now NONMATCHING (87 blocks minus the shared declarations block and the 4 that were there before); 5,754 asm files remain as the matching ROM's source. Writing Step 18:
+
+- tool `Bash`: sed -i 's/all code: 5,767 asm files left in asm\/non_matching/all code: 5,754 asm files left in asm\/non_matching, of which ~82 also have equivalent C under NON
+
+- tool `PushNotification`: 
+
+## Claude
+
+Continuing. Checking how much of the queue is left:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; n=0; while read f o z; do ls asm/non_matching/*/$f.inc >
+
+## Claude
+
+31 functions are left in this queue, the bigger ones. Next, `sub_0800F0A0`, which blits a glyph into the text buffer through a colour map:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -n "u8 \*unk8\|unk8\[" include/types.h | sed -n 1,3
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's/gUnknown_08427474\[p->unk4\]/gUnknown_08427474
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; $S/b2nm.sh $S/b65.txt sub_0800F0A0 && make -j8 compare 2
+
+- tool `Bash`: python3 - <<'EOF' fn="src/rom_0800D4F0.c"; s=open(fn).read() s=s.replace("void sub_0800F0A0(struct Struct0800EE2C *, const u32 *);","void sub_0800F0A0(struct St
+
+## Claude
+
+Next, `sub_08015AC4`:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; echo sub_0800F0A0 >> $S/skip.txt; bash $S/nextq.sh 1 $(c
+
+## Claude
+
+Next, `sub_08015AC4`, which walks every map tile and spawns the object its tile ID calls for:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/b66.txt <<'EOF' @@ sub_08015AC4 extern const u1
+
+## Claude
+
+Simplifying the helper to return whether a record matched, then placing it straight under NONMATCHING (a helper function can't byte-match anyway):
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' S="/tmp/claude-1000/-home-alex-Documen
+
+- tool `Bash`: make NONMATCHING=1 2>&1 | grep -v warning | grep "file_select.c:[0-9]\|undefined" | head -5
+
+- tool `Bash`: make NONMATCHING=1 2>&1 | grep -v "warning" | grep -i "error\|undefined\|multiple" | head -5; make NONMATCHING=1 >/dev/null 2>&1; echo $?
+
+- tool `Bash`: make NONMATCHING=1 2>&1 | grep -B3 "Error 1" | head -8
+
+- tool `Bash`: python3 - <<'EOF' p="Makefile"; s=open(p).read() s=s.replace("""compare: $(ROM) 	$(SHA1) checksum.sha1 ""","""compare: $(ROM) 	$(SHA1) checksum.sha1  # All obje
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's/make -j8 NONMATCHING=1 >\/dev\/null 2>\&1 \&\&
+
+- tool `Bash`: grep -rhoE "\b(bl|b|beq|bne|bcc|bcs|bhi|bls|bgt|blt|bge|ble|bmi|bpl)\s+0x08[0-9A-Fa-f]{6}" asm src/*.s 2>/dev/null | awk '{print $1}' | sort | uniq -c; grep -rh
+
+## Claude
+
+1,483 `bl` calls and 262 `.4byte` pool words use absolute ROM addresses. Finding the short branch that broke the link:
+
+- tool `Bash`: grep -rn "0x812[dD]3[aA]2\|0x0812D3A2" src/*.c asm 2>/dev/null | head -3
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/tools/symbolize_asm.py
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && python3 tools/symbolize_asm.py $(find asm -name "*.inc" -o -name "*.s" | grep -v "^asm/macro") $(ls data
+
+- tool `Bash`: git checkout -q asm data && make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && echo restored; arm-none-eabi-readelf -sW zeldaalttp.elf | awk '$4=="FUNC"' |
+
+- tool `Bash`: python3 - <<'EOF' p="tools/symbolize_asm.py"; s=open(p).read() old=s[s.index("syms = {}"):s.index("pat = re.compile")] new='''# From readelf: function symbols (
+
+- tool `Bash`: make 2>&1 | grep -B2 "Error 1" | head -10
+
+## Claude
+
+Local labels like `_0812D398` aren't visible across objects. Using them only within the file that defines them:
+
+- tool `Bash`: git checkout -q asm data && make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && echo restored && python3 - <<'EOF' p="tools/symbolize_asm.py"; s=open(p).rea
+
+## Claude
+
+1,893 addresses symbolized, and the matching ROM still checks out. Now the NONMATCHING ROM:
+
+- tool `Bash`: make -j8 NONMATCHING=1 2>&1 | grep -B2 "Error\|undefined\|truncated" | head -10; ls -la zeldaalttp_nm.gba 2>&1 | awk '{print $5, $6, $7, $8, $9}'; grep -rhoE "\
+
+- tool `Bash`: for e in zeldaalttp.elf zeldaalttp_nm.elf; do arm-none-eabi-readelf -SW $e | awk '$2==".text"||$2==".rodata"{print "'$e'", $2, $4, $6}'; done; grep -n "rodata\|
+
+- tool `Bash`: for e in zeldaalttp.elf zeldaalttp_nm.elf; do echo $e; arm-none-eabi-readelf -SW $e | grep -E " \.text| \.rodata| \.data" ; done; sed -n 1,7p ldscript.txt; grep
+
+- tool `Bash`: sed -n 50,55p ldscript.txt
+
+- tool `Bash`: python3 - <<'EOF' p="ldscript.txt"; s=open(p).read() old="\t} = 0\n\n\t.rodata :\n\tALIGN(4)\n" assert s.count(old)==1 s=s.replace(old,"\t} = 0\n\n\t/* fixed ad
+
+- tool `Bash`: grep -rhoE "\.4byte\s+0x0?8[0-9A-Fa-f]{6}" asm data | awk '{print $2}' | python3 -c " import sys v=[int(l,16) for l in sys.stdin] print('total',len(v),'odd',sum
+
+## Claude
+
+256 remain, and 46 are odd. Looking at an example, since my pattern only matched `.4byte` at the start of a line:
+
+- tool `Bash`: grep -nE "\.4byte\s+0x0?8[0-9A-Fa-f]{6}" asm/non_matching/file_select/sub_08010270.inc asm/non_matching/rom2a/sub_08030100.inc asm/crt0.s | head -8
+
+- tool `Bash`: python3 - <<'EOF' p="tools/symbolize_asm.py"; s=open(p).read() s=s.replace('''def name(v, key, local):     # local labels (_0801E4C8) only resolve inside the fi
+
+- tool `Bash`: grep -rhoE "\.4byte\s+0x0?8[0-9A-Fa-f]{6}\b" asm data | awk '{print $2}' | sort | uniq -c | sort -rn | head -8; grep -rlE "\.4byte\s+0x0?8[0-9A-Fa-f]{6}\b" asm 
+
+## Claude
+
+Addresses at or above 0x08137B04 are in `.rodata`, which no longer moves, so they're fine. Counting the ones that point into code:
+
+- tool `Bash`: grep -rhoE "\.4byte\s+0x0?8[0-9A-Fa-f]{6}\b" asm data | awk '{print $2}' | python3 -c " import sys v=sorted(set(int(l,16) for l in sys.stdin)) c=[x for x in v i
+
+- tool `Bash`: grep -rnE "\.4byte\s+0x0?81(2[cC]|345)[0-9A-Fa-f]{3}\b" asm data | head; arm-none-eabi-nm -n zeldaalttp.elf | awk '$1>="0812cc00" && $1<="0812cf20"' | head; arm
+
+- tool `Bash`: python3 - <<'EOF' p="tools/symbolize_asm.py"; s=open(p).read() s=s.replace('''    if key == "word" and v & 1 and (v - 1) in funcs:         return funcs[v - 1]''
+
+- tool `Bash`: make 2>&1 | grep -B2 "Error 1" | head -6; arm-none-eabi-nm zeldaalttp.elf | grep -i "0812cd78\|0812ce70\|0812cf10"; grep -rn "_0812CD78\|_0812CE70\|_0812CF10\|0
+
+## Claude
+
+Those three aren't function starts. Finding where those addresses fall:
+
+- tool `Bash`: grep -rln "_0812CD78:\|_0812CE70:\|_0812CF10:" asm src | head; git show HEAD:zeldaalttp.elf >/dev/null 2>&1; git stash -q; make -j8 >/dev/null 2>&1; arm-none-ea
+
+## Claude
+
+No labels exist at those addresses at all. Finding which functions contain them:
+
+- tool `Bash`: arm-none-eabi-nm -n zeldaalttp.elf | awk '$1>="0812cc00" && $1<="0812cf30"'; ls -la zeldaalttp.elf | awk '{print $6,$7,$8}'
+
+## Claude
+
+They're all inside the large hand-written `sub_0812CC58`. The plain alias label I added at its start can carry an offset without picking up bit 0:
+
+- tool `Bash`: sed -i 's/\.4byte sub_0812CD78_addr$/.4byte sub_0812CC58_addr+0x120/; s/\.4byte sub_0812CE70_addr$/.4byte sub_0812CC58_addr+0x218/' asm/non_matching/interface/s
+
+## Claude
+
+Mismatch. Finding which bytes differ:
+
+- tool `Bash`: cmp -l baserom.gba zeldaalttp.gba | head -10 | awk '{printf "%x %s %s\n", $1-1, $2, $3}'
+
+- tool `Bash`: python3 - <<'EOF' p="asm/non_matching/interface/sub_0812CC58.inc"; s=open(p).read() blk="\t.global sub_0812CC58_addr\nsub_0812CC58_addr:  @ plain label: a data 
+
+## Claude
+
+Matching again. The ROM-address cleanup is done. Committing, then trying the NONMATCHING ROM in mGBA:
+
+- tool `Bash`: git add -A asm data tools ldscript.txt && git commit -qm "Symbolize absolute ROM addresses in the asm (tools/symbolize_asm.py: 1,900 branches and pool words) an
+
+- tool `Bash`: sed -n 1,40p tools/mgba_run.c | grep -E "^//|^ \*|--" | head -30; ls recordings/ 2>/dev/null
+
+- tool `Bash`: head -5 recordings/intro.inputs; ls recordings/start_linked recordings/session1 | head; wc -l recordings/intro.inputs
+
+## Claude
+
+`intro.inputs` starts from power-on. Running it on both ROMs with two linked GBAs and comparing RAM at a few frames:
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && cp zeldaalttp.gba /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa
+
+## Claude
+
+The NONMATCHING run is taking longer than the original. It may have crashed into a loop; it stops at 300 seconds either way. Waiting for it before building anything else.
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat $S/../tasks/bb0pvcf8e.output; ls $S/cmp_m $S/cmp_nm
+
+## Claude
+
+Both runs finished but wrote no files, so my `--dump` usage must be wrong. Checking the runner's options:
+
+- tool `Bash`: grep -n '"--dump"\|"--out"\|"--shot"\|dump_\|fopen' tools/mgba_run.c | head -15
+
+- tool `Bash`: sed -n 640,690p tools/mgba_run.c
+
+- tool `Bash`: grep -n "dumps\[" tools/mgba_run.c | head; grep -n "snprintf(path.*dump\|\.bin" tools/mgba_run.c | head
+
+- tool `Bash`: sed -n 380,405p tools/mgba_run.c
+
+## Claude
+
+Dumps go to stdout, not to `--out`, and frame 3000 is probably past the run's end. Rerunning both with the output captured and dumps at frames 1000, 2000 and 2990, in the background:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for r in m nm; do rom=$S/m.gba; [ $r = nm ] && rom=zelda
+
+## Claude
+
+Both ROMs are replaying the same inputs, and their RAM will be compared once the runs finish.
+
+Since your go-ahead, the work has shifted from byte-matching to C that just has to behave the same:
+
+- **New rule (also in CLAUDE.md and memory):** I give a function one or two quick tries at an exact match. If it doesn't match, the C goes under `#ifdef NONMATCHING` with the original asm kept as the fallback. The normal ROM build still checks out against the original every time.
+- **Progress:** about 85 functions are now in C this way, including all 76 earlier near-misses. A few new ones matched exactly (`sub_0802CD3C`, `sub_0800EC08`).
+- **Two real bugs found and fixed.** One call passed its arguments in the wrong order, and another dropped an argument. Both compiled silently because the calls had no prototype, so calls from NONMATCHING code now get real prototypes and are checked against the asm.
+- **The NONMATCHING ROM now links.** About 1,900 hardcoded ROM addresses in the remaining asm now use symbol names instead. Read-only data is pinned at its original address, because the data contains absolute pointers into itself. Without these changes the ROM failed to link once the C changed function sizes. A small number of hardcoded addresses remain, all in early asm that nothing in front of it shifts.
+- **Behaviour check now running:** both ROMs replay the same intro inputs on two linked GBAs, and I'll compare their RAM at three points. That will be the first evidence of whether the C actually behaves like the original.
+
+The background permuter runs are stopped; they no longer help with this goal. 31 functions are left in the current queue, all larger ones.
+
+## User
+
+Proceed with my input until all code is C
+
+## Claude
+
+I'll keep going until everything is C. The RAM comparison is still running; once it finishes I'll check the results, fix any differences in the NONMATCHING C, then continue through the remaining functions.
+
+## User
+
+Without my input, that is
+
+## Claude
+
+Understood: no stopping for input. Recording that in memory:
+
+- tool `Bash`: cat ~/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/memory/keep-going-decomp.md
+
+- tool `Bash`: cd ~/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/memory && python3 - <<'EOF' p="keep-going-decomp.md"; s=open(p).read() s=s.replace("**How to apply:** 
+
+## Claude
+
+Noted in memory. I'll continue without stopping for input until all the code is C, making those decisions myself. The RAM comparison is still running; when it finishes I'll check the results and carry on with the remaining functions.
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat $S/../tasks/ba2i3c3mz.output; cd $S; python3 - <<'EO
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; ls -la $S/cmp_nm; cmp $S/cmp_m/p0_f02990.png $S/cmp_nm/p
+
+## Claude
+
+A 510-byte PNG is a blank screen, so the NONMATCHING ROM doesn't run at all. To narrow it down, I'll make NONMATCHING selectable per source file and test the files one at a time on an early frame:
+
+- tool `Bash`: python3 - <<'EOF' p="Makefile"; s=open(p).read() old="""ifneq ($(NONMATCHING),)   CPPFLAGS += -DNONMATCHING endif """ new="""ifneq ($(NONMATCHING),)   CPPFLAGS 
+
+## Claude
+
+Now a script that builds with one file's NONMATCHING C at a time and checks whether the screen is blank at frame 1000:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/nmtest.sh <<'EOF' #!/bin/bash # nmtest.sh FILE.
+
+## Claude
+
+Two problems: every build fails, and the reference screenshot is only 192 bytes (also blank at frame 1000). The build first:
+
+- tool `Bash`: make NONMATCHING_FILES="src/rom2.c" 2>&1 | grep -v warning | grep -i "error\|overlap\|undefined\|\.c:[0-9]" | head -5
+
+- tool `Bash`: python3 - <<'EOF' p="Makefile"; s=open(p).read() s=s.replace('''# make NONMATCHING_FILES="src/rom2.c ...": the NONMATCHING C of just those files (bisecting a ba
+
+## Claude
+
+All five still fail, so either several files have bugs or the problem isn't the C at all. Excluding every file should give the matching code again, which tests the build setup itself:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; ALL=$(grep -l "^#ifdef NONMATCHING$" src/*.c | tr '\n' '
+
+## Claude
+
+Even with every file excluded, the ROM differs from the matching one, starting at offset 0x219. So the problem is in the build setup, not the C. Looking at what's there:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cmp -l zeldaalttp_nm.gba $S/m.gba | wc -l; cmp -l zeldaa
+
+## Claude
+
+Over a million bytes differ, which suggests the exclude didn't take effect at all. Checking the `.text` size:
+
+- tool `Bash`: arm-none-eabi-readelf -SW zeldaalttp_nm.elf | grep -E " \.text"; make -n NONMATCHING=1 NONMATCHING_EXCLUDE="src/rom2.c" src/rom2.o 2>&1 | grep cpp | head -2
+
+## Claude
+
+Right: the objects weren't rebuilt. The flags stamp only records the global CPPFLAGS, which don't change with the exclude list. Adding the list to the stamp:
+
+- tool `Bash`: grep -n "CPPFLAGS_STAMP) || echo" Makefile; sed -i "s/^\$(shell echo '\$(CPPFLAGS)' | cmp -s - \$(CPPFLAGS_STAMP) || echo '\$(CPPFLAGS)' > \$(CPPFLAGS_STAMP))/\
+
+## Claude
+
+The harness works: excluding everything reproduces the original screen. Now testing each file's NONMATCHING C on its own (everything else excluded):
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; ALL="src/interface.c src/rom2.c src/rom2a.c src/rom_0800
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; ALL="src/interface.c src/rom2.c src/rom2a.c src/rom_0800
+
+- tool `Bash`: python3 - <<'EOF' import struct,subprocess,re rom=open("/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/m.g
+
+## Claude
+
+5,841 words in `.rodata` equal function addresses. Checking whether they come from `.incbin` slices of the ROM, which would carry the original addresses:
+
+- tool `Bash`: grep -c "incbin" data/*.s | head; grep -n "incbin" data/data.s | head -3; arm-none-eabi-nm -n zeldaalttp.elf | awk '$1<="08138c08"' | tail -2
+
+- tool `Bash`: grep -rn "gUnknown_08138C08" data src/*.c | head -3; grep -n -A4 "^gUnknown_08138C08" data/*.s | head -8
+
+- tool `Bash`: grep -n "gUnknown_08138C08" ldscript.txt | head -3; grep -n "\.rodata" ldscript.txt | head; sed -n '/\.rodata 0x08137B04/,/^\t}/p' ldscript.txt | head -30
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/tools/split_incbin_ptrs.py
+
+- tool `Bash`: make -j8 compare 2>&1 | grep "zeldaalttp.gba:"; python3 tools/split_incbin_ptrs.py data/*.s && make -j8 compare 2>&1 | grep -E "zeldaalttp.gba: |rror" | head -3
+
+## Claude
+
+5,790 function pointers replaced, and the matching build still checks out. Now the full NONMATCHING ROM test:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; $S/nmtest.sh ""
+
+## Claude
+
+With all the NONMATCHING C in, the screen at frame 2990 is now identical to the original's. Committing:
+
+- tool `Bash`: git add -A Makefile tools data && git commit -qm "Function pointers in the data blobs as symbols (tools/split_incbin_ptrs.py, 5,790 words); NONMATCHING_EXCLUDE 
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/ref2990.png
+
+## Claude
+
+That's only the title screen, which is a weak test. The NONMATCHING functions are mostly Four Swords code, so the test needs Four Swords gameplay. Checking what the `start_linked` recording contains:
+
+- tool `Bash`: ls -la recordings/start_linked recordings/fs_only.gba 2>&1 | head; grep -rn "start_linked\|FS_ONLY" docs/*.md | head -5
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' S="/tmp/claude-1000/-home-alex-Documen
+
+## Claude
+
+One of the builds failed (no file listing printed). Checking which:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; ls $S/fs_m.gba $S/fs_nm.gba 2>&1; make FS_ONLY=1 NONMATC
+
+- tool `Bash`: make FS_ONLY=1 2>&1 | grep -v warning | grep -i "error\|overlap\|undefined" | head -3
+
+## Claude
+
+The default target is `compare`, which fails for an FS_ONLY build as expected. Naming the ROM targets explicitly:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; make -j8 FS_ONLY=1 zeldaalttp.gba >/dev/null 2>&1 && cp 
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for r in m nm; do rm -rf $S/fsc_$r; mkdir -p $S/fsc_$r; 
+
+## Claude
+
+Differences appear in Four Swords gameplay. Looking at frame 1600 from both builds:
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/fsc_m/p0_f01600.png
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/fsc_nm/p0_f01600.png
+
+## Claude
+
+They look the same to the eye. Computing exactly which pixels differ:
+
+- tool `Bash`: cd /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad && python3 -c " from PIL import Image, ImageChops for f 
+
+## Claude
+
+Small but real: a narrow strip around x=132-140 at frame 1600, growing larger later. Bisecting by file with the Four Swords test (frame 1600):
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/fstest.sh <<'EOF' #!/bin/bash # fstest.sh FRAME
+
+- tool `Bash`: python3 - <<'EOF' import struct,subprocess,re rom=open("baserom.gba","rb").read() def syms(elf):     d={}     for l in subprocess.run(["arm-none-eabi-readelf","
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/funcoff.py <<'EOF' # funcoff.py FILE FUNC...: s
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; ALL="src/interface.c src/rom2.c src/rom2a.c src/rom_0800
+
+- tool `Bash`: sed -n 38,52p ldscript.txt
+
+- tool `Bash`: grep -n "LDSCRIPT" Makefile | head
+
+- tool `Bash`: python3 - <<'EOF' p="Makefile"; s=open(p).read() s=s.replace("LDSCRIPT := ldscript.txt\n","""LDSCRIPT := ldscript.txt # NONMATCHING builds move libgcc's soft-fl
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; ALL="src/interface.c src/rom2.c src/rom2a.c src/rom_0800
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; ALL="src/interface.c src/rom2.c src/rom2a.c src/rom_0800
+
+## Claude
+
+About 1,000 stale words remain, mostly jump tables inside the code. Looking at how one is written in the source:
+
+- tool `Bash`: grep -rn "080AD0E0\|080ad0e0" asm src/*.c src/*/*.c 2>/dev/null | head -5
+
+- tool `Bash`: python3 - <<'EOF' import struct,subprocess,re S="/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad" def syms(
+
+- tool `Bash`: ls tools/ | grep -i "tr_\|thumb2c\|trace"; head -40 tools/tr_check.c 2>/dev/null | grep "^//"
+
+- tool `Bash`: ls tools/ps2 | head -30; grep -rn "tr_check" docs/*.md | head -5
+
+- tool `Bash`: sed -n 265,300p "docs/Running Walkthrough.md"; head -30 tools/tr_check.py
+
+- tool `Bash`: grep -n "traceStep\|gzwrite\|gzprintf\|static void trace" tools/mgba_run.c | head -20
+
+- tool `Bash`: sed -n 440,515p tools/mgba_run.c
+
+- tool `Bash`: cat tools/mgba_run.sh | head -20; sed -n 1,30p tools/mgba_run.c | grep include; find / -name "isa-inlines.h" -path "*arm*" 2>/dev/null | head -2
+
+## Claude
+
+Looking at how `mgba_run` creates and loads a core, so the replay mode can reuse it:
+
+- tool `Bash`: grep -n "GBACoreCreate\|mCoreInit\|loadROM\|->reset\|VFileOpen(rom\|core->init\|mCoreConfig" tools/mgba_run.c | head -15; sed -n 555,600p tools/mgba_run.c
+
+- tool `Bash`: grep -n "define THUMB_WRITE_PC\|define ARM_WRITE_PC\|static inline.*ThumbWritePC\|_ARMSetMode\|ARMSetPrivilegeMode" reference/mgba/include/mgba/internal/arm/isa
+
+## Claude
+
+Writing the replay mode. Function pointers held in RAM point at old code addresses, so the tool maps them (old→new, from a map built out of the two ELFs) both before running and when comparing:
+
+- tool `Bash`: grep -n "^int main" tools/mgba_run.c
+
+- tool `Read`: /home/alex/Documents/zeldaalttp-ps2/tools/mgba_run.c
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/tools/mgba_run.c
+
+- tool `Bash`: sed -i 's|#include <mgba/internal/arm/arm.h>|#include <mgba/internal/arm/arm.h>\n#include <mgba/internal/arm/isa-inlines.h>|' tools/mgba_run.c && bash tools/mgb
+
+- tool `Bash`: sed -i 's/mapWords(gba->memory.wram, 0x40000, \([01]\));/mapWords((uint8_t *) gba->memory.wram, 0x40000, \1);/; s/mapWords(gba->memory.iwram, 0x8000, \([01]\));
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; mkdir -p $S/rp; make -j8 FS_ONLY=1 zeldaalttp.gba >/dev/
+
+## Claude
+
+116 NONMATCHING functions are in the list. Tracing them on the asm build over the Four Swords replay:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/rp; rm -rf $S/tr; mkdir -p $S/tr; timeout 900 ./tools/mgb
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/rp; timeout 60 ./tools/mgba_run $S/m.gba 100 --players 2 
+
+## Claude
+
+The first run failed on a relative inputs path; a 100-frame test with the full path works. Running the full trace in the background:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/rp; rm -rf $S/tr; mkdir -p $S/tr; timeout 1500 ./tools/mg
+
+## Claude
+
+While that runs (it uses copies of the ROMs, so builds can continue), back to the queue. Next, `sub_08013A60`:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; bash $S/nextq.sh 1 $(cat $S/skip.txt) 2>&1 | cut -c1-420
+
+## Claude
+
+Next, `sub_08013A60`, which processes two 48-entry lists of tile records: switching tiles and spawning objects when their flags are set:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/b67.txt <<'EOF' @@ sub_08013A60 struct TileRec 
+
+## Claude
+
+The trace finished. The `sub_08013A60` build also seems to have failed (no symbol). Checking both:
+
+- tool `Bash`: cat /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/tasks/bjgvhylmk.output; make 2>&1 | grep -v warning | grep "file_s
+
+## Claude
+
+179 calls recorded across 63 functions. The build is fine now. Checking `sub_08013A60`, then running the replay:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/fncmp.py sub_08013A60; R=$S/rp; ./tools/mgba_
+
+- tool `Bash`: arm-none-eabi-nm -n /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/rp/m.elf | awk '$1<="02030eb8"' | tail 
+
+## Claude
+
+0x02030EB8 sits past the last named symbol there. Checking for declarations near it:
+
+- tool `Bash`: grep -n "02030E\|02030D\|02030C" include/variables.h | head; grep -n "sub_0800F808\|sub_0800FDB4" src/*.c | head -4
+
+- tool `Bash`: sed -n 55,80p src/file_select.c; sed -n 300,320p src/file_select.c
+
+- tool `Bash`: git status --short | head; git diff --stat src | tail -1
+
+## Claude
+
+Before committing, the `sub_08013A60` draft that's placed in the tree needs a build check:
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -v warning | grep "zeldaalttp.gba:\|\.c:[0-9]\|rror" | head -5; python3 /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91f
+
+- tool `Bash`: make 2>&1 | grep -B3 "Error 1" | head -6
+
+- tool `Bash`: python3 - <<'EOF' p="ldscript.txt"; s=open(p).read() old="\t/* fixed address: data blobs hold absolute ROM pointers, so NONMATCHING builds (code of another size
+
+## Claude
+
+16 bytes long, so it goes in as NONMATCHING. Then committing it along with the replay tool and the linker changes:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; $S/b2nm.sh $S/b67.txt sub_08013A60 && make -j8 compare 2
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/tools/check_nonmatching.sh
+
+- tool `Bash`: chmod +x tools/check_nonmatching.sh && cp /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/fs.inputs recordi
+
+## Claude
+
+`recordings/` is gitignored, so the inputs file goes in `tools/`:
+
+- tool `Bash`: mv recordings/fs_walk.inputs tools/fs_walk.inputs && sed -i 's|# check_nonmatching.sh OUTDIR INPUTS FRAMES:|# check_nonmatching.sh OUTDIR INPUTS FRAMES (e.g. to
+
+## Claude
+
+The check is now a repo script. Recording Step 19 in the walkthrough:
+
+- tool `Bash`: cat >> "docs/Running Walkthrough.md" <<'EOF'  ## Step 19: making the NONMATCHING build run, and checking it call by call (2026-11-17)  - A NONMATCHING ROM built
+
+## Claude
+
+Back to the queue. Next, `sub_0802A4EC`:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; bash $S/nextq.sh 1 $(cat $S/skip.txt) 2>&1 | cut -c1-450
+
+## Claude
+
+Next, `sub_0802A4EC`, a count over the four players with the same per-player check unrolled:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/b68.txt <<'EOF' @@ sub_0802A4EC extern const u8
+
+- tool `Bash`: sed -i '/^u8 sub_08000A40(u8);$/d' src/file_select.c $S/b68.txt 2>/dev/null; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c10
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git add -A asm/non_matching src && git commit -qm "Decompile sub_0802A4EC  Co-Authored-By: Claude Opus 5
+
+## Claude
+
+Next, `sub_0800F22C`, the text reader's next-character routine with its control codes:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/b69.txt <<'EOF' @@ sub_0800F22C // Next charact
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; $S/b2nm.sh $S/b69.txt sub_0800F22C && make -j8 compare 2
+
+## Claude
+
+Next is `sub_08037574`, in the -O0 `fs_game.c`. There's a draft generator for -O0 code; trying it:
+
+- tool `Bash`: ls tools/ | grep -i draft; python3 tools/o0_draft.py 2>&1 | head -5
+
+- tool `Bash`: head -20 tools/o0_draft.py | grep "^#\|\"\"\"" ; python3 tools/o0_draft.py asm/non_matching/fs_game/sub_08037574.inc 2>&1 | head -80
+
+- tool `Bash`: ls asm/non_matching/*/sub_08037574.inc; sed -n 1,30p tools/o0_draft.py | grep -i "usage\|argv"
+
+- tool `Bash`: grep -n "argv\|def main" tools/o0_draft.py | head
+
+- tool `Bash`: sed -n 334,345p tools/o0_draft.py; python3 tools/o0_draft.py sub_08037574 2>&1 | head -90
+
+## Claude
+
+The draft is rough. Reading the asm itself:
+
+- tool `Bash`: grep -v "^\s*$" asm/non_matching/fs_game/sub_08037574.inc | tr '\t' ' ' | paste -sd';' | cut -c1-5000
+
+- tool `Bash`: grep -n "gUnknown_03000FC0\|gUnknown_0200B1D0\|gUnknown_03000494\b\|gUnknown_03000FE4\|gUnknown_03000FD0\|gHeldKeys\|gUnknown_02000010;" include/variables.h | h
+
+- tool `Bash`: awk '/^struct Struct03000FC0$/,/^};/' include/types.h; grep -n "struct BitU16A" -A3 include/types.h | head -4
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/drafts/sub_08037574.c <<'EOF' // Records this G
+
+## Claude
+
+Next, `sub_0800CE74`:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; bash $S/nextq.sh 1 $(cat $S/skip.txt) 2>&1 | cut -c1-550
+
+## Claude
+
+Next, `sub_0800CE74`, which draws a rotating triangle window: three edges rasterised into the scanline table, then per-line left/right bounds:
+
+- tool `Bash`: grep -n "struct UnknownStruct4$" -A4 include/types.h | head -5; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scra
+
+## Claude
+
+The extern and `sub_0800D0A8` are defined later in `rom2.c`, so the draft needs its own declarations. Using the struct's `src` field for the pointer too, then trying it:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' S="/tmp/claude-1000/-home-alex-Documen
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; $S/b2nm.sh $S/b70.txt sub_0800CE74 && make -j8 compare 2
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/drafts/sub_08013490.c <<'EOF' // Shuffles n hal
+
+## Claude
+
+Both builds pass, and the four orders match the asm (A always; B, C and D only while they have entries left). Committing:
+
+- tool `Bash`: git commit -qam "sub_08013490 (list shuffle) as NONMATCHING C  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" && echo committed; S=/tmp/claude-1000/-h
+
+- tool `Bash`: grep -n "sub_08012F84_u32 = " ldscript.txt; sed -i 's|^sub_08012F84_u32 = sub_08012F84;\(.*\)$|sub_08012F84_u32 = sub_08012F84;\1\nsub_08009380 = sub_0800935C +
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/b71.txt <<'EOF' @@ sub_08012BE4 extern u8 gUnkn
+
+## Claude
+
+Those two externs live only in the NONMATCHING declarations block. Moving them to the unconditional section at the top:
+
+- tool `Bash`: python3 - <<'EOF' fn="src/file_select.c"; s=open(fn).read() for d in ["extern u8 gUnknown_0200B314;\n","extern u8 gUnknown_02000430[];\n"]:     s=s.replace(d,""
+
+## Claude
+
+16 bytes short, so NONMATCHING. My `b2nm.sh` resets `src/`, which would undo the extern move, so I'll do the steps by hand:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/unplace.py sub_08012BE4 >/dev/null; python3 -
+
+- tool `Bash`: git add -A src ldscript.txt asm && git commit -qm "sub_08012BE4 (room setup) as NONMATCHING C; sub_08009380 = second entry point of sub_0800935C  Co-Authored-By
+
+## Claude
+
+Next, `sub_0800DCDC`:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; bash $S/nextq.sh 1 $(cat $S/skip.txt) 2>&1 | cut -c1-700
+
+## Claude
+
+Next, `sub_0800DCDC`, one step of the text box: it handles the reader's control codes (all of which return 0), otherwise draws the character and maybe plays the voice blip:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/drafts/sub_0800DCDC.c <<'EOF' extern const u8 g
+
+## Claude
+
+The matching build passes and no errors printed. Confirming the NONMATCHING objects build succeeds, then committing:
+
+- tool `Bash`: make -j8 NONMATCHING=1 objects >/dev/null 2>&1 && echo nm-ok && make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git commit -qam "sub_0800DCDC (text box 
+
+## Claude
+
+Committed. The rest of the queue:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; bash $S/nextq.sh 30 $(cat $S/skip.txt) 2>&1 | grep "^=="
+
+## Claude
+
+About 21 left, mostly large -O0 functions in `fs_game.c`. Trying the -O0 draft generator on one to see how usable its output is:
+
+- tool `Bash`: python3 tools/o0_draft.py sub_08043B94 2>&1 | head -120
+
+## Claude
+
+The output is a usable starting point, and I can turn it into structured C quickly. This one initialises an entity from its subtype's record. Checking the tables' declarations:
+
+- tool `Bash`: grep -n "gUnknown_08138C20\|gUnknown_081390E0" include/variables.h src/fs_game.c | head -4; grep -n "u8 sub_0802C2DC\|u8 sub_0802C070" include/functions.h
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/drafts/sub_08043B94.c <<'EOF' extern const u16 
+
+## Claude
+
+Committing, then the next one:
+
+- tool `Bash`: git commit -qam "sub_08043B94 (enemy init from its record) as NONMATCHING C  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" && echo committed; python3
+
+## Claude
+
+Next, `sub_08052CE4`: off-screen arrows for the other players. For each player off screen it picks one of 8 directions and counts arrows per direction, and Select toggles the feature:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -n "sub_0804C938" include/functions.h | head -2; ca
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git commit -qam "sub_08052CE4 (off-screen player arrows) as NONMATCHING C  Co-Authored-By: Claude Opus 5
+
+## Claude
+
+This one is trickier; the draft has unclear operator precedence and loop structure. Checking the asm for the first condition and the loop's end:
+
+- tool `Bash`: awk '/_08044296:/,/_08044320:/' asm/non_matching/fs_game/sub_08044240.inc | head -30; awk '/_08044386:/,/_080443AE:/' asm/non_matching/fs_game/sub_08044240.inc
+
+- tool `Bash`: sed -n 1,40p asm/non_matching/fs_game/sub_08044240.inc | grep -v "^\s*$"
+
+- tool `Bash`: grep -n "sub_08002E70" include/functions.h | head -2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; ca
+
+- tool `Bash`: make NONMATCHING=1 objects 2>&1 | grep -A2 "conflicting types for .sub_08044240" | head; grep -n "sub_08044240" include/functions.h src/fs_game.c | head -4
+
+- tool `Bash`: sed -i 's/^void sub_08044240(struct Entity \*this, u16 speed)$/void sub_08044240(struct Entity *this, u32 speed_)/' src/fs_game.c && python3 - <<'EOF' fn="src/f
+
+## Claude
+
+Committed. Re-running the per-function check in the background on the Four Swords replay, since several new functions are gameplay code. It builds as it goes, so meanwhile I'll only write drafts:
+
+- tool `Bash`: ./tools/check_nonmatching.sh /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/cn1 tools/fs_walk.inputs 3921 
+
+- tool `Bash`: python3 tools/o0_draft.py sub_08055688 2>&1 | head -150
+
+- tool `Bash`: grep -n "sub_08055A08\|sub_0802C3E0\|u32 sub_08013D54" include/functions.h | head -3; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-
+
+- tool `Bash`: cat /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/tasks/bg73fm5fq.output
+
+- tool `Bash`: python3 - <<'EOF' p="tools/mgba_run.c"; s=open(p).read() old='''		if (got0 != r1[0]) snprintf(why, sizeof why, "r0 %08X expected %08X", got0, r1[0]);''' new='''
+
+- tool `Bash`: git add tools/mgba_run.c && git commit -qm "mgba_run --replay: two differing values that are both ROM code addresses (moved return addresses) count as equal  Co
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git commit -qam "sub_08055688 (item handed to a player) as NONMATCHING C  Co-Authored-By: Claude Opus 5.
+
+## Claude
+
+Next, `sub_0803F74C`, which looks like the player's sword or attack entity being set up from its owner. The last call's arguments are unclear in the draft, so checking the asm tail:
+
+- tool `Bash`: awk '/_0803FA50:/,/_0803FAD8:/' asm/non_matching/fs_game/sub_0803F74C.inc | grep -v "^\s*$" | tr '\t' ' ' | paste -sd';' | cut -c1-1500; grep -n "sub_08003184\|
+
+- tool `Bash`: awk '/_0803FA50:/,/_0803FAD8:/' asm/non_matching/fs_game/sub_0803F74C.inc | grep -A40 "bl sub_0803FAE8" | grep -v "^\s*$" | tr '\t' ' ' | paste -sd';' | cut -c1
+
+## Claude
+
+The call is `sub_08003E10(owner, gUnknown_0813E8BF[sub_08003184(gUnknown_0813E8BC)])`. Writing it:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/drafts/sub_0803F74C.c <<'EOF' extern const u8 g
+
+## Claude
+
+Both builds pass. Committing and drafting the next, `sub_08042F5C`:
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git commit -qam "sub_0803F74C (player weapon setup) as NONMATCHING C  Co-Authored-By: Claude Opus 5.5 <n
+
+## Claude
+
+Next, `sub_08042F5C`, the weapon's per-frame update: it syncs with its owner's animation and frame, applies hits, and deletes itself when the owner stops attacking:
+
+- tool `Bash`: grep -n "frameIdx\|0x21 \*/" include/entity.h | head -2; grep -n "gUnknown_08428764\|sub_08000740\|sub_08000620" include/variables.h include/functions.h | head 
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i '1i extern const void *const gUnknown_08428764[];
+
+- tool `Bash`: python3 tools/o0_draft.py sub_0804C448 2>&1 | head -170
+
+## Claude
+
+This is a `switch` on the item's form, compiled as a jump table, and the draft lost the case labels. Reading the table:
+
+- tool `Bash`: grep "\.4byte _0804" asm/non_matching/fs_game/sub_0804C448.inc | awk '{print NR-1, $2}' | head -16; grep -n "^_0804C4..:\|^_0804C5..:\|^_0804C6..:\|^_0804C7..:"
+
+## Claude
+
+The table's first word is its own address; entries 1-14 map forms 0-13 to the cases in the draft's order. This is the pickup effect handler (`a1` is whoever picked it up):
+
+- tool `Bash`: grep -n "sub_0802C6AC\|sub_0803D65C\|sub_0804C448" include/functions.h | head -3; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d
+
+- tool `Bash`: python3 - <<'EOF' fn="src/fs_game.c"; s=open(fn).read() s=s.replace("void sub_0802C6AC(struct Entity *);\nvoid sub_0803D65C(u8, u32);\n\n// Effect of pickup","/
+
+## Claude
+
+Committed. Next, `sub_0803FAE8`:
+
+- tool `Bash`: python3 tools/o0_draft.py sub_0803FAE8 2>&1 | head -150
+
+- tool `Bash`: grep -n "sub_08040074\|sub_0803F0E4\|sub_0804055C\|gUnknown_0813EABC" include/functions.h include/variables.h | head -4; S=/tmp/claude-1000/-home-alex-Documents
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git commit -qam "sub_0803FAE8 (player weapon swing, sword beam) as NONMATCHING C  Co-Authored-By: Claude
+
+## Claude
+
+Next, `sub_0804F760`, a block that covers (form+1)×(form+1) tiles. The unrolled calls become a loop:
+
+- tool `Bash`: grep -n "sub_0804FF80\|gUnknown_0813FEAC" include/functions.h include/variables.h | head -3; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git commit -qam "sub_0804F760 (block setup) as NONMATCHING C  Co-Authored-By: Claude Opus 5.5 <noreply@a
+
+## Claude
+
+This one has a hazard. After `DeleteThisEntity`, the asm falls through and reads values that were never set. Whether that matters depends on whether `DeleteThisEntity` returns, so checking tmc:
+
+- tool `Bash`: grep -rn "void DeleteThisEntity" -A8 reference/tmc/src/*.c | head -12; grep -n "DeleteThisEntity" -B2 -A10 asm/non_matching/*/DeleteThisEntity.inc 2>/dev/null |
+
+- tool `Bash`: grep -n "gUnknown_08141A08\|gUnknown_08141A00\|sub_0804CB38" include/variables.h include/functions.h | head -3; S=/tmp/claude-1000/-home-alex-Documents-zeldaalt
+
+## Claude
+
+One check: the draft marks the `unk64` updates as byte accesses (`/* bf */`), but `unk64` is a `u32`. Checking the asm:
+
+- tool `Bash`: grep -n "#100\]\|#100$" asm/non_matching/fs_game/sub_080608F8.inc | head; grep -c "add.*#100" asm/non_matching/fs_game/sub_080608F8.inc; grep -n -B1 -A3 "add r.
+
+## Claude
+
+It's a halfword (`ldrh`). Fixing those accesses to use the low `u16`:
+
+- tool `Bash`: python3 - <<'EOF' fn="src/fs_game.c"; s=open(fn).read() i=s.index("void sub_080608F8(struct Entity *this)"); j=s.index("\n}\n",i) body=s[i:j].replace("this->unk
+
+## Claude
+
+Committed. That's a lesson for the draft tool: its `/* bf */` notes can hide an access's width, so I'll keep checking load/store sizes in the asm. Next, `sub_0804FB80`:
+
+- tool `Bash`: python3 tools/o0_draft.py sub_0804FB80 2>&1 | head -170
+
+## Claude
+
+Next, `sub_0804FB80`, which puts a block's tiles back into the map as a 9-slice: a corner from `unk60`, then edges, middle and corners from tiles 0x140-0x147. The unrolled calls become a loop:
+
+- tool `Bash`: grep -n "sub_08003B64" include/functions.h | head -1; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; ca
+
+## Claude
+
+The tile order matches the original row by row. Committing:
+
+- tool `Bash`: make -j8 compare 2>&1 | grep -q "zeldaalttp.gba: OK" && git commit -qam "sub_0804FB80 (block back into the map) as NONMATCHING C  Co-Authored-By: Claude Opus 5.
+
+## Claude
+
+Next, `sub_0803E114`, the players' per-frame bookkeeping. Checking the access widths for fields 0x8A and 0x34, given the draft-tool lesson:
+
+- tool `Bash`: grep -n "#138\|#52\]\|#52$\|#0x8a\|add r.*#52" asm/non_matching/fs_game/sub_0803E114.inc | head; grep -n -A3 "add r[0-9], r[0-9], #138\|add r[0-9], #138" asm/no
+
+- tool `Bash`: grep -n "sub_080074C0\|sub_08003130\|sub_0801276C\|gUnknown_03000838" include/functions.h include/variables.h | head -4; S=/tmp/claude-1000/-home-alex-Documents
+
+## Claude
+
+`gUnknown_03000838` has no declaration. Checking its width in the asm:
+
+- tool `Bash`: sed -n 1,12p asm/non_matching/fs_game/sub_0803E114.inc | grep -v "^\s*$"; grep -rn "gUnknown_03000838" src/*.c | head -3; grep -n "sub_08003130" include/functio
+
+## Claude
+
+You've hit your 5-hour limit · resets 10:10pm (America/Chicago)
+
+## User
+
+Try again
+
+## User
+
+[Request interrupted by user]
+
+## User
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+<system-reminder>
+<tools-used-before-summary>Bash, Edit, PushNotification, Read, TaskStop, ToolSearch, Write</tools-used-before-summary>
+</system-reminder>
+Summary:
+1. Primary Request and Intent:
+   - **Goal:** decompile Four Swords (zeldaalttp GBA disassembly, USA) to C for a PS2 port with split-screen multiplayer.
+   - **Latest direction:**
+     - "Yes, all I really want is functionally equivalent C. Proceed with that in mind."
+     - "Proceed with my input until all code is C".
+     - "Without my input, that is" — i.e. continue autonomously, without asking, until all code is C.
+   - **Earlier requests:**
+     - "Continue unprompted until I need to make a decision".
+     - Asked whether the substack article's tools would help (answered: the permuter; it was set up).
+     - "How efficiently are we working?" (answered: about 10 functions/hour, near-misses costly).
+   - **Constraints (verbatim from CLAUDE.md / user):**
+     - "Web access: GitHub only without asking."
+     - "Never access tcrf.net (The Cutting Room Floor) in any way."
+     - "No `pkill -f <pattern>` in a command whose own command line contains the pattern."
+     - "No ROM, BIOS or extracted asset is ever committed."
+     - reference/ is never committed.
+     - Never share the user's email with external services.
+     - Substack access was one-time only.
+   - **Workflow:**
+     - Commit only when `make compare` prints `zeldaalttp.gba: OK` (gate with `grep -q "zeldaalttp.gba: OK"`, never `| tail`).
+     - Update docs/Running Walkthrough.md, docs/Planning Doc.md and Claude Conversation.md at milestones (archive script; check no removed lines).
+     - Push notification at milestones.
+   - **New rule (also in CLAUDE.md and memory functional-c-ok.md):** one or two quick tries for an exact match; otherwise commit the C under `#ifdef NONMATCHING` with the asm include in the `#else`. `make NONMATCHING=1 objects` must compile.
+
+2. Key Technical Concepts:
+   - **Builds:** agbcc -O2 (fs_game.c at -O0). The NONMATCHING build makes `zeldaalttp_nm.gba`, linked with the generated `ldscript_nm.txt`:
+     - `.rodata 0x08137B04` fixed;
+     - libgcc `dp-bit`/`fp-bit` moved after rodata into `.text_softfloat`.
+   - **Absolute ROM addresses** had to be symbolized so moved code links and runs:
+     - `.4byte` against a Thumb FUNC symbol gets bit 0 set, so even words use non-function labels;
+     - local `_08...` labels only within their own file;
+     - `.thumb_func` makes the next label the function, so plain alias labels go after the function's own label.
+   - **incbin function pointers:** odd words equal to func+1 become `.4byte name`.
+   - **Whole-game screen comparison isn't valid** for code-moved builds (timing/RNG with linked GBAs).
+   - **Per-function validation:** `mgba_run --trace` (original) plus `mgba_run --replay ROM MAP TRACE.gz...` (NM).
+     - Maps function pointers; masks IRQs; compares r0, r4-r11, sp and memory.
+     - Excludes I/O and the stack below sp; two differing ROM-code addresses count as equal.
+   - **Matching lessons:**
+     - struct views keep the base register (`((struct View *)&g)->f`);
+     - branch swaps; `<< 2` vs `* 4`;
+     - `u32 lo = t & 15` computed first;
+     - `if (n<0) return; if (n>2) return;`;
+     - the permuter's odd outputs point at the key expression.
+   - **o0_draft.py** produces drafts for -O0 code; check `/* bf */` widths against the asm (ldrh vs ldrb).
+   - **DeleteThisEntity(e) returns normally in this game.** In sub_080608F8 I return after delete (a noted deviation).
+
+3. Files and Code Sections:
+   - **Makefile:**
+     - `NONMATCHING=1` adds `-DNONMATCHING` and makes `ROM := zeldaalttp$(if $(NONMATCHING),_nm).gba`.
+     - `NONMATCHING_EXCLUDE` uses `$(foreach f,$(NONMATCHING_EXCLUDE),$(eval $(f:.c=.o): CPPFLAGS := $(filter-out -DNONMATCHING,$(CPPFLAGS))))`; the stamp includes the exclude list.
+     - `objects: $(OFILES)` target.
+     - `LDSCRIPT := ldscript_nm.txt` when NONMATCHING, plus a generation rule (python one-liner).
+   - **ldscript.txt:**
+     - `.rodata :` floats (the fixed address is only in the generated nm script);
+     - `sub_08009380 = sub_0800935C + 0x24;` alias.
+   - **New tools:**
+     - tools/permuter_setup.py;
+     - tools/place_nonmatching.py (pattern `asm(".include \"...\"");`);
+     - tools/symbolize_asm.py;
+     - tools/split_incbin_ptrs.py;
+     - tools/check_nonmatching.sh (OUT INPUTS FRAMES);
+     - tools/fs_walk.inputs;
+     - tools/mgba_run.c (replay mode, includes isa-inlines.h).
+   - **Other changed files:**
+     - asm/**/*.inc and data/*.s symbolized;
+     - asm/non_matching/interface/sub_0812CC58.inc has a `sub_0812CC58_addr` alias after the function label;
+     - src/rom3a.c, src/lttp/sprite_faerie.c and src/lttp/sprite2.c use `#ifdef NONMATCHING_LTTP`.
+   - **include/types.h:**
+     - Struct0202A5E0 (unk2_6, unk10C, s8 unk10D);
+     - Struct03000450 fields unk12, unk14, unk1C, unk1E, unk20, unk22, unk24, unk26, unk28, unk2A;
+     - Struct03006C80 (unk48, unk49, unk4B);
+     - Struct0202A770 (unk58 const struct U32x3*), struct U32x3;
+     - Struct0202A580 (u16 unk8, unkA);
+     - Struct0800EE2C unk3.
+   - **include/functions.h:**
+     - sub_080144F0(u16,u16,u16);
+     - sub_08009664 returns u16;
+     - sub_08013C8C(u16*,u16,u16,u8);
+     - sub_0800EC08 returns u32.
+   - **src/file_select.c:**
+     - top unconditional block: MapBuf struct; externs 02038000, 0200B314, 02000430;
+     - NONMATCHING declarations block.
+   - **src/rom2.c:** gUnknown_02030790 link struct moved before sub_0800C54C.
+   - **Many NONMATCHING blocks** in file_select, rom_0800D4F0, rom2, rom2a, fs_game.
+   - **Docs:** walkthrough Steps 16-19; planning count 5,754 (about 82+ NONMATCHING); CLAUDE.md rule updated.
+   - **Memory:** functional-c-ok.md (new) and keep-going-decomp.md ("Reaffirmed 2026-11-17: proceed without the user's input until all code is C").
+   - **Scratchpad** (/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad):
+     - nextq.sh, skip.txt, place.py, unplace.py (fixed to skip asm( lines), fncmp.py, extract.py;
+     - b2nm.sh (BATCH FUNC: unplace, then place NONMATCHING; does `git checkout -q src`!), tonm.sh;
+     - drafts/, batch files bNN.txt, deferred_notes.txt.
+
+4. Errors and fixes:
+   - **Commit after a failed compare** (`| tail -1` hid the status): amended; always gate with grep -q.
+   - **unplace.py deleted asm include lines:** fixed with the `asm(` exclusion; also restored stray declarations several times.
+   - **NONMATCHING build failures:**
+     - implicit decls with a wrong argument order (sub_0800E78C → sub_0800E80C, fixed);
+     - a missing third arg to sub_0802C1C0 (fixed);
+     - duplicate struct definitions;
+     - missing externs.
+   - **Link errors:** short branches to absolute addresses, then .rodata overlap → symbolize tool and ldscript_nm.
+   - **Exclude-stamp bug:** objects weren't rebuilt → added the exclude list to the stamp.
+   - **Blank screen in the NM ROM:** incbin function pointers → split_incbin_ptrs.
+   - **Width mistake from o0_draft:** sub_080608F8's unk64 is u16 (fixed).
+
+5. Problem Solving:
+   - The NONMATCHING ROM boots and plays.
+   - The replay check on fs_walk: 144 ok, 5 fail — only expected cases:
+     - sub_0800C54C reads I/O;
+     - sub_0800C75C is void.
+   - Remaining queue (executed FS functions): sub_08028200, sub_080272D0, sub_08038E44, sub_08040074, sub_08014958, sub_08028CD0, sub_080291F8, sub_08050444, sub_08050B50, plus others already in progress. Beyond that, all other asm, since the goal is all code C.
+
+6. All user messages:
+   - "Proceed"
+   - "Were there any tools from the substack article that you think would help?"
+   - "Yes"
+   - "Proceed"
+   - "Continue unprompted until I need to make a decision"
+   - "How efficiently are we working?"
+   - "Yes, all I really want is functionally equivalent C. Proceed with that in mind"
+   - "Proceed with my input until all code is C"
+   - "Without my input, that is"
+
+7. Pending Tasks:
+   - Continue converting all remaining asm to C autonomously:
+     - functional NONMATCHING C acceptable;
+     - Four Swords first, then the rest.
+   - Periodically run tools/check_nonmatching.sh.
+   - Update docs and archive at milestones, with a push notification.
+
+8. Current Work:
+   - sub_0803E114 (fs_game.c, player per-frame bookkeeping) was placed via place_nonmatching.py; the matching build passes.
+   - The NONMATCHING build fails: "`gUnknown_03000838' undeclared". The asm shows `strb` (byte), so it needs `extern u8 gUnknown_03000838;` added to the top of the draft's NONMATCHING block in src/fs_game.c. It is not yet committed.
+   - Previously committed this stretch: sub_08043B94, 52CE4, 44240, 55688, 3F74C, 42F5C, 4C448, 3FAE8, 4F760, 608F8, 4FB80 and others.
+
+9. Optional Next Step:
+   - Add `extern u8 gUnknown_03000838;` before `void sub_0803E114(void)` in the NONMATCHING block of src/fs_game.c.
+   - Re-run `make -j8 NONMATCHING=1 objects`, then gate on `make compare` and commit "sub_0803E114 (player per-frame bookkeeping) as NONMATCHING C".
+   - Then continue with the next queue functions (sub_08038E44, sub_08040074, sub_08028200, …), per the user's "Proceed with my input until all code is C" / "Without my input, that is".
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /home/alex/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9.jsonl
+Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.
+
+The messages after this summary are the most recent messages from before compaction, kept verbatim. The summary was written without seeing them, so something it says has not happened yet may already have happened in them.
+
+## User
+
+<command-name>/compact</command-name>
+            <command-message>compact</command-message>
+            <command-args></command-args>
+
+## User
+
+<local-command-stdout>Compacted </local-command-stdout>
+
+## User
+
+Continue
+
+- tool `Bash`: Locate the missing extern and function
+
+- tool `Bash`: Add extern, build NM, compare, commit
+
+- tool `Bash`: Review queue scripts and drafts
+
+- tool `Bash`: Show next queued function and remaining asm count
+
+- tool `Bash`: Check struct layouts
+
+## Claude
+
+Status: sub_0803E114 (player per-frame bookkeeping) is now committed as NONMATCHING C, and `make compare` still prints OK. The last full check of the NONMATCHING functions, which was run before this one was added, gave 133 ok and 16 fail. 5 of those fails are expected: functions that read hardware registers or return nothing. The other 11 aren't explained yet. 6 are sub_0800E78C, sub_0800E80C and sub_0800E950 returning or storing 0800D87D where the original has 0800D871. That looks like a code address that moves in the NONMATCHING build rather than a logic error, but I haven't confirmed it. The other 5 are sub_0800EAA4 with the same 7D/71 difference in memory.
+
+The bigger picture: 5,753 asm functions are still waiting to become C, so this is a long road.
+
+I'm now on sub_08028200, which applies an entity's movement to the up-to-four players linked to it, and I'll keep going through the queue.
+
+## User
+
+Continue converting assembly to equivalent C
+
+- tool `Bash`: Look up field names
+
+- tool `Bash`: Show entity fields around 0x2B-0x36 and 0x7C
+
+- tool `Bash`: Draft sub_08028200, place, build both
+
+- tool `Bash`: Commit and show next queue function
+
+- tool `Bash`: Show tail of sub_080272D0 and callee info
+
+## Claude
+
+Converting sub_080272D0, a second moving-platform routine that also handles diagonal movement. sub_08028200 is committed.
+
+- tool `Bash`: Look up entity fields and callee definitions
+
+- tool `Bash`: Draft sub_080272D0, place, build both
+
+- tool `Bash`: Commit and show next function
+
+- tool `Bash`: Generate -O0 draft for sub_08038E44
+
+- tool `Bash`: Show later asm and struct layout
+
+- tool `Bash`: Look up remaining struct fields and prototypes
+
+## Claude
+
+Now on sub_08038E44, a Four Swords level-end sequence (subState 0-6, written at -O0). Writing its C by hand from the draft.
+
+- tool `Bash`: Draft sub_08038E44 and build both
+
+- tool `Bash`: Commit and show next function
+
+- tool `Bash`: Generate -O0 draft for sub_08040074
+
+- tool `Bash`: Inspect asm details and entity fields
+
+- tool `Bash`: Field names and data declarations
+
+- tool `Bash`: Draft sub_08040074 and build both
+
+## Claude
+
+sub_08038E44 (stage clear) and sub_08040074 (held item) are done; committing, then on to the next queued function.
+
+- tool `Bash`: Commit and show next function
+
+- tool `Bash`: Show the rest of sub_08014958
+
+- tool `Bash`: Check existing declarations
+
+- tool `Bash`: Draft sub_08014958 and build both
+
+- tool `Bash`: Commit and show next function
+
+- tool `Bash`: Extract tile offset lists per case
+
+- tool `Bash`: Check case 3 base constant
+
+- tool `Bash`: Draft sub_08028CD0 and build both
+
+- tool `Bash`: Commit and show next function
+
+## Claude
+
+Same shape as the last one with a different table; checking it's byte-identical apart from labels.
+
+- tool `Bash`: Compare the two functions' asm
+
+- tool `Bash`: Share a helper between the two tile-block functions
+
+- tool `Bash`: Commit and show next function
+
+- tool `Bash`: Generate compact -O0 draft
+
+- tool `Bash`: Draft sub_08050444 table-driven and build
+
+- tool `Bash`: Commit and show next function
+
+## Claude
+
+Door tiles done (sub_08050444). Now sub_08050B50, a larger variant of the same table-driven tile drawing.
+
+- tool `Bash`: Compact -O0 draft of sub_08050B50
+
+- tool `Bash`: Check jump table order
+
+- tool `Bash`: Show jump table targets and labels
+
+- tool `Bash`: Refactor shared helper and add sub_08050B50
+
+- tool `Bash`: Commit sub_08050B50
+
+- tool `Bash`: Run per-function replay check
+
+- tool `Bash`: Peek at upcoming queue
+
+- tool `Bash`: Read check results
+
+- tool `Bash`: Find why the NM ROM build failed
+
+- tool `Bash`: Show file_select.o error
+
+- tool `Bash`: Build file_select.o alone for error
+
+- tool `Bash`: Filter for actual errors
+
+## Claude
+
+The validation run caught a NONMATCHING build error in sub_080272D0 that my error filter missed: the callees weren't declared before use. Fixing it and making the check rely on make's exit status.
+
+- tool `Bash`: Declare callees before the helper
+
+- tool `Bash`: Cast pointers and rebuild both
+
+- tool `Bash`: Show remaining NM errors
+
+- tool `Bash`: Check existing declaration and callers
+
+- tool `Bash`: Match existing u8* prototype
+
+- tool `Bash`: Rebuild NM objects and compare
+
+## Claude
+
+The NONMATCHING build compiles again. Committing the fix and re-running the replay check.
+
+- tool `Bash`: Commit fix and run replay check
+
+- tool `Bash`: Check commit and FS_ONLY NM build
+
+- tool `Bash`: Show link error
+
+## Claude
+
+Static const tables in my C land in each object's .rodata, which the NONMATCHING linker script throws away. Adding them to the generated script.
+
+- tool `Bash`: Inspect ldscript generation
+
+- tool `Bash`: Find static const tables in C
+
+- tool `Bash`: Find global header
+
+- tool `Bash`: Add NM_RODATA section and rebuild
+
+- tool `Bash`: Commit and run replay check
+
+## Claude
+
+Replay check: 134 ok, 26 fail. The 5 known expected fails remain. 21 are new, in functions that passed before, so something in the NONMATCHING build regressed. Investigating.
+
+- tool `Bash`: Compare rodata region of NM ROM with baserom
+
+- tool `Bash`: Compare rodata with FS_ONLY matching build
+
+- tool `Bash`: Find first long mismatch run
+
+- tool `Bash`: Compare section layouts
+
+- tool `Bash`: List rodata sizes of objects (current = matching build)
+
+- tool `Bash`: Compare rodata sizes in the NM build
+
+## Claude
+
+Found it: in the NONMATCHING build, file_select.o's .rodata is 16 bytes larger, which shifts all the fixed data after it. Finding which function adds it.
+
+- tool `Bash`: Find references to file_select rodata
+
+- tool `Bash`: Identify function referencing .rodata
+
+- tool `Bash`: Move sFns to .rodata.nm
+
+## Claude
+
+Adding a guard to check_nonmatching.sh so a .rodata size change stops the check right away.
+
+- tool `Bash`: Add rodata guard and rerun check
+
+## Claude
+
+Replay check is clean: 155 ok, and the 5 fails are only the expected ones. The 11 unexplained fails from the earlier run are gone too. Updating the docs for this milestone.
+
+- tool `Bash`: Gather doc state and counts
+
+- tool `Bash`: Update docs and commit
+
