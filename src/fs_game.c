@@ -7751,7 +7751,41 @@ void sub_0804FB34(struct Entity *this)
         sub_0804FB80(this);
 }
 
+#ifdef NONMATCHING
+// Puts a (form + 1)-tile-square block back into the map as a 9-slice (top-left tile unk60, edges and
+// middle 0x140-0x147) and deletes it; a single block (other forms) becomes tile 0x136 once it can
+// (sub_08003B64 is 0)
+void sub_0804FB80(struct Entity *this)
+{
+    static const u16 slice[3][3] = {
+        { 0, 0x143, 0x140 },      // top: corner (unk60), edge, corner
+        { 0x145, 0x147, 0x146 },  // middle rows
+        { 0x141, 0x144, 0x142 },  // bottom
+    };
+    u32 off = this->form * 8;
+    u16 pos = ((this->x.HALF.HI - off - gUnknown_03000450.unk18) >> 4)
+            | (((this->y.HALF.HI - off - gUnknown_03000450.unk1A) >> 4) * 64);
+    u32 n, x, y, r, c;
+
+    if (this->form >= 1 && this->form <= 3) {
+        n = this->form + 1;
+        for (y = 0; y < n; y++) {
+            r = y == 0 ? 0 : y == n - 1 ? 2 : 1;
+            for (x = 0; x < n; x++) {
+                c = x == 0 ? 0 : x == n - 1 ? 2 : 1;
+                sub_08014658(r == 0 && c == 0 ? (u16)this->unk60 : slice[r][c], (u16)(pos + y * 64 + x), this->unk50);
+            }
+        }
+    } else {
+        if (sub_08003B64(this))
+            return;
+        sub_08014658(0x136, pos, this->unk50);
+    }
+    DeleteThisEntity(this);
+}
+#else
 asm(".include \"asm/non_matching/fs_game/sub_0804FB80.inc\"");
+#endif
 
 void sub_0804FF80(u16 a, struct Entity *e)
 {
