@@ -7,11 +7,11 @@
 // Room map buffer (gUnknown_0201F020 and gUnknown_0200B320): tiles, attributes, block tables
 struct MapBuf { u32 unk0; u16 tiles[0x1000]; u8 attrs[0x1000]; u16 unk3004[0x1000]; u16 unk5004[0x1000]; u16 blocks[0x800][4]; };
 extern u8 gUnknown_02038000[];
+extern u8 gUnknown_0200B314;
+extern u8 gUnknown_02000430[];
 
 #ifdef NONMATCHING
 // Declarations the NONMATCHING functions below share
-extern u8 gUnknown_0200B314;
-extern u8 gUnknown_02000430[];
 extern const u8 gUnknown_0813AAFC[];
 extern const u8 gUnknown_0813AB00[];
 extern const s8 gUnknown_0813D0D4[];
@@ -718,7 +718,104 @@ void sub_08012B64(u8 k)
 #else
 asm(".include \"asm/non_matching/file_select/sub_08012B64.inc\"");
 #endif
+
+extern u8 gUnknown_02030A60;
+extern u8 gUnknown_0202A760[];
+#ifdef NONMATCHING
+extern u8 gUnknown_02030A60;
+extern u8 gUnknown_0202A760[];
+extern const u8 gUnknown_0842761C[];
+void sub_08012FA8(void);
+void sub_080133D0(void);
+void sub_08016084(void);
+void sub_08012A94(u16, u16);
+void sub_08012B64(u8);
+void sub_08013A10(void);
+void sub_08008ED8(void);
+u16 sub_08009380(u16, u16);
+
+// Sets up a room: clears the room state, loads the rooms and their gfx, then scans both map layers for
+// switch tiles (21, 378: a random player's colour), door/conveyor tiles and the players' start markers
+void sub_08012BE4(void)
+{
+    u8 i, x, y;
+    u16 pos, tile, t1, t2;
+
+    gUnknown_02030A60 = 0;
+    gUnknown_0201F000[4] = 0;
+    gUnknown_0201F000[3] = 0;
+    gUnknown_0201F000[2] = 0;
+    gUnknown_0201F000[1] = 0;
+    gUnknown_0201F000[0] = 0;
+    gUnknown_0200B314 = 0;
+    for (i = 0; i < 8; i++)
+        gUnknown_02000430[i] = 0;
+    for (i = 0; i < 4; i++)
+        gUnknown_0202A760[i] = 0;
+    for (i = 0; i <= 4; i++)
+        gUnknown_02016330[i] = 0;
+    sub_08013DE0();
+    sub_08012FA8();
+    sub_080133D0();
+    sub_08016084();
+    gUnknown_03006C80.unk7 = gUnknown_03006C80.unk2 ? 4 : gUnknown_03006C80.unk1;
+    if (gUnknown_02030A60) {
+        gUnknown_02000028[gUnknown_03000204] = 1;
+        sub_08008ED8();
+        return;
+    }
+    for (i = 0; i < 4; i++)
+        if (gUnknown_0202A760[i])
+            sub_080009F4((void *)(0x06004240 + i * 64),
+                         (u32)gUnknown_03000030 + gUnknown_0842761C[gUnknown_0202A760[i]] * 64 + 0x44520, 64);
+    if (gUnknown_03006C80.unk1 != 1) {
+        CpuFastSet(gUnknown_03000030 + gLCDRegisterBuffer * 128 + 0x44920, (void *)0x06004C00, 16);
+        CpuFastSet(gUnknown_03000030 + gLCDRegisterBuffer * 128 + 0x44920 + 64, (void *)0x06005000, 16);
+    }
+    t1 = sub_0800099C() % gUnknown_03006C80.unk0 + 15;
+    t2 = sub_0800099C() % gUnknown_03006C80.unk0 + 374;
+    for (y = 1; y < 64; y++) {
+        for (x = 0; x < 64; x++) {
+            pos = (y << 6) | x;
+            tile = sub_0800932C(pos, 0x4000);
+            if (tile == 21)
+                sub_080144F0(t1, pos, 0x4000);
+            if (tile == 378)
+                sub_080144F0(t2, pos, 0x4000);
+            sub_08012A50(tile, pos);
+            sub_08012A94(tile, pos);
+            sub_08012B04(tile, pos);
+            tile = sub_0800932C(pos, 0x8000);
+            sub_08012A94(tile, pos);
+        }
+    }
+    for (y = 1; y < 64; y++) {
+        for (x = 0; x < 64; x++) {
+            u16 u;
+
+            pos = x | (y << 6);
+            tile = sub_0800932C(pos, 0x4000);
+            if ((u16)(tile - 15) <= 3 && tile - 15 != gLCDRegisterBuffer) {
+                u = sub_08009380(pos - 64, 0x4000);
+                if (u == 66 || u == 6)
+                    sub_080144F0(19, pos, 0x4000);
+                else
+                    sub_080144F0(20, pos, 0x4000);
+            }
+        }
+    }
+    sub_08012B44(0);
+    sub_08012B44(1);
+    sub_08012B64(0);
+    sub_08012B64(1);
+    sub_08013A10();
+    gUnknown_02000028[gUnknown_03000204] = 1;
+    sub_08008ED8();
+}
+#else
 asm(".include \"asm/non_matching/file_select/sub_08012BE4.inc\"");
+#endif
+
 asm(".include \"asm/non_matching/file_select/sub_08012EB4.inc\"");
 asm(".include \"asm/non_matching/file_select/sub_08012F20.inc\"");
 
