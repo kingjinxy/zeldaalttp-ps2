@@ -11,6 +11,9 @@ mkdir -p "$OUT"; rm -rf "$OUT/tr"; mkdir "$OUT/tr"
 make -j8 FS_ONLY=1 zeldaalttp.gba >/dev/null 2>&1; cp zeldaalttp.gba "$OUT/m.gba"; cp zeldaalttp.elf "$OUT/m.elf"
 make -j8 FS_ONLY=1 NONMATCHING=1 zeldaalttp_nm.gba >/dev/null 2>&1; cp zeldaalttp_nm.gba "$OUT/nm.gba"; cp zeldaalttp_nm.elf "$OUT/nm.elf"
 make -j8 compare >/dev/null 2>&1 || true
+# .rodata must keep its layout (data holds absolute addresses into it); NONMATCHING tables use NM_RODATA
+rs() { arm-none-eabi-readelf -SW "$1" | awk '$2==".rodata"{print $6}'; }
+[ "$(rs "$OUT/m.elf")" = "$(rs "$OUT/nm.elf")" ] || { echo ".rodata size differs: $(rs "$OUT/m.elf") vs $(rs "$OUT/nm.elf")"; exit 1; }
 python3 - "$OUT" <<'EOF'
 import glob, re, subprocess, sys
 out = sys.argv[1]
