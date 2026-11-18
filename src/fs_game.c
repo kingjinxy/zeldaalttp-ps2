@@ -6452,7 +6452,96 @@ struct Entity *sub_0804C410(struct Entity *this, u8 form)
     return e;
 }
 
+#ifdef NONMATCHING
+// Effect of pickup form on entity e (a player when e->type == 1): hearts refill (unk45, 8 per heart),
+// rupees, keys, upgrades (unk3E levels 0-2) and a fairy
+void sub_0804C448(struct Entity *this, struct Entity *e)
+{
+#define HEAL(n)                                         \
+    if (e->type == 1)                                   \
+        sub_0802C3F0(e, n);                             \
+    else if (e->unk45 + (n) > 0xFE)                     \
+        e->unk45 |= 0xFF;                               \
+    else                                                \
+        e->unk45 += (n);
+    struct Struct03006A30 *p;
+
+    switch (this->form) {
+    case 0:
+        HEAL(8)
+        break;
+    case 1:
+        if (e->type == 1)
+            sub_0802C53C(e, 1);
+        break;
+    case 2:
+        if (e->type == 1)
+            sub_0802C53C(e, 5);
+        break;
+    case 3:
+        if (e->type == 1)
+            sub_0802C53C(e, 20);
+        break;
+    case 4:
+        if (e->type == 1)
+            sub_0802C710(e);
+        break;
+    case 5:
+        if (e->type == 1)
+            sub_0802C6AC(e);
+        break;
+    case 6:
+        if (e->type == 1)
+            sub_0802C53C(e, 50);
+        break;
+    case 7:
+        HEAL(0x38)
+        sub_08003E10(e, 0x4A);
+        break;
+    case 8:
+        if (e->type == 1)
+            sub_0802C53C(e, 100);
+        break;
+    case 9:
+        if (e->type == 1)
+            sub_0802C53C(e, 200);
+        break;
+    case 10:
+        if (e->type == 1) {
+            sub_08003E10(e, 0x7A);
+            p = &gUnknown_03006A30[e->form];
+            if (p->unk3E_0 <= 1)
+                p->unk3E_0++;
+        }
+        break;
+    case 11:
+        if (e->type == 1) {
+            sub_08003E10(e, 0x7A);
+            p = &gUnknown_03006A30[e->form];
+            if (((((u8 *)p)[0x3E] >> 2) & 3) <= 1)
+                ((u8 *)p)[0x3E] = (((u8 *)p)[0x3E] & 0xF3) | (((((((u8 *)p)[0x3E] >> 2) & 3) + 1) & 3) << 2);
+        }
+        break;
+    case 12:
+        if (e->type == 1) {
+            sub_08003E10(e, 0x7A);
+            p = &gUnknown_03006A30[e->form];
+            if (((((u8 *)p)[0x3E] >> 4) & 3) <= 1)
+                ((u8 *)p)[0x3E] = (((u8 *)p)[0x3E] & 0xCF) | (((((((u8 *)p)[0x3E] >> 4) & 3) + 1) & 3) << 4);
+        }
+        break;
+    case 13:
+        if (e->type == 1) {
+            play_sound(0x95);
+            sub_0803D65C(e->form, 80);
+        }
+        break;
+    }
+#undef HEAL
+}
+#else
 asm(".include \"asm/non_matching/fs_game/sub_0804C448.inc\"");
+#endif
 
 // Spawns objects from a list of (subtype, form, parameter, x, y) bytes ending with 0
 bool32 sub_0804C808(const u8 *p)
