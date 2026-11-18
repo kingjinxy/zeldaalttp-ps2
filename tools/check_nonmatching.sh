@@ -38,7 +38,8 @@ for c in glob.glob("src/*.c") + glob.glob("src/*/*.c"):
 import os
 if os.environ.get("AUTO_C"):
     for c in glob.glob("src/auto/*.c"):
-        names |= set(re.findall(r"^u32 (\w+)\(u32 r0", open(c).read(), re.M))
+        names |= set(re.findall(r"^u32 (\w+)\(u32 r0", open(c).read(), re.M))  # asm2c
+        names |= set(re.findall(r"^void (\w+)\(void\);  /\* gs wrapper \*/", open(c).read(), re.M))  # gs2c
 open(out + "/list.txt", "w").write("".join(f"{m[k] & ~1:08X}\n" for k in sorted(names) if k in m))
 print(len(names), "NONMATCHING functions")
 EOF

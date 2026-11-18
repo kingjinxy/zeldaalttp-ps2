@@ -583,6 +583,7 @@ static int replay(int argc, char **argv) {
 		cpu->gprs[ARM_LR] = r0[14];  // the old caller's address: we stop there before executing it
 		cpu->cpsr.packed = r0[16] | 0x80;  // IRQs masked
 		cpu->gprs[ARM_PC] = newPc;
+
 		_ARMSetMode(cpu, MODE_THUMB);
 		ARMSetPrivilegeMode(cpu, cpu->cpsr.priv);
 		ThumbWritePC(cpu);
@@ -594,7 +595,10 @@ static int replay(int argc, char **argv) {
 			core->step(core);
 		}
 		const char *name = strrchr(argv[t], '/') ? strrchr(argv[t], '/') + 1 : argv[t];
-		if (!done) { printf("%s FAIL did not return\n", name); fail++; continue; }
+		if (!done) {  // gs.h's gs_bad stores the address it couldn't run at 0x0203C0F0
+			uint32_t bad; memcpy(&bad, (uint8_t *) gba->memory.wram + 0x3C0F0, 4);
+			printf("%s FAIL did not return (pc %08X, gs_bad %08X)\n", name, cpu->gprs[15], bad); fail++; continue;
+		}
 		mapWords((uint8_t *) gba->memory.wram, 0x40000, 0);
 		mapWords((uint8_t *) gba->memory.iwram, 0x8000, 0);
 		char why[200] = "";
@@ -617,6 +621,7 @@ static int replay(int argc, char **argv) {
 			for (size_t i = 0; i < m[k].len; i++) {
 				uint32_t addr = m[k].base + i;
 				if (addr >= sp0 - 0x1000 && addr < sp0) continue;  // the callee's stack frame
+				if (addr >= 0x0203C000 && addr < 0x02040000) continue;  // gs2c's CPU state and stack (include/gs.h)
 				if (m[k].got[i] != m[k].exp[i]) {
 					size_t w = i & ~3u;
 					uint32_t gv, ev;

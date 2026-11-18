@@ -124,7 +124,7 @@ tidy:
 
 # Link ELF file
 ldscript_nm.txt: ldscript.txt
-	python3 -c "import re,sys; s=open('ldscript.txt').read(); m=[l for l in s.splitlines(True) if re.search(r'libgcc.a:(dp|fp)-bit.o', l)]; s=''.join(l for l in s.splitlines(True) if l not in m); s=s.replace(chr(9)+'.rodata :', chr(9)+'.rodata 0x08137B04 :', 1); i=s.index('.rodata 0x08137B04'); j=s.index('} = 0', i)+len('} = 0'); s=s[:j]+chr(10)+chr(10)+chr(9)+'.text_softfloat 0x08800000 :'+chr(10)+chr(9)+'{'+chr(10)+''.join(m)+chr(9)+chr(9)+'*(.rodata.nm);'+chr(10)+chr(9)+chr(9)+'*(.text.auto);'+chr(10)+chr(9)+'}'+s[j:]; open('ldscript_nm.txt','w').write(s)"
+	python3 -c "import re,sys; s=open('ldscript.txt').read(); m=[l for l in s.splitlines(True) if re.search(r'libgcc.a:(dp|fp)-bit.o', l)]; s=''.join(l for l in s.splitlines(True) if l not in m); s=s.replace(chr(9)+'.rodata :', chr(9)+'.rodata 0x08137B04 :', 1); i=s.index('.rodata 0x08137B04'); j=s.index('} = 0', i)+len('} = 0'); s=s[:j]+chr(10)+chr(10)+chr(9)+'.text_softfloat 0x08800000 :'+chr(10)+chr(9)+'{'+chr(10)+''.join(m)+chr(9)+chr(9)+'*(.rodata.nm);'+chr(10)+chr(9)+chr(9)+'*(.text.auto);'+chr(10)+chr(9)+chr(9)+'. = ALIGN(4); __gstable_start = .; *(.gstable); __gstable_end = .;'+chr(10)+chr(9)+chr(9)+'__gstablew_start = .; *(.gstablew); __gstablew_end = .;'+chr(10)+chr(9)+'}'+s[j:]; open('ldscript_nm.txt','w').write(s)"
 
 $(ELF): $(OFILES) $(LDSCRIPT)
 	$(LD) -T $(LDSCRIPT) -Map $(MAP) $(LIB) -o $@
@@ -139,23 +139,33 @@ $(ELF): $(OFILES) $(LDSCRIPT)
 # Functions not decompiled yet: asm/non_matching/NAME/*.inc, included by src/NAME.c (tools/asm_split.py)
 .SECONDEXPANSION:
 # Every header, coarsely: SCANINC isn't in this repo, and a stale object hides a header change.
-src/%.o: src/%.c $(CPPFLAGS_STAMP) $(if $(AUTO_C),tools/asm2c.py) $$(wildcard asm/non_matching/$$*/*.inc) $(wildcard include/*.h include/gba/*.h)
+src/%.o: src/%.c $(CPPFLAGS_STAMP) $(if $(AUTO_C),tools/asm2c.py tools/gs2c.py include/gs.h src/auto/gs.list) $$(wildcard asm/non_matching/$$*/*.inc) $(wildcard include/*.h include/gba/*.h)
 	$(CPP) $(CPPFLAGS) $< | $(CC1) $(CC1FLAGS) -o src/$*.s
 	echo '.ALIGN 2, 0' >> src/$*.s
 ifneq ($(AUTO_C),)
 	@mkdir -p src/auto
 	if [ -z "$(AUTO_C_FILES)" ] || echo " $(AUTO_C_FILES) " | grep -q " $* "; then \
-		python3 tools/asm2c.py --s src/$*.s src/auto/$(subst /,_,$*).c; \
+		python3 tools/asm2c.py --s src/$*.s src/auto/$(subst /,_,$*).c --gs src/auto/gs.list; \
 	else echo '#include "auto.h"' > src/auto/$(subst /,_,$*).c; fi
 	$(CPP) -Itools/agbcc/include -iquote include -nostdinc -undef src/auto/$(subst /,_,$*).c | $(CC1) -mthumb-interwork -O2 -o src/auto/$(subst /,_,$*).s
 	echo '.ALIGN 2, 0' >> src/auto/$(subst /,_,$*).s
 	$(AS) $(ASFLAGS) src/auto/$(subst /,_,$*).s -o src/auto/$(subst /,_,$*).o
 	$(OBJCOPY) --rename-section .text=.text.auto src/auto/$(subst /,_,$*).o
 	$(AS) $(ASFLAGS) src/$*.s -o src/$*.main.o
-	$(LD) -r src/$*.main.o src/auto/$(subst /,_,$*).o -o src/$*.o
+	python3 tools/gs2c.py src/$*.main.o src/auto/gs.list src/auto/$(subst /,_,$*)_gs.c
+	$(CPP) -Itools/agbcc/include -iquote include -nostdinc -undef src/auto/$(subst /,_,$*)_gs.c | $(CC1) -mthumb-interwork -O2 -o src/auto/$(subst /,_,$*)_gs.s
+	echo '.ALIGN 2, 0' >> src/auto/$(subst /,_,$*)_gs.s
+	$(AS) $(ASFLAGS) src/auto/$(subst /,_,$*)_gs.s -o src/auto/$(subst /,_,$*)_gs.o
+	$(OBJCOPY) --rename-section .text=.text.auto src/auto/$(subst /,_,$*)_gs.o
+	$(LD) -r src/$*.main.o src/auto/$(subst /,_,$*).o src/auto/$(subst /,_,$*)_gs.o -o src/$*.o
 else
 	$(AS) $(ASFLAGS) src/$*.s -o src/$*.o
 endif
+
+# global-state functions of an AUTO_C build (tools/asm2c.py --gs-list)
+src/auto/gs.list: tools/asm2c.py $(CPPFLAGS_STAMP) $(wildcard asm/non_matching/*/*.inc) $(wildcard src/*.c src/*/*.c data/*.s)
+	@mkdir -p src/auto
+	python3 tools/asm2c.py --gs-list $@
 
 # Assembly source code
 asm/%.o: asm/%.s

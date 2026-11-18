@@ -832,9 +832,121 @@ def hand_written(t):
                 or re.search(r"(?m)^\s*(thumb_func_start|THUMB_FUNC_START_NOALIGN)\b", t))
 
 
+def nonmatching_c_incs():
+    """asm includes replaced by C under #ifdef NONMATCHING (the #else part of those blocks)"""
+    import glob
+    out = set()
+    for c in glob.glob("src/*.c") + glob.glob("src/*/*.c"):
+        t = open(c).read()
+        for b in re.finditer(r"^#ifdef NONMATCHING\n", t, re.M):
+            e1, e2 = t.find("\n#else\n", b.end()), t.find("\n#endif", b.end())
+            if e1 != -1 and e1 < e2:
+                out |= set(re.findall(r'asm\("\.include \\"([^\\]+)\\""\)', t[e1:e2]))
+    return out
+
+
+def gs_list(outp):
+    """asm2c.py --gs-list OUT: the functions of the build that get global-state C (tools/gs2c.py): those the
+    C-ABI translation can't take, minus ARM code (stays native) and those with NONMATCHING C. Lines "NAME" and
+    "NAME OFFSET" (an entry other code jumps to). Honours AUTO_C_FILES and AUTO_C_SKIP (those stay native)."""
+    import glob, os
+    allinc = sorted(glob.glob("asm/non_matching/*/*.inc"))
+    only = os.environ.get("AUTO_C_FILES", "").split()
+    skip = set(os.environ.get("AUTO_C_SKIP", "").split())
+    nmc = nonmatching_c_incs()
+    funcs, arity = bl_targets(allinc), proto_arity()
+    pins = pinned_functions(allinc)
+    names, starts, gs = {}, {}, []
+    for p in allinc:
+        t = open(p).read()
+        m = re.search(r"(?m)^(\w+):\s*(?:@\s*0[xX]([0-9a-fA-F]+))?", t)
+        if not m:
+            continue
+        names[p] = m.group(1)
+        if m.group(2):
+            starts[p] = int(m.group(2), 16)
+        if p in nmc or os.path.basename(p)[:-4] in skip:
+            continue
+        if only and os.path.basename(os.path.dirname(p)) not in only:
+            continue
+        if re.search(r"(?mi)^\s*(\.arm\b|arm_func_start)", t):
+            continue
+        if p not in pins:
+            try:
+                Func(p, funcs, arity, {}).translate()
+                continue  # C-ABI translation
+            except Fail:
+                pass
+        gs.append(p)
+    # entries: labels of a GS function that other code names, sym+offset targets, hard-coded addresses
+    order = sorted(starts, key=starts.get)
+    def owner(a):
+        best = None
+        for q in order:
+            if starts[q] <= a:
+                best = q
+            else:
+                break
+        return best
+    gsset = set(gs)
+    ent = {p: set() for p in gs}
+    srcs = allinc + glob.glob("data/*.s") + glob.glob("asm/*.s")
+    for f in srcs:
+        t = open(f).read()
+        for lab in set(re.findall(r"\b_(08[0-9A-Fa-f]{6})\b(?!:)", t)):
+            a = int(lab, 16)
+            o = owner(a)
+            if o in gsset and o != f and a != starts[o]:
+                ent[o].add(a - starts[o])
+        for sym, off in re.findall(r"\b(_08[0-9A-Fa-f]{6}|[A-Za-z]\w*)\s*\+\s*(0x[0-9a-fA-F]+|\d+)\b", t):
+            a = int(sym[1:], 16) if sym.startswith("_08") else next((starts[q] for q in starts if names.get(q) == sym), None)
+            if a is None:
+                continue
+            a += int(off, 0)
+            o = owner(a & ~1)
+            if o in gsset:
+                ent[o].add((a & ~1) - starts[o])
+        for v in re.findall(r"(?m)^\s*\.4byte\s+(0x0?8[0-9a-fA-F]{6})\s*$", t):
+            a = int(v, 16) & ~1
+            o = owner(a)
+            if o in gsset and a < 0x08137B04:
+                ent[o].add(a - starts[o])
+    with open(outp, "w") as fo:
+        for p in gs:
+            fo.write(names[p] + "\n")
+            for e in sorted(ent[p]):
+                if e:
+                    fo.write("%s %X\n" % (names[p], e))
+    print("asm2c: %d functions for global-state C" % len(gs), file=sys.stderr)
+
+
+def gs_copy(p, gsnames):
+    """src/auto/gs/NAME.inc: the asm of a GS function with every GS function name renamed NAME__asm (except
+    plain data pointers, which go to the C wrapper) and a NAME__base data label at its start"""
+    import os
+    t = open(p).read()
+    name = re.search(r"(?m)^(\w+):", t).group(1)
+    pat = re.compile(r"\b(%s)\b" % "|".join(sorted(gsnames, key=len, reverse=True)))
+    out = []
+    for l in t.splitlines():
+        if re.match(r"\s*\.4byte\s+\w+\s*$", l):
+            out.append(l)
+            continue
+        l2 = pat.sub(lambda m: m.group(1) + "__asm", l)
+        out.append(l2)
+        if re.match(r"%s__asm:" % name, l2):
+            out.append(".global %s__base\n%s__base:" % (name, name))
+    os.makedirs("src/auto/gs", exist_ok=True)
+    q = "src/auto/gs/%s.inc" % name
+    open(q, "w").write("\n".join(out) + "\n")
+    return q
+
+
 def main():
-    # asm2c.py OUT.c INC...  |  asm2c.py --s FILE.s OUT.c: translate the asm includes left in FILE.s (compiler
-    # output) and remove the translated ones from it
+    # asm2c.py OUT.c INC...  |  asm2c.py --s FILE.s OUT.c [--gs LIST]: translate the asm includes left in FILE.s
+    # (compiler output) and remove the translated ones from it; with LIST, GS functions become renamed copies
+    if sys.argv[1] == "--gs-list":
+        return gs_list(sys.argv[2])
     if sys.argv[1] == "--s":
         sfile, outp = sys.argv[2], sys.argv[3]
         st = open(sfile).read()
@@ -892,8 +1004,19 @@ def main():
         print("asm2c: kept asm %s: %s" % (p, e), file=sys.stderr)
     if sfile:
         gone = {p for p, _ in done}
-        st = re.sub(r'^\s*\.include\s+"(asm/non_matching/[^"]+\.inc)"\s*\n',
-                    lambda m: "" if m.group(1) in gone else m.group(0), st, flags=re.M)
+        gsnames = set()
+        if "--gs" in sys.argv:
+            gsnames = {l.split()[0] for l in open(sys.argv[sys.argv.index("--gs") + 1]) if l.strip()}
+        def repl(m):
+            p = m.group(1)
+            if p in gone:
+                return ""
+            n = os.path.basename(p)[:-4]
+            if n in gsnames or (gsnames and re.search(r"\b(%s)\b" % "|".join(gsnames), open(p).read())):
+                # GS functions, and native asm naming them (its branches keep reaching the copies)
+                return '.include "%s"\n' % gs_copy(p, gsnames)
+            return m.group(0)
+        st = re.sub(r'^\s*\.include\s+"(asm/non_matching/[^"]+\.inc)"\s*\n', repl, st, flags=re.M)
         open(sfile, "w").write(st)
     print("asm2c: %d translated, %d kept as asm" % (len(done), len(bad)), file=sys.stderr)
 
