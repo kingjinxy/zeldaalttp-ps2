@@ -663,3 +663,26 @@ State. Of the 5,753 asm functions:
 
 Replay: 1,325 ok, 24 fail. The fails are the sound engine's player chain (sub_08134074 recursing through its
 callbacks; the PS2 audio layer replaces it), EEPROM, and the 2 known I/O cases.
+
+## Step 23: the Four Swords level format, and a room dump tool (2026-11-23)
+
+Groundwork for bringing the Anniversary Edition's new levels to the port: document how Four Swords stores its
+levels, using the GBA data, before comparing with the DSi files (the DSi ROM lives in `reference/dsi/`, never
+committed).
+
+- Found the loaders from a session 1 replay with `mgba_run --loads`, grouped by calling function: the BIOS
+  decompressions from the map-data blob come from `sub_0801484C`, the same loader as Minish Cap's
+  `LoadMapData` (12-byte MapDataDefinition records: source offset from `gUnknown_0854F7E8` with bit 31 =
+  more, destination, size with bit 31 = LZ77; destination 0 = palette group). The blob starts where the DSi
+  `zelmap.bin` matches the GBA ROM.
+- Levels: a stage descriptor (pools `gUnknown_0842B8A8[6]`, counts `gUnknown_0842B8C0`, 146 stages) gives
+  the stage map index (`gUnknown_08146090`, 63x63 metatiles, two layers), the tileset (`gUnknown_08146078`, 6),
+  the slot count and slot positions, the four players' start points and the object-layer table. Each slot
+  gets a random sub-room (`sub_08013120`, pools `gUnknown_0842B8CC[4]`, 216 sub-rooms: map index into
+  `gUnknown_0814627C`, pixel size `gUnknown_081465E0`), stamped into the map by `sub_08015FE4`. Tilesets
+  load as in Minish Cap: tiles to VRAM 0x06000000/0x06004000, metatile tables to +0x7004 and types to +0x5004 of
+  the two layer buffers (0x0201F020 top, 0x0200B320 bottom), plus a palette group.
+- `tools/fs_rooms.py` lists every stage and sub-room and with `--png DIR` renders each stage map (all 146
+  render correctly). Slots are left unfilled: which room pool fills which stage pool isn't known yet (6 against
+  4); an attempt that stamped pool 0's rooms everywhere drew the wrong rooms.
+- Next: the slot-to-pool mapping and rendering sub-rooms, then run the same decoding over the DSi files.
