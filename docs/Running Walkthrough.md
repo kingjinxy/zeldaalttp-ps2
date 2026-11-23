@@ -714,3 +714,20 @@ committed).
   0.01-0.3); several are identity tables (u16 0, 1, 2, ...) and the 0x8000-byte ones are larger than any GBA
   metatile table, so the DSi engine converts or re-lays out tiles and metatiles. Reading the DSi loader code
   (Ghidra/melonDS; it's the code that walks these records) is the next step, not more byte matching.
+- DSi loader read (objdump on the extracted ARM9, `reference/dsi/extract/arm9.bin`; Ghidra wasn't needed):
+  - 0x02056F80.. is the DSi `sub_08015DD8` (area setup). It centres the camera on 128/96 (half of 256x192)
+    where the GBA used 120/80: the resolution change in one place. It calls the loader `0x02021EC4` (DSi
+    `sub_0801484C`) with the tileset list from 0x020D70F0.
+  - The loader fetches word A (offset) and word B (size | bit 31 = LZ) of zelmap.bin's index: A and B are
+    the two halves of one index pair, so the entry is A / 2 (my earlier "B = A + 1" was this). DSi tileset 1
+    is entries 13-18 and matches GBA tileset 1 (graphics identical, metatiles 90%+); destinations keep the GBA
+    layer layout (types +0x5004, metatiles +0x7004 of 0x02158F80 / 0x02163F84), BG characters at 0x06008000.
+  - Palettes: DSi `load_palette_from_gfx_group` at 0x02029B38, groups at 0x021039B8, records {u16: low byte =
+    zeldat.bin entry (NDS file 20), high byte = offset / 16; u8 palette; u8 count | more}.
+  - Stage maps: table at 0x020D7660 (DSi `gUnknown_08146090`), indexed by descriptor [0]; layers to 0x02138780
+    (top) and 0x0213A780 (bottom).
+- `tools/dsi_zelmap.py --png DIR` now renders the 18 new stages from their own descriptors with their DSi
+  tilesets and palettes; all 18 come out clean. Tilesets 11, 13 and 14 are recolours of GBA tilesets 1, 3, 0
+  (new palette groups), 12 pairs new graphics with tileset 2's metatiles, 6-10 are new.
+- Next for the port's level work: the new stages' object layers (descriptor +20) and sub-room pools, which
+  use the same formats as the GBA, and any new object/enemy types they reference.
