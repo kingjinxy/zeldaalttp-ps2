@@ -11,7 +11,7 @@ Its slots get sub-rooms (pool gUnknown_0842B8CC[4], counts gUnknown_0842B8DC) at
 Pool entries are {descriptor, flags}: flags bits 30-31 pick the variant (sub_080131C8).
 Maps are MapDataDefinition lists (12 bytes: src offset from gUnknown_0854F7E8 with bit 31 = more follow,
 dest, size with bit 31 = LZ77) as read by sub_0801484C; dest 0 means a palette group (gUnknown_08429750).
---png renders each stage's own map, slots unfilled (the game fills them with random sub-rooms).
+--png renders each stage with one valid sub-room pick per slot (the game picks at random).
 """
 import argparse, os, struct
 
@@ -101,7 +101,7 @@ def rooms(rom):
             yield s, k, d, f
 
 
-def render(rom, desc, path):
+def render(rom, pool, desc, flags, path):
     from PIL import Image
     mem = Mem(rom)
     a = [rom.u8(desc + i) for i in range(20)]
@@ -110,8 +110,21 @@ def render(rom, desc, path):
     mem.load(rom.mapdefs(rom.u32(STAGE_MAPS + 4 * a[0])))
     grid = {TOP: [[mem.u16(0x02038000 + 2 * (y * 63 + x)) for x in range(63)] for y in range(63)],
             BOTTOM: [[mem.u16(0x0203A000 + 2 * (y * 63 + x)) for x in range(63)] for y in range(63)]}
-    # shortcut: slots stay as the stage map has them; which room pool fills a stage's slots isn't known
-    # yet (6 stage pools, 4 room pools; sub_08013120 indexes both by gUnknown_03006C80.unk1)
+    # sub-rooms: room pool = stage pool (pools 4 and 5 have no slots); candidates whose variant (flags bits
+    # 30-31, sub_080131C8) equals the stage's, taken in pool order. The game shuffles; this is one valid pick.
+    var = flags >> 30
+    cands = [d for s, k, d, f in rooms(rom) if s == pool and f >> 30 == var] or \
+            [d for s, k, d, f in rooms(rom) if s == pool]
+    for i in range(a[2]):
+        r = cands[i % len(cands)]
+        mi = rom.u16(r)
+        w, h = rom.u16(ROOM_SIZES + 4 * mi) >> 4, rom.u16(ROOM_SIZES + 4 * mi + 2) >> 4
+        mem.load(rom.mapdefs(rom.u32(ROOM_MAPS + 4 * mi)))
+        for buf, layer in ((0x02038000, TOP), (0x02038800, BOTTOM)):
+            for y in range(h):
+                for x in range(w):
+                    gy, gx = a[5 + 2 * i] + y, a[4 + 2 * i] + x
+                    if gy < 63 and gx < 63: grid[layer][gy][gx] = mem.u16(buf + 2 * (y * w + x))
     img = Image.new('RGB', (63 * 16, 63 * 16))
     px = img.load()
     rgb = [((c & 31) * 255 // 31, (c >> 5 & 31) * 255 // 31, (c >> 10 & 31) * 255 // 31) for c in mem.pal]
@@ -152,7 +165,7 @@ def main():
         print(f'S {s} {k:2} {d:08x} {f:08x} | {b[0]:3} {b[1]} {b[2]} {b[3]:2} | {slots:16} | {starts} | {rom.u32(d + 20):08x}')
         if a.png and (a.stage is None or a.stage == f'{s}:{k}'):
             os.makedirs(a.png, exist_ok=True)
-            render(rom, d, os.path.join(a.png, f'stage_{s}_{k:02}.png'))
+            render(rom, s, d, f, os.path.join(a.png, f'stage_{s}_{k:02}.png'))
     print('sub-rooms: pool idx descriptor flags | map key | w h (px) | layers')
     for s, k, d, f in rooms(rom):
         mi = rom.u16(d)

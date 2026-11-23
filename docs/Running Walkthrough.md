@@ -686,3 +686,7 @@ committed).
   render correctly). Slots are left unfilled: which room pool fills which stage pool isn't known yet (6 against
   4); an attempt that stamped pool 0's rooms everywhere drew the wrong rooms.
 - Next: the slot-to-pool mapping and rendering sub-rooms, then run the same decoding over the DSi files.
+- Slot mapping (same day): stage pools 4 and 5 have no slots, so a stage's sub-rooms come from the room pool
+  with its own number (0-3, `gUnknown_03006C80.unk1` indexes both). Pool flags bits 30-31 are the variant
+  (`sub_080131C8`); sub-rooms only use 0-2, matching the three key levels. `--png` now stamps one valid pick per
+  slot (same pool, same variant), and the rooms fit their stages.
