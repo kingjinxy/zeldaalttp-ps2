@@ -699,3 +699,9 @@ committed).
 - Rendering the new stages with GBA tilesets 0-3 gives level-shaped layouts with the wrong graphics: they use
   new DSi tilesets. Which zelmap entries form each DSi tileset (and which tileset each stage uses) is in the
   DSi code's own tables, the next thing to find (ARM9, by searching for entry-index lists).
+- DSi descriptors: the DSi ARM9 binary keeps the GBA stage-descriptor format with relocated pointers (145 of
+  the 146 GBA descriptors found verbatim). The 18 new stages have descriptors in a pool at 0x02103DD4 (entries
+  {descriptor, flags}), map indices 123-140, using new tilesets 6-14 (123-131: tilesets 6/7/8, three stages
+  each; 132-137: 11/12/13; 138-140: 14). Sub-room descriptors (u16 map, u8 key, pointer) also sit in the ARM9
+  around 0x02104B30-0x0210F930. Still to find: the DSi tileset table (how tilesets 6-14 name their zelmap
+  entries), then render the new stages with their own graphics.
