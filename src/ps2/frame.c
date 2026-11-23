@@ -1,5 +1,5 @@
-// PS2: one GBA frame per VBlankIntrWait. For the first boot milestone there's no rendering or vsync yet: the game's
-// VBlank handler runs, the display-status VBlank bit stays set (the game polls it), and a heartbeat goes out over SIO.
+// PS2: one GBA frame per VBlankIntrWait: the game's VBlank handler runs (the display-status VBlank bit stays set; the
+// game polls it), then video.c draws the frame and waits for vsync. A heartbeat goes out over SIO.
 // Logging is SIO only (CLAUDE.md: never block in printf from game-reachable code).
 #include <kernel.h>
 #include <sio.h>
@@ -15,6 +15,7 @@
 
 u32 (*ps2_icall(u32 target))();
 void ps2_io_vblank(void);
+void ps2_video_frame(void);
 
 static u32 sFrame;
 
@@ -53,6 +54,7 @@ void ps2_vblank_wait(void)
         ps2_icall(h)();
     REG16(BIOS_IF) |= 1;
     REG16(REG_IF) &= ~1;
+    ps2_video_frame();  // draws, shows and waits for vsync: the game runs at the PS2's 60 Hz
     if (++sFrame % 60 == 0 || sFrame <= 10)
         ps2_log("frame %u", sFrame);
 }
@@ -70,7 +72,11 @@ static int watch_handler(int cause)
     REG16(REG_VCOUNT) = REG16(REG_VCOUNT) == 159 ? 160 : 159;
     if (++ticks % 60 == 0) {
         u32 i = ring[0] % 1024, k;
-        int n = snprintf(buf, sizeof(buf), "watch: frame %u%s ring", sFrame, sFrame == lastFrame ? " (stuck)" : "");
+        u32 epc;
+        int n;
+        __asm__ volatile("mfc0 %0, $14" : "=r"(epc));  // the interrupted pc (EPC is still set in the handler)
+        n = snprintf(buf, sizeof(buf), "watch: frame %u%s pc %08x ring", sFrame, sFrame == lastFrame ? " (stuck)" : "",
+                     epc);
         for (k = 1; k <= 6 && n < 150; k++) {
             u32 j = (i + 1024 - k) % 1024;
             n += snprintf(buf + n, sizeof(buf) - n, " %08x", ring[1 + 3 * j]);
@@ -87,3 +93,15 @@ void ps2_watch_init(void)
     AddIntcHandler(INTC_VBLANK_S, watch_handler, 0);
     EnableIntc(INTC_VBLANK_S);
 }
+
+// -finstrument-functions on hand-written game C (Makefile.ps2): each entry goes into the trace ring too, so the
+// watchdog names hand C as well
+__attribute__((no_instrument_function)) void __cyg_profile_func_enter(void *fn, void *site)
+{
+    volatile u32 *ring = (volatile u32 *)0x0203C200;
+    u32 i = ring[0] % 1024;
+    (void)site;
+    ring[1 + 3 * i] = (u32)fn;
+    ring[0] = i + 1;
+}
+__attribute__((no_instrument_function)) void __cyg_profile_func_exit(void *fn, void *site) { (void)fn, (void)site; }

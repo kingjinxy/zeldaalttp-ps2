@@ -65,6 +65,7 @@ void ps2_tlb_map(void)
     memset((void *)0x02000000, 0, 0x40000);
     memset((void *)0x03000000, 0, 0x8000);
     memset((void *)0x04000000, 0, 0x2000);
+    *(volatile u16 *)0x04000130 = 0x03FF;  // KEYINPUT is active low: no buttons held (input.c sets it each frame)
     memset((void *)0x05000000, 0, 0x400);
     memset((void *)0x06000000, 0, 0x18000);
     memset((void *)0x07000000, 0, 0x400);

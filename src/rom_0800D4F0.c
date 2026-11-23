@@ -155,9 +155,11 @@ void sub_0800D788(void)
     sub_0800E78C();
 }
 
-void sub_0800D87C(void)
+// called through gUnknown_084273D4 as int (*)(void): the result ends sub_0800D788's loop
+int sub_0800D87C(void)
 {
     gTextbox.unk10B = 0;
+    return 0;
 }
 
 int sub_0800D890(void)

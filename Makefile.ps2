@@ -15,7 +15,9 @@ CFLAGS := -std=gnu99 -O1 -G0 -fno-builtin -fno-strict-aliasing -w -DNONMATCHING 
           -Wno-error=int-conversion -Wno-error=return-mismatch
 
 # PS2 runtime (src/ps2): ps2sdk headers, not the game's
-PS2_CFLAGS := -D_EE -O2 -G0 -Wall -I$(PS2SDK)/ee/include -I$(PS2SDK)/common/include -I$(PS2DEV)/gsKit/include
+PS2_CFLAGS := -D_EE -O2 -G0 -Wall -I$(PS2SDK)/ee/include -I$(PS2SDK)/common/include -I$(PS2DEV)/gsKit/include \
+              -Isrc/ps2/mgba/include -Isrc/ps2/mgba/src -include mgba/flags.h -DNDEBUG
+MGBA_C := $(wildcard src/ps2/mgba/src/gba/renderers/*.c)
 
 GAME_C := $(wildcard src/*.c src/lttp/*.c)
 AUTO_C := $(foreach f,$(GAME_C),src/auto/$(subst /,_,$(patsubst src/%.c,%,$(f))).c src/auto/$(subst /,_,$(patsubst src/%.c,%,$(f)))_gstate_ps2.c)
@@ -24,7 +26,8 @@ PS2_C := $(wildcard src/ps2/*.c)
 GLUE_C := $(wildcard src/ps2/glue/*.c)
 
 OBJS := $(GAME_C:src/%.c=$(B)/game/%.o) $(AUTO_C:src/auto/%.c=$(B)/auto/%.o) $(DATA_S:data/%.s=$(B)/data/%.o) \
-        $(PS2_C:src/ps2/%.c=$(B)/ps2/%.o) $(GLUE_C:src/ps2/glue/%.c=$(B)/glue/%.o)
+        $(PS2_C:src/ps2/%.c=$(B)/ps2/%.o) $(GLUE_C:src/ps2/glue/%.c=$(B)/glue/%.o) \
+        $(MGBA_C:src/ps2/mgba/src/gba/renderers/%.c=$(B)/mgba/%.o)
 
 objects: $(OBJS)
 
@@ -57,7 +60,7 @@ $(B)/include/%.h: include/%.h tools/ps2/struct_align.py
 	python3 tools/ps2/struct_align.py $< $@
 
 $(B)/game/%.o: $(B)/game/%.c $(PS2_HEADERS)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -finstrument-functions -c $< -o $@
 
 $(B)/auto/%.o: src/auto/%.c $(PS2_HEADERS)
 	@mkdir -p $(dir $@)
@@ -74,6 +77,11 @@ $(B)/data/%.s: data/%.s
 
 $(B)/data/%.o: $(B)/data/%.s $(B)/asminclude/macro.inc
 	$(AS) -I$(B)/asminclude -I. $< -o $@
+
+# mGBA's software renderer (vendored, MPL-2.0)
+$(B)/mgba/%.o: src/ps2/mgba/src/gba/renderers/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(PS2_CFLAGS) -std=gnu11 -w -c $< -o $@
 
 # game-side glue (src/ps2/glue): the game's headers and flags
 $(B)/glue/%.o: src/ps2/glue/%.c $(PS2_HEADERS)
