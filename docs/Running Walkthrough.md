@@ -690,3 +690,12 @@ committed).
   with its own number (0-3, `gUnknown_03006C80.unk1` indexes both). Pool flags bits 30-31 are the variant
   (`sub_080131C8`); sub-rooms only use 0-2, matching the three key levels. `--png` now stamps one valid pick per
   slot (same pool, same variant), and the rooms fit their stages.
+- DSi comparison: `tools/dsi_zelmap.py` reads `zelmap.bin` (NDS file 24: {offset, size | bit 31 = LZ type
+  0x11} index, 779 entries) and matches each decompressed entry against every GBA map-data record. 578 are
+  byte-identical to GBA data (379 sub-room layers, 196 stage layers, 3 tileset parts). Of the 201 others:
+  all 55 sub-room layers are edits of GBA rooms (52 at 90%+ equal metatiles); the stage layers are stored as
+  (top, bottom) pairs in GBA stage order, and after GBA stage 122 come 18 new pairs: the new levels (DSi
+  stages 123-140); the rest of the new entries are tile graphics and metatile tables, i.e. new tilesets.
+- Rendering the new stages with GBA tilesets 0-3 gives level-shaped layouts with the wrong graphics: they use
+  new DSi tilesets. Which zelmap entries form each DSi tileset (and which tileset each stage uses) is in the
+  DSi code's own tables, the next thing to find (ARM9, by searching for entry-index lists).

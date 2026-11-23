@@ -125,6 +125,12 @@ def render(rom, pool, desc, flags, path):
                 for x in range(w):
                     gy, gx = a[5 + 2 * i] + y, a[4 + 2 * i] + x
                     if gy < 63 and gx < 63: grid[layer][gy][gx] = mem.u16(buf + 2 * (y * w + x))
+    draw(mem, grid, path)
+
+
+def draw(mem, grid, path):
+    """grid: {TOP|BOTTOM: 63x63 metatile indices}, drawn with the tileset loaded in mem"""
+    from PIL import Image
     img = Image.new('RGB', (63 * 16, 63 * 16))
     px = img.load()
     rgb = [((c & 31) * 255 // 31, (c >> 5 & 31) * 255 // 31, (c >> 10 & 31) * 255 // 31) for c in mem.pal]
