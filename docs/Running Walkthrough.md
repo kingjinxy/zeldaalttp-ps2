@@ -705,3 +705,12 @@ committed).
   each; 132-137: 11/12/13; 138-140: 14). Sub-room descriptors (u16 map, u8 key, pointer) also sit in the ARM9
   around 0x02104B30-0x0210F930. Still to find: the DSi tileset table (how tilesets 6-14 name their zelmap
   entries), then render the new stages with their own graphics.
+- DSi tileset table: 0x020D70F0, 15 pointers (tilesets 0-14; 3 and 5 share a list, as on the GBA), followed
+  by a 15-entry animation table at 0x020D712C. Each list is 12-byte records {u32 zelmap entry A | bit 31 = more,
+  u32 destination, u32 entry B}, B = A + 1 so far; destination 0 = palette group A. Tileset 1 (0x020D7168):
+  A = 0x1A..0x24 step 2 to 0x06008000, 0x0600C000 (DS BG VRAM), 0x0215FF84, 0x0216AF88, 0x0215DF84, 0x02168F88,
+  palette 0x18. Stage maps are zelmap entries 64 + 2m (top) and 65 + 2m (bottom).
+- Not solved: what A and B each hold. The entries don't line up with the GBA tileset parts (similarity
+  0.01-0.3); several are identity tables (u16 0, 1, 2, ...) and the 0x8000-byte ones are larger than any GBA
+  metatile table, so the DSi engine converts or re-lays out tiles and metatiles. Reading the DSi loader code
+  (Ghidra/melonDS; it's the code that walks these records) is the next step, not more byte matching.
