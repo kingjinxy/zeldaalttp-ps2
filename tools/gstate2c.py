@@ -257,9 +257,86 @@ def main():
                 "        R32(s), R32(s + 4), R32(s + 8), R32(s + 12));",
                 "    gCpu.r[15] = gCpu.r[14];", "}"]
     open(outc, "w").write("\n".join(out) + "\n")
+    open(outc.replace(".c", "_ps2.c"), "w").write(ps2_file(tag, data, syms, relocs, ranges, tables, failed, swis,
+                                                           decls, bodies))
     for n, e in failed:
         print("gstate2c: kept native %s: %s" % (n, e), file=sys.stderr)
     print("gstate2c: %d functions in global-state C, %d native" % (len(tables), len(failed)), file=sys.stderr)
+
+
+def ps2_file(tag, data, syms, relocs, ranges, tables, failed, swis, decls, bodies):
+    """The same global-state C for the PS2 build (X_gstate_ps2.c): no Thumb code. The copies NAME__base become data
+    (the original bytes, every ABS32 word relocated against the PS2 link: R32(NAME__base + off) literal reads and
+    the return-address tokens keep working), entries from C are C functions with the 8-argument convention, BIOS calls
+    go to ps2_swi(), and copies that never decoded trap (ps2_native_missing)."""
+    funcsyms = sorted((v & ~1, n) for v, n, t in syms if t == "FUNC")
+    copies = {n: (v, end) for v, end, n in ranges}
+
+    def target(a):  # an address inside this object's .text, as a PS2 symbol expression
+        for n, (v, end) in copies.items():
+            if v <= a < end:
+                return "%s__base + %d" % (n, a - v)
+        f = max(((v, n) for v, n in funcsyms if v <= a), default=None)
+        if f is None:
+            raise Fail("ps2 reloc into .text 0x%X" % a)
+        return f[1] if a - f[0] in (0, 1) else "%s + %d" % (f[1], a - f[0])
+
+    out = ['#include "gstate.h"', "#define sp (gCpu.r[13])", "void ps2_swi(u32);", "void ps2_native_missing(const char *);"]
+    for k in sorted(swis):
+        out.append("static void gstate_swi_%s_%X(void) { ps2_swi(0x%X); }" % (tag, k, k))
+    funcs = {re.match(r"u32 (\w+)\(\);", d).group(1) for d in decls if re.match(r"u32 \w+\(\);", d)}
+    for d in sorted(decls):
+        m = re.match(r"extern u8 (\w+)\[\];", d)
+        if m and m.group(1) in funcs:
+            continue  # also called directly: (u32)NAME of the function works the same
+        out.append(re.sub(r"extern u8 (\w+__base)\[\];", r"extern const u32 \1[];", d))
+    for n, _ in tables:
+        out += ["extern const u32 %s__base[];" % n, "void gs_%s(u32);" % n]
+    for n, _ in failed:
+        out += ["extern const u32 %s__base[];" % n]
+    out += [""] + bodies + [""]
+    # copies: the original bytes at the original alignment mod 4, ABS32 words as relocations
+    for v, end, n in ranges:
+        lines = [".pushsection .rodata", ".balign 4"] + ([".space %d" % (v & 3)] if v & 3 else []) + \
+                [".global %s__base" % n, "%s__base:" % n]
+        o = v
+        while o < end:
+            r = relocs.get(o)
+            if r and r[0] == "R_ARM_ABS32" and o + 4 <= end:
+                typ, name, val = r
+                add = w(data, o)
+                if name.startswith("."):  # section symbol: an address in this object
+                    lines.append(".4byte %s" % target(val + add))
+                elif name.endswith("__asm"):
+                    lines.append(".4byte %s__base + %d" % (name[:-5], add))
+                else:
+                    lines.append(".4byte %s + %d" % (name, add) if add and add != 1 else ".4byte %s" % name)
+                o += 4
+            else:
+                lines.append(".byte %d" % data[o])
+                o += 1
+        out.append('asm("%s");' % "\\n".join(lines + [".popsection"]))
+    if tables or failed:
+        out.append("static void gstate_enter_c_%s(void (*fn)(u32), u32 *f) { gstate_enter_c(fn, f); }" % tag)
+    for n, _ in tables:  # C entry: r0-r3 and 4 stack words in, r0 out
+        out += ["u32 %s(u32 a0, u32 a1, u32 a2, u32 a3, u32 s0, u32 s1, u32 s2, u32 s3)" % n, "{",
+                "    u32 f[17] = { 0 };",
+                "    f[7] = a0, f[8] = a1, f[9] = a2, f[10] = a3, f[13] = s0, f[14] = s1, f[15] = s2, f[16] = s3;",
+                "    gstate_enter_c_%s(gs_%s, f);" % (tag, n), "    return f[7];", "}"]
+    if tables:
+        out.append("struct GstateEntry gGstateTable_%s[] __attribute__((section(\".gstatetable\"))) = {" % tag)
+        for n, entries in tables:
+            for e in sorted(x for x in entries if x < copies[n][1] - copies[n][0]):
+                out.append("    { (u32)%s__base + 0x%X, gs_%s, 0x%X }," % (n, e, n, e))
+        out.append("};")
+        out.append("struct GstateEntry gGstateTableW_%s[] __attribute__((section(\".gstatetablew\"))) = {" % tag)
+        for n, _ in tables:
+            out.append("    { (u32)%s, gs_%s, 0 }," % (n, n))
+        out.append("};")
+    for n, e in failed:
+        out += ["void gs_%s(u32 e) { ps2_native_missing(\"%s\"); }" % (n, n),
+                "u32 %s() { ps2_native_missing(\"%s\"); return 0; }" % (n, n)]
+    return "\n".join(out) + "\n"
 
 
 def translate(data, relocs, start, end, name, taken, gsnames, decls, swis, tag):

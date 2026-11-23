@@ -1,6 +1,11 @@
 #include "gba/gba.h"
 #include "global.h"
 
+#ifdef PLATFORM_PS2  // called before their definitions: implicit int declarations conflict in modern GCC
+u32 sub_0800E4EC(s32);
+u32 sub_0800E6B0(s32);
+#endif
+
 void splash_screen_main(void)
 {
     switch (gSubState)

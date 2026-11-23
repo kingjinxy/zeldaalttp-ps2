@@ -42,7 +42,11 @@ struct GstateEntry {
 #define GSTATE_RETURNED_IN(base, size, ret) do { if ((gCpu.r[15] ^ (ret)) & ~1u) { u32 tt_ = gCpu.r[15] & ~1u; \
     if (tt_ - (base) < (size)) { e = tt_ - (base); goto dispatch; } return; } } while (0)
 
+#ifdef PLATFORM_PS2  // sorted at startup (ps2 runtime), so writable
+extern struct GstateEntry __gstatetable_start[], __gstatetable_end[], __gstatetablew_start[], __gstatetablew_end[];
+#else
 extern const struct GstateEntry __gstatetable_start[], __gstatetable_end[], __gstatetablew_start[], __gstatetablew_end[];
+#endif
 
 static const struct GstateEntry *gstate_find(const struct GstateEntry *lo, const struct GstateEntry *hi, u32 a)
 {
@@ -83,11 +87,13 @@ static void gstate_run(u32 a)
         f->fn(f->off);
         return;
     }
+#ifndef PLATFORM_PS2  // PS2: C functions live anywhere in EE RAM
     if (!(b < 0x4000u || (b >= 0x08000000u && b < 0x08137B04u) || (b >= 0x08800000u && b < 0x0A000000u) ||
           (b >= 0x03000000u && b < 0x03008000u) || (b >= 0x02000000u && b < 0x02040000u))) {
         W32(0x0203C0F4u, gCpu.r[14]);  // lr: who jumped there
         gstate_bad(a);
     }
+#endif
     // C (or native) code: the C calling convention, then return to lr
     {
         u32 s = gCpu.r[13];

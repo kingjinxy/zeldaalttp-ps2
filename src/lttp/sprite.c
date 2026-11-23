@@ -1,5 +1,10 @@
 #include "global.h"
 
+#ifdef PLATFORM_PS2  // called before their definitions: implicit int declarations conflict in modern GCC
+u8 Sprite3_MoveHoriz(u8);
+u8 Sprite3_CheckIfActive_Permissive(u8);
+#endif
+
 void Sprite_ExecuteSingleLong(u8 r0)
 {
     Sprite_ExecuteSingle(r0);

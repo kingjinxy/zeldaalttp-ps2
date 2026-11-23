@@ -1,0 +1,62 @@
+# PS2 build: make -f Makefile.ps2
+# Needs the generated C of an AUTO_C build first: make NONMATCHING=1 AUTO_C=1 objects
+# (src/auto/X.c: C translations of the functions still in asm; src/auto/X_gstate_ps2.c: global-state C).
+# Hand-written C is compiled with its asm(".include") lines removed: those functions come from src/auto/X.c.
+
+EE_PREFIX := $(PS2DEV)/ee/bin/mips64r5900el-ps2-elf-
+CC := $(EE_PREFIX)gcc
+AS := $(EE_PREFIX)as
+B := build/ps2
+
+# Old GBA-era C: gnu99 (f() takes any arguments), and newer GCC's default errors back to warnings
+CFLAGS := -std=gnu99 -O1 -G0 -fno-builtin -fno-strict-aliasing -w -DNONMATCHING -DPLATFORM_PS2 \
+          -iquote $(B)/include -iquote include -iquote src -Itools/agbcc/include \
+          -Wno-error=implicit-function-declaration -Wno-error=incompatible-pointer-types \
+          -Wno-error=int-conversion -Wno-error=return-mismatch
+
+GAME_C := $(wildcard src/*.c src/lttp/*.c)
+AUTO_C := $(foreach f,$(GAME_C),src/auto/$(subst /,_,$(patsubst src/%.c,%,$(f))).c src/auto/$(subst /,_,$(patsubst src/%.c,%,$(f)))_gstate_ps2.c)
+DATA_S := $(wildcard data/*.s)
+PS2_C := $(wildcard src/ps2/*.c)
+
+OBJS := $(GAME_C:src/%.c=$(B)/game/%.o) $(AUTO_C:src/auto/%.c=$(B)/auto/%.o) $(DATA_S:data/%.s=$(B)/data/%.o) \
+        $(PS2_C:src/ps2/%.c=$(B)/ps2/%.o)
+
+objects: $(OBJS)
+
+$(B)/game/%.c: src/%.c tools/ps2/struct_align.py
+	@mkdir -p $(dir $@)
+	python3 tools/ps2/struct_align.py $< $@
+
+# headers through the same filter (struct alignment), found first
+HEADERS := $(wildcard include/*.h include/*/*.h)
+PS2_HEADERS := $(HEADERS:include/%=$(B)/include/%)
+$(B)/include/%.h: include/%.h tools/ps2/struct_align.py
+	@mkdir -p $(dir $@)
+	python3 tools/ps2/struct_align.py $< $@
+
+$(B)/game/%.o: $(B)/game/%.c $(PS2_HEADERS)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(B)/auto/%.o: src/auto/%.c $(PS2_HEADERS)
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# ARM-syntax data: '@' comments go (MIPS gas reads '#'), the rest are plain directives
+$(B)/asminclude/%: asminclude/%
+	@mkdir -p $(dir $@)
+	sed 's/@.*$$//' $< > $@
+
+$(B)/data/%.s: data/%.s
+	@mkdir -p $(dir $@)
+	sed 's/@.*$$//' $< > $@
+
+$(B)/data/%.o: $(B)/data/%.s $(B)/asminclude/macro.inc
+	$(AS) -I$(B)/asminclude -I. $< -o $@
+
+$(B)/ps2/%.o: src/ps2/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -I$(PS2SDK)/ee/include -I$(PS2SDK)/common/include -c $< -o $@
+
+.PHONY: objects
+.SECONDARY:

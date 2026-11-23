@@ -4,6 +4,12 @@
 
 #include "sounds.h"
 
+#ifdef PLATFORM_PS2  // called before their definitions: implicit int declarations conflict in modern GCC
+u8 sub_0802A4EC(struct Entity *);
+u8 sub_0802C148(void);
+u16 sub_08004710(void);
+#endif
+
 // Room map buffer (gUnknown_0201F020 and gUnknown_0200B320): tiles, attributes, block tables
 struct MapBuf { u32 unk0; u16 tiles[0x1000]; u8 attrs[0x1000]; u16 unk3004[0x1000]; u16 unk5004[0x1000]; u16 blocks[0x800][4]; };
 extern u8 gUnknown_02038000[];

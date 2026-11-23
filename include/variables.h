@@ -5273,7 +5273,6 @@ extern const u8 gUnknown_083BCF58[];
 //extern gUnknown_084272B0;
 //extern gUnknown_084272BC;
 extern void (*const gUnknown_0842731C[])(void);
-extern const u16 sBGMapSizes[];
 extern const u8 gUnknown_0842735C[];
 //extern gUnknown_08427390;
 //extern gUnknown_084273A0;
