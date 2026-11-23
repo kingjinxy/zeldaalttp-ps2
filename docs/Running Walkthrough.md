@@ -731,3 +731,36 @@ committed).
   (new palette groups), 12 pairs new graphics with tileset 2's metatiles, 6-10 are new.
 - Next for the port's level work: the new stages' object layers (descriptor +20) and sub-room pools, which
   use the same formats as the GBA, and any new object/enemy types they reference.
+
+## Step 24: the PS2 build boots and runs the main loop (2026-11-23)
+
+Milestones 1 and 2 of the PS2 port: everything compiles and links into one EE ELF (`make -f Makefile.ps2 elf`,
+after `make NONMATCHING=1 AUTO_C=1 objects`), and it boots in PCSX2 and runs the game's main loop (1,200+ frames,
+no crash; no rendering yet).
+
+- **Compile.** Hand-written C through `tools/ps2/struct_align.py` (agbcc pads and aligns every non-packed struct
+  and union to 4 bytes; all 78 header struct sizes now match agbcc's), with ARM-only asm removed and GCC 2.95
+  cast-as-lvalues rewritten. The 16 naked-asm functions became `asm/non_matching` includes (matching unchanged),
+  so `asm2c` translates them. `gstate2c.py` writes a PS2 file next to each global-state file: the copies as one
+  contiguous data blob per object with relocated literal words (code reads neighbouring functions' literal pools),
+  C entry functions with the 8-argument convention, BIOS calls through `ps2_swi`.
+- **gstate2c fix found on the way:** Thumb labels inside a copy ended it, so their code was never translated (the
+  ARM build ran it natively); they are now entries. The first attempt treated function names of grouped copies as
+  inner labels and produced a 147 MB rom1 file; agbcc -O2 on it was OOM-killed at 5.4 GB and took the IDE down.
+  Safeguards since: generated global-state C compiles at -O0, compiles run under `ulimit -v`, long builds run in
+  `systemd-run --user --scope -p MemoryMax=6G` (which then caught asm2c at 6 GB with `-j2`; `-j1` fits).
+- **Link** (`src/ps2/ps2.ld`): the ROM data objects at their GBA addresses with physical load addresses at
+  0x01000000 (`tools/ps2/fix_elf.py` moves the segment to physical for loaders), the ROM's code area from
+  baserom.gba, GBA RAM symbols as absolute addresses (`tools/ps2/gba_syms.py`).
+- **Runtime** (`src/ps2`): TLB entries map 0x02/03/04/05/06/07/08/0D000000 onto the top 16 MB of PS2 RAM
+  (PCSX2's kernel refuses `PutTLBEntry` with -1; its unused entries 39-47 work with `_SetTLBEntry`); BIOS calls in C;
+  C ports of the ARM routines the game runs from IWRAM (UpdateAllEntities, sub_080007C4, sub_080008A8,
+  sub_08008FA4) and of two Thumb oddities in rom1's code area; `ICALL()` resolves indirect calls to GBA addresses.
+- **I/O side effects:** a read-only I/O mapping that traps stores was tried first; PCSX2 raises no TLB-modified
+  exception, so stores went through silently. Instead translated code's R*/W* macros send I/O addresses to
+  `src/ps2/io.c` (DMA runs in software, IF write-1-to-clear), and hand C's `DmaSet` polls it.
+- **Debugging aids:** a VBlank-interrupt watchdog prints the frame count and the last functions entered (the
+  global-state trace ring, now also fed by translated C-convention functions on the PS2) once a second over SIO.
+  Hangs found with it: m4a waiting for VCOUNT 159 (VCOUNT now alternates 159/160), a DMA3 wait, EEPROM polling
+  (the EEPROM window is mapped to all ones; no saves yet).
+- Next: rendering (mGBA's software renderer, MPL-2.0) and vsync pacing, input.

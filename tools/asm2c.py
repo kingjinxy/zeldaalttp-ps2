@@ -311,6 +311,8 @@ class Func:
         for k in range(nargs):
             head.append("    frame[%d] = a%d;" % (maxd // 4 + k, k))
         head.append("    r4 = r5 = r6 = r7 = r8 = r9 = r10 = r11 = r12 = lr = n = z = c = v = 0;")
+        m = re.fullmatch(r"sub_([0-9A-Fa-f]{8})", s.name)
+        head.append("    AUTO_TRACE(0x%s);" % (m.group(1) if m else "0"))
         if out and out[-1].endswith(":"):
             out.append("    ;")
         return head + out + ["}"]

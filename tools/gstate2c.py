@@ -314,14 +314,29 @@ def ps2_file(tag, data, syms, relocs, ranges, tables, failed, swis, decls, bodie
     for n, _ in failed:
         out += ["extern const u32 %s__base[];" % n]
     out += [""] + bodies + [""]
-    # copies: the original bytes at the original alignment mod 4, ABS32 words as relocations
-    for v, end, n in ranges:
-        lines = [".pushsection .rodata", ".balign 4"] + ([".space %d" % (v & 3)] if v & 3 else []) + \
-                [".global %s__base" % n, "%s__base:" % n]
-        o = v
-        while o < end:
+    # copies: one blob with this object's .text from the first copy to the end of the last, in original layout (code
+    # reads literal pools of neighbouring functions at base + offset, as on the GBA); ABS32 words inside copies as
+    # relocations, other bytes raw; a label at each copy's start
+    if ranges:
+        lo, hi = min(v for v, end, n in ranges) & ~3, max(end for v, end, n in ranges)
+        starts = {v: n for v, end, n in ranges}
+        incopy = bytearray(hi - lo)
+        for v, end, n in ranges:
+            incopy[v - lo:end - lo] = b"\x01" * (end - v)
+        lines, raw = [".pushsection .rodata", ".balign 4"], []
+
+        def flush():
+            if raw:
+                lines.append(".byte " + ",".join(str(x) for x in raw))
+                raw.clear()
+        o = lo
+        while o < hi:
+            if o in starts:
+                flush()
+                lines += [".global %s__base" % starts[o], "%s__base:" % starts[o]]
             r = relocs.get(o)
-            if r and r[0] == "R_ARM_ABS32" and o + 4 <= end:
+            if r and r[0] == "R_ARM_ABS32" and incopy[o - lo] and o + 4 <= hi and not any(x in starts for x in (o + 1, o + 2, o + 3)):
+                flush()
                 typ, name, val = r
                 add = w(data, o)
                 if name.startswith("."):  # section symbol: an address in this object
@@ -332,8 +347,11 @@ def ps2_file(tag, data, syms, relocs, ranges, tables, failed, swis, decls, bodie
                     lines.append(".4byte %s + %d" % (name, add) if add and add != 1 else ".4byte %s" % name)
                 o += 4
             else:
-                lines.append(".byte %d" % data[o])
+                raw.append(data[o])
+                if len(raw) == 32:
+                    flush()
                 o += 1
+        flush()
         out.append('asm("%s");' % "\\n".join(lines + [".popsection"]))
     if tables or failed:
         out.append("static void gstate_enter_c_%s(void (*fn)(u32), u32 e, u32 *f) { gstate_enter_ce(fn, e, f); }" % tag)

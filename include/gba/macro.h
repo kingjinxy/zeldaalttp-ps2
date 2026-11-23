@@ -36,7 +36,15 @@
     dmaRegs[1] = (vu32)(dest);                    \
     dmaRegs[2] = (vu32)(control);                 \
     dmaRegs[2];                                   \
+    PS2_IO_POLL();                                \
 }
+
+#ifdef PLATFORM_PS2  // the port runs DMAs in software (src/ps2/io.c)
+void ps2_io_poll(void);
+#define PS2_IO_POLL() ps2_io_poll()
+#else
+#define PS2_IO_POLL()
+#endif
 
 #define DMA_FILL(dmaNum, value, dest, size, bit)                                              \
 {                                                                                             \
