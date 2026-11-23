@@ -13546,3 +13546,1007 @@ Final check: 604 ok, 14 fail. The fails are only the EEPROM save functions and t
 
 - tool `Bash`: Update planning doc and walkthrough
 
+- tool `Bash`: Archive conversation and commit
+
+- tool `PushNotification`: 
+
+## Claude
+
+The translator works. `tools/asm2c.py` turns 5,102 of the 5,753 remaining asm functions into C, built with `make NONMATCHING=1 AUTO_C=1`. The per-call replay check gives 604 matching calls and 14 failures. The 14 are all calls that read hardware the replay doesn't restore: the 3 EEPROM save functions and the 2 known register-reading cases. `make compare` still prints OK and everything is committed.
+
+**How it works:**
+- **Translation:** each asm function becomes plain C where registers are local variables, and every memory access goes through macros in `include/auto.h`. That's the hook the PS2 port will use to remap GBA addresses. Here's a sample:
+  ```c
+  r0 = (u32)gUnknown_03005050;
+  r0 = R8(r0);
+  r0 = r0 << 2;
+  r0 = R32(r0 + r1);
+  r0 = ((u32 (*)())r0)(r0, r1, r2, r3);
+  ```
+- **Build:** nothing in `src/` changes. The build translates whatever asm is still left in each file, so functions written by hand keep replacing translated ones. The generated C goes in `src/auto/`, which git ignores, and is linked as a separate block after the game data.
+
+**Bugs found along the way:** the worst was that switch statements lost their case code entirely. Missing code now makes the translator refuse the function instead of dropping it silently. Most other fixes were rules for code that can't be translated safely, such as hand-written asm and code entered partway through.
+
+**What stays asm (651 functions):**
+- All of rom1, the hand-written engine core. Other code refers to fixed addresses inside it, so its layout can't change.
+- The sound engine and its command table.
+- Functions that pass values in registers outside the C convention, or whose callers depend on registers surviving a call.
+
+These need hand-written C. The Minish Cap decomp and pret's m4a sound engine cover much of it.
+
+**Limits of the check:**
+- **Coverage:** only about 130 of the translated functions actually run in the walk recording I test with, so coverage is thin. Longer recordings would raise it.
+- **No whole-game check:** comparing screenshots of a full linked play-through doesn't work for any build where code has moved. Even the build with no translation at all drifts from the original by frame 2000, because the two linked GBAs' timing shifts.
+
+Next I'd suggest hand-writing C for the 651 asm functions, starting with the sound engine and EEPROM from the pret references, and making longer test recordings to cover more of the translated code.
+
+## User
+
+Commit. What will hand writing the C involve? Why does it need to be hand written? Can we use the recomp in some way?
+
+- tool `Bash`: Check for uncommitted changes
+
+## Claude
+
+Everything was already committed; the working tree is clean.
+
+**Why I said "hand-written".** The translator emits ordinary C functions, `u32 f(r0, r1, r2, r3)` returning r0. That only works for code that follows the C calling convention and doesn't care where it sits in ROM. The 651 left break one or both of those:
+- **Register conventions:** values passed in r4/r5, or callers that expect r1-r3 or r12 to survive a call.
+- **Entry points:** code entered partway through a function, or two functions sharing code.
+- **Layout:** hard-coded addresses into rom1, `label+offset` pointers, and data read at a fixed distance from the current instruction.
+- **Raw bytes and ARM:** machine code stored as `.byte` lines, and the ARM functions.
+
+Writing C by hand fixes all of that, because a person works out what each function means. It's the slow path, though: about 10 functions an hour, as before.
+
+**They don't strictly need to be hand-written.** A static recompiler like FourSwordsRecomp handles exactly this kind of code without understanding it:
+1. **Global CPU state:** registers and flags live in one shared struct instead of locals. Each function becomes `void f(void)` working on that struct, so any register convention just works.
+2. **Address dispatch:** a table maps every code address that can be jumped to, including mid-function entries and `label+offset` targets, to C code. Indirect jumps and hard-coded addresses go through it, so layout stops mattering.
+3. **Data as data:** tables embedded in code become byte arrays at their original addresses, and raw `.byte` code gets decoded into instructions.
+4. **ARM:** a second decoder for the few ARM functions.
+
+asm2c already has most of the machinery: the parser, the control-flow analysis and the instruction translation. A global-state mode for the 651 would be roughly a few days' work, not months, and the replay check would validate it the same way.
+
+**Using the recomp itself.** FourSwordsRecomp and its engine are PolyForm Noncommercial. We decided on 2026-11-17 not to copy their code into the port, because that would tie the port to their licence. We can keep using their design docs as a reference for the technique, address dispatch and the instance model, and write our own implementation in asm2c.
+
+**Where hand-written C is still worth it:** the parts the PS2 port has to replace anyway:
+- the m4a sound mixer, which becomes PS2 audio output;
+- EEPROM, which becomes save files;
+- the link cable, which becomes in-process communication between the players;
+- the BIOS calls.
+
+Those get new code whichever route we take. The pret m4a decomp and the Minish Cap decomp make them easier.
+
+**My recommendation:** add the global-state mode to asm2c for the 651, and hand-write only the platform layer listed above. That gives you all-C code soonest; nicer, readable C can come later wherever it pays off. Should I go ahead with the global-state mode?
+
+## User
+
+What does the recomp license entail? Non commercial sounds ok to me, but are there other implications?
+
+## Claude
+
+This is from memory of PolyForm Noncommercial 1.0.0, not a fresh read of their repo's LICENSE file. I can check the file on GitHub before you decide.
+
+**What it allows:**
+- Using, copying, modifying and redistributing their code, and building new works on it, for any noncommercial purpose.
+- Personal use, hobby projects, research, study and experimentation all count as noncommercial. So does use by charities, schools and public bodies.
+- A patent licence for the same uses.
+
+**What it requires:**
+- **Pass on the terms.** Anyone you give their code to (in a repo, a release or a build) must get the licence terms, or a link to them.
+- **Keep their notice.** Their "Required Notice: Copyright …" lines have to stay with the code.
+- **No commercial use**, including indirect use: selling the port, bundling it with something paid, or putting it behind a paywall or paid tier. Ad-supported or sponsored distribution is a grey area. Plain donations are generally seen as fine, but it isn't spelled out.
+
+**Other implications:**
+1. **It spreads to the port.** It isn't copyleft (you don't have to publish your source), but the parts derived from their code can only be shared under their terms. In practice the whole port becomes noncommercial, and anyone who forks it inherits that restriction too.
+2. **You can't relicense it.** Today the port's own code could go out under MIT or similar. Once their code is mixed in, that part stays PolyForm NC.
+3. **Clash with GPL code.** GPL forbids adding restrictions like "noncommercial", so their code can't be combined with GPL-licensed code. Check this if the PS2 side uses any GPL libraries. ps2sdk is AFL/BSD-style, so it's fine. mGBA (MPL 2.0) is only used as a test tool, so it doesn't matter.
+4. **Termination.** A breach ends your licence. A first breach can be cured if you fix it within 32 days of being notified.
+5. **No warranty, and no trademark rights.**
+6. **Separate issue: Nintendo.** Their licence only covers their own code. The game itself remains Nintendo's IP however the port is licensed, which already limits the port to the usual fan-project status: you supply your own ROM, and nothing is sold.
+
+**For this project:** since the port can never be sold anyway (it's Nintendo's game), "noncommercial" costs you little. The real costs are that their terms and notices travel with the port, and that you couldn't later relicense it as MIT.
+
+If you're fine with that, I'd still write our own global-state mode in asm2c. It's a few days' work and keeps the licence question moot. Their design docs would guide it, without copying their code. Copying parts of their code would be faster in places, but then everything above applies.
+
+## User
+
+Alright, let's just do our own global state mode
+
+## Claude
+
+First, a check that shapes the design: whether rom1 still sits at its original address in the NONMATCHING build. If it does, its asm can stay in place as data while execution moves to C, and every hard-coded address into it stays valid.
+
+- tool `Bash`: Check object order in the linker script
+
+- tool `Bash`: Check which top EWRAM blocks the game uses
+
+- tool `Bash`: Check the dump option syntax
+
+- tool `Bash`: Retry dump and see output
+
+- tool `Bash`: Find highest used EWRAM address
+
+- tool `Bash`: Parse dump output properly
+
+- tool `Bash`: Highest used EWRAM per GBA
+
+## Claude
+
+The top of EWRAM, from 0x0203C000 up, stays unused through this recording. That gives the GS code 16 KB for its CPU state and stack. Checking the asm function macros, which the copies need to rename.
+
+- tool `Bash`: Read the asm function macros
+
+- tool `Bash`: Count sym+offset refs in data files
+
+- tool `Bash`: Try forced-thumb disassembly of rom1
+
+- tool `Read`: /home/alex/Documents/zeldaalttp-ps2/tools/asm2c.py
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/tools/gs2c.py
+
+## Claude
+
+Now the runtime header: CPU state at a fixed EWRAM address, the lookup, the wrapper and the jump macros.
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/include/gs.h
+
+## Claude
+
+Now the rest of gs2c:
+- wrappers;
+- address-sorted tables;
+- entries named globally by asm2c;
+- calls to `sym+offset`;
+- BIOS-call stubs.
+
+- tool `Bash`: Extend gs2c with wrappers, tables, entries, swi
+
+- tool `Bash`: Locate main's structure in asm2c
+
+- tool `Read`: /home/alex/Documents/zeldaalttp-ps2/tools/asm2c.py
+
+- tool `Bash`: Add GS list and copy generation to asm2c
+
+## Claude
+
+627 functions go to global-state C, with 455 extra entry points. Wiring it into the build.
+
+- tool `Bash`: Show current AUTO_C recipe
+
+- tool `Bash`: Integrate gs2c into the build and try it
+
+- tool `Bash`: Native fallback; rebuild
+
+- tool `Bash`: Trial-decode pointer-taken entries
+
+- tool `Bash`: Handle noreturn calls; rebuild
+
+- tool `Bash`: Inspect C errors and a native fallback
+
+- tool `Bash`: Fix negative offsets; rebuild
+
+- tool `Bash`: Find the function with the missing label
+
+- tool `Bash`: Inspect sub_08004532 asm and entries
+
+- tool `Bash`: Fix end labels and swi names; rebuild
+
+## Claude
+
+Kept-native functions need their real name defined in the assembly itself; an alias from the C side can't see the copy's symbol. gs2c will add the label to the copy and re-assemble.
+
+- tool `Bash`: Re-assemble with native labels; rebuild
+
+- tool `Bash`: Show the link error
+
+- tool `Bash`: Check how sub_08008C02 is handled
+
+- tool `Bash`: Why sub_08009106 is native
+
+## Claude
+
+sub_08009106 contains ARM code, so it stays native, but its branches still name the GS functions. Native asm will also get a renamed copy, so it keeps reaching the asm copies exactly as before.
+
+- tool `Bash`: Rename GS refs in native asm too; rebuild
+
+## Claude
+
+It builds. Now the replay check. GS wrappers have to be in its trace list, and the replay has to ignore the GS state area at 0x0203C000-0x02040000.
+
+- tool `Bash`: Run replay check with GS functions
+
+- tool `Bash`: Categorize GS failures; inspect a small one
+
+## Claude
+
+Most failures are "did not return", probably the `gs_bad` trap. I'll make the replay print the trapped address and the PC.
+
+- tool `Bash`: Get the trap address for a few failures
+
+- tool `Bash`: Where the PCs are, and the callee's GS code
+
+- tool `Bash`: Trampoline in wrapper; rerun check
+
+- tool `Bash`: Inspect sub_0800127C and its GS C
+
+- tool `Bash`: Resolve relocated b/bcc targets
+
+- tool `Bash`: Rerun replay check
+
+- tool `Bash`: Inspect callee sub_08001D5C translation
+
+- tool `Bash`: Fix fall-through at end; rerun check
+
+- tool `Bash`: Expose GS final registers to replay; rerun
+
+## Claude
+
+That made it worse: ABI-C functions that call GS code pick up a stale marker. The replay needs to know which functions are GS wrappers, so the map file will flag them.
+
+- tool `Bash`: Find map parsing in replay
+
+- tool `Bash`: Read map loading and new-pc lookup
+
+- tool `Bash`: Flag GS wrappers for the replay; rerun
+
+- tool `Bash`: Debug an r4 failure
+
+- tool `Bash`: Inspect GS code of sub_08000358
+
+- tool `Bash`: Register-transparent GS wrappers
+
+- tool `Bash`: Wire transparent wrappers; clean replay hack; rerun
+
+## Claude
+
+1,253 ok, 102 fail. Committing this progress, then on to the 88 calls that never return.
+
+- tool `Bash`: Commit and list non-returning cases
+
+- tool `Bash`: Inspect sub_08003E10
+
+## Claude
+
+The wild PCs come from executing garbage after a bad jump. I'll make gs_run trap on any target outside ROM code, IWRAM or EWRAM, and record lr too, so the replay names the first bad jump.
+
+- tool `Bash`: Trap bad jump targets; rerun
+
+- tool `Bash`: Inspect sub_080072F4
+
+## Claude
+
+BIOS addresses (below 0x4000) are legitimate targets for hand-written code, so I'm allowing them.
+
+- tool `Bash`: Allow BIOS targets; rerun
+
+- tool `Bash`: Inspect sub_080071B8
+
+## Claude
+
+Most failures are now in hand-written engine functions. sub_080072F4 fails although its callee passes, so I'm reading its generated C.
+
+- tool `Bash`: Read GS C for sub_080072F4
+
+- tool `Bash`: Add GS entry ring trace and inspect one failure
+
+- tool `Bash`: Rebuild map and replay with ring
+
+## Claude
+
+It passes now, so the earlier failure probably came from a stale object. Re-running the full check from a clean AUTO build.
+
+- tool `Bash`: Clean AUTO build and full check
+
+## Claude
+
+1,271 ok, 84 fail, across 22 functions. Making the check start from a clean `src/auto/`, then tracing sub_08003E10.
+
+- tool `Bash`: Clean auto in check; ring-trace sub_08003E10
+
+- tool `Bash`: Identify the IWRAM routine and the chain
+
+- tool `Bash`: Locate these functions
+
+- tool `Bash`: Map addresses to GS functions
+
+- tool `Bash`: Inspect sub_081342DC
+
+- tool `Bash`: Print CPU mode; sanity-replay original
+
+## Claude
+
+I'm tracing why the GS code ends up looping on an IWRAM sound routine. gs_run calls will go in the ring trace as well.
+
+- tool `Bash`: Trace gs_run calls too
+
+- tool `Bash`: Find the indirect call in play_sound
+
+- tool `Bash`: Code after the call in play_sound
+
+- tool `Bash`: Disassemble play_sound copy around the call
+
+- tool `Bash`: Read play_sound after the third call
+
+- tool `Bash`: Keep GS sp in gCpu; full check
+
+## Claude
+
+1,286 ok, 69 fail. Next: sub_080045FC.
+
+- tool `Bash`: Ring-trace another failure
+
+- tool `Bash`: Which function holds 0x08008D50
+
+- tool `Bash`: Inspect sub_08008CB4
+
+- tool `Bash`: Add raw rom1 code pointers as entries
+
+- tool `Bash`: Fix size field; full check
+
+- tool `Bash`: Next failure traces
+
+- tool `Bash`: Name the two addresses
+
+- tool `Bash`: Inspect sub_08134074 start
+
+- tool `Bash`: Treat local bl as call; full check
+
+- tool `Bash`: Look at a now-broken small sound function
+
+- tool `Bash`: Reset privilege mode per replay; rerun replay
+
+## Claude
+
+1,308 ok, 47 fail. Committing, then continuing with the rest.
+
+- tool `Bash`: Commit and show remaining failures
+
+- tool `Bash`: Trace sub_08134350 failure
+
+- tool `Bash`: Inspect sub_081339C4
+
+- tool `Bash`: ARM-state bx goes native; full check
+
+- tool `Bash`: Remaining failures detail
+
+- tool `Bash`: Read sub_081339D4 (sound main)
+
+- tool `Bash`: Keep RAM-code jumpers native; full check
+
+- tool `Bash`: Trace sub_08008D90
+
+- tool `Bash`: Which BIOS calls GS code uses
+
+- tool `Bash`: Look at code near 0x08004554
+
+- tool `Bash`: Check GS tables are sorted
+
+- tool `Bash`: Drop end-of-function table entries; full check
+
+- tool `Bash`: Remaining non-I/O failures
+
+- tool `Bash`: Test with MPlayMain native
+
+- tool `Bash`: Bigger ring; full path for sub_08008D90
+
+- tool `Bash`: Tail of the GS path, with function names
+
+- tool `Bash`: Read MPlayMain's GS C start
+
+- tool `Bash`: Count GS, native, ABI translations
+
+- tool `Bash`: Update docs and commit
+
+- tool `PushNotification`: 
+
+## Claude
+
+The global-state mode works, and with it almost all the asm now builds as C. I checked it the same way as before, by replaying individual recorded calls; I haven't attempted a whole-game run. That replay check gives 1,325 matching calls and 24 failing. `make compare` still prints OK and everything is committed.
+
+| How each of the 5,753 asm functions now builds | Count |
+|---|---|
+| C-calling-convention C (asm2c) | 5,010 |
+| Global-state C (new, `tools/gs2c.py`) | 603 |
+| NONMATCHING C written earlier | 112 |
+| Still native asm | 28 |
+
+**How it works.** The 603 functions run as C on one shared CPU state at the top of EWRAM, defined in `include/gs.h`.
+- **Asm kept as data:** each function's original asm stays assembled in place as a renamed copy. Its layout, embedded tables and every hard-coded address stay valid, and rom1 stays at its original address.
+- **Translated from machine code:** gs2c has its own Thumb decoder, so code stored as raw bytes decodes too.
+- **Unchanged interface:** each function keeps its name as a small stub. Callers' registers go in and the results come back out, so other code calls it exactly as before.
+- **Returns and jumps:** calls carry real return addresses, and code that returns past its caller unwinds correctly. Indirect jumps go through a lookup table of entry addresses.
+
+**The 28 native functions** are ARM code, code that doesn't decode as Thumb, and the sound mixer's jump into its code copied to RAM. The PS2 port needs its own versions of the mixer and the BIOS calls anyway.
+
+**The 24 failures:**
+- **Sound engine:** most go through the per-player loop (`sub_08134074`, MPlayMain in pret's m4a). With the translation it recurses through its callbacks instead of stopping. Keeping that one function native didn't change the result, so the cause lies elsewhere in that path and I haven't found it yet. I stopped there because the PS2 audio layer replaces this code.
+- **Hardware reads the replay can't restore:** the EEPROM save functions and the 2 known register-reading cases.
+
+**Bugs the replay check caught and that are fixed:**
+- Branches to other functions resolved to themselves, producing infinite loops.
+- Functions that run on into the next one just stopped.
+- The stack pointer was published late, so a nested call overwrote a saved return address. This would also have bitten under interrupts.
+- Calls to small helpers inside the same function had no return point.
+- Jumps into ARM code and duplicate table entries (the latter caused endless recursion).
+
+Separately, a replay that hung in the BIOS left the CPU in the wrong mode, which broke every later replay in the same batch. The replay now resets the mode before each call.
+
+**Limits:**
+- **Coverage:** only the functions the walk recording reaches get tested, about 270 in this run.
+- **Speed:** the global-state code is slower than the original on the GBA. That only matters for GBA testing, not the PS2.
+- **Fixed memory:** the CPU state uses top-of-EWRAM memory that stays unused in this recording; another game mode could need it.
+
+Next I'd suggest starting the platform layer: sound (from pret's m4a), EEPROM saves, the link cable and BIOS calls. The other option is first making longer recordings, so the replay check covers more of the translated code.
+
+## User
+
+As a rule, distinguish global state from Graphics Synthesizer, as both can be abbreviated GS
+
+- tool `Write`: /home/alex/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/memory/gs-ambiguity.md
+
+- tool `Bash`: Save memory; rename gs to gstate throughout
+
+- tool `Bash`: Rename prose; rebuild and verify
+
+- tool `Bash`: See why the check stopped
+
+- tool `Bash`: Find leftover copy-path references
+
+- tool `Bash`: Fix directory name; verify again
+
+- tool `Bash`: Check remaining build error after rename
+
+## User
+
+[Request interrupted by user for tool use]
+
+## User
+
+I have an idea to make recordings easier. I want to be able to press L3 on my controller and signal mGBA to switch control to the other emulated GBA. Is this possible?
+
+## Claude
+
+Yes, in our own recorder. `mgba_run --play` already runs both linked GBAs in one SDL2 window and records each GBA's buttons to `DIR/inputs0` and `DIR/inputs1`. At the moment it only reads the keyboard (WASD for GBA 0, arrows for GBA 1).
+
+**The change, roughly 40 lines in `tools/mgba_run.c`:**
+- Open the controller through SDL's GameController API, which already knows most pads' layouts.
+- Map the d-pad and left stick to the D-pad, A/B to A/B, the shoulder buttons to L/R, and Start/Back to Start/Select.
+- Keep an "active GBA" index. Pressing L3 (`SDL_CONTROLLER_BUTTON_LEFTSTICK`) flips it, and the controller's buttons then drive that GBA.
+- Release all buttons on the GBA you switch away from, so nothing stays held.
+- Show which GBA is active, for example with a coloured border around its half of the window.
+- Leave the keyboard controls as they are.
+
+The recordings themselves don't change: each GBA's own input file still gets that GBA's buttons frame by frame, so replays work exactly as before.
+
+Stock mGBA can't do this, because each of its windows is a separate emulator taking its own input, and its Lua scripting can't drive another instance. Doing it in `mgba_run` is the simple route.
+
+The global-state → gstate rename is half-done and not committed, so the `AUTO_C=1` build is currently broken. The matching build is fine (`make compare` printed OK). I'll finish and commit the rename before starting on the controller support. Should I go ahead with both?
+
+## User
+
+Yes
+
+- tool `Bash`: Find the remaining rename breakage
+
+- tool `Bash`: Fix asm-string names and stale ldscript
+
+- tool `Bash`: Verify and commit rename
+
+## Claude
+
+Rename done and verified (same 1,325 ok). Now the controller support in `mgba_run --play`.
+
+- tool `Bash`: Find the SDL play-mode code
+
+- tool `Read`: /home/alex/Documents/zeldaalttp-ps2/tools/mgba_run.c
+
+- tool `Bash`: Add controller with L3 switching to --play
+
+## Claude
+
+It compiles. A quick smoke test with no display, to make sure play mode still starts and runs:
+
+- tool `Bash`: Smoke-test play mode headless
+
+- tool `Bash`: Commit controller support
+
+## Claude
+
+Both are done and committed.
+
+**Rename.** The translator is now `tools/gstate2c.py` with `include/gstate.h`, and every name, comment and doc reference uses "global state" or "gstate". The `AUTO_C=1` build works again, and the replay check gives the same 1,325 ok as before. I also saved your rule to memory so "GS" stays reserved for the Graphics Synthesizer.
+
+**Controller in `mgba_run --play`.**
+- **Mapping:**
+  - d-pad or left stick: D-pad
+  - A and B: A and B
+  - shoulders or triggers: L/R
+  - Start: Start
+  - Back: Select
+- **L3** (clicking the left stick) switches the controller between GBA 1 and GBA 2. A yellow frame shows which one it is driving.
+- **Keyboard:** the keyboard controls still work alongside it, so a second person can play the other GBA.
+- **Hot-plug:** a controller plugged in while the window is open is picked up.
+
+Recording works as before: each GBA's buttons go to its own `inputs0` or `inputs1` file. I could only smoke-test without a display (it started, ran and wrote all the recording files), so the controller itself hasn't been tried yet. To try it:
+
+```
+tools/mgba_run zeldaalttp.gba 0 --players 2 --play recordings/NAME
+```
+
+Add `--start recordings/start_linked` to begin from the existing linked saves. If any button feels wrong on your pad, tell me which and I'll remap it.
+
+## User
+
+How much of the project now is code from the disassembly hand converted to C, and how much has simply been converted mechanically?
+
+- tool `Bash`: Count hand vs mechanical C by functions and bytes
+
+- tool `Bash`: Check wrapper marker text
+
+- tool `Bash`: Fix marker name; recompute breakdown
+
+- tool `Bash`: Commit marker rename
+
+## Claude
+
+By code size, about a fifth of the game's code is hand-converted C and about four-fifths was converted mechanically. By function count it's about 30% hand-converted and 70% mechanical.
+
+| | Functions | Share | Code size | Share |
+|---|---|---|---|---|
+| Hand-converted, matching (byte-identical) | 2,281 | 28.4% | 201 KB | 16.8% |
+| Hand-converted, NONMATCHING (equivalent) | 112 | 1.4% | 42 KB | 3.6% |
+| Mechanical, C calling convention (`asm2c`) | 5,010 | 62.4% | 911 KB | 76.2% |
+| Mechanical, global state (`gstate2c`) | 603 | 7.5% | 40 KB | 3.4% |
+| Still native asm | 28 | 0.3% | ~0 KB | ~0% |
+
+- **The hand-converted share skews small.** It's a bigger share of the functions than of the bytes, because the functions decompiled by hand tend to be the smaller ones. The mechanical ones include most of the large game logic.
+- **"Hand-converted, matching" isn't all from this session.** It includes the C that came with the original zeldaalttp disassembly, and A Link to the Past code as well as Four Swords.
+- **The 28 native functions are tiny:** ARM routines and stubs that are mostly data, with almost no code size.
+- **Sizes come from the matching build's symbol table.** "Code size" is each function's size in the original ROM, not the size of the C.
+
+While counting, I noticed one leftover "gs" in the generated wrapper comments. It now says "gstate", and that's committed.
+
+## User
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+<system-reminder>
+<tools-used-before-summary>Bash, Edit, PushNotification, Read, TaskStop, ToolSearch, Write</tools-used-before-summary>
+</system-reminder>
+Summary:
+1. **Primary Request and Intent:**
+   - **Goal:** decompile Four Swords (zeldaalttp GBA disassembly, USA) to C for a PS2 port with split-screen multiplayer.
+   - **User decisions this session:**
+     - "Continue converting assembly to equivalent C".
+     - "Do you have any other ideas for speeding up this process?" → "How would you do 2?" (reachability) → "Let's try auto translating the long tail."
+     - "Commit. What will hand writing the C involve? Why does it need to be hand written? Can we use the recomp in some way?"
+     - "What does the recomp license entail?..." → "Alright, let's just do our own global state mode".
+     - "As a rule, distinguish global state from Graphics Synthesizer, as both can be abbreviated GS" (saved to memory; code renamed to gstate).
+     - L3 controller switching in mgba_run for recordings → "Yes" (to finishing the rename plus the controller work).
+     - Latest: "How much of the project now is code from the disassembly hand converted to C, and how much has simply been converted mechanically?"
+   - **Constraints (verbatim from CLAUDE.md / user):**
+     - "Web access: GitHub only without asking."
+     - "Never access tcrf.net (The Cutting Room Floor) in any way."
+     - "No `pkill -f <pattern>` in a command whose own command line contains the pattern."
+     - "No ROM, BIOS or extracted asset is ever committed." reference/ is never committed.
+     - Never share the user's email with external services.
+     - FourSwordsRecomp/GBARecomp code (PolyForm Noncommercial 1.0.0) is not copied; its design docs may be used as reference.
+   - **Workflow rules:**
+     - Commit only when `make compare` prints `zeldaalttp.gba: OK` (gate with grep -q).
+     - Update docs/Running Walkthrough.md, docs/Planning Doc.md and Claude Conversation.md at milestones (archive script; check no removed lines).
+     - Push notification at milestones.
+
+2. **Key Technical Concepts:**
+   - **Builds:**
+     - Matching build (agbcc).
+     - `NONMATCHING=1` (C under `#ifdef NONMATCHING`; generated ldscript_nm.txt with .rodata fixed at 0x08137B04).
+     - `NM_RODATA` puts static tables in `.rodata.nm`.
+   - **AUTO_C=1** (with NONMATCHING), per-object pipeline:
+     1. `asm2c.py --s` translates the remaining includes to C-ABI C (src/auto/X.c), writes copies for global-state functions, and rewrites the include lines.
+     2. Assemble X.main.o.
+     3. `gstate2c.py` produces X_gstate.c.
+     4. Compile; the auto objects' .text is renamed `.text.auto`.
+     5. `ld -r` combines them into src/X.o.
+     6. ldscript_nm places .text_softfloat at 0x08800000, containing dp/fp-bit, `*(.rodata.nm)`, `*(.text.auto)` and the sorted tables `__gstatetable_start/end` (.gstatetable) and `__gstatetablew_start/end` (.gstatetablew).
+   - **AUTO_C knobs:** `AUTO_C_FILES` (limit to objects) and `AUTO_C_SKIP` (function names).
+   - **asm2c (C-ABI translation):**
+     - Registers become u32 locals; flags are computed only where a branch reads them; a frame array mirrors the original stack frame; memory goes through R8/W32 macros (include/auto.h).
+     - Jump tables become switch; calls pass r0-r3 plus stack words.
+     - `pinned_functions` keeps asm for:
+       - mid-function entries, label+offset ranges, and raw pc-relative reads;
+       - groups that hard-coded code addresses point into (all of rom1);
+       - hand-written (unified syntax) code, raw .byte code, fall-through, and non-ABI register use;
+       - callees whose callers read r1-r3/r12 after the call;
+       - pointer tables containing hand-written functions;
+       - targets of short branches.
+   - **Global-state mode (gstate2c, include/gstate.h):**
+     - CPU state `gCpu` (struct GstateCpu {r[16], n,z,c,v}) at 0x0203C000; stack top 0x02040000.
+     - Copies are named NAME__asm plus NAME__base labels; gstate2c decodes their Thumb machine code with its own decoder.
+     - `void gstate_NAME(u32 entry)`: registers are locals, synced via GSTATE_LOAD/STORE; sp always lives in gCpu (`#define sp (gCpu.r[13])`).
+     - lr holds real return addresses; GSTATE_JUMP_IN / GSTATE_RETURNED_IN handle unwinding.
+     - gstate_run does a binary-search table lookup, else a C call.
+     - Register-transparent asm entry stubs (gstate_enter_TAG → gstate_enter_c, with gCpu saved and restored); the trampoline runs until GSTATE_MAGIC_RET 0xFFFFFFF1.
+     - SWI goes through asm stubs. `bx` with an even target means ARM, so it runs natively.
+     - Functions that fail to decode, or that jump into Thumb code in RAM, stay native (their copy gets a label with their own name).
+     - Ring trace: 1024 entries at 0x0203C200.
+   - **Validation:** `AUTO_C=1 TRACE_MAX=6 tools/check_nonmatching.sh OUT tools/fs_walk.inputs 3921`.
+     - It removes src/auto when AUTO_C is set, checks .rodata size, and writes map.txt.
+     - mgba_run --replay:
+       - counts code at ≥0x08800000 as code;
+       - skips r0 when it equals the return address (void functions);
+       - ignores 0x0203C000-0x02040000;
+       - resets privilege mode per call;
+       - prints pc/mode/gstate_bad, and the ring with `GS_RING=1` (env var name not renamed).
+     - Linked whole-game screenshots are not valid for code-moved builds (timing).
+
+3. **Files and Code Sections:**
+   - **tools/asm2c.py:** C-ABI translator.
+     - Modes: `--s FILE.s OUT.c [--gs src/auto/gstate.list]`, `--gs-list OUT`, and standalone.
+     - Pinning rules; `gs_copy` (now writes src/auto/gstate/NAME.inc).
+     - `nonmatching_c_incs()`.
+     - `gs_list` excludes NONMATCHING C, ARM and AUTO_C_FILES/SKIP, and emits "NAME" / "NAME OFFSET" entries.
+   - **tools/gstate2c.py** (renamed from gs2c.py):
+     - Decoder (all Thumb-1 formats); `reloc_branch`; `flow` (trial decoding of pointer-taken entries; after-call stop); `finish`; `emit`.
+     - Wrappers are emitted as asm stubs with the marker comment `/* gstate wrapper */`.
+     - Tables exclude entries ≥ function size.
+     - rom1 raw odd pointers become entries (base = 0x08000000 + crt0 .text size 0x358).
+   - **include/gstate.h** (renamed from gs.h): GstateCpu, gCpu, GSTATE_* macros, gstate_find, gstate_bad, gstate_run (traps bad target ranges and records lr at 0x0203C0F4), gstate_enter_c.
+   - **include/auto.h:** typedefs, R/W macros, LSL/LSR/ASR/ROR(_C) macros.
+   - **include/global.h:** `#define NM_RODATA __attribute__((section(".rodata.nm")))`.
+   - **Makefile:**
+     - `empty`/`space` vars.
+     - AUTO_C rule steps; src/auto/gstate.list rule.
+     - Objects depend on asm2c.py, gstate2c.py, include/gstate.h and src/auto/gstate.list.
+     - ldscript_nm generation.
+   - **tools/check_nonmatching.sh:** env -u AUTO_C for the matching builds, AUTO_C support, TRACE_MAX, rodata guard, and regexes for asm2c functions and `/* gstate wrapper */`.
+   - **tools/mgba_run.c:**
+     - Replay changes, as listed in section 2.
+     - `--play` now supports a game controller:
+       - mapping: d-pad/left stick, A/B, shoulders/triggers = L/R, Start, Back = Select;
+       - L3 (`SDL_CONTROLLER_BUTTON_LEFTSTICK`) toggles `padGba`;
+       - a yellow frame marks the active GBA;
+       - `SDL_INIT_GAMECONTROLLER`; hot-plug supported.
+   - **asm/non_matching/rom1/sub_08003228.inc:** `beq.n 0x8003224` became `beq.n _08003224` (matching unchanged).
+   - **.gitignore:** src/auto/ and *.main.o.
+   - **Docs:** walkthrough Steps 20, 21 and 22 plus planning doc entries; global-state wording fixed per the GS rule.
+   - **Memory:** gs-ambiguity.md and its MEMORY.md line.
+   - **NONMATCHING C commits this session:**
+     - sub_0803E114
+     - sub_08028200
+     - sub_080272D0 (helper; callee prototypes)
+     - sub_08038E44
+     - sub_08040074
+     - sub_08014958 (u8* prototype)
+     - sub_08028CD0 and sub_080291F8 (shared helper)
+     - sub_08050444 and sub_08050B50 (shared table helper)
+
+4. **Errors and fixes:**
+   - **NONMATCHING build errors were missed by grep:** now check make's exit status. The .rodata growth (from sFns) shifted data → NM_RODATA plus the size guard.
+   - **asm2c issues:**
+     - jump-table case bodies were dropped (flow didn't follow tables) → follow tables; unreachable code now fails the function;
+     - builtin name clashes → `asm("name")` declarations;
+     - the AUTO_C env var leaked into matching builds → `env -u`.
+   - **gstate issues:**
+     - relocated b/bcc to symbols became self-loops;
+     - code running off a function's end;
+     - stale sp clobbering saved lr (fixed by keeping sp in gCpu);
+     - local `bl` helper calls;
+     - `bx` to ARM;
+     - duplicate end-of-function table entries caused infinite recursion;
+     - stale objects → the check removes src/auto;
+     - BIOS-mode hang cascades → reset privilege mode per replay call.
+   - **Rename leftovers:**
+     - the `src/auto/gs` directory name;
+     - the `\ngs_enter` / `\ngs_swi` asm strings;
+     - stale ldscript_nm.txt;
+     - the "gs wrapper" marker.
+
+     All were fixed and committed.
+   - **User feedback:** don't abbreviate global state as GS.
+
+5. **Problem Solving:**
+   - **Replay check (AUTO_C):** 1,325 ok, 24 fail. The fails are:
+     - the m4a player chain: sub_08134074 (MPlayMain) recursing via callbacks. This was unresolved; keeping it native didn't fix it. The PS2 audio layer replaces it.
+     - EEPROM: 08067A30, 08067AE0, 08068108;
+     - the known I/O cases 0800C54C and 0800C75C;
+     - 080045FC, 08004FD0, 08008D90 and 08013C8C, which end in the BIOS or RAM on sound paths.
+   - **Breakdown by function (matching ELF sizes), computed just now:**
+
+     | Category | Functions | % of functions | Size | % of bytes |
+     |---|---|---|---|---|
+     | Hand C, matching | 2,281 | 28.4% | 201 KB | 16.8% |
+     | Hand C, NONMATCHING | 112 | 1.4% | 42 KB | 3.6% |
+     | Mechanical, C-ABI (asm2c) | 5,010 | 62.4% | 911 KB | 76.2% |
+     | Mechanical, global state (gstate2c) | 603 | 7.5% | 40 KB | 3.4% |
+     | Still native asm | 28 | 0.3% | ~0 KB | — |
+
+6. **All user messages:**
+   - "Give a status update" (mid-turn)
+   - "Continue converting assembly to equivalent C"
+   - "Do you have any other ideas for speeding up this process?"
+   - "How would you do 2?"
+   - "Let's try auto translating the long tail."
+   - "Commit. What will hand writing the C involve? Why does it need to be hand written? Can we use the recomp in some way?"
+   - "What does the recomp license entail? Non commercial sounds ok to me, but are there other implications?"
+   - "Alright, let's just do our own global state mode"
+   - "As a rule, distinguish global state from Graphics Synthesizer, as both can be abbreviated GS"
+   - (interrupted a tool call) "I have an idea to make recordings easier. I want to be able to press L3 on my controller and signal mGBA to switch control to the other emulated GBA. Is this possible?"
+   - "Yes"
+   - "How much of the project now is code from the disassembly hand converted to C, and how much has simply been converted mechanically?"
+
+7. **Pending Tasks:**
+   - Answer the latest question with the computed breakdown.
+   - **Possible future work (not yet requested):**
+     - the platform layer (m4a sound from pret, EEPROM saves, link cable, BIOS calls);
+     - longer recordings for replay coverage;
+     - the remaining failures on the sound path;
+     - doc updates for the controller feature and the conversation archive at the next milestone.
+
+8. **Current Work:**
+   - The breakdown table in section 5 is the answer to "How much of the project now is code from the disassembly hand converted to C, and how much has simply been converted mechanically?"
+   - The marker rename fix ("gs wrapper" → "gstate wrapper") was just committed. All work is committed.
+
+9. **Optional Next Step:**
+   - Reply to the user's question in text with the numbers in section 5: roughly 30% of functions (20% of code bytes) are hand-converted, and about 70% of functions (80% of bytes) are mechanical.
+   - Note that "hand C, matching" includes the disassembly's pre-existing C plus decompiled functions.
+   - Do not start new work without the user's direction.
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /home/alex/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9.jsonl
+Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.
+
+The messages after this summary are the most recent messages from before compaction, kept verbatim. The summary was written without seeing them, so something it says has not happened yet may already have happened in them.
+
+## User
+
+<command-name>/compact</command-name>
+            <command-message>compact</command-message>
+            <command-args></command-args>
+
+## User
+
+<local-command-stdout>Compacted </local-command-stdout>
+
+## User
+
+I've added a Four Swords Anniversary Edition rom to the VirtualBox shared folder. Copy it to the project folder and analyze it against the GBA ROM
+
+- tool `Bash`: Find VirtualBox shared folder
+
+- tool `Bash`: Copy FSAE files into reference and inspect headers
+
+- tool `Bash`: Parse NDS header and list filesystem
+
+- tool `Bash`: Search FSAE parts for byte blocks from the GBA ROM
+
+- tool `Bash`: Match GBA ROM functions against FSAE ARM9 binary
+
+- tool `Bash`: Attribute ARM9 data matches to GBA symbols, look at strings
+
+- tool `Bash`: Look for source paths and debug strings
+
+## Claude
+
+I copied the Anniversary Edition ROM to [reference/fsae/](reference/fsae/), as `fsae.app` plus its `fsae.pub` companion file. That folder is git-excluded like the rest of `reference/`, so it won't be committed. The file is a decrypted DSiWare ROM with game code `KQ9E` (DSi-only), 14.5 MB.
+
+**It's a rewrite, not the GBA program running in an emulator.** Of the 6,800 functions in the GBA ROM, only 1 appears byte-for-byte in the DSi code (`sub_08000358`, 134 bytes) and 2 more partly match. The DSi code is mostly ARM, while the GBA code is Thumb. It has its own engine with C++ class names (`DataManager.cpp`, `DatalinkReader.cpp`) and uses DS Wireless Play in place of the link cable. So it can't be used to check our decomp code against.
+
+**The GBA data is reused heavily.** I compared the two by looking for 32-byte blocks of the GBA ROM inside each DSi file:
+
+| DSi file | Size | What it holds |
+|---|---|---|
+| ARM9 binary | 1.1 MB | About 690 KB of GBA data tables, including big blocks from 0x0813FED8 to 0x08445BA8. The DSi game code is new. |
+| `zeldat.bin` | 1.7 MB | Largely GBA data from 0x08137BA0 to 0x0854F7C0 (34,587 matching blocks), probably the graphics and tiles. |
+| `zelmap.bin` | 1.0 MB | GBA data from 0x08550B00 to 0x0862E180, probably the maps. |
+| `pat.bin` | 75 KB | GBA data, mostly blocks from 0x081485C0 to 0x08641560. |
+| `zeldat_us_{en,fr,sp}.bin` | 62 KB each | Per-language variants of `zeldat.bin`. |
+| `*.wave`, `knife_sound.sdat` | 9 MB | Streamed music, with a few GBA sample matches. These are new recordings, not the GBA's m4a sequenced music. |
+| `us.kmsg`, `all.kmsg` | 0.5 MB | Text, now in a new message format, with a few GBA blocks. Anniversary-only content such as the extra dungeons and the original-staff credits. |
+| `subtask*.cmp`, `*_narc.blz`, `font_ltn.nftr` | 0.5 MB | New compressed DS resources. |
+
+**What it's useful for:**
+- **Naming data.** Many of our unnamed `gUnknown_08xxxxxx` tables also appear in `zeldat.bin` and `zelmap.bin`, so seeing how the DSi files split them up shows where each graphics and map asset starts and ends.
+- **Ideas for the PS2 multiplayer.** Its wireless design (one shared game rather than linked GBAs running separately) is the closer model for split-screen. Its C++ class names are a structural reference, but it's compiled ARM, so it would need its own disassembly to study.
+
+These numbers come from matching byte blocks, which only shows shared data, not what each file is. The labels "graphics", "maps" and "music" are guesses from the file names and the matched address ranges.
+
+## User
+
+The DSi game is an expanded version of the GBA game, with a few new levels, a status screen on the bottom, a single-player mode with an AI for the second Link character, and a slightly higher screen resolution. I'm planning on implementing at least some of these in this PS2 port. As far as I know, there isn't a decomp or disassembly for the DSi game, so a recomp may be in order to study the code.
+
+- tool `Write`: /home/alex/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/memory/fsae-features.md
+
+- tool `Bash`: Add memory index line
+
+## Claude
+
+I saved those plans to memory so later sessions know which features you're after.
+
+A decompiler is a cheaper first step than a recomp. A recomp is what you'd build to *run* the DSi code. To *study* it, you can load the ARM9 binary into Ghidra (free, downloadable from GitHub) and read its decompiled C. With the melonDS emulator's debugger next to it, you can see what a function does at runtime. A recomp would only pay off later, if we wanted to run its AI or level code directly instead of rewriting it from what we learn. Even then we'd need an ARM decoder of our own, since `gstate2c` only handles Thumb.
+
+How I'd get into the DSi code:
+
+1. **Unpack the ARM9 binary.** Retail DS binaries are usually compressed, and those 1.1 MB may be too. Then load it at 0x02004000 with the ARM9i part at its DSi address.
+2. **Use the shared data as anchors.** About 690 KB of GBA tables sit inside the ARM9 binary. Code in the DSi game that reads one of those tables corresponds to the GBA function that reads it, and we already have names and C for those. That maps the DSi engine onto our names without starting from scratch.
+3. **Find each feature from its strings and assets:**
+   - **AI partner:** start from the single-player text and follow the code that drives the second Link's inputs. It probably feeds a virtual controller, which would slot into our per-player input with little change to the engine.
+   - **Status screen:** the bottom-screen graphics in the new DS resource files, and the code that draws them. On the PS2 this could be a panel next to each player's view.
+   - **New levels:** maps and text that appear only in the DSi version (in the map file and the message files). They'll need their formats worked out, which the shared GBA data helps with.
+   - **Higher resolution:** see how its camera and screen-edge code handle the wider view. On the PS2 that mostly means changing the constants in our C.
+
+One rule to keep: the DSi ROM, anything extracted from it and any Ghidra project stay in `reference/` and are never committed. Our port would carry only our own reimplementation of what we learn.
+
+Which feature do you want first? I'd start with the AI partner: it's the most self-contained, and our decomp already has the input path it would plug into.
+
+## User
+
+One small change, put extracted DSi files into "reference/dsi" just to tidy things a bit. Characterize the difficulty of decompiling the GBA game vs the DSi game.
+
+- tool `Bash`: Rename reference folder to dsi and update memory
+
+## Claude
+
+I moved the DSi ROM to [reference/dsi/](reference/dsi/), and anything extracted from it later will go there too. The memory notes point to the new path.
+
+Decompiling the DSi game would be much harder than the GBA game, roughly an order of magnitude more effort to reach the same result.
+
+| | GBA game (current project) | DSi game |
+|---|---|---|
+| **Starting point** | A complete, building disassembly of the cartridge already existed, with labels and some C. | Nothing public. We'd start from the raw binary: unpack it, separate code from data, find every function. |
+| **Compiler** | agbcc (GCC 2.95), which is freely available, so the C can be checked byte-for-byte. | Almost certainly Metrowerks CodeWarrior for DS, the official tool, proprietary and not freely available. Byte-matching is impractical, so only equivalent C is possible (the NONMATCHING approach). |
+| **Language** | C. Functions are short and decompile cleanly. | C++, judging by the class names in its strings. Virtual calls, constructors and inlined templates make the output much harder to read and get right. |
+| **Instruction set** | Thumb only: simple, and our tools already cover it. | Mostly ARM plus some Thumb on an ARMv5 CPU. That's more instruction forms, and conditional execution makes the code harder to follow. Our tools would need a second decoder. |
+| **Size** | About 1.2 MB of code, 6,800 functions, and the game itself fills only part of the ROM. | The main binary is 1.1 MB, partly GBA data, so the code is probably 0.4–0.6 MB. But there are two CPUs (the second one runs the wireless and sound side), plus the DS libraries the game is built on. |
+| **Libraries** | Only m4a sound plus a few BIOS calls, and a C version of m4a exists in other pret projects. | The DS SDK, wireless and sound libraries, which are large. Their functions would have to be recognized and set aside, without public signature files. |
+| **Hardware** | One screen, one CPU, documented in GBATEK, and mGBA is accurate. | Two screens, two CPUs, the 3D engine if it's used, and DSi-only hardware. melonDS is usable but less exact than mGBA. |
+| **Checking work** | `make compare` proves every change, and mGBA replays check the equivalent C. | No matching build. The only checks are behaviour comparisons in melonDS, which can't take our scripted inputs the way our mGBA runner does. |
+| **Head start** | The Minish Cap decomp, which shares its engine, gives names and structs. | Our own GBA decomp. Where the DSi code reads the shared GBA tables, it probably mirrors our functions, which helps with naming. |
+
+What this means for the plan:
+
+- **A full decomp of the DSi game isn't worth it.** Your four features are a small part of its code. The rest is mostly the GBA engine rewritten, which we already have in C.
+- **Targeted study is the right scale:** Ghidra with melonDS, starting from the shared data and the strings. For each feature, read only that code and reimplement it in our C, in our own structures.
+  - **AI partner:** the largest piece of new logic, and the one most worth reading closely.
+  - **Status screen and resolution:** mostly a matter of watching what the game does, plus a few constants.
+  - **New levels:** mainly a data-format problem, eased by the GBA data they share.
+- **A recomp** would only make sense to run the AI as-is instead of reimplementing it. It would need an ARM decoder of our own, and we'd also have to emulate the DS hardware around that code, a big job just to run one subsystem.
+
+## User
+
+For now, my priority list for the DSi game is:
+1, the new levels, 2, the resolution change, and 3, the AI.
+
+- tool `Bash`: Record DSi feature priorities in memory
+
+## Claude
+
+I've saved the order to memory: 1, the new levels; 2, the resolution change; 3, the AI. The status screen isn't on the list yet.
+
+Here's what the levels work would involve:
+
+- **Our side first.** To load new levels, the PS2 port has to understand Four Swords' own level format: room headers, tilemaps, tilesets, entity lists and warps. A lot of that loading code is still in the mechanically translated part. So step one is hand-decompiling the Four Swords room and map loaders and naming those tables. That's useful for the port anyway.
+- **Find the new data.** Some of the DSi map and graphics files are copied GBA data, and those parts line up with tables we already know. The bytes that have no GBA counterpart are the candidates for the new levels.
+- **Work out the formats.** If the new levels use the same format as the GBA levels, little code is needed. If they were converted for the DSi engine, we'd read those loaders in Ghidra and write a converter that turns them into the GBA layout at build time.
+- **Supply the files at runtime.** Like the ROM, DSi assets can't be committed. The port would read them from the user's own DSi ROM, the same way it uses their GBA ROM.
+
+New levels also bring new text, and some may use new enemies or behaviour. Those would come out of the DSi code itself, so the levels work could pull in some Ghidra study earlier than planned.
+
+The first concrete step is mapping our Four Swords room loaders and the files they read. I'd start there next, unless you want to keep going with the general decomp instead.
+
+## User
+
+What kind of work do you anticipate for this step?
+
+## Claude
+
+I'd expect about one focused session to map our side and a second for the DSi comparison. That depends on how much of the Four Swords loading path is still mechanically translated. I haven't checked yet, and that's the main unknown. Most of the work is reading and naming, not writing new code.
+
+1. **Find the load path.** Trace from "the game changes rooms" to the code that copies the room's data into memory. The quickest route is an mGBA replay from our recordings that walks through a door. We log which functions run and which ROM tables they read, and the tile, palette and map uploads point at the loaders.
+2. **Decompile those functions by hand.** I'd expect a few dozen: the room-transition logic, the loaders for tilesets, tilemaps, collision, palettes and entity lists, and the decompressors. The decompressors are probably the BIOS ones or near copies, as in Minish Cap. Minish Cap's decomp shares this engine, so its matching C and struct names should cover a good share of them. Everything gets the usual `make compare` or NONMATCHING checks.
+3. **Name and type the data.** Turn the `gUnknown_08xxxxxx` tables these functions read into named, typed structs, such as a room header with its size, tileset ID, entity-list pointer and exits. This is where the level format becomes documented in code, which is what the DSi comparison needs.
+4. **Write a small dump tool.** A host-side script that lists every Four Swords room from the user's ROM: its sizes, assets and entities, plus a rendered PNG of the room. It's a check that the format is right, since rendered rooms should look like the game, and it's the tool we'd later point at the DSi files.
+5. **Docs and commits.** Walkthrough and planning doc entries, plus format notes the DSi work will refer back to.
+
+Risks:
+
+- **Indirect loading.** Function-pointer tables and per-level script data could make the trail harder to follow than a straight call chain.
+- **Compression and packing.** Four Swords may pack its maps differently from Minish Cap, so not all of the Minish Cap code will carry over.
+- **Overlap with A Link to the Past.** Some loaders may be shared with the A Link to the Past side of the cartridge, which widens the trace a little.
+
+What this produces: a documented Four Swords level format in C and named data, and a tool that dumps and renders rooms. Once those exist, the DSi part becomes "run the same dump on the DSi files and see what differs" rather than open-ended reverse engineering.
+
+## User
+
+Alright, let's give it a shot
+
+- tool `Bash`: Survey repo layout and existing room-related names
+
+- tool `Bash`: Find room names and mgba_run options
+
+- tool `Bash`: Read existing room struct and loads tracing notes
+
+- tool `Bash`: Read prior notes on area headers and rooms
+
+- tool `Bash`: Check C/asm status of known room functions
+
+- tool `Bash`: Look at run script and recordings
+
+- tool `Bash`: Read replay command and usage
+
+- tool `Bash`: See how classify runs replays
+
+- tool `Bash`: Read replay invocation
+
+- tool `Bash`: Replay session 1 logging ROM data loads
+
+## Claude
+
+Session 1 has replayed with load logging on. Now I'm grouping the decompress and copy calls by the function that made them, to find the graphics and map loaders.
+
+- tool `Bash`: Group BIOS loads by calling function
+
+- tool `Bash`: Group CPU ROM reads by function
+
+- tool `Bash`: ROM data ranges per real function
+
+- tool `Bash`: Locate candidate loader functions
+
+- tool `Bash`: Read sub_0801484C asm
+
+- tool `Bash`: Read loader C draft and callers; find TMC equivalent
+
+- tool `Bash`: Compare TMC map structs and find table definitions
+
+## Claude
+
+The map-data base pointer is `gUnknown_0854F7E8`, which lines up with the DSi `zelmap.bin` match (0x550B00 onwards). That's a strong anchor. Next I'll look at the tables those loaders index.
+
+- tool `Bash`: Read map tables and their callers
+
+- tool `Bash`: Read room-load caller and dump tables
+
+- tool `Bash`: Read room list filler and pool declarations
+
+- tool `Bash`: Read sub-room picker
+
+- tool `Bash`: Read sub-room picker and stamp asm
+
+- tool `Bash`: Decode tileset and map data records
+
+- tool `Bash`: Read palette loader, stage setup, map blit
+
+- tool `Bash`: Find where room size and palette base are set
+
+- tool `Bash`: Read palette record struct and loader
+
+- tool `Bash`: Check palette record offset scaling
+
+- tool `Bash`: Dump stage and room pools
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/tools/fs_rooms.py
+
+- tool `Bash`: Run room dump and render one stage
+
+- tool `Bash`: Check rendered PNG
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/rooms/stage_0_00.png
+
+## Claude
+
+The first render came out right: a full dungeon stage, with the sub-room stamped into its slot. Now I'll render all 146 stages.
+
+- tool `Bash`: Render all stages and make contact sheets
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/sheet4.png
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/sheet2.png
+
+- tool `Bash`: Stop stamping guessed sub-rooms; re-render a stage
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/r2/stage_2_01.png
+
+## Claude
+
+Stage maps now render cleanly, with the random-room slot showing as the blank green area. I'll write the walkthrough entry, check the build and commit.
+
+- tool `Bash`: Add walkthrough step, check build, commit
+
