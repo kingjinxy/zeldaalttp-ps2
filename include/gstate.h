@@ -97,7 +97,7 @@ static void gstate_run(u32 a)
     // C (or native) code: the C calling convention, then return to lr
     {
         u32 s = gCpu.r[13];
-        gCpu.r[0] = ((u32 (*)())a)(gCpu.r[0], gCpu.r[1], gCpu.r[2], gCpu.r[3], R32(s), R32(s + 4), R32(s + 8),
+        gCpu.r[0] = ICALL(a)(gCpu.r[0], gCpu.r[1], gCpu.r[2], gCpu.r[3], R32(s), R32(s + 4), R32(s + 8),
                                    R32(s + 12));
         gCpu.r[15] = gCpu.r[14];
     }
@@ -106,7 +106,7 @@ static void gstate_run(u32 a)
 // Entry into global-state code from outside (gstate2c's per-function stubs, through gstate_enter): f holds the caller's
 // registers (f[0..2] r5-r7, f[3..6] r8-r11, f[7..10] r0-r3, f[11] r4, f[12] lr, f[13..16] its first 4 stack
 // words) and gets the registers the global-state code ends with. gCpu is saved around the call (interrupts).
-static void gstate_enter_c(void (*fn)(u32), u32 *f)
+static void gstate_enter_ce(void (*fn)(u32), u32 e, u32 *f)
 {
     struct GstateCpu save = gCpu;
     u32 sp = gCpu.r[13];
@@ -125,7 +125,7 @@ static void gstate_enter_c(void (*fn)(u32), u32 *f)
         gCpu.r[8 + i] = f[3 + i];
     gCpu.r[13] = sp;
     gCpu.r[14] = GSTATE_MAGIC_RET;
-    fn(0);
+    fn(e);
     // a jump out of every global-state frame (into C or native code, or back into a frame that has unwound): run on
     // from there until the code returns to this call
     while ((gCpu.r[15] | 1) != GSTATE_MAGIC_RET)
@@ -139,5 +139,7 @@ static void gstate_enter_c(void (*fn)(u32), u32 *f)
         f[3 + i] = gCpu.r[8 + i];
     gCpu = save;
 }
+
+static void gstate_enter_c(void (*fn)(u32), u32 *f) { gstate_enter_ce(fn, 0, f); }
 
 #endif  // GUARD_GSTATE_H

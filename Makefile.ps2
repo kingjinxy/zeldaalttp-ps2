@@ -14,15 +14,36 @@ CFLAGS := -std=gnu99 -O1 -G0 -fno-builtin -fno-strict-aliasing -w -DNONMATCHING 
           -Wno-error=implicit-function-declaration -Wno-error=incompatible-pointer-types \
           -Wno-error=int-conversion -Wno-error=return-mismatch
 
+# PS2 runtime (src/ps2): ps2sdk headers, not the game's
+PS2_CFLAGS := -D_EE -O2 -G0 -Wall -I$(PS2SDK)/ee/include -I$(PS2SDK)/common/include -I$(PS2DEV)/gsKit/include
+
 GAME_C := $(wildcard src/*.c src/lttp/*.c)
 AUTO_C := $(foreach f,$(GAME_C),src/auto/$(subst /,_,$(patsubst src/%.c,%,$(f))).c src/auto/$(subst /,_,$(patsubst src/%.c,%,$(f)))_gstate_ps2.c)
 DATA_S := $(wildcard data/*.s)
 PS2_C := $(wildcard src/ps2/*.c)
+GLUE_C := $(wildcard src/ps2/glue/*.c)
 
 OBJS := $(GAME_C:src/%.c=$(B)/game/%.o) $(AUTO_C:src/auto/%.c=$(B)/auto/%.o) $(DATA_S:data/%.s=$(B)/data/%.o) \
-        $(PS2_C:src/ps2/%.c=$(B)/ps2/%.o)
+        $(PS2_C:src/ps2/%.c=$(B)/ps2/%.o) $(GLUE_C:src/ps2/glue/%.c=$(B)/glue/%.o)
 
 objects: $(OBJS)
+
+ELF := $(B)/zeldaalttp.elf
+LIBS := -L$(PS2SDK)/ee/lib -L$(PS2DEV)/gsKit/lib -lgskit -ldmakit -lpad -leedebug -lm -lc -lkernel
+
+$(B)/gba_syms.ld: tools/ps2/gba_syms.py sym_ewram.txt sym_iwram.txt ldscript.txt
+	@mkdir -p $(dir $@)
+	python3 tools/ps2/gba_syms.py $@
+
+$(B)/ps2/gbarom.o: src/ps2/gbarom.S baserom.gba
+	@mkdir -p $(dir $@)
+	$(CC) -c $< -o $@
+
+$(ELF): $(OBJS) $(B)/ps2/gbarom.o src/ps2/ps2.ld $(B)/gba_syms.ld tools/ps2/fix_elf.py
+	$(CC) -T src/ps2/ps2.ld -o $@ $(OBJS) $(B)/ps2/gbarom.o $(LIBS)
+	python3 tools/ps2/fix_elf.py $@
+
+elf: $(ELF)
 
 $(B)/game/%.c: src/%.c tools/ps2/struct_align.py
 	@mkdir -p $(dir $@)
@@ -40,7 +61,7 @@ $(B)/game/%.o: $(B)/game/%.c $(PS2_HEADERS)
 
 $(B)/auto/%.o: src/auto/%.c $(PS2_HEADERS)
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@
+	ulimit -v 3000000; $(CC) $(CFLAGS) -c $< -o $@
 
 # ARM-syntax data: '@' comments go (MIPS gas reads '#'), the rest are plain directives
 $(B)/asminclude/%: asminclude/%
@@ -54,9 +75,14 @@ $(B)/data/%.s: data/%.s
 $(B)/data/%.o: $(B)/data/%.s $(B)/asminclude/macro.inc
 	$(AS) -I$(B)/asminclude -I. $< -o $@
 
+# game-side glue (src/ps2/glue): the game's headers and flags
+$(B)/glue/%.o: src/ps2/glue/%.c $(PS2_HEADERS)
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
 $(B)/ps2/%.o: src/ps2/%.c
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -I$(PS2SDK)/ee/include -I$(PS2SDK)/common/include -c $< -o $@
+	$(CC) $(PS2_CFLAGS) -c $< -o $@
 
-.PHONY: objects
+.PHONY: objects elf
 .SECONDARY:

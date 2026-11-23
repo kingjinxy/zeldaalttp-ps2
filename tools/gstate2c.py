@@ -12,7 +12,7 @@
 #   addresses to entries; other addresses are C functions.
 # NAMES: one function name per line (all global-state functions of the build; those in OBJ are translated).
 # shortcut: wrappers pass 4 stack words to the global-state code whatever the callee takes (extra words are garbage).
-import re, struct, subprocess, sys
+import os, re, struct, subprocess, sys
 
 CONDS = ["eq", "ne", "cs", "cc", "mi", "pl", "vs", "vc", "hi", "ls", "ge", "lt", "gt", "le"]
 COND_C = {"eq": "z", "ne": "!z", "cs": "c", "cc": "!c", "mi": "n", "pl": "!n", "vs": "v", "vc": "!v",
@@ -169,8 +169,26 @@ def main():
     for v, n, t in syms:
         LOCAL.setdefault(n, v)
     funcs = sorted((v & ~1, n) for v, n, t in syms if t == "FUNC")
-    starts = sorted({v for v, n in funcs})
     mine = [(v, n[:-5]) for v, n in funcs if n.endswith("__asm") and n[:-5] in gsnames]
+    # Thumb labels inside a copy (other names for places in it) don't end it: they're entries; ARM labels do end it
+    inner, arm = set(), set()
+    for v, n in mine:
+        q = "src/auto/gstate/%s.inc" % n
+        if not os.path.exists(q):
+            continue
+        mode = "thumb"
+        for l in open(q):
+            l = l.split("@")[0].strip()
+            if re.match(r"(?i)(\.arm\b|arm_func_start)", l):
+                mode = "arm"
+            elif re.match(r"(?i)(\.thumb\b|thumb_func_start)", l):
+                mode = "thumb"
+            m = re.match(r"(\w+):", l)
+            if m and m.group(1) != n:
+                (arm if mode == "arm" else inner).add(m.group(1))
+    inner -= {n for v, n in funcs if n.endswith("__asm")} | {n[:-5] for v, n in funcs if n.endswith("__asm")}
+    labelv = {n: v for v, n, t in syms}
+    starts = sorted({v for v, n in funcs if n not in inner})
     # code addresses other code takes (relocated words pointing into this .text): entries
     taken = set()
     for o, (typ, name, val) in relocs.items():
@@ -180,6 +198,7 @@ def main():
                 taken.add((sv + w(data, o)) & ~1)
     for v, n in mine:
         taken |= {v + e for e in extra.get(n, ())}
+    taken |= {labelv[n] & ~1 for n in inner if n in labelv and not n.startswith("_")}
     if obj.endswith("rom1.main.o"):  # rom1 sits at its original address (right after crt0): raw Thumb pointers
         base = 0x08000000 + int(readelf(["-SW"], "asm/crt0.o").split(".text")[1].split()[3], 16)
         for o in range(0, len(data) - 3, 4):
@@ -258,13 +277,13 @@ def main():
                 "    gCpu.r[15] = gCpu.r[14];", "}"]
     open(outc, "w").write("\n".join(out) + "\n")
     open(outc.replace(".c", "_ps2.c"), "w").write(ps2_file(tag, data, syms, relocs, ranges, tables, failed, swis,
-                                                           decls, bodies))
+                                                           decls, bodies, obj))
     for n, e in failed:
         print("gstate2c: kept native %s: %s" % (n, e), file=sys.stderr)
     print("gstate2c: %d functions in global-state C, %d native" % (len(tables), len(failed)), file=sys.stderr)
 
 
-def ps2_file(tag, data, syms, relocs, ranges, tables, failed, swis, decls, bodies):
+def ps2_file(tag, data, syms, relocs, ranges, tables, failed, swis, decls, bodies, obj):
     """The same global-state C for the PS2 build (X_gstate_ps2.c): no Thumb code. The copies NAME__base become data
     (the original bytes, every ABS32 word relocated against the PS2 link: R32(NAME__base + off) literal reads and
     the return-address tokens keep working), entries from C are C functions with the 8-argument convention, BIOS calls
@@ -317,12 +336,31 @@ def ps2_file(tag, data, syms, relocs, ranges, tables, failed, swis, decls, bodie
                 o += 1
         out.append('asm("%s");' % "\\n".join(lines + [".popsection"]))
     if tables or failed:
-        out.append("static void gstate_enter_c_%s(void (*fn)(u32), u32 *f) { gstate_enter_c(fn, f); }" % tag)
-    for n, _ in tables:  # C entry: r0-r3 and 4 stack words in, r0 out
-        out += ["u32 %s(u32 a0, u32 a1, u32 a2, u32 a3, u32 s0, u32 s1, u32 s2, u32 s3)" % n, "{",
+        out.append("static void gstate_enter_c_%s(void (*fn)(u32), u32 e, u32 *f) { gstate_enter_ce(fn, e, f); }" % tag)
+    # other global symbols inside a copy (mid-function entries, labels other code names): code labels of translated
+    # copies become C entries at that offset, the rest data aliases into the copy
+    translated = {n for n, _ in tables}
+    inner = []
+    for l in readelf(["-sW"], obj).splitlines():
+        p = l.split()
+        if len(p) >= 8 and p[0].endswith(":") and p[4] == "GLOBAL" and p[6].isdigit() and p[7] not in copies:
+            v = int(p[1], 16)
+            if p[7].endswith(("__asm", "__base")):
+                continue
+            for n, (cv, cend) in copies.items():
+                if cv <= (v & ~1) < cend:
+                    inner.append((p[7], n, (v & ~1) - cv, n in translated))
+    for name, n, e, code in inner:
+        if not code:
+            out.append('asm(".global %s\\n.set %s, %s__base + %d");' % (name, name, n, e))
+    for n, (v, end) in copies.items():  # NAME__asm (the copy's Thumb symbol) for code that names it
+        out.append('asm(".global %s__asm\\n.set %s__asm, %s__base + 1");' % (n, n, n))
+    centries = [(n, n, 0) for n, _ in tables] + [(name, n, e) for name, n, e, code in inner if code]
+    for name, n, e in centries:  # C entry: r0-r3 and 4 stack words in, r0 out
+        out += ["u32 %s(u32 a0, u32 a1, u32 a2, u32 a3, u32 s0, u32 s1, u32 s2, u32 s3)" % name, "{",
                 "    u32 f[17] = { 0 };",
                 "    f[7] = a0, f[8] = a1, f[9] = a2, f[10] = a3, f[13] = s0, f[14] = s1, f[15] = s2, f[16] = s3;",
-                "    gstate_enter_c_%s(gs_%s, f);" % (tag, n), "    return f[7];", "}"]
+                "    gstate_enter_c_%s(gs_%s, 0x%X, f);" % (tag, n, e), "    return f[7];", "}"]
     if tables:
         out.append("struct GstateEntry gGstateTable_%s[] __attribute__((section(\".gstatetable\"))) = {" % tag)
         for n, entries in tables:
@@ -330,8 +368,8 @@ def ps2_file(tag, data, syms, relocs, ranges, tables, failed, swis, decls, bodie
                 out.append("    { (u32)%s__base + 0x%X, gs_%s, 0x%X }," % (n, e, n, e))
         out.append("};")
         out.append("struct GstateEntry gGstateTableW_%s[] __attribute__((section(\".gstatetablew\"))) = {" % tag)
-        for n, _ in tables:
-            out.append("    { (u32)%s, gs_%s, 0 }," % (n, n))
+        for name, n, e in centries:
+            out.append("    { (u32)%s, gs_%s, 0x%X }," % (name, n, e))
         out.append("};")
     for n, e in failed:
         out += ["void gs_%s(u32 e) { ps2_native_missing(\"%s\"); }" % (n, n),

@@ -30,4 +30,13 @@ typedef signed int s32;
 #define ASR_C(a, s, c) (((s) & 0xFF) == 0 ? (c) : ((s) & 0xFF) >= 32 ? (a) >> 31 : ((a) >> (((s) & 0xFF) - 1)) & 1)
 #define ROR_C(a, s, c) (((s) & 0xFF) == 0 ? (c) : ((a) >> (((s) - 1) & 31)) & 1)
 
+// indirect calls of translated code: on the PS2 the target may be a GBA address (an IWRAM routine, a global-state
+// copy), which src/ps2/icall.c resolves to something callable with the C convention
+#ifdef PLATFORM_PS2
+u32 (*ps2_icall(u32 target))();
+#define ICALL(p) (ps2_icall((u32)(p)))
+#else
+#define ICALL(p) ((u32 (*)())(p))
+#endif
+
 #endif  // GUARD_AUTO_H

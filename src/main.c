@@ -80,6 +80,9 @@ void AgbMain(void)
     CpuCopy32((void *)sub_080008A8, gUnknown_03005AE0, sizeof(gUnknown_03005AE0));
     CpuCopy32((void *)UpdateAllEntities, gUnknown_03006740, sizeof(gUnknown_03006740));
     gUnknown_03006C70 = gUnknown_03006740;
+#ifdef PLATFORM_PS2  // the IWRAM copy is ARM code: call the C port (src/ps2/glue/arm_ports.c)
+    gUnknown_03006C70 = (void *)UpdateAllEntities;
+#endif
     while (1)
     {
         if ((gUnknown_03000BF0 & 0x180) != 0x100)

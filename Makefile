@@ -147,13 +147,14 @@ ifneq ($(AUTO_C),)
 	if [ -z "$(AUTO_C_FILES)" ] || echo " $(AUTO_C_FILES) " | grep -q " $* "; then \
 		python3 tools/asm2c.py --s src/$*.s src/auto/$(subst /,_,$*).c --gs src/auto/gstate.list; \
 	else echo '#include "auto.h"' > src/auto/$(subst /,_,$*).c; fi
-	$(CPP) -Itools/agbcc/include -iquote include -nostdinc -undef src/auto/$(subst /,_,$*).c | $(CC1) -mthumb-interwork -O2 -o src/auto/$(subst /,_,$*).s
+	ulimit -v 3000000; $(CPP) -Itools/agbcc/include -iquote include -nostdinc -undef src/auto/$(subst /,_,$*).c | $(CC1) -mthumb-interwork -O2 -o src/auto/$(subst /,_,$*).s
 	echo '.ALIGN 2, 0' >> src/auto/$(subst /,_,$*).s
 	$(AS) $(ASFLAGS) src/auto/$(subst /,_,$*).s -o src/auto/$(subst /,_,$*).o
 	$(OBJCOPY) --rename-section .text=.text.auto src/auto/$(subst /,_,$*).o
 	$(AS) $(ASFLAGS) src/$*.s -o src/$*.main.o
 	python3 tools/gstate2c.py src/$*.main.o src/auto/gstate.list src/auto/$(subst /,_,$*)_gstate.c
-	$(CPP) -Itools/agbcc/include -iquote include -nostdinc -undef src/auto/$(subst /,_,$*)_gstate.c | $(CC1) -mthumb-interwork -O2 -o src/auto/$(subst /,_,$*)_gstate.s
+	# -O0 and a memory cap: agbcc -O2 on the large generated functions grew past 5 GB and was OOM-killed
+	ulimit -v 3000000; $(CPP) -Itools/agbcc/include -iquote include -nostdinc -undef src/auto/$(subst /,_,$*)_gstate.c | $(CC1) -mthumb-interwork -O0 -o src/auto/$(subst /,_,$*)_gstate.s
 	echo '.ALIGN 2, 0' >> src/auto/$(subst /,_,$*)_gstate.s
 	$(AS) $(ASFLAGS) src/auto/$(subst /,_,$*)_gstate.s -o src/auto/$(subst /,_,$*)_gstate.o
 	$(OBJCOPY) --rename-section .text=.text.auto src/auto/$(subst /,_,$*)_gstate.o

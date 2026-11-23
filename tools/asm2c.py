@@ -80,7 +80,7 @@ def parse(path):
                 raise Fail("ARM function")
             continue
         if l.lower().startswith(("thumb_func_end", ".syntax", ".thumb", ".align", ".global",
-                                 ".thumb_func", ".balign")):
+                                 ".thumb_func", ".balign", ".type")):
             continue
         if l.startswith(".arm"):
             raise Fail("ARM code")
@@ -331,13 +331,13 @@ class Func:
             raise Fail("call to a local label of another function")
         m = re.fullmatch(r"_call_via_(\w+)", t)
         if m:
-            fn = "((u32 (*)())%s)" % reg(m.group(1))
+            fn = "ICALL(%s)" % reg(m.group(1))
             na = 4
         else:
             mo = re.fullmatch(r"(\w+)\s*\+\s*(0x[0-9a-fA-F]+|\d+)", t)
             if mo:  # a call into a function past its start (the target stays asm)
                 s.data.add(mo.group(1))
-                fn = "((u32 (*)())((u32)%s + %s))" % (mo.group(1), mo.group(2))
+                fn = "ICALL((u32)%s + %s)" % (mo.group(1), mo.group(2))
                 na = 4
             else:
                 s.callees.add(t)
