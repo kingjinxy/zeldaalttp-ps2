@@ -71,6 +71,9 @@ def main():
             i = j
         else:
             i += 1
+    # whole aligned words: the map comes from two GBAs, whose per-player values (player 0 and 1's record pointers,
+    # 0x03006A30/0x03006AC0) can differ in one byte only; players 2-3's differ in more
+    runs = [[a & ~3, (b + 3) & ~3] for a, b in runs]
     runs += [[a, b] for a, b, _ in FIXED]
     runs.sort()
     merged = []

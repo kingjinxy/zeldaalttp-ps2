@@ -1375,3 +1375,20 @@ ROM:
 - **Result** (2-player replay): both players' screens identical to the separate build at all 34 check frames, no TLB
   misses, `SHARED_CHECK` silent. Overlay 224 ranges, 41 KB. Game share 0.39 M cycles a frame (1.84 M separate, 0.51 M
   in Step 46); drawing 1.34 M. Player 1's memory still differs in ~45 bytes that don't reach the screen.
+
+## Step 48: shared world with four players (2026-11-24)
+
+- **Inputs, for now:** players 3 and 4 had no script and sat on file select, so the link never finished. Copies of
+  `build/ps2/replay_p2.inputs` as `replay_p3.inputs`/`replay_p4.inputs` (build files, not committed) take all four
+  into the stage. Real 4-player inputs are left for later.
+- **First run:** four screens in the stage, each with its own camera and YOU marker, but players 3-4 had no hearts and
+  an orange badge. Tried and ruled out: the whole VRAM 0x06004000-0x06005FFF per player again; sharing only 60 frames
+  after all four reach the stage; the whole text/HUD area 0x0202D000-0x0202E1E3 per player.
+- **Cause:** dumps of both builds at frame 2800 showed players 3-4's `gUnknown_03006730` (pointer to the player's own
+  record in `gUnknown_03006A30`, 0x90 bytes each) as 0x03006A50/0x03006AE0 instead of 0x03006B50/0x03006BE0. The map
+  comes from two GBAs, whose pointers (0x03006A30, 0x03006AC0) differ in the low byte only, so only that byte was in
+  the overlay; the second byte came from player 0. `overlay_ranges.py` now widens every map run to whole aligned
+  words (183 ranges, 42 KB).
+- **Result:** all four HUDs right; render 2.67 M + game 0.58 M cycles a frame of 4.9 M (60 fps); no TLB misses. The
+  2-player replay is still identical to the separate build at all 34 check frames. The 4-player run isn't compared
+  pixel for pixel: with the copied scripts the separate build reaches the stage at a different frame.

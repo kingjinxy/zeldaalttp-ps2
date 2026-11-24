@@ -237,6 +237,10 @@ Phase 1: the world runs once (`FS_SHARED_WORLD`, breaks GBA matching on purpose)
         ~45 bytes that don't reach the screen (link packet bytes at 0x020305EF..., 0x03000490, 0x03001FF2,
         0x03006C70/0x03006EF8/0x03006F0C); 4 players untested (players 3-4 have no recorded input); other stages,
         bosses and the results screen untested; the pickup patch (kind 3).
+  - [x] 5c, four players (2026-11-24, walkthrough Step 48): `INSTANCES=4 SHARED_WORLD=1` runs a stage with four
+        screens at 60 fps (render 2.67 M + game 0.58 M cycles of 4.9 M; separate instances ran at 30). Players 3-4
+        replay player 2's script for now (copies of `replay_p2.inputs`; real inputs later). Not checked pixel for
+        pixel against the separate build: the copied scripts don't keep the two builds in step.
   - [ ] 5c, as planned: Port, under `FS_SHARED_WORLD`: one world block plus a ~13 KB overlay per player, swapped by
         `ps2_tlb_select`. Frame: player 0 runs the whole frame as now; players 1-3 get their overlay, the player
         number byte (0x03000414) and only the view functions from 5b. Keys straight into the arrays the link

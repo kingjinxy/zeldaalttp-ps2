@@ -21486,3 +21486,147 @@ Docs update and commit:
 
 - tool `Bash`: Update docs, archive, verify and commit
 
+- tool `ToolSearch`: 
+
+- tool `PushNotification`: 
+
+## Claude
+
+With the shared world on, the pause and the sprites are now right for every player. On the 2-player replay, both players' screens match the separate-copies build at all 34 check frames, which cover two pauses and an unpause. The check that catches a player's pass changing shared world data reports nothing, and there are no TLB misses. `make compare` reports OK, and this is committed as `003d66a` with walkthrough Step 47 and the plan updated.
+
+The game's cost for 2 players is now 0.39M cycles a frame, against 0.51M before this step and 1.84M with separate copies. It fell because each player's private memory went from 49 KB to 41 KB.
+
+**Fixes:**
+- **Stale pause state for player 2.** Two of the memory ranges I had marked as per-player were too wide. One included the shared "paused" flag and the "stage cleared" flag; the other included everyone's newly pressed keys. So player 2's pass checked an out-of-date pause flag and out-of-date keys. I narrowed both ranges to the symbols that actually live there. The range generator also has a new list of bytes that always stay shared, even where the recorded map marks them per-player.
+- **A crash that fix exposed.** When the game unpauses, player 1's frame clears the shared pause flag before player 2's pause screen has taken its own last step. Player 2's pause screen stayed half-closed, and the next pause jumped through a bad pointer around frame 1370. Player 2's pass now also takes the pause path while that player's own pause screen is still open.
+- **Extra sprites for player 2.** I added a hook in the generated game code that records, during player 1's frame, every entity whose draw step really runs. Player 2's pass replays exactly that list in the same order. The 5 extra shadow sprites are gone.
+- **Wall gems a frame behind.** I had made an 8 KB block of video memory private to each player. Dumping both players from the separate build showed only three 64-byte tiles there really differ between players. The rest, including the animated wall gems and the text glyphs, is now shared.
+
+**Still open:**
+- Player 2's memory differs from the separate build in about 45 bytes, mostly link and other game state. None of it shows on screen.
+- The private video tiles come from only two scenes. The safety check doesn't cover video memory, so a tile I missed would only show up as a screen difference.
+- Untested: 4 players (players 3 and 4 have no recorded input), other stages, bosses and the results screen.
+- Not done yet: the pickup patch, so that a player other than the first gets the item they collect.
+
+Natural next steps are 4-player inputs and the pickup patch.
+
+## User
+
+Let's try getting 4 players rendering. Leave the inputs for later
+
+## Claude
+
+Starting with a plain run: 4 instances with the shared world on, to see how far it gets.
+
+- tool `Bash`: Run 4 instances with the shared world
+
+- tool `Bash`: Look at the 4-player log
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/four.png
+
+- tool `Bash`: Find the replay input code
+
+- tool `Bash`: Read the input replay code
+
+## Claude
+
+No code is needed for that: the replay reads `replay_p<n>.inputs` per player, so copies of player 2's script in the build folder will do. They're scratch files and won't be committed. Running again:
+
+- tool `Bash`: Copy player 2's inputs to players 3-4 and run
+
+- tool `Bash`: Read the log lines again
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/four.png
+
+- tool `Bash`: Run the separate 4-player build and compare screens
+
+## Claude
+
+Every stage frame differs, even player 1's, so the two runs may simply be in different places. The separate build's screenshot:
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/foursep.png
+
+- tool `Bash`: Stack frame 1300 of all players, shared vs separate
+
+- tool `Bash`: Retry the image stack
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/c4.png
+
+- tool `Bash`: Stack the shared build's four screens
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/s4.png
+
+- tool `Bash`: Test with all 8 KB of VRAM tiles per player
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/s4v.png
+
+## Claude
+
+Not the video tiles; restoring the header. Next, a `SHARED_CHECK` run with 4 players, to see whether the view passes for players 3 and 4 write shared world bytes:
+
+- tool `Bash`: Restore overlay; run the 4-player shared check
+
+- tool `Bash`: Read shared lines from the check log
+
+- tool `Bash`: Show the HUD function
+
+- tool `Bash`: Test: delay sharing by 60 frames
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/s4d.png
+
+- tool `Bash`: Check HUD-related bytes in the overlay
+
+- tool `Bash`: Make text/HUD per-player; rerun 4 players
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/s4h.png
+
+## Claude
+
+No change. Before going further: did the separate build show the same thing later in its run? Its frame-2800 images for all four:
+
+- tool `Bash`: Stack the separate build's frame 2800
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/sep2800.png
+
+- tool `Bash`: Dump all four players at frame 2800 in both builds
+
+- tool `Bash`: Diff players 2 and 3 between builds
+
+- tool `Bash`: Compare HUD state bytes across players and builds
+
+## Claude
+
+The HUD state at 0x03000420 differs only for players 3 and 4 in the shared build. Two bytes there are non-zero, and 0x0300042C is 0 where everyone else has 9. Finding what writes 0x0300042C:
+
+- tool `Bash`: Search for writers of 0x0300042C
+
+- tool `Bash`: Show the code around line 6056
+
+- tool `Bash`: Get the record size and overlay coverage
+
+- tool `Bash`: Find the record struct definition
+
+- tool `Bash`: Read the record struct
+
+## Claude
+
+The listing shows fields up to 0x3F, so I'll assume 0x40-byte records. Comparing `unk1C` of each record (0x03006A4C + 0x40·i) across the dumps:
+
+- tool `Bash`: Compare each record's unk1C across dumps
+
+- tool `Bash`: Widen map runs to words; rerun 4 players
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/s4w.png
+
+## Claude
+
+All four screens now have their hearts and the blue badge. Checking the cost, then re-running the 2-player comparison against the saved separate-build screens to be sure nothing regressed:
+
+- tool `Bash`: Report cost; 2-player regression check
+
+## Claude
+
+The 2-player check still matches at all 34 frames. With 4 players the frame costs 2.67M render + 0.58M game, about 3.25M of the 4.9M budget, so it holds 60 fps. Docs and commit:
+
+- tool `Bash`: Update docs, verify, archive and commit
+
