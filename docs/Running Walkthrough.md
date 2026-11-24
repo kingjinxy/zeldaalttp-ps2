@@ -1382,8 +1382,8 @@ ROM:
   `build/ps2/replay_p2.inputs` as `replay_p3.inputs`/`replay_p4.inputs` (build files, not committed) take all four
   into the stage. Real 4-player inputs are left for later.
 - **First run:** four screens in the stage, each with its own camera and YOU marker, but players 3-4 had no hearts and
-  an orange badge. Tried and ruled out: the whole VRAM 0x06004000-0x06005FFF per player again; sharing only 60 frames
-  after all four reach the stage; the whole text/HUD area 0x0202D000-0x0202E1E3 per player.
+  the shield as their equipped item (the HUD's item icon, read from the wrong player record). Tried and ruled out: the
+  whole VRAM 0x06004000-0x06005FFF per player again; sharing only 60 frames after all four reach the stage; the whole text/HUD area 0x0202D000-0x0202E1E3 per player.
 - **Cause:** dumps of both builds at frame 2800 showed players 3-4's `gUnknown_03006730` (pointer to the player's own
   record in `gUnknown_03006A30`, 0x90 bytes each) as 0x03006A50/0x03006AE0 instead of 0x03006B50/0x03006BE0. The map
   comes from two GBAs, whose pointers (0x03006A30, 0x03006AC0) differ in the low byte only, so only that byte was in
