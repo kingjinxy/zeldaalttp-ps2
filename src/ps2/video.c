@@ -71,6 +71,13 @@ void ps2_video_init(int instances)
 #ifdef WIDE_VIEW
     if (instances <= 2)
         ps2_view_w = instances == 1 ? 320 : 640, ps2_view_h = 240;
+#if WIDE_VIEW == 2  // a vertical split: two 320x480 views side by side (taller than the software renderer's buffers)
+#ifndef GS_RENDER
+#error "WIDE_VIEW=2 needs GS_RENDER=1"
+#endif
+    if (instances == 2)
+        ps2_view_w = 320, ps2_view_h = 480;
+#endif
 #endif
     sTexW = (VIEW_W + 63) & ~63;
     dmaKit_init(D_CTRL_RELE_OFF, D_CTRL_MFD_OFF, D_CTRL_STS_UNSPEC, D_CTRL_STD_OFF, D_CTRL_RCYC_8,
@@ -277,7 +284,7 @@ void ps2_video_render(int inst)
 }
 
 // Where screen i goes, in square pixels of the aw x fbh screen. One player: centred at the mode's scale. Two: one above
-// the other, each 1:1 (240x160), touching,
+// the other, each 1:1 (240x160), touching (side by side when the views are taller than wide),
 // the pair centred in the frame. Three or four: a 2x2 grid of 1:1 screens, touching, centred as one block.
 static void place(int i, int instances, float *x, float *y, float *w, float *h)
 {
@@ -294,6 +301,8 @@ static void place(int i, int instances, float *x, float *y, float *w, float *h)
     *w = VIEW_W * s, *h = VIEW_H * s;
     if (instances == 1)
         *x = (cw - *w) / 2, *y = (ch - *h) / 2;
+    else if (instances == 2 && *h > *w)  // tall views: side by side, centred as one block
+        *x = (aw - 2 * *w) / 2 + i * *w, *y = (ah - *h) / 2;
     else if (instances == 2)  // the pair stacked together, centred as one block
         *x = (aw - *w) / 2, *y = (ah - 2 * *h) / 2 + i * *h;
     else  // 2x2, P1 P2 on top, P3 P4 below

@@ -19964,3 +19964,68 @@ Normal build unchanged: 34 of 34 identical, 1.2M cycles. Updating the docs and c
 
 - tool `Bash`: python3 - <<'EOF' p='docs/Planning Doc.md'; s=open(p).read() old="""- [ ] Two routes: (a) as the DSi""" new="""- [x] Route (b) chosen (user, 2026-11-24). Step 1
 
+## Claude
+
+The comment I just put on the `GS_RENDER ?= 0` line would leave trailing spaces in the value, and Make would then switch the GS renderer on for every wide build. Moving it to its own line:
+
+- tool `Bash`: sed -i 's/^GS_RENDER ?= 0  # the software renderer draws the wide view as the game left it; GS_RENDER=1 draws the room from its data$/# (the software renderer s
+
+- tool `Bash`: sed -i 's/^# renderer (also the default with WIDE_VIEW, which the GS renderer doesn.t do yet). Touch src\/ps2\/video.c when changing it$/# renderer (also the de
+
+- tool `SendUserFile`: 
+
+- tool `PushNotification`: 
+
+## Claude
+
+Wide view step 1 works: with 2 players at 640x240 each, the GS renderer draws the room's backgrounds from the room data across the whole view. The GBA's own 240x160 in the middle matches the GBA's picture exactly. Committed as `7651fda` (plus two small Makefile fixes); walkthrough Step 40 and the Planning Doc are updated, and `make compare` reports OK. The attached image shows both players' views at two stage frames.
+
+**How it works**
+- Before writing renderer code, I worked out the mapping on the memory dumps:
+  - BG2 shows the room's top layer and BG1 its bottom layer.
+  - Screen pixel x shows room pixel (camera − room origin) + x, and the scroll registers equal that value modulo 512.
+  - All 651 visible tiles of both layers matched the room data, for both players' cameras.
+- The renderer:
+  - **Placement:** it draws the GBA picture in the middle of the view and fills the rest of the view with the room from its data.
+  - **Self-check every frame:** before using the room data, it checks that the GBA screen's 31x21 tiles equal it. If they don't (menus, the lobby, a room change), that frame is drawn the old way, with repeating tiles.
+  - **GBA-sized parts:** the HUD and sprites stay inside the GBA screen. The backdrop, fades and the window mask cover the whole view.
+- Build with `make -f Makefile.ps2 WIDE_VIEW=1 GS_RENDER=1`. The wide view still defaults to the software renderer.
+
+**Results (2-player replay)**
+- All 34 check frames per screen, lobby to stage, match the software renderer's GBA picture exactly in the middle 240x160.
+- No TLB misses.
+- In the stage, the room continues to both sides with no repeating. The sand outside the cliffs is the game's separate background layer (BG3), which repeats as before.
+- The normal 240x160 GS build is unchanged: 34 of 34 identical, 1.2M cycles.
+
+**Limits**
+- **Speed:** two 640x240 views take 3.35M EE cycles to draw. With the game's 1.84M that's over the 4.9M budget, so the wide 2-player view runs below 60 fps for now.
+- **Still GBA-sized:**
+  - Sprites: only what the game puts on its own screen gets drawn. Enemies or other Links just outside the middle 240x160 are missing.
+  - The camera is still centred for 240x160.
+  - The HUD sits in the middle strip.
+  - The stage wipe (window 0) still uses the GBA screen's coordinates.
+
+**Next is step 2, sprites**, the part that needs game-side changes: finding the code that culls sprites and builds the sprite list, and giving the PS2 build a sprite list with wider coordinates.
+
+## User
+
+Just to see what it would look like, I want to see a vertical split screen, with two 320x480 screens side by side
+
+- tool `Bash`: grep -n "WIDE_VIEW" Makefile.ps2 src/ps2/*.c src/ps2/mgba/include/mgba/internal/gba/renderers/*.h | head; sed -n 270,300p src/ps2/video.c
+
+- tool `Bash`: python3 - <<'EOF' p='Makefile.ps2'; s=open(p).read() old="""ifdef WIDE_VIEW  # draw 320x240 (one player) or 640x240 (two) of the unchanged game's video memory (
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -a "pixels differ" $S/vsplit.log | sed 's/.*: \([0-
+
+## Claude
+
+Runs cleanly: 34 of 34 check frames identical in the middle, no TLB misses. The PCSX2 screenshot:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 -c " from PIL import Image im=Image.open('$S/vsp
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/vsplit_crop.png
+
+- tool `Bash`: cat >> "docs/Running Walkthrough.md" <<'EOF'  ## Step 41: vertical split, two 320x480 views (2026-11-24)  To see it (user): `make -f Makefile.ps2 INSTANCES=2 WI
+
+- tool `SendUserFile`: 
+

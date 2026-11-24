@@ -1200,3 +1200,12 @@ renderer, which shows the game's maps as they are).
   4.9 M budget, so this runs below 60 fps for now. Writing a wide check image to host: takes about 3 s.
 - Still GBA-sized: sprites (only what the game puts in OAM, culled to its screen), the camera (centred for 240x160),
   the HUD and window 0.
+
+## Step 41: vertical split, two 320x480 views (2026-11-24)
+
+To see it (user): `make -f Makefile.ps2 INSTANCES=2 WIDE_VIEW=2 GS_RENDER=1` gives each of two players a 320x480 view,
+side by side in the 640x480 frame (`place()`: two views taller than wide go side by side). GS renderer only: the
+software renderer's line buffers stop at 240 lines. GS memory: two 320x480 targets plus the double-buffered frame,
+about 3.8 MB of 4. Result on the 2-player replay: 34 of 34 check frames identical to the GBA in the middle 240x160, no
+TLB misses; the stage shows the room's full width between the cliffs and well above and below the players. Drawing
+costs 2.98 M cycles a frame for both. Same limits as Step 40 (sprites, HUD and camera still GBA-sized).
