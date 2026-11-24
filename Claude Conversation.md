@@ -20179,3 +20179,96 @@ A single player at 2x draws sharp and centred. Updating the docs and committing:
 
 - tool `PushNotification`: 
 
+## Claude
+
+GS memory use is down from 3.75 MB to about 1.4 MB, and it no longer grows with the number of players or the view size. Committed as `52c93f0`, with walkthrough Step 42; `make compare` reports OK.
+
+**The two changes:**
+- **Screens draw straight into the frame.** Each screen is drawn at its place in the frame, scaled where needed (one player at 2x, the 16:9 squeeze). The per-player buffers and the copy step are gone.
+- **16-bit frame.** The GBA's colours are 15-bit, so nothing is lost. The 1 spare alpha bit holds the window mask or the blending flag, which are never needed at the same time.
+
+**GS memory now:**
+
+| Use | Size |
+|---|---|
+| Frame, 640x480 16-bit, double-buffered | 2 × 0.6 MB |
+| Tile graphics and palettes | 0.14 MB |
+| **Total, any number of players** | **≈ 1.4 MB of 4 MB** |
+
+A double-buffered 1280x720 frame (3.7 MB) would now fit, which is what the 9-screen layout needs.
+
+**Checks (all with no TLB misses):**
+
+| Build | Result |
+|---|---|
+| 2 players, 240x160 | 22 of 34 check frames identical; the other 12 are the fade/wipe frames, within one level |
+| Vertical split, 320x480 | 14 of 34 identical, none more than one level off |
+| 1 player at 2x (480p) | sharp and centred |
+
+The check now compares at 5 bits per channel, the GBA's own precision. mGBA computes fades in 8-bit colour, so its values can't land exactly on the frame's 5-bit ones. The GBA hardware also rounds to 5 bits, so off by one in a fade isn't a sign the GS output is wrong.
+
+**Side effects:**
+- **16:9 mode:** it's no longer smoothed, so pixel columns there will vary slightly in width. Integer scales are unaffected.
+- **Drawing cost:** two 240x160 screens went from 1.2M to 1.34M cycles per frame. A test with a 32-bit frame cost the same, so 16-bit colour isn't the cause. Most likely it's an accounting shift: the frame clear is still running when the next frame's drawing starts, so that wait now counts as drawing. I haven't confirmed this. A first version that scaled positions with floating point cost more; it now uses integers.
+
+**What remains for 9 screens on 1280x720** is all on the EE side:
+- the game itself supports only 4 players;
+- each player's separate memory copy;
+- the per-player memory switching, which the shared world would remove;
+- drawing cost per screen.
+
+## User
+
+Let's proceed with those changes
+
+## Claude
+
+The EE-side work, in dependency order:
+1. **The shared world (Phase 5).** It removes the per-player memory copies and the 1 MB-per-player memory blocks, and more than 4 players needs it first.
+2. **Supporting more than 4 players** in the game's own code.
+3. **Cheaper drawing per screen.**
+
+Starting where the tabled plan left off, step 5a: finding the code that writes each player's own memory. First, a complete list of the per-player bytes across the whole of session 1, from mGBA dumps of both GBAs at regular intervals.
+
+- tool `Bash`: grep -n "dump" tools/mgba_run.c | head -20
+
+- tool `Bash`: sed -n 540,560p tools/mgba_run.c
+
+## Claude
+
+I'm adding a `--perplayer FILE` option to the mGBA runner. Every 60 frames it compares the GBAs' EWRAM and IWRAM and accumulates a map of every byte that ever differs between players.
+
+- tool `Bash`: grep -n "static void frameCallback\|^static void .*frame\|void onFrame\|id, frame\b" tools/mgba_run.c | head; sed -n 500,515p tools/mgba_run.c
+
+- tool `Bash`: python3 - <<'EOF' p='tools/mgba_run.c'; s=open(p).read() def rep(old,new):     global s     assert old in s, old     s=s.replace(old,new,1) rep("""// --survey F
+
+- tool `Bash`: bash tools/mgba_run.sh 2>&1 | grep -E "error" ; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; time (to
+
+- tool `Bash`: python3 - <<'EOF' p='tools/mgba_run.c'; s=open(p).read() def rep(old,new):     global s     assert old in s, old     s=s.replace(old,new,1) rep("""// --survey F
+
+## Claude
+
+2,805 distinct store sites write per-player bytes. Grouping by function and by which per-player variable they write:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - $S/writes.txt $S/fsyms.txt <<'EOF' > $S/writer
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - $S/perplayer.bin <<'EOF' import sys,re,bisect,
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - $S/perplayer.bin <<'EOF' import sys d=open(sys
+
+- tool `Bash`: python3 - <<'EOF' p='tools/mgba_run.c'; s=open(p).read() s=s.replace("static const char *perPlayerPath;\n","static const char *perPlayerPath;\nstatic unsigned p
+
+## Claude
+
+During the stage, about 14.9 KB still differs once the IWRAM stack is excluded. Checking how much of that is entity data, and grouping the rest into areas:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - $S/pp_stage.bin.nostack <<'EOF' import sys d=o
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; timeout 900 tools/mgba_run baserom.gba 44522 --players 2
+
+## Claude
+
+Step 5a has its answer. Recording it in the plan and committing before step 5b, which sorts these functions one by one.
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; mkdir -p docs/shared_world && python3 - $S/writes2.txt $
+

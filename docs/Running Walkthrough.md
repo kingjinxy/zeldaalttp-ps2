@@ -1235,3 +1235,20 @@ players or their view size (the user wants up to 9 screens on 1280x720 eventuall
   path: most likely the frame clear now still running on the GS when the next frame's first upload goes out (that
   wait counts as drawing; the old copy sprites counted under present). A first version scaled positions with floats
   and cost another 0.05 M; integer fixed-point now.
+
+## Step 43: shared world 5a, which memory is per player and who writes it (2026-11-24)
+
+The user asked to go ahead with the EE-side work for many screens (shared world first). Step 5a, in mGBA:
+
+- `mgba_run --perplayer FILE` (new): every 60 frames, every GBA's EWRAM and IWRAM against GBA 0's at the same frame;
+  FILE is a byte map of everything that ever differed. `--perplayer-frames A-B` limits it to a frame range.
+  Whole session 1: 15.6 KB. Much of it is from before the link: each GBA runs its own file select. Only the stage
+  (frames 1800-44200, 707 comparisons), IWRAM stack (0x03007B00+) excluded: **14.9 KB**.
+- Areas: 0x02000000-0x02003000, 8.5 KB (the players' own save/profile data, it seems: written by the file select and
+  a few others); the sound engine (0x0202E1E4-0x02032100, `sub_08133xxx`/`sub_08134xxx`), 4.4 KB: each GBA plays its own
+  sounds; 0x0202D000-0x0202E1E4, 0.7 KB (`sub_0800D6F4`, `sub_0800D788`, text and HUD code); 0x03005E60-0x03006450,
+  0.65 KB (written by `sub_08000BAC`/`CFC`/`E6C`/`EFC`: likely the OAM buffers); entities 62 bytes; the rest ~0.5 KB.
+- The step 3 dump's 6 KB at 0x0203C200 doesn't differ in mGBA: it was the PS2 port's own (above the GBA game's data).
+- `mgba_run --writes MAP` (new): every distinct Thumb store into a byte the map marks, with its caller. 1,010 store
+  sites; by function and area in `docs/shared_world/per_player_writers.txt`. The 62 entity bytes are the "view code
+  inside the entity update" risk from the plan; 72 functions write there (some only in the file select).

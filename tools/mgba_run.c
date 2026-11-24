@@ -14,6 +14,12 @@
 // and width as in the register; cpu: register width); DST is 0 for cpu loads. Same run as without it.
 // --reads ADDR: every distinct Thumb instruction that loads the byte at ADDR (any width covering it), all GBAs, with
 // its caller (lr): "read PC LR WIDTH". ARM-mode code (the game's IWRAM copies) isn't decoded.
+// --perplayer FILE: every 60 frames, compare the GBAs' EWRAM and IWRAM (each against GBA 0 at the same frame) and
+// mark every byte that differs; FILE gets the bitmap at the end, one byte per address (EWRAM 256 KB, then IWRAM
+// 32 KB; 1 = differed at least once): the per-player state for the shared-world plan. --perplayer-frames A-B
+// compares only between frames A and B.
+// --writes FILE: FILE is a --perplayer bitmap; every distinct Thumb store into a marked byte is logged as
+// "write PC LR ADDR WIDTH" (first address seen for that PC/LR). ARM code, DMA and BIOS copies aren't seen.
 // --survey FILE: which video features the game uses (for the PS2 GS renderer): per frame, display modes, windows,
 // blend settings, sprite attributes, HBlank DMA and HBlank/VCount interrupts, and video register writes during the
 // visible lines (a register changed mid-frame, from any source). Written to FILE at the end: one line per feature
@@ -235,6 +241,8 @@ static int frameReady;              // --play: GBA 0 finished a frame
 static uint8_t covered[0x800000 / 16];
 static FILE *loads;                 // --loads FILE
 static uint32_t readWatch;          // --reads ADDR
+static uint8_t *writeMap;           // --writes FILE: the per-player bitmap
+static uint64_t writeSeen[1 << 14];
 static uint64_t readSeen[4096];     // --reads: PC/LR pairs logged
 static const char *loadsPath;
 static uint8_t ramWord[0x48000 / 4];  // --loads: EWRAM (0x40000) and IWRAM words read by a 32-bit CPU load
@@ -305,6 +313,26 @@ decode:;
 			int h = (key * 0x9E3779B97F4A7C15ull) >> 52;
 			while (readSeen[h] && readSeen[h] != key) h = (h + 1) & 4095;
 			if (!readSeen[h]) { readSeen[h] = key; printf("read %08X %08X %u\n", pc, r[14] - 1, w); }
+		}
+	}
+	if (writeMap) {
+		uint32_t wa = 0, ww = 0;
+		if ((op & 0xF800) == 0x6000) wa = r[op >> 3 & 7] + (op >> 6 & 31) * 4, ww = 4;          // str [rb, #imm]
+		else if ((op & 0xF800) == 0x7000) wa = r[op >> 3 & 7] + (op >> 6 & 31), ww = 1;     // strb [rb, #imm]
+		else if ((op & 0xF800) == 0x8000) wa = r[op >> 3 & 7] + (op >> 6 & 31) * 2, ww = 2; // strh [rb, #imm]
+		else if ((op & 0xFE00) == 0x5000) wa = r[op >> 3 & 7] + r[op >> 6 & 7], ww = 4;     // str [rb, ro]
+		else if ((op & 0xFE00) == 0x5200) wa = r[op >> 3 & 7] + r[op >> 6 & 7], ww = 2;     // strh [rb, ro]
+		else if ((op & 0xFE00) == 0x5400) wa = r[op >> 3 & 7] + r[op >> 6 & 7], ww = 1;     // strb [rb, ro]
+		else if ((op & 0xF800) == 0x9000) wa = r[13] + (op & 0xFF) * 4, ww = 4;             // str [sp, #imm]
+		else if ((op & 0xF800) == 0xC000) wa = r[op >> 8 & 7], ww = 4 * __builtin_popcount(op & 0xFF);  // stmia
+		for (uint32_t b = 0; b < ww; b++) {
+			uint32_t x = wa + b, o = x >> 24 == 2 ? (x & 0x3FFFF) : x >> 24 == 3 ? 0x40000 + (x & 0x7FFF) : 0xFFFFFFFF;
+			if (o == 0xFFFFFFFF || !writeMap[o]) continue;
+			uint64_t key = (uint64_t) pc << 32 | (r[14] - 1);
+			int h = (key * 0x9E3779B97F4A7C15ull) >> 50;
+			while (writeSeen[h] && writeSeen[h] != key) h = (h + 1) & ((1 << 14) - 1);
+			if (!writeSeen[h]) { writeSeen[h] = key; printf("write %08X %08X %08X %u\n", pc, r[14] - 1, x, ww); }
+			break;
 		}
 	}
 	if (!loads) return;
@@ -499,6 +527,24 @@ static void lsUnload(struct mLockstep *l, int id) {
 
 // --- Per-frame work (videoFrameEnded) ---
 
+static const char *perPlayerPath;
+static unsigned perPlayerFrom, perPlayerTo = ~0u;  // --perplayer-frames A-B: only compare in that range
+static uint8_t perPlayerSnap[MAX_GBAS][0x48000], perPlayerDiff[0x48000];
+static unsigned perPlayerTaken[MAX_GBAS], perPlayerCompares;
+
+static void perPlayerFrame(int id, struct mCore *core, unsigned frame) {
+	if (frame % 60 || frame < perPlayerFrom || frame > perPlayerTo) return;
+	for (unsigned i = 0; i < 0x48000; i++)
+		perPlayerSnap[id][i] = core->busRead8(core, i < 0x40000 ? 0x02000000 + i : 0x03000000 + i - 0x40000);
+	perPlayerTaken[id] = frame + 1;
+	for (int k = 0; k < nplayers; k++)
+		if (perPlayerTaken[k] != frame + 1) return;
+	for (int k = 1; k < nplayers; k++)  // all GBAs have this frame now
+		for (unsigned i = 0; i < 0x48000; i++)
+			perPlayerDiff[i] |= perPlayerSnap[k][i] != perPlayerSnap[0][i];
+	perPlayerCompares++;
+}
+
 static void onFrame(void *context) {
 	struct Player *p = context;
 	int id = p - players;
@@ -509,6 +555,7 @@ static void onFrame(void *context) {
 		surveyFrame(id);
 		featureCount(id, frame);
 	}
+	if (perPlayerPath) perPlayerFrame(id, core, frame);
 
 	if (watch) {
 		int v = core->busRead8(core, watch);
@@ -859,6 +906,14 @@ int main(int argc, char **argv) {
 		else if (!strcmp(o, "--view")) view = atoi(v);
 		else if (!strcmp(o, "--survey")) surveyPath = v;
 		else if (!strcmp(o, "--reads")) readWatch = strtoul(v, NULL, 0);
+		else if (!strcmp(o, "--perplayer")) perPlayerPath = v;
+		else if (!strcmp(o, "--perplayer-frames")) { char *e; perPlayerFrom = strtoul(v, &e, 0); perPlayerTo = strtoul(e + 1, NULL, 0); }
+		else if (!strcmp(o, "--writes")) {
+			FILE *wf = fopen(v, "rb");
+			writeMap = malloc(0x48000);
+			if (!wf || fread(writeMap, 1, 0x48000, wf) != 0x48000) { perror(v); return 1; }
+			fclose(wf);
+		}
 		else if (!strcmp(o, "--start")) start = v;
 		else if (!strcmp(o, "--save-states")) saveStates = strtoul(v, NULL, 0);
 		else if (!strcmp(o, "--trace")) traceDir = v;
@@ -988,14 +1043,14 @@ int main(int argc, char **argv) {
 					p->core->step(p->core);
 				}
 				cpu->irqh.processEvents(cpu);
-			} else if (coverage || loads || readWatch) {
+			} else if (coverage || loads || readWatch || writeMap) {
 				// ARMRunLoop with each instruction's address recorded before it runs (as mGBA's
 				// ARMDebuggerCheckBreakpoints computes it), so GBAs interleave exactly as with runLoop.
 				struct ARMCore *cpu = ((struct GBA *) p->core->board)->cpu;
 				while (cpu->cycles < cpu->nextEvent) {
 					uint32_t pc = cpu->gprs[ARM_PC] - (cpu->executionMode == MODE_THUMB ? 2 : 4) - 0x08000000;
 					if (pc < 0x800000) covered[pc >> 4] |= 1 << ((pc >> 1) & 7);
-					if (loads || readWatch) loadsBefore(p->core, cpu);
+					if (loads || readWatch || writeMap) loadsBefore(p->core, cpu);
 					p->core->step(p->core);
 					if (loads) loadsAfter(i, p->core->board);
 				}
@@ -1029,6 +1084,12 @@ int main(int argc, char **argv) {
 		printf("recorded %u frames to %s\n", players[0].frame, play);
 	}
 	if (surveyPath) surveyWriteReport();
+	if (perPlayerPath) {
+		FILE *f = fopen(perPlayerPath, "wb");
+		if (!f || fwrite(perPlayerDiff, 1, sizeof perPlayerDiff, f) != sizeof perPlayerDiff) perror(perPlayerPath);
+		if (f) fclose(f);
+		fprintf(stderr, "perplayer: %u comparisons\n", perPlayerCompares);
+	}
 	for (int i = 0; i < nplayers; i++) players[i].core->deinit(players[i].core);
 	if (loads) {
 		fclose(loads);

@@ -150,7 +150,12 @@ Phase 1: the world runs once (`FS_SHARED_WORLD`, breaks GBA matching on purpose)
       (link: go away), `gUnknown_0842731C[gMainState]()` (the game: world mixed with camera, HUD, "mine?" checks),
       then `sub_0800D788`, `sub_0800C118`, `sub_0802C940`, `sub_0800B524` (roles unknown, probably mostly per
       player).
-  - [ ] 5a. Who writes the per-player bytes: a write watch (like `mgba_run --reads`) over step 3's ranges on the
+  - [x] 5a (2026-11-24, walkthrough Step 43). In session 1's stage 14.9 KB differ (IWRAM stack excluded): profile
+        area 0x02000000-0x02003000 8.5 KB, sound engine 0x0202E1E4-0x02032100 4.4 KB, 0x0202D000-0x0202E1E4 0.7 KB,
+        OAM buffers (?) 0x03005E60-0x03006450 0.65 KB, entities 62 bytes, the rest ~0.5 KB. Writers by area:
+        `docs/shared_world/per_player_writers.txt` (10 profile, 13 0x0202D/E, 39 sound, 72 entity, 5 OAM-buffer, 76 other
+        functions; entity and other lists include file-select code from before the stage).
+  - [ ] 5a, as planned: Who writes the per-player bytes: a write watch (like `mgba_run --reads`) over step 3's ranges on the
         session 1 replay gives the view functions and their callers. More memory diffs across session 1 (other
         rooms, menus, the stage's end) to complete the 13 KB list. (~1 session)
   - [ ] 5b. Sort each per-player function and the ~23 from step 4: view only (camera, BG map streaming, OAM,
