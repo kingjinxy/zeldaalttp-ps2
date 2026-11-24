@@ -57,17 +57,22 @@ static const struct { u32 va, mask, even, odd, used; } sRegions[] = {
 };
 #define NREGIONS (sizeof(sRegions) / sizeof(sRegions[0]))
 
+u32 ps2_switch_cycles;  // EE cycles spent in memory switches (video.c logs them with the frame cost)
+
 void ps2_tlb_select(int inst)
 {
-    u32 r;
+    u32 r, t0, t1;
     if (inst == ps2_cur_instance)
         return;
+    __asm__ volatile("mfc0 %0, $9" : "=r"(t0));
     for (r = 0; r < NREGIONS; r++) {
         if (ps2_cur_instance >= 0)
             memcpy(SAVED(ps2_cur_instance) + sRegions[r].even, (void *)sRegions[r].va, sRegions[r].used);
         memcpy((void *)sRegions[r].va, SAVED(inst) + sRegions[r].even, sRegions[r].used);
     }
     ps2_cur_instance = inst;
+    __asm__ volatile("mfc0 %0, $9" : "=r"(t1));
+    ps2_switch_cycles += t1 - t0;
 }
 
 void ps2_tlb_map(int instances)

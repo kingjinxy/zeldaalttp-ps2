@@ -19289,3 +19289,148 @@ Different from the frame-1770 bug: on the file-select screen (where players 3 an
 
 - tool `Bash`: cat >> "docs/Running Walkthrough.md" <<'EOF'  ## Step 35: GS renderer by default; four players 1:1 in a 2x2 block (2026-11-24)  - `GS_RENDER` defaults to 1 (`Ma
 
+- tool `Bash`: git add -A Makefile.ps2 src/ps2/gsrender.c src/ps2/video.c "docs/Running Walkthrough.md" "Claude Conversation.md" && git commit -q -m "PS2: GS renderer by defau
+
+- tool `ToolSearch`: 
+
+- tool `SendUserFile`: 
+
+- tool `PushNotification`: 
+
+## Claude
+
+The GS renderer is now the default, and 4 players show as four 240x160 screens at 1:1 in a 2x2 block centred in the 640x480 frame. But 4 players still run at only 30 fps. Committed as `09181c6`; `make compare` reports OK.
+
+**Default and layout**
+- Builds use the GS renderer unless you pass `GS_RENDER=0`. Builds with `WIDE_VIEW` still use the software renderer, because the GS renderer doesn't do the wider view yet.
+- The block is 480x320, with P1 and P2 on top and P3 and P4 below ([video.c](src/ps2/video.c), `place()`). Before, each screen was scaled up to fill a quarter of the frame. The screenshot is attached.
+
+**Speed**
+4 players first cost 4.6M EE cycles a frame to draw (about 1.1M per screen), against 4.9M available per 60 fps frame. Most of that was building the GS draw commands each frame, so I made two changes in [gsrender.c](src/ps2/gsrender.c):
+- Background tiles that are fully transparent are no longer drawn.
+- A blended background used to have its tile list rebuilt for each of its four drawing passes. It is now built once and reused.
+
+| | Before | After |
+|---|---|---|
+| 4 screens | 4.6M | 2.6M |
+| 2 screens | 1.5M | 1.2M |
+
+The pictures didn't change. In the 2-player replay, all 34 compared frames matched the software renderer pixel for pixel. That run didn't happen to compare a lobby frame, the one that used to be one colour level off. In the 4-player run, every difference is the same one-level blend rounding as before.
+
+**Why it's still 30 fps**
+The game code for four players, plus copying each player's memory in and out every frame, takes 3.9M cycles on its own. That leaves about 1M for drawing four screens. Getting to full speed needs work on both sides:
+- the remaining drawing cost: about 0.3M per screen goes to rearranging the graphics data into a GS texture each frame;
+- the per-player memory copy, about 387 KB for each player switch.
+
+**Errors in the 4-player run**
+The 4-player run logs 50 TLB misses in `gs_sub_08003870`, where file-select code reads through a null animation pointer. This is the known open bug from Step 26: it depends on the save file and happens with one player too. Players 3 and 4 have no recorded inputs, so they sit on the file select, where it shows up. The rendering changes didn't cause it; it appeared before them too.
+
+`docs/Running Walkthrough.md` Step 35 and the conversation archive are updated.
+
+**Next steps, for you to pick:**
+- Fix the file-select null pointer.
+- Work toward 60 fps with 4 players: the texture rearranging and the per-player memory copy.
+- Look at the earlier bad-instruction crash around frame 1770.
+
+## User
+
+I want to return to the subject of having all players share a world instead of exchanging packets. Each player would then have a camera view into the same world space. This should speed up rendering to some degree. Provide an outline for how this plan could be achieved, and estimate how much of a speed up it would be.
+
+- tool `Bash`: grep -n -i "shared world\|share a world\|single world\|one world\|shared-world" "docs/Planning Doc.md" "docs/Running Walkthrough.md" | head; grep -n -i -A12 "sh
+
+- tool `Bash`: grep -n -i "carries\|per frame.*bytes\|link packet\|lockstep" "docs/Planning Doc.md" "docs/Running Walkthrough.md" | head -15; grep -c "" src/ps2/link.c; sed -n
+
+## Claude
+
+# Shared world for split-screen: outline and speed estimate
+
+**The short answer:** most of the speed-up would come from running the game once instead of four times, not from rendering. I estimate a 4-player frame would drop from about 6.5M EE cycles to roughly 3.2–3.8M. The budget at 60 fps is 4.9M, so 4 players would fit. Rendering alone would only get about 25–35% cheaper.
+
+## Where the time goes now (4 players, measured)
+
+| Cost per frame | EE cycles |
+|---|---|
+| Game code ×4, plus copying each player's memory in and out at every switch | 3.9M |
+| Rendering, about 0.65M per screen: | 2.6M |
+| – rearranging the graphics memory into a GS texture | 0.3M per screen |
+| – building the draw commands | ~0.35M per screen |
+| **Total** (60 fps budget: 4.9M) | **6.5M** |
+
+All four game copies simulate the same world in lockstep: every enemy, object and all four Links. Each copy only differs in which player it follows. So most of that 3.9M is the same work done four times. I haven't timed the memory copying apart from the game code yet; that's the first thing to measure.
+
+## Outline
+
+**Phase 0: measure and map.** This doesn't change the game.
+1. Time the memory copying separately from the game code. Inside the 3.9M, that split decides how much the cheap step 4 below gains.
+2. Log and decode the link packet: 12 halfwords per player per frame. The planning doc's Phase 5 depends on the cable carrying little more than inputs.
+3. Compare the four copies' memory at the same frame. Bytes that differ are per-player state; everything else is the shared world. The copy-swap blocks at 0x01900000 + i MB make this a small tool. I expect it to find:
+   - the camera and background scroll;
+   - the background tile maps around each camera;
+   - the sprite list the game builds for the GBA's sprite hardware;
+   - the HUD and menus;
+   - the "which player am I" ID;
+   - possibly some sprite graphics loaded per player.
+4. Find every place the game reads its own player number (the link status register). Those are the branches where "this GBA's player" matters.
+
+**Phase 1: run the world once, keep the per-player parts.** This is the incremental step, under an `FS_SHARED_WORLD` option that breaks GBA matching on purpose.
+5. Split the game frame into two parts:
+   - the world update, run once;
+   - the per-player part, run once per player with that player's small state block swapped in: input, camera, HUD, sprite list, background tile maps.
+   
+   The memory copying then shrinks from roughly 387 KB per switch to a few KB.
+6. Replace the link exchange with direct reads of the shared input array. Every player's inputs are already in the same memory.
+7. Check it against the current 4-instance build with the same scripted inputs: compare each player's screen frame by frame (the GS readback check already does this) and compare world memory.
+
+**Phase 2: render from shared graphics.**
+8. Upload the tile graphics and palettes once per frame instead of four times. That saves about 0.9M.
+9. Per camera, draw only what differs: background tile maps, scroll, sprite list, windows and fades. The GS renderer already takes these per screen, so it changes little.
+
+**Phase 3: audio.** One sound mixer fed by the shared world, instead of four.
+
+## Estimate (4 players, per frame)
+
+| | Now | Shared world |
+|---|---|---|
+| World update | ~3.9M combined | ~0.9–1.2M (once) |
+| Per-player game work ×4 | (included above) | ~0.4–0.6M |
+| Memory copying | (included above) | ~0.05M |
+| Graphics upload | 1.2M | 0.3M |
+| Draw commands ×4 | 1.4M | ~1.4M |
+| **Total** | **6.5M (30 fps)** | **~3.2–3.8M (60 fps)** |
+
+- **Game side:** about 3–4× faster. This is where the gain is.
+- **Rendering:** about 2.6M down to about 1.7M. Each camera still sees different tiles, so the draw commands stay per player.
+- **Uncertainty:**
+  - The per-player share is a guess until steps 1 and 3 measure it.
+  - If the game reloads sprite graphics per player, those can't be shared, which reduces the upload saving.
+- **Other routes to 60 fps without a shared world:** cutting the remaining texture-rearranging and memory-copy costs. Those can only win back part of the 1.6M over budget, because the four game copies stay.
+
+## Risks
+- **Hidden player-only code:** code that assumes "the local player" in places Phase 0 doesn't catch. Step 7's check is there for this.
+- **Translated code:** functions not yet decompiled are still auto-translated, so splitting the frame update can mean decompiling the main loop and the per-player HUD/camera code first.
+- **More than 4 players:** the shared world makes this easier later, because per-player arrays get sized by one constant.
+
+I'd start with Phase 0 steps 1 and 3. They take about a session and settle both the estimate and whether this plan works at all.
+
+## User
+
+Create a plan for this and let's update it as we go forward. Let's start with phase 0 step 1.
+
+- tool `Bash`: sed -n 90,113p "docs/Planning Doc.md"; grep -n "ps2_tlb_select" -r src/ps2/*.c | head; grep -n "^void ps2_tlb_select" -A40 src/ps2/tlb.c
+
+## Claude
+
+Updating the Phase 5 plan in the Planning Doc first, then adding the timer around the memory switch.
+
+- tool `Bash`: python3 - <<'EOF' p='docs/Planning Doc.md'; s=open(p).read() old=s[s.index("## Phase 5: single shared world"):s.index("## Medium priority: more than 4 players")
+
+- tool `Bash`: sed -n 60,90p src/ps2/main.c
+
+- tool `Bash`: systemd-run --user --scope -q -p MemoryMax=6G make -f Makefile.ps2 elf -j8 2>&1 | grep -E " error|fix_elf:"; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-
+
+- tool `Bash`: touch src/ps2/main.c && systemd-run --user --scope -q -p MemoryMax=6G make -f Makefile.ps2 INSTANCES=2 elf -j8 2>&1 | grep -E " error|fix_elf:"; S=/tmp/claude-1
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -E "cost:|\] frame " $S/sw2p.log | cut -c1-170
+
+- tool `Bash`: python3 - <<'EOF' p='docs/Planning Doc.md'; s=open(p).read() old="- [ ] 1. Time the memory switches (`ps2_tlb_select`) apart from the game code" new="""- [x] 1.
+

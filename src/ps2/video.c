@@ -291,6 +291,8 @@ static void place(int i, int instances, float *x, float *y, float *w, float *h)
 }
 
 // show every instance's screen; wait for vsync
+extern u32 ps2_switch_cycles;  // tlb.c
+
 void ps2_video_present(int instances)
 {
     int i;
@@ -300,10 +302,10 @@ void ps2_video_present(int instances)
         sOtherCycles += count() - sLastEnd - sFrameRender;
     sRenderCycles += sFrameRender, sFrameRender = 0;
     if (n % 600 == 0)  // every 10 s, averaged over the last 60 frames (EE cycles; 4.9 M per 60 Hz frame)
-        ps2_log("cost: render %u cycles/frame (all screens), game %u cycles/frame (all instances) of 4915200",
-                sRenderCycles / 60, sOtherCycles / 60);
+        ps2_log("cost: render %u cycles/frame (all screens), game %u cycles/frame (all instances, of which memory switches %u) of 4915200",
+                sRenderCycles / 60, sOtherCycles / 60, ps2_switch_cycles / 60);
     if (n % 600 == 540)
-        sRenderCycles = sOtherCycles = 0;
+        sRenderCycles = sOtherCycles = ps2_switch_cycles = 0;
     FlushCache(0);
 #ifdef GS_RENDER  // gsrender.c changed the drawing registers
     gsKit_setactive(sGs);

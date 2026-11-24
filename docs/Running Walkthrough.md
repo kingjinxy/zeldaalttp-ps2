@@ -1090,3 +1090,24 @@ ones as textured triangles), window 0 with per-line edges, and brighten/darken f
   shrink further (the swizzle) and the game side too.
 - The 4-player run shows the known TLB misses in `gs_sub_08003870` (Step 26: a null animation pointer in the file
   select, save-dependent); players 3 and 4 sit on the file select with no inputs. Still open.
+
+## Step 36: shared-world plan; phase 0 step 1, timing the memory switches (2026-11-24)
+
+- The shared-world plan (one world, a camera per player) is in `docs/Planning Doc.md` Phase 5, with phases 0-3 and
+  the first estimate: 4 players from 6.5 M EE cycles a frame to ~3.2-3.8 M.
+- `ps2_tlb_select` (`src/ps2/tlb.c`) now counts its cycles (`ps2_switch_cycles`); the 10-second cost line shows them
+  as part of the game's share.
+- Results (EE cycles per frame, 4.9 M at 60 fps):
+
+  | run | game share | of which memory switches | game code |
+  |---|---|---|---|
+  | 4 players, lobby / file select | 3.92 M | 3.57 M | 0.35 M |
+  | 2 players, lobby | 2.42 M | 1.78 M | 0.64 M |
+  | 2 players, stage (replay ended, players idle) | 1.84 M | 1.78 M | 0.05 M |
+
+  Each switch copies the instance's 387 KB out and the next one's in: about 0.9 M per instance per frame, ~1.15
+  cycles a byte. The game code is small next to it in every scene measured.
+- So the plan's estimate was wrong about where the time goes: the four simulations are cheap, copying memory is not.
+  A shared world still removes the switches, but making the switches cheaper (copying less, or not at all) would also
+  put 4 players at 60 fps (2.6 M rendering + ~0.35 M game) without changing the game. A busy 4-player stage still
+  needs measuring; there's no 4-player replay yet.

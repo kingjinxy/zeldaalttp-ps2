@@ -96,11 +96,34 @@ player, linked in memory instead of by cable, each drawn into its own part of th
 - [ ] Real hardware through Neutrino
 
 ## Phase 5: single shared world
-Only if the cable carries little more than inputs (check in Phase 1). Each step is checked against the
-four-instance build, which stays as the reference and fallback.
-- [ ] Audio: one mixer; other instances' sound events feed it
-- [ ] Rendering: one PPU pass per player view
-- [ ] Simulation once, per-player state as arrays (`FS_SHARED_WORLD`, breaks GBA matching on purpose)
+Requested by the user (2026-11-24): the players share one world, each with a camera into it, instead of four linked
+instances exchanging packets. Each step is checked against the four-instance build, which stays as the reference and
+fallback. Estimate (4 players, EE cycles per frame, 4.9 M at 60 fps): now 6.5 M (game ×4 with memory switches 3.9 M,
+rendering 2.6 M); shared ~3.2-3.8 M (world once ~1 M, per-player parts ×4 ~0.5 M, rendering ~1.7 M with the tiles
+uploaded once). Revised as the phase 0 numbers come in.
+
+Phase 0: measure and map (no game changes)
+- [x] 1. Time the memory switches (`ps2_tlb_select`) apart from the game code (2026-11-24): the switches are almost
+      all of it, about 0.9 M per instance per frame (387 KB out and in, ~1.15 cycles a byte); the game code itself
+      was 30-300 K per instance in the scenes measured (lobby, file select, an idle stage). Revised estimate: the
+      shared world's speed-up comes from dropping the switches; cheaper switches alone would also reach 60 fps
+      (4 players: 2.6 M rendering + ~0.35 M game). Still to measure: game code in a busy 4-player stage.
+- [ ] 2. Log and decode the link packet (12 halfwords per player per frame): does it carry little more than inputs?
+- [ ] 3. Diff the instances' memory at the same frame: what differs is per-player state (camera, scroll, BG maps,
+      OAM buffer, HUD, player ID, per-player sprite tiles?), the rest is the shared world
+- [ ] 4. Find every read of the player's own number (SIOCNT ID, the link state) in game code
+
+Phase 1: the world runs once (`FS_SHARED_WORLD`, breaks GBA matching on purpose)
+- [ ] 5. Split the frame: world update once, then per player with only that player's state block swapped in
+- [ ] 6. Inputs straight from a shared array in place of the link exchange
+- [ ] 7. Check each screen and the world memory against the four-instance build, same scripted inputs
+
+Phase 2: rendering from shared graphics
+- [ ] 8. Tiles and palettes uploaded once a frame
+- [ ] 9. Per camera only what differs: BG maps, scroll, OAM, windows, fades
+
+Phase 3: audio
+- [ ] 10. One mixer fed by the shared world
 
 ## Medium priority: more than 4 players
 Requested by the user (2026-11-16). After Phase 4 works with 4 players.
