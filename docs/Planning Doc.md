@@ -175,6 +175,20 @@ Phase 1: the world runs once (`FS_SHARED_WORLD`, breaks GBA matching on purpose)
         Entity lists are always the same length on every GBA (707 comparisons), so entity slots stay in step.
         Drawing is per entity right after its update (`UpdateAllEntities` calls the draw routine `sub_080008A8`
         after each handler), so the per-player pass can be a draw-only walk of the lists with each camera.
+        The stage frame (`sub_08038A30`, main state 2 / `gUnknown_08427BCC[9]`) in order: input and timers, world
+        update `UpdateAllEntities` (each entity's handler, then its draw `sub_080008A8`), `sub_08014900`, camera
+        `sub_08015D9C` (dispatch on `gUnknown_03000450.unk6`; `sub_08008B4A`/`sub_08008C02` follow the entity),
+        `sub_08015C64`, `sub_08013A60`, BG streaming `sub_08008ED8`, HUD `sub_0802CD3C`, `sub_08000434`, `sub_0803F284`,
+        `sub_08052A88` (writes the arrow objects), sprite-list finish `sub_08000BAC`, `sub_0802BFC4`, end checks,
+        random seed saved, `sub_08037574` (reads the player number). Then the main loop's `sub_0800D788` (text),
+        `sub_0800C118`, `sub_0802C940` (BG0 buffer swap), `sub_0800B524` (flip: swaps the two OAM buffers at
+        0x03005E60/0x03006260, copies the video registers).
+        Draft view pass for players 1-3 (5c): camera `sub_08015D9C`; a draw-only walk of the entity lists
+        (`sub_080008A8` per entity, with kind-2 attributes for the viewer); the arrow objects; HUD `sub_0802CD3C`;
+        `sub_08000BAC`; then text and the flip. BG streaming isn't needed with the GS renderer's room drawing (it
+        draws from the room data at the viewer's camera). To confirm for each: that it writes only per-player bytes
+        (the write watch per function), and which of `sub_08014900`, `sub_08015C64`, `sub_08013A60`, `sub_08000434`,
+        `sub_0803F284`, `sub_0802BFC4` are world and which view.
         Still to sort: the remaining step 4 readers and the profile, HUD and "other" writers in
         `docs/shared_world/per_player_writers.txt`.
   - [ ] 5b. Sort each per-player function and the ~23 from step 4: view only (camera, BG map streaming, OAM,

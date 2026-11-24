@@ -1273,3 +1273,8 @@ The user asked to go ahead with the EE-side work for many screens (shared world 
   bits (0x400E / 0x000E), the other Links 0 (0x4000 / 0x0000). The camera setup (file_select.c, `gUnknown_03000450.unk12
   = 14; e->unk50 = 14` for the followed entity) puts it there: a "this is my Link" drawing attribute. The camera
   struct itself differs only in +0x00 (followed entity) and +0x20-0x27 (camera and target positions).
+- The stage's frame function is `sub_08038A30` (`gUnknown_08427BCC[9]` under main state 2). Its order, and the
+  calls after it in the main loop, are in the Planning Doc (5b), with a first draft of the view pass for players 1-3:
+  camera (`sub_08015D9C`, whose callees `sub_08008B4A`/`sub_08008C02` are the camera struct's writers in the stage),
+  a draw-only walk of the entities, the arrows, the HUD, the sprite-list finish and the flip. `sub_0800B524` (the flip)
+  swaps two sprite-list buffers at 0x03005E60 and 0x03006260, which settles what that per-player area is.

@@ -20362,3 +20362,54 @@ Mapping the per-player entity bytes onto the entity struct's fields.
 
 - tool `Bash`: cp tools/mgba_run.c /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/mgba_run_keep2.c && python3 - <<'EOF' p
 
+- tool `Bash`: python3 - <<'EOF' p='docs/Planning Doc.md'; s=open(p).read() old="""        2. Drawing attributes stored in shared entities: +0x50 (sprite layer | camera struct
+
+- tool `PushNotification`: 
+
+## Claude
+
+The first sorting pass of step 5b is done, and it's good news for the plan: during a stage, the world really is identical on every player's GBA. The per-player differences fall into six kinds, each with a clear treatment in a shared world. Committed as `112581b` and `c162655`; the plan and walkthrough Step 44 are updated.
+
+**How:** the mGBA runner's player comparison now also walks the game's 8 entity lists on both GBAs. It pairs entities by position and counts which fields differ, per entity type.
+
+**The main result:** across the whole stage (707 comparisons), the entity lists never differ in length, so every GBA holds the same entities in the same slots. What differs:
+
+| Kind | Example | In a shared world |
+|---|---|---|
+| 1. View-only entities | object 16: the arrows pointing at off-screen players. Each GBA creates one per *other* player and positions it from its own camera | created and run once per player, in the per-player pass |
+| 2. Drawing marks stored in shared entities | Links' +0x50: 0x0E on the local player's Link only, set by the camera setup; also object 65's +0x18 | worked out per player at draw time ("is this the viewer's Link?") |
+| 3. World events with a "mine?" check | object 65, a pickup: only the collector's GBA adds to its own counter | add to the collecting player's own profile instead |
+| 4. Profile data | 8.5 KB at 0x02000000 | per-player arrays |
+| 5. Sound | 4.4 KB | per player until the single mixer; the PS2 has no sound yet |
+| 6. View state | the camera and its target, sprite lists, HUD and text, background maps | the per-player overlay |
+
+**A finding that simplifies step 5c:** the game draws each entity right after updating it. `UpdateAllEntities` calls the draw routine after each entity's handler. So the extra players' view pass can be a draw-only walk over the same lists with that player's camera, with no need to separate drawing out of the game's code.
+
+**Still to sort:**
+- the remaining functions that read the player number;
+- the profile, HUD and "other" writers in [per_player_writers.txt](docs/shared_world/per_player_writers.txt).
+
+Then comes step 5c, the actual split in the port: world once, then a view pass per player with a small memory overlay. That's where the memory-switch cost goes away. I'd go straight on to the remaining sorting.
+
+## User
+
+Update docs, commit, and then proceed
+
+## Claude
+
+The docs and commit are already done: `c162655` holds the last update, and nothing is left uncommitted. Checking that, then continuing with the sort, starting from the main loop's per-frame calls:
+
+- tool `Bash`: git status --short | head; for f in sub_0800D788 sub_0800C118 sub_0802C940 sub_0800B524 sub_08036864 sub_080368A0; do file=$(grep -l "^void $f(" src/*.c | head 
+
+- tool `Bash`: python3 - <<'EOF' import struct,subprocess r=open('baserom.gba','rb').read() out=subprocess.run(["arm-none-eabi-nm","zeldaalttp.elf"],capture_output=True,text=T
+
+- tool `Bash`: for f in sub_08038168 sub_0803815C; do file=$(grep -l "^void $f(" src/*.c | head -1); echo "=== $f ($file)"; awk -v f="void $f(" 'index($0,f)==1{p=1} p{print} p
+
+- tool `Bash`: python3 - <<'EOF' import struct,subprocess r=open('baserom.gba','rb').read() out=subprocess.run(["arm-none-eabi-nm","zeldaalttp.elf"],capture_output=True,text=T
+
+- tool `Bash`: for f in sub_080386C0 sub_08038A30; do file=$(grep -l "^void $f(" src/*.c | head -1); echo "=== $f ($file)"; awk -v f="void $f(" 'index($0,f)==1{p=1} p{print} p
+
+- tool `Bash`: for f in sub_08037554 sub_08037750 sub_0803DE94 sub_080141E8 sub_0802B74C UpdateAllEntities sub_08014900 sub_08015D9C sub_08015C64 sub_08013A60 sub_08008ED8 sub
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - $S/writes2.txt $S/fsyms.txt <<'EOF' import sys
+
