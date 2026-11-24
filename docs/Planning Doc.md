@@ -296,15 +296,17 @@ Requested by the user (2026-11-16). After Phase 4 works with 4 players.
         (`sub_0803781C`, `sub_080378F4`, `sub_080379BC`, `sub_08037A94`, `sub_08037B5C`, the `sub_08038A30`
         start-button checks); player masks `& 15`/`gUnknown_03000BF0` bits 0-3 (`sub_08037B5C`). Users of the arrays:
         about 130 functions for `gUnknown_03006A30`, 115 for `gUnknown_03006C80`, 20-30 each for the key arrays and
-        `gLCDRegisterBuffer` (the player number). Nearly all are C already (draft C beside the original asm in
-        `asm/non_matching`), so the PS2 build can change them; about 2 per global are still asm only.
+        `gLCDRegisterBuffer` (the player number). Correction (same day): about 186 of these functions are still asm
+        only (plain `asm(".include")`, run as gstate translations that read the addresses from the ROM's literal
+        pools): file_select.c 109, game_select.c 40, rom2a.c 20, fs_game.c 16, rom_0800D4F0.c 1. Moving an array by
+        linker symbol doesn't reach them.
       - **Player number:** `Entity.form` and `Entity.unk18` are full bytes (no 2-bit fields found in the headers);
         the player byte 0x03000414 is a byte. Masks `& 3` on them still need checking function by function.
       - **Link protocol:** the PS2 port does the exchange itself (`ps2_link_exchange`), so 8 packets are a port change;
         the game's packet code (`sub_08037574`, `sub_080368A0`) loops over four.
       - **Room to grow:** the EWRAM mirror at 0x02040000 (tlb.c maps it to the same 256 KB as 0x02000000) can get
-        its own memory: 256 KB at a GBA address for 8-player copies of these arrays, moved by linker symbol in the
-        PS2 build only (the GBA build keeps them in place).
+        its own memory: 256 KB at a GBA address for 8-player copies of these arrays (or a new region of its own
+        at an unused address, one line in tlb.c's region table).
 - [ ] Data that comes in four (Link colours, palettes, HUD slots, spawn points, item/rupee splits)
       Link colours (2026-11-24, walkthrough Step 45): exactly four in the ROM (green, red, blue, purple at
       0x0844DD74-0x0844DDF3, the palette base; a copy at 0x0844DED4), sprite palettes 7-10 in a stage. All share

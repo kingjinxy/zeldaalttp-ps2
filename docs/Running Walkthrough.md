@@ -1425,7 +1425,10 @@ ROM:
 
 Greps over the headers, the decompiled C and the asm, and the link map (details in the planning doc's "more than 4
 players" section). Every per-player array is exactly four long and packed against the next global, so none can grow
-in place; the code that walks them is 20 loops and a handful of unrolled four-way checks, nearly all already C. A
+in place; the code that walks them is 20 loops and a handful of unrolled four-way checks. Correction: about 186
+functions that use these arrays are still asm only (run as gstate translations reading addresses from the ROM's
+literal pools), so moving an array by linker symbol doesn't reach them; the first count took every file in
+`asm/non_matching` for a C draft, but many are plain includes. A
 place for bigger arrays: the EWRAM mirror (0x02040000), mapped today to the same memory as 0x02000000, can be given
 256 KB of its own. Not done yet: checking each `& 3` on a player number, and data tables of four in the ROM (spawn
 points, HUD slots) beyond the Link palettes (Step 45).
