@@ -45,7 +45,58 @@ void sub_0802FCC8(void)
 asm(".include \"asm/non_matching/rom2a/sub_0802FCCC.inc\"");
 asm(".include \"asm/non_matching/rom2a/sub_0802FD88.inc\"");
 asm(".include \"asm/non_matching/rom2a/sub_0802FE04.inc\"");
+#ifdef NONMATCHING
+// The lobby's last step (gUnknown_02016D60 byte 0 the step): 0 clears the players' choices (gUnknown_03006C80.unk28,
+// 8 words) and starts the link, 1 waits for gUnknown_03000FC0.unk8 == 1, 2 checks the choices: every player's high
+// nibble of unk28[i].unk4 the same (0xF0: anyone) and none zero, else main state 10; then main state 5.
+void sub_0802FEE8(void)
+{
+    u8 *step = (u8 *)&gUnknown_02016D60;
+    u32 zero;
+    u8 i, v, t;
+
+    if (gUnknown_03000520.unk0 != 0)
+        return;
+    gUnknown_03000FC0.unk12 = 8;
+    switch (*step) {
+    case 0:
+        gUnknown_030004A0.dispCnt = 64;
+        *(vu16 *)0x04000000 = 0;
+        sub_0801239C();
+        sub_080123BC();
+        zero = 0;
+        CpuSet(&zero, gUnknown_03006C80.unk28, 0x05000008);
+        sub_08036704(3);
+        (*step)++;
+        break;
+    case 1:
+        if (gUnknown_03000FC0.unk8 == 1)
+            *step = 2;
+        break;
+    case 2:
+        sub_0800BED8();
+        v = gUnknown_03006C80.unk28[0].unk4 & 0xF0;
+        if (v != 0xF0) {
+            for (i = 1; i < gUnknown_03006C80.unk0; i++) {
+                t = gUnknown_03006C80.unk28[i].unk4 & 0xF0;
+                if (t != 0xF0 && t != v) {
+                    set_main_state(10);
+                    return;
+                }
+            }
+            for (i = 0; i < gUnknown_03006C80.unk0; i++)
+                if (gUnknown_03006C80.unk28[i].unk4 == 0) {
+                    set_main_state(10);
+                    return;
+                }
+        }
+        set_main_state(5);
+        break;
+    }
+}
+#else
 asm(".include \"asm/non_matching/rom2a/sub_0802FEE8.inc\"");
+#endif
 asm(".include \"asm/non_matching/rom2a/sub_0802FFE4.inc\"");
 asm(".include \"asm/non_matching/rom2a/sub_08030018.inc\"");
 asm(".include \"asm/non_matching/rom2a/sub_08030054.inc\"");

@@ -20,6 +20,7 @@
 // compares only between frames A and B.
 // --writes FILE: FILE is a --perplayer bitmap; every distinct Thumb store into a marked byte is logged as
 // "write PC LR ADDR WIDTH" (first address seen for that PC/LR). ARM code, DMA and BIOS copies aren't seen.
+// --access (with --writes): loads from marked bytes are logged too, as "load PC LR ADDR WIDTH".
 // --bracket ADDR,ADDR,... (with --writes MAP): GBA 0, every 10th frame in --perplayer-frames: for each listed
 // function (Thumb or ARM, ROM or RAM), memory is copied at its entry and compared at its return (callees included); the changed bytes are counted
 // as per-player (marked in MAP) or world (the IWRAM stack excluded). Printed per function at the end.
@@ -245,6 +246,7 @@ static uint8_t covered[0x800000 / 16];
 static FILE *loads;                 // --loads FILE
 static uint32_t readWatch;          // --reads ADDR
 static uint8_t *writeMap;           // --writes FILE: the per-player bitmap
+static int accessLoads;             // --access
 static uint64_t writeSeen[1 << 14];
 #define MAX_BRACKETS 32
 static uint32_t bracketAddr[MAX_BRACKETS], bracketRet[MAX_BRACKETS];
@@ -348,6 +350,18 @@ decode:;
 			int h = (key * 0x9E3779B97F4A7C15ull) >> 52;
 			while (readSeen[h] && readSeen[h] != key) h = (h + 1) & 4095;
 			if (!readSeen[h]) { readSeen[h] = key; printf("read %08X %08X %u\n", pc, r[14] - 1, w); }
+		}
+	}
+	if (writeMap && accessLoads && k) {
+		uint32_t w = k[3] == '3' ? 4 : k[3] == '1' ? 2 : 1;
+		for (uint32_t b = 0; b < w; b++) {
+			uint32_t x = a + b, o = x >> 24 == 2 ? (x & 0x3FFFF) : x >> 24 == 3 ? 0x40000 + (x & 0x7FFF) : 0xFFFFFFFF;
+			if (o == 0xFFFFFFFF || !writeMap[o]) continue;
+			uint64_t key = (uint64_t) pc << 32 | (r[14] - 1) | 1ull << 31;
+			int h = (key * 0x9E3779B97F4A7C15ull) >> 50;
+			while (writeSeen[h] && writeSeen[h] != key) h = (h + 1) & ((1 << 14) - 1);
+			if (!writeSeen[h]) { writeSeen[h] = key; printf("load %08X %08X %08X %u\n", pc, r[14] - 1, x, w); }
+			break;
 		}
 	}
 	if (writeMap) {
@@ -962,6 +976,7 @@ int main(int argc, char **argv) {
 		else if (!strcmp(o, "--view")) view = atoi(v);
 		else if (!strcmp(o, "--survey")) surveyPath = v;
 		else if (!strcmp(o, "--reads")) readWatch = strtoul(v, NULL, 0);
+		else if (!strcmp(o, "--access")) { accessLoads = 1; i--; continue; }
 		else if (!strcmp(o, "--perplayer")) perPlayerPath = v;
 		else if (!strcmp(o, "--bracket")) {
 			for (char *t = (char *) v; *t && nbrackets < MAX_BRACKETS; t += *t == ',')
