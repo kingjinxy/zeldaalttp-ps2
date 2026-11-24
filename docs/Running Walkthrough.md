@@ -791,3 +791,9 @@ no crash; no rendering yet).
   one.
 - Not yet: saves (EEPROM), sound, HBlank-timed effects (per-scanline registers), link cable / multiplayer, and the
   ARM-side replay check after this step's translator changes.
+- **Saves (same day):** `src/ps2/io.c` emulates the 64 Kbit EEPROM behind the game's DMA3 bit streams (read request
+  `11`+address+`0`, 68-bit read; write `10`+address+64 bits+`0`; 6- or 14-bit addresses), in mGBA's `.sav` layout
+  (8 KB, block n at n×8, bits most significant first), so mGBA saves load as they are. `src/ps2/save.c` loads
+  `host:zeldaalttp.sav` at startup (missing: an erased chip, all ones) and writes it at the vblank after a write.
+  With no file the game formats the save and the file select is clean; `recordings/session1/end_save0.sav` shows
+  file A with its hearts and Four Swords data. shortcut: host: only; a memory card file for real hardware is next.

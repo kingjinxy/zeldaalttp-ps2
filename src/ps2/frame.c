@@ -17,6 +17,7 @@ u32 (*ps2_icall(u32 target))();
 void ps2_io_vblank(void);
 void ps2_video_frame(void);
 void ps2_input_frame(void);
+void ps2_save_vblank(void);
 
 static u32 sFrame;
 
@@ -57,6 +58,7 @@ void ps2_vblank_wait(void)
     REG16(REG_IF) &= ~1;
     ps2_video_frame();  // draws, shows and waits for vsync: the game runs at the PS2's 60 Hz
     ps2_input_frame();  // KEYINPUT for the frame the game is about to run
+    ps2_save_vblank();  // the save file, after the game changed the EEPROM
     if (++sFrame % 60 == 0 || sFrame <= 10)
         ps2_log("frame %u", sFrame);
 }

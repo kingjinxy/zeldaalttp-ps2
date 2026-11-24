@@ -7,6 +7,7 @@ void ps2_glue_init(void);
 void ps2_watch_init(void);
 void ps2_video_init(void);
 void ps2_input_init(void);
+void ps2_save_load(void);
 void ps2_log(const char *fmt, ...);
 void AgbMain(void);
 
@@ -17,6 +18,7 @@ int main(void)
     ps2_glue_init();
     ps2_video_init();
     ps2_input_init();
+    ps2_save_load();
     ps2_watch_init();
     ps2_log("GBA memory mapped, entering AgbMain");
     AgbMain();

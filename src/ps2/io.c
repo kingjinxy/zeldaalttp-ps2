@@ -8,6 +8,42 @@
 #define IO16(o) (*(volatile u16 *)(0x04000000u + (o)))
 #define IO32(o) (*(volatile u32 *)(0x04000000u + (o)))
 
+// ---- EEPROM (64 Kbit), as mGBA: 8 KB, block n (8 bytes) at n * 8, bits most significant first -------------------
+// The game talks to it with DMA3 bit streams (one bit per halfword, bit 0): a read request "11" + address + "0", then
+// a 68-bit read (4 junk bits, 64 data); a write "10" + address + 64 data bits + "0". Address: 6 or 14 bits.
+u8 ps2_eeprom[8192];
+int ps2_eeprom_dirty;
+static u32 sEepromRead;  // byte offset of the block the last read request named
+
+static void eeprom_command(const volatile u16 *src, u32 n)
+{
+    u32 i, addr = 0, abits;
+    if (n < 9 || !(src[0] & 1))
+        return;
+    abits = (src[1] & 1) ? n - 3 : n - 67;  // read request : write
+    if (abits != 6 && abits != 14)
+        return;
+    for (i = 0; i < abits; i++)
+        addr = (addr << 1) | (src[2 + i] & 1);
+    addr = (addr & 0x3FF) * 8;
+    if (src[1] & 1) {
+        sEepromRead = addr;
+        return;
+    }
+    for (i = 0; i < 64; i++) {
+        u8 *b = &ps2_eeprom[addr + i / 8], m = 0x80 >> (i % 8);
+        *b = (src[2 + abits + i] & 1) ? (*b | m) : (*b & ~m);
+    }
+    ps2_eeprom_dirty = 1;
+}
+
+static void eeprom_read(volatile u16 *dst, u32 n)
+{
+    u32 i;
+    for (i = 0; i < n; i++)
+        dst[i] = i < 4 ? 0 : (ps2_eeprom[sEepromRead + (i - 4) / 8] >> (7 - (i - 4) % 8)) & 1;
+}
+
 // DMA channel n (0-3): registers at 0xB0 + 12n: SAD, DAD, CNT_L (count), CNT_H (control)
 static void dma_run(int n)
 {
@@ -15,11 +51,10 @@ static void dma_run(int n)
     u32 count = IO16(base + 8), wide = ctl & 0x400, step = wide ? 4 : 2;
     int dstep = ((ctl >> 5) & 3) == 1 ? -(int)step : ((ctl >> 5) & 3) == 2 ? 0 : (int)step;
     int sstep = ((ctl >> 7) & 3) == 1 ? -(int)step : ((ctl >> 7) & 3) == 2 ? 0 : (int)step;
-    if (src - 0x0D000000u < 0x01000000u || dst - 0x0D000000u < 0x01000000u) {
-        // EEPROM: shortcut: no save chip yet, reads return all ones; upgrade with real save support
-        if (src - 0x0D000000u < 0x01000000u)
-            for (; count; count--, dst += dstep)
-                *(volatile u16 *)dst = 1;
+    if (dst - 0x0D000000u < 0x01000000u) {
+        eeprom_command((const volatile u16 *)src, count);
+    } else if (src - 0x0D000000u < 0x01000000u) {
+        eeprom_read((volatile u16 *)dst, count);
     } else {
         if (count == 0)
             count = n == 3 ? 0x10000 : 0x4000;
