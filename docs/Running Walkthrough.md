@@ -1024,3 +1024,33 @@ The survey (step 31) found two per-line effects driven by HBlank DMA. The port d
   the GBA (interrupt-driven wipe vs main-loop clouds), which the port doesn't reproduce. Not proven.
 - No TLB misses in the run. The stage-entry wipe (HBlank DMA to WIN0H in session 1) and the BG3 wave (game choice,
   not reached in FS_ONLY) use the same path.
+
+## Step 33: GS renderer, first version: the stage matches the software renderer exactly (2026-11-24)
+
+`make -f Makefile.ps2 GS_RENDER=1` draws the GBA screens with the Graphics Synthesizer (`src/ps2/gsrender.c`), covering
+what the survey (step 31) found in the stage: mode 0 16-colour BGs, sprites (1D/2D mapping, flips, rotating/scaling
+ones as textured triangles), window 0 with per-line edges, and brighten/darken fades.
+
+- Each frame per instance: VRAM goes up as one 4-bit texture, 256 wide (32 tiles a row; BG tiles rows 0-511, sprite
+  tiles 512-767, rearranged on the EE), and each 16-colour palette as its own 8x2 CLUT (32 of them, 256 bytes apart).
+  Layers are drawn back to front (per priority: BG3..BG0, then sprites from OAM 127 down to 0) into a 256x160 render
+  target per instance, which `video.c` shows as before (no texture upload). Colour 0 is transparent through the alpha
+  test. Window 0: its shape goes into the target's alpha once a frame (line runs, so per-line edges from the HBlank
+  DMA cost 160 small rectangles at most); later colour writes mask alpha off, and a layer shown only inside or outside
+  uses the destination alpha test. Fades: a blended rectangle (darken (0 - Cd) * evy + Cd, brighten (white - Cd) * evy
+  + Cd), where the window's effect bit is on.
+- Check: at the dump frames the software renderer draws the same state too, the GS target is read back
+  (tp-ps2's readback, from the HAL) and compared pixel by pixel; both pictures are written (`_gs.ppm`).
+- Fixed on the way:
+  - a 4-bit texture's CLUT load takes 16 entries at CSA, not 256: per-palette CLUTs, loaded with CLD 4 (only when the
+    palette changes);
+  - mGBA expands 5-bit colour as `(c << 3) | (c >> 2)`, not a plain shift;
+  - the GS samples at a pixel's top-left corner: a flipped tile's texture range must start 1/16 texel inside (u + 8)
+    or its first pixel reads the next tile, and the end must stay at u (u = 0 minus 1/16 wrapped to garbage);
+  - the render target shown through gsKit needs `TBW` set (normally set by an upload): rows repeated every 32;
+  - per-line window edges drawn by redrawing tiles per line run overflowed the packet: the alpha mask instead;
+  - the game starts DMA0 with source 0 for a frame (the BIOS, which a DMA can't read): skipped (both renderers).
+- Result (2 players, intro replay): the stage frames (2000, 2400, 2800) are identical to the software renderer, 0
+  pixels different on both screens; Choose a Stage 7 pixels; the lobby (3,820) and Choose a Stage's opening
+  (6,000-22,000) differ by their alpha blending, not done yet. Drawing both screens: ~1.5M EE cycles a frame (the
+  software renderer: ~6M); no TLB misses.

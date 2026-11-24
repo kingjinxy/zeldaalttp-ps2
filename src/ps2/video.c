@@ -118,6 +118,17 @@ void ps2_video_init(int instances)
         r->cache = NULL;
         r->init(r);
     }
+#ifdef GS_RENDER  // the GS draws each screen into a render target, shown as the texture (no upload)
+#ifdef WIDE_VIEW
+#error "GS_RENDER doesn't do WIDE_VIEW yet"
+#endif
+    {
+        u32 ps2_gsr_init(GSGLOBAL *gs, int instances), ps2_gsr_target(int inst);
+        ps2_gsr_init(sGs, instances);
+        for (i = 0; i < instances; i++)
+            sView[i].tex.Vram = ps2_gsr_target(i), sView[i].tex.TBW = sTexW / 64;  // TBW: set by uploads normally
+    }
+#endif
     ps2_log("video: %s, %dx%d buffer (DW %d DH %d MAGH %d), %d screens of %dx%d", sMode->name, sGs->Width,
             sGs->Height, sGs->DW, sGs->DH, magh, instances, VIEW_W, VIEW_H);
 }
@@ -156,7 +167,7 @@ static int hblank_dma(struct GBAVideoRenderer *r, int y)
         if ((ctl & 0xB000) != 0xA000)  // enabled, HBlank timing
             continue;
         active++;
-        if (y == 0 || dst - 0x04000000u >= 0x56)
+        if (y == 0 || dst - 0x04000000u >= 0x56 || src < 0x02000000u)  // source 0 for a frame: the BIOS, unreadable
             continue;
         unit = (ctl & 0x400) ? 4 : 2;
         src += (u32)(y - 1) * count * unit * (((ctl >> 7) & 3) == 2 ? 0 : 1);  // fixed source: the same entry each line
@@ -203,6 +214,7 @@ void ps2_video_render(int inst)
     u32 t0 = count(), n = ps2_frame + 1;
     int dump = n == 1300 || n == 1600 || n == 2000 || n == 2400 || n == 2800;
     static int sHdmaDumps;  // the first frames drawn with an HBlank DMA, to compare with mGBA
+    int y;
     if (dump && VIEW_W != GBA_W) {  // wide view check: the GBA's own 240x160 from the same state, as _gba.ppm
         int w = VIEW_W, h = VIEW_H;
         ps2_view_w = GBA_W, ps2_view_h = GBA_H;
@@ -210,6 +222,37 @@ void ps2_video_render(int inst)
         dump_frame(inst, n, "_gba");
         ps2_view_w = w, ps2_view_h = h;
     }
+#ifdef GS_RENDER
+    {
+        void ps2_gsr_draw(int inst);
+        int ps2_gsr_read(int inst, u32 *dst);
+        ps2_gsr_draw(inst);
+        sFrameRender += count() - t0;
+        for (y = 0; y < 4; y++)  // frames with an HBlank DMA (the window wipes) are checked too, as in the software path
+            if ((IO16(0xBA + 12 * y) & 0xB000) == 0xA000 && sHdmaDumps < 24 && n % 4 == 0) {
+                sHdmaDumps++, dump = 1;
+                break;
+            }
+        if (dump) {  // check: the software renderer's picture of the same state, pixel by pixel
+            static u32 gs[256 * 160] __attribute__((aligned(64)));
+            int x, diff = 0, first = -1;
+            render(r);
+            if (!ps2_gsr_read(inst, gs))
+                ps2_log("gsrender: readback stuck");
+            for (y = 0; y < GBA_H; y++)
+                for (x = 0; x < GBA_W; x++)
+                    if ((gs[y * 256 + x] & 0xFFFFFF) != (PIXELS(inst)[y * sTexW + x] & 0xFFFFFF) && !diff++)
+                        first = y * 256 + x;
+            ps2_log("gsrender: frame %u screen %d: %d pixels differ from the software renderer%s (first at %d,%d: gs %06x sw %06x)",
+                    n, inst, diff, "", first % 256, first / 256, first < 0 ? 0 : gs[first] & 0xFFFFFF,
+                    first < 0 ? 0 : PIXELS(inst)[(first / 256) * sTexW + first % 256] & 0xFFFFFF);
+            dump_frame(inst, n, "");
+            memcpy(PIXELS(inst), gs, sizeof(gs));
+            dump_frame(inst, n, "_gs");
+        }
+        return;
+    }
+#endif
     if (render(r) && sHdmaDumps < 24 && n % 4 == 0)
         sHdmaDumps++, dump = 1;
     sFrameRender += count() - t0;
@@ -257,6 +300,11 @@ void ps2_video_present(int instances)
     if (n % 600 == 540)
         sRenderCycles = sOtherCycles = 0;
     FlushCache(0);
+#ifdef GS_RENDER  // gsrender.c changed the drawing registers
+    gsKit_setactive(sGs);
+    gsKit_set_scissor(sGs, GS_SCISSOR_RESET);
+    gsKit_set_test(sGs, GS_ATEST_OFF);
+#endif
     gsKit_clear(sGs, GS_SETREG_RGBAQ(0, 0, 0, 0x80, 0));
     for (i = 0; i < instances; i++) {
         float x, y, w, h;
@@ -265,7 +313,9 @@ void ps2_video_present(int instances)
         // whole multiples stay sharp; other sizes (1.5x, the 16:9 squeeze) are smoothed so pixels don't vary in size
         sView[i].tex.Filter = (w == (int)w && (int)w % VIEW_W == 0 && (int)h % VIEW_H == 0) ? GS_FILTER_NEAREST
                                                                                             : GS_FILTER_LINEAR;
+#ifndef GS_RENDER
         gsKit_texture_upload(sGs, &sView[i].tex);
+#endif
         gsKit_prim_sprite_texture(sGs, &sView[i].tex, x, y, 0, 0, x + w, y + h, VIEW_W, VIEW_H, 1,
                                   GS_SETREG_RGBAQ(0x80, 0x80, 0x80, 0x80, 0));
     }

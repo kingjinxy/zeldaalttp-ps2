@@ -18753,3 +18753,157 @@ Using a fresh output directory instead of clearing the old one:
 
 - tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; systemd-run --us
 
+- tool `Bash`: grep -rln -i "download\|readback\|vram_dump\|TRXDIR\|gs_download\|GsVram2Ram\|from_vram" /home/alex/ps2dev/gsKit/include /home/alex/ps2dev/ps2sdk/ee/include 2>/
+
+- tool `Bash`: cd /home/alex/Documents; grep -n "s_shot\|shot" tp-ps2/src/ps2/gs.c | head -20; grep -rn "vram_dump\|TRXDIR\|readback\|read back" psx-to-ps2-HAL/src/ps2/gpu_gs.
+
+- tool `Bash`: cd /home/alex/Documents; sed -n 150,200p tp-ps2/src/ps2/gs.c; grep -n "static.*readback\|^static void gs_read\|Download\|VIF1\|vif1" psx-to-ps2-HAL/src/ps2/gpu_
+
+- tool `Bash`: cd /home/alex/Documents; grep -n "dump_frame" -A40 tp-ps2/src/ps2/gs.c | sed -n 1,60p | head -70
+
+## Claude
+
+Committed (`5e89c05`). Now the GS renderer. tp-ps2's `gs.c` already has a working GS-to-EE readback (`download_rows`), which the pixel comparison needs. Reading its packet and readback code:
+
+- tool `Bash`: cd /home/alex/Documents/tp-ps2; sed -n 60,120p src/ps2/gs.c
+
+## Claude
+
+tp-ps2's readback is reusable as is. Checking which gsKit calls exist for restoring its state after my own GS drawing:
+
+- tool `Bash`: grep -n "void gsKit_setactive\|void gsKit_set_test\|void gsKit_set_scissor\|GS_SCISSOR_RESET\|GS_ATEST_OFF\|void gsKit_set_clamp\|OffsetX\|define GS_TEXFLUSH\|d
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/src/ps2/mgba; grep -rn "define M_RGB5_TO_BGR8\|define M_RGB5_TO_RGB8\|define M_R5\|define M_G5\|define M_B5\|COLOR_16_BIT
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "src/ps2/\*\|wildcard src/ps2\|PS2_C\b\|PS2_SRC" Makefile.ps2 | head; grep -n "_brighten\|_darken" -A6 src/ps2/m
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 222,247p src/ps2/mgba/src/gba/renderers/software-private.h; sed -n 256,275p src/ps2/mgba/src/gba/renderers/softwa
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/src/ps2/gsrender.c
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' p='src/ps2/gsrender.c'; s=open(p).read() def r(a,b,n=1):     global s; c=s.count(a); assert c==n,(a,c)
+
+## Claude
+
+Building. gsKit already defines `GS_CSR` and `GS_BUSDIR`, so I'm renaming mine. Then checking how much heap is left:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -i 's/\bGS_CSR\b/RB_CSR/g; s/\bGS_BUSDIR\b/RB_BUSDIR/g' src/ps2/gsrender.c; S=/tmp/claude-1000/-home-alex-Documents-
+
+## Claude
+
+Built, with 1.6 MB of heap left. First GS run, with the comparison at the dump frames:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; rm -f build/ps2/
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; tail -5 $S/gs1.log; grep -c . $S/gs1.log; cat /tmp/claud
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -n "TLB\|input:\|video\|tlb\|gstate\|ELF\|elf" $S/g
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -n 252,347p $S/gs1.log | grep -v "^\[.*\] *$" | cut 
+
+## Claude
+
+The GS build starts, but frames stop after frame 2, followed by loads from address 0 at pc `0xb193a8`. Finding that code:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep "TLB Miss" 
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -E "gsrender|cost|crash|stuck" $S/gs1.log | grep -v
+
+## Claude
+
+The readback gives nearly all black, so either nothing reached the render targets or the readback is wrong. Checking the PCSX2 screenshot, which shows the render targets directly:
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/gs1_c.png
+
+## Claude
+
+Something is drawn, but each screen shows its top 32 lines repeated down the whole screen. Separately, the readback doesn't match what's on screen. Looking at the read-back image itself:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 -c " fro
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/gs_vs_sw.png
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep "BG" $S/survey/fs_intro.txt
+
+- tool `Bash`: grep -n "typedef struct gsTexture" -A25 /home/alex/ps2dev/gsKit/include/gsInit.h | grep -n "TBW\|Vram\|Width" 
+
+- tool `Bash`: grep -rn "TBW" /home/alex/ps2dev/gsKit/include/*.h | head -5; grep -rn "struct gsTexture\b" -A22 /home/alex/ps2dev/gsKit/include/*.h | head -30
+
+## Claude
+
+Confirmed: `GSTEXTURE` has a `TBW` field that the upload normally fills in. Setting it, and switching to one CLUT per 16-colour palette (32 of them, each in its own 256-byte GS block):
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' p='src/ps2/gsrender.c'; s=open(p).read() def r(a,b,n=1):     global s; c=s.count(a); assert c==n,(a,c)
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' p='src/ps2/gsrender.c'; s=open(p).read() def r(a,b,n=1):     global s; c=s.count(a); assert c==n,(a,c)
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' p='src/ps2/gsrender.c'; s=open(p).read() i=s.index("// ---- windows:"); j=s.index("// ---- layers") ne
+
+## Claude
+
+Also making the GS build dump frames while an HBlank DMA is active, so the Choose a Stage reveal gets compared too:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' p='src/ps2/video.c'; s=open(p).read() a="""        ps2_gsr_draw(inst);         sFrameRender += count()
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' p='src/ps2/gsrender.c'; s=open(p).read() a="if ((ctl & 0xB000) != 0xA000 || dst > 0x04000040u || dst +
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/gs1300.png
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; systemd-run --us
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -E "gsrender|heartbeat|crash|stuck" $S/gs4.log | cu
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep "gsrender" $S/gs4.log | cut -c1-175
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 -c " fro
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/gs_stage.png
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "GS_SETREG_UV(u0 << 4, v0 << 4)\|GS_SETREG_UV(u1 << 4, v1 << 4)" src/ps2/gsrender.c; python3 - <<'EOF' p='src/ps
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/gs_stage2.png
+
+## Claude
+
+The stage is now identical except a strip at the right edge (x 233 on, from x 201 on P2's screen), where wrong tiles appear. TLB misses are back as well, so checking those first:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep "TLB Miss" 
+
+## Claude
+
+Still in `ps2_gsr_draw`, reading from address 0 in 2-byte steps: a window-edge DMA table whose source register reads 0. Logging the DMA registers once when that happens:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' p='src/ps2/gsrender.c'; s=open(p).read() a="""        for (y = 1; y < 160; y++)             sWin0H[y] 
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' p='src/ps2/gsrender.c'; s=open(p).read() a="""        if (src < 0x02000000u) {             static int 
+
+## Claude
+
+Now the right-edge strip. Zooming in on both screens' right edges:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; ls build/ps2/fra
+
+## Claude
+
+That short run removed the dumps. Rebuilding with the source guard and running again:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; systemd-run --us
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/edge.png
+
+## Claude
+
+A single 8-pixel column of wrong tiles, at a different x on each screen, so it follows the scroll. Logging the background registers and the map entries in that column at frame 2000:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' p='src/ps2/gsrender.c'; s=open(p).read() a="""static void draw_bg(int b) {     u16 cnt = IO16(0x08 + 2
+
+## Claude
+
+All four backgrounds use 32×32 maps, and on both screens the bad column is map column 11 (BG1/BG2), so it's in VRAM, not the scroll maths. Logging that column's map entries:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' p='src/ps2/gsrender.c'; s=open(p).read() a="""    { extern u32 ps2_frame; if (ps2_frame + 1 == 2000) p
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' import re p='src/ps2/gsrender.c'; s=open(p).read() s=re.sub(r"\n    \{ extern u32 ps2_frame; if \(ps2_
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; systemd-run --us
+
