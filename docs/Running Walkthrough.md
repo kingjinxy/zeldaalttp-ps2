@@ -797,3 +797,9 @@ no crash; no rendering yet).
   `host:zeldaalttp.sav` at startup (missing: an erased chip, all ones) and writes it at the vblank after a write.
   With no file the game formats the save and the file select is clean; `recordings/session1/end_save0.sav` shows
   file A with its hearts and Four Swords data. shortcut: host: only; a memory card file for real hardware is next.
+- **Replay check after the PS2 work:** `JOBS=1 AUTO_C=1 TRACE_MAX=6 tools/check_nonmatching.sh` (now with a `JOBS`
+  setting: AUTO_C builds need one job) first gave 1,232 ok / 120 fail. Bisected: not the allocator translation,
+  not gstate2c's range or inner-label changes (each switched off: still 120), the pre-session commit still gave
+  1,325 / 24, commit f67c462 1,328 / 24. The cause was the memory safeguard that compiled generated global-state
+  C at agbcc -O0; back at -O2 (still under `ulimit -v`): 1,328 ok / 24 fail, the same known failures as before
+  (EEPROM, I/O, the four sound-path calls). Why -O0 behaves differently isn't known yet.

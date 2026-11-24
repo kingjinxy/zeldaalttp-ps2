@@ -153,8 +153,9 @@ ifneq ($(AUTO_C),)
 	$(OBJCOPY) --rename-section .text=.text.auto src/auto/$(subst /,_,$*).o
 	$(AS) $(ASFLAGS) src/$*.s -o src/$*.main.o
 	python3 tools/gstate2c.py src/$*.main.o src/auto/gstate.list src/auto/$(subst /,_,$*)_gstate.c
-	# -O0 and a memory cap: agbcc -O2 on the large generated functions grew past 5 GB and was OOM-killed
-	ulimit -v 3000000; $(CPP) -Itools/agbcc/include -iquote include -nostdinc -undef src/auto/$(subst /,_,$*)_gstate.c | $(CC1) -mthumb-interwork -O0 -o src/auto/$(subst /,_,$*)_gstate.s
+	# memory cap: agbcc on an oversized generated file (a gstate2c bug, since fixed) grew past 5 GB and was OOM-killed.
+	# -O2: at -O0 the replay check failed 120 calls instead of 24 (agbcc -O0 behaves differently on this code)
+	ulimit -v 3000000; $(CPP) -Itools/agbcc/include -iquote include -nostdinc -undef src/auto/$(subst /,_,$*)_gstate.c | $(CC1) -mthumb-interwork -O2 -o src/auto/$(subst /,_,$*)_gstate.s
 	echo '.ALIGN 2, 0' >> src/auto/$(subst /,_,$*)_gstate.s
 	$(AS) $(ASFLAGS) src/auto/$(subst /,_,$*)_gstate.s -o src/auto/$(subst /,_,$*)_gstate.o
 	$(OBJCOPY) --rename-section .text=.text.auto src/auto/$(subst /,_,$*)_gstate.o
