@@ -18361,3 +18361,193 @@ Both runs logged TLB misses (50 lines each), so I'm checking those before anythi
 
 - tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; touch src/ps2/vi
 
+- tool `SendUserFile`: 
+
+## Claude
+
+Step 1 is done: with `make -f Makefile.ps2 WIDE_VIEW=1`, the renderer draws 320×240 for one player and 640×240 each for two, from the unchanged game. I sent three images: the two-player PCSX2 screen, frame dumps at the title, Choose a Stage and the stage while walking, and the single-player screen at the lobby. Committed as `b1b175f`; the matching build still reports OK.
+
+**Check:** at each dump frame, the wide build also drew the normal 240×160 picture from the same state. All 10 dumps (both players, five moments) match the wide frame's top-left 240×160 exactly. So the renderer changes don't alter the normal picture.
+
+**What the extra area shows:**
+- **Backgrounds repeat every 256 pixels across.** Four Swords' maps here are 256 wide, so the room and the HUD (hearts, rupee counter) appear about two and a half times on a 640-wide screen. The repeat is the map wrapping, not more of the room. This is the main problem: the game only keeps a screen's worth of map, so real extra content has to come from the game side.
+- **Below line 160:** map rows the game never fills. In the stage that's black with stray tiles; on the title it's tile data shown as garbage.
+- **Sprites the GBA keeps out of sight appear:** a second copy of the switches below the screen, and a "YOU / P1" marker parked at x 250 in the lobby.
+- **Speed:** wide two-player drawing takes about 4× the frame time; PCSX2 ran at about 12 fps.
+
+**Problems found on the way:**
+- **Build bug (fixed):** mGBA's objects weren't rebuilt when its headers changed. After the struct change, the stage drew with no backgrounds until I found it. The Makefile now rebuilds them.
+- **Memory (fixed):** the bigger pixel buffers didn't fit the EE's roughly 2 MB of free memory. They now share one 1.2 MB buffer, and gsKit's draw queues are smaller.
+- **New bug, not fixed:** with the replay I changed for walking (A instead of Start in the lobby), the EE runs a bad instruction around frame 1770. PCSX2 then logs 50 TLB-miss lines. It happens in the normal build too, so the wide view isn't the cause. The game keeps running. I suggest fixing this next, before the game-side wide-view work.
+
+For step 2, one player at 320×240 needs the game to fill a wider map, a camera centred on the bigger view, wider object culling and the HUD moved to the new edges. That's the work from the earlier plan.
+
+## User
+
+Alright, it clearly needs some work, but we can come back to this. I want to turn your attention to rendering using the Graphics Synthesizer. What do we need to do for this?
+
+- tool `Bash`: cd /home/alex/Documents; ls psx-to-ps2-HAL/src/ps2/ | head -30; wc -l psx-to-ps2-HAL/src/ps2/gpu_gs*.c 2>/dev/null; grep -il "CLUT\|PSMT4\|T4" psx-to-ps2-HAL/sr
+
+## Claude
+
+Moving drawing to the GS means rebuilding the GBA's picture-drawing hardware out of GS primitives. The EE would only turn video memory, palettes and sprite tables into textures and draw lists; the GS draws the pixels. That removes the software renderer's cost: today it's about 4 million EE cycles per screen, nearly a whole 60 Hz frame (4.9 million).
+
+The planning doc already expected this ("GS tile rendering later if too slow"). The HAL's `gpu_gs.c` (about 3,900 lines) already does the hardest similar job, drawing the PS1's palette-based 4- and 8-bit textures on the GS. Its palette uploads, texture cache and blend settings are good patterns to follow.
+
+**What has to be built**
+
+1. **Tiles to GS textures.** GBA video memory holds 8×8 tiles in 4-bit (16 colours) or 8-bit (256 colours). Each frame, the EE would copy changed tiles into GS textures of the same formats, laid out 32 tiles per row. The GS's largest texture is 1024×1024, so tiles can't simply be stacked in one column. That's at most 96 KB per instance per frame, and less if only changed tiles are copied.
+2. **Palettes.** The 512 GBA colours (15-bit) become GS colour tables (32-bit), with colour 0 of each 16-colour set transparent via alpha. The GS's alpha test then drops transparent pixels.
+3. **Tile backgrounds (mode 0), the main case.**
+   - Each visible map entry becomes an 8×8 textured rectangle. Flips are swapped texture coordinates, and the palette is chosen per rectangle.
+   - That's about 650 rectangles per layer and up to 4 layers per screen, a light load for the GS.
+   - Scrolling is an offset, and map wraparound is handled when building the list.
+   - Rectangles sharing a palette should be batched, since switching palettes costs GS commands.
+4. **Sprites:**
+   - sizes 8 to 64 pixels;
+   - 1D and 2D tile layouts;
+   - flips and 16- or 256-colour palettes;
+   - rotated and scaled sprites as transformed quads using the sprite's matrix.
+5. **Layer order.** The list is drawn back to front: for priority 3 down to 0, the backgrounds at that priority, then the sprites at that priority. Sprites go in reverse table order, so lower-numbered ones end up on top, as on the GBA.
+6. **Rotating/scaling backgrounds (modes 1 and 2), if Four Swords uses them.** The map is drawn as tiles with the background's matrix applied to the vertices. Wraparound needs extra copies of the map.
+7. **Windows.** Window 0 and window 1 rectangles become GS scissor rectangles: a layer is drawn once per window region that shows it. The sprite window, where sprite shapes act as a mask, needs a mask pass using the GS's destination-alpha test.
+8. **Blending (the hard part):**
+   - The GBA computes A×eva + B×evb, clamped. The GS can only do (A−B)×C+D in one pass, so it's exact only when eva+evb = 16. Other cases need two passes or an approximation.
+   - The GBA also blends only where the pixel underneath belongs to a chosen "second target" layer. The GS has nothing like that, so it would be approximated. The HAL's PS1 blending has the same kind of limits.
+   - Fading to white or black (`BLDY`) only affects the chosen layers, so it's applied per layer as a blend.
+9. **Mosaic** is probably rare. It would start approximated or left out.
+10. **Per-scanline effects** (registers changed partway down the screen) aren't supported today either, since the picture is drawn after the frame. That stays the same.
+
+**GS memory.** The 4 MB holds the 480p frame buffers (2.4 MB) plus about 100 KB of tiles and palettes per instance, so four players fit. It's tight with the wide view, but that could use one buffer, or 16-bit colour.
+
+**How to check it.** The software renderer stays in the build as the reference. At chosen frames, the same state is drawn both ways: the GS picture is read back and compared pixel by pixel with mGBA's. That gives an exact difference count per frame, much like the wide-view check, and shows exactly which feature is wrong.
+
+**Suggested order**
+1. **Survey first.** Log which video features Four Swords actually uses across the recordings: display modes, rotated backgrounds or sprites, windows, blend modes, mosaic. That decides how much of 6–9 is needed. It's cheapest to log in `mgba_run`, which plays the same recordings. Maybe half a day.
+2. **Backgrounds and sprites, no effects,** with the comparison running. That should already draw most of the game correctly.
+3. **Windows and blending,** working down the frames that still differ.
+4. **Then:** four players at full speed, and the wide view, which becomes cheap once the GS draws it.
+
+As a rough estimate, the survey plus step 2 is a few days of work, and step 3 depends on what the survey finds. The new bug from the wide-view work (the bad instruction around frame 1770) is still open. It's separate from this and can be fixed before or alongside it.
+
+Should I start with the survey?
+
+## User
+
+First explain blending and scanline effects in more detail
+
+## Claude
+
+Both are GBA features that don't map directly onto the GS. Here's how each works, what the port does today, and how the GS version would handle it.
+
+## Blending
+
+**What the GBA does.** Three registers control it:
+- `BLDCNT` picks an effect (none, alpha blend, brighten or darken). It also has two layer lists: the **first targets** (any of BG0–3, sprites, backdrop) and the **second targets**.
+- `BLDALPHA` holds two weights, eva and evb, each 0–16 (in sixteenths).
+- `BLDY` holds the brighten/darken amount, evy (0–16).
+
+The GBA keeps the top two layers for every pixel: the visible one (A) and the one directly under it (B).
+- **Alpha blend:** applies only if A is a first target and B is a second target. The result is min(31, A×eva/16 + B×evb/16) per 5-bit channel. Otherwise A shows unblended.
+- **Semi-transparent sprites** (a per-sprite flag) blend with whatever is below, if it's a second target, even when the selected effect isn't alpha. That's how shadows, ghosts and glows are usually done.
+- **Brighten:** A + (31−A)×evy/16. **Darken:** A − A×evy/16. Both apply only where A is a first target. Fades to white or black are usually this, with every layer as a first target.
+- **Windows** can switch effects off per region (a bit in `WININ`/`WINOUT`).
+
+**What the GS can do.** One blend formula: ((A − B) × C) / 128 + D.
+- A, B and D can each be the colour being drawn (Cs), the colour already in the frame buffer (Cd), or 0.
+- C can be the drawn alpha, the frame buffer's alpha, or a fixed value.
+- Results above 255 can be clamped.
+
+**How each GBA case would map:**
+
+| GBA case | GS approach | Exact? |
+|---|---|---|
+| Alpha with eva + evb = 16 (the usual 50/50, 75/25) | One pass: (Cs − Cd) × eva + Cd | Yes |
+| Alpha with other sums (e.g. 16 + 16, an additive glow) | Two passes over the same shape: first scale the frame buffer by evb (Cd − Cd×(1−evb)), then add Cs×eva | Yes, at the cost of drawing it twice |
+| Darken | A second pass on the layer's shape: Cd × (1 − evy) | Yes |
+| Brighten | The formula can't add a constant white, so: mark the layer's pixels, then draw a white rectangle that blends only there | Needs a marking pass |
+| Whole-screen fade (every layer a first target) | One full-screen rectangle at the end | Yes |
+| "Only blend if the layer under it is a second target" | Each layer writes a flag into the frame buffer's alpha bit (1 for second target, 0 otherwise). The blended layer is drawn twice: once blended where the flag is set, once opaque where it isn't, using the GS's destination-alpha test. | Yes |
+
+Layers are drawn back to front, so the frame buffer's flag always describes the layer directly underneath, which is exactly what the GBA checks. The catch is that brighten's marking pass also needs the alpha bit, so those two jobs have to take turns. That's doable because each layer is drawn and finished one at a time.
+
+**Rounding.** The GBA works in 5 bits per channel and the GS in 8. Without care, blended pixels come out one or two levels different from mGBA. The pixel comparison would either allow that tolerance for blended pixels, or the formula would be chosen to round the same way.
+
+So blending can be made exact or very close, but each effect costs extra passes and careful ordering. That's why the survey matters: it'll show which of these cases Four Swords actually uses.
+
+## Scanline effects
+
+**What they are.** The GBA draws the screen one line at a time while the game runs, and the game can change video registers between lines:
+- **HBlank DMA:** a DMA channel set to repeat every line copies the next entry of a table into a register. Common uses:
+  - background scroll per line (heat shimmer, water wobble, parallax layers);
+  - the window's left and right edges per line (circle "iris" wipes, spotlights);
+  - colours per line.
+- **HBlank or VCount interrupts:** game code runs at a chosen line. The usual case is a split screen, such as a HUD with different scroll or mode from the play area.
+
+**What the port does today.** The game runs a whole frame, and only then is the picture drawn, using the registers as they are at the end of the frame. Per-line changes are lost, and only the last value counts. The DMA emulation in [io.c](src/ps2/io.c) only runs immediate and VBlank DMAs; HBlank DMAs (start timing 2) never run. So any such effect already draws wrong today, with the software renderer too. For example, an iris wipe would show one window width for every line.
+
+**How to support it (the same idea for either renderer):**
+1. **Capture per-line values.** An HBlank DMA's table is already in memory before the frame is drawn: entry *y* is the register value for line *y*. When drawing, the port reads the table instead of running the DMA. Mid-frame interrupt code is harder; it would need the game's writes recorded with the line they happen on.
+2. **Draw with them:**
+   - **Software renderer (works today):** mGBA's renderer was built for this. Write the register before drawing each line. Cheap to add.
+   - **GS:** split each layer into horizontal bands where its state doesn't change. A per-line scroll becomes up to 160 one-line bands, which is still little work for the GS.
+   - **GS window edges per line:** an iris becomes 160 one-line scissor rectangles, or a shape built from triangles.
+
+Finding out whether Four Swords uses these is part of the survey: log any HBlank DMA or HBlank/VCount interrupt it sets up. If it does (iris transitions are likely, since the Minish Cap engine does them), I'd add the table reading to the software renderer first. That fixes the current output and gives the GS version a correct reference to compare against.
+
+## User
+
+Let's do the survey
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; wc -l tools/mgba_run.c; grep -n "^static\|^int main\|argv\[i\]\|runFrame\|busRead\|--" tools/mgba_run.c | head -60; cat 
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; ls recordings/session1 recordings/start_linked; cat recordings/session1/*.txt 2>/dev/null | head; sed -n 330,420p tools/
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; cat recordings/session1/replay | head -20; grep -n "setVideoBuffer\|core->init\|GBAVideo\|struct GBA \*gba\|board\|loadR
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 760,830p tools/mgba_run.c; ls recordings/session1/replay | head; grep -rn "session1" docs/*.md | grep -i "mgba_ru
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rhn "mgba_run [a-z_./]*gba [0-9]* .*session1\|session1.*mgba_run" docs/*.md tools/*.sh tools/*.py 2>/dev/null | he
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rn "session1" docs/ tools/ --include=* 2>/dev/null | grep -v "^Binary" | head -8
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "44,522\|44522\|recordings/" "docs/Running Walkthrough.md" "docs/Planning Doc.md" | head -10
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 205,222p "docs/Running Walkthrough.md"
+
+## Claude
+
+Writing the survey into `mgba_run`, checking mGBA's struct field names first:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/reference/mgba; grep -n "struct GBADMA {" -A10 include/mgba/internal/gba/dma.h; grep -n "vcount\|struct GBAVideoRenderer\
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/reference/mgba; grep -n "struct GBAVideo {" -A20 include/mgba/internal/gba/video.h | grep -n "vcount\|renderer"; grep -n 
+
+## Claude
+
+Adding the survey to `mgba_run`:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "^struct Player {" -A22 tools/mgba_run.c | head -30; grep -n '"--view"\|strcmp(argv\[i\], "--loads")' tools/mgba
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 700,712p tools/mgba_run.c; grep -n "return 0;\s*$" tools/mgba_run.c | tail -3; sed -n 860,884p tools/mgba_run.c
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' p='tools/mgba_run.c'; s=open(p).read() def r(a,b):     global s; assert s.count(a)==1,a; s=s.replace(a
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -i 's|^// --- --survey ---$|// --- --survey ---\nstatic int nplayers;  // defined below|' tools/mgba_run.c; bash too
+
+## Claude
+
+Built. Running the survey over the intro (empty saves through the lobby to Choose a Stage) and over session 1 (44,522 frames, a whole stage), with two linked GBAs:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; mkdir -p $S/surv
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat $S/survey/intro.txt; echo ====; cat $S/survey/sessio
+
+## Claude
+
+Both runs finished: the intro in 3 s, session 1 in about a minute. The results are clear. Taking screenshots of each effect where it first appears, to see what it is:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/survey; ./tools/m
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/survey/effects.png
+

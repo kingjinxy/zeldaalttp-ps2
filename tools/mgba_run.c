@@ -12,6 +12,10 @@
 // and "morph OLD NEW 0 0" when an object reaches DoObjectEntity with another subtype than before. Each distinct one once, as
 //   KIND SRC DST N CALLER    KIND = swiNN | dma | cpu32 | cpu16 | cpu8; N = units (swi: r2; dma: count
 // and width as in the register; cpu: register width); DST is 0 for cpu loads. Same run as without it.
+// --survey FILE: which video features the game uses (for the PS2 GS renderer): per frame, display modes, windows,
+// blend settings, sprite attributes, HBlank DMA and HBlank/VCount interrupts, and video register writes during the
+// visible lines (a register changed mid-frame, from any source). Written to FILE at the end: one line per feature
+// with the frames it was seen on (counted per GBA), the first and last frame and the GBA.
 // --trace DIR --trace-list FILE: GBA 0 only. FILE has one hex function address per line; the first
 // --trace-max (default 2) calls of each that no interrupt breaks into are written to DIR/ADDR_N.gz:
 // registers and all GBA memory at entry, then at return (tools/tr_check, the thumb2c test).
@@ -46,8 +50,10 @@
 #include <mgba/internal/gba/gba.h>
 #include <mgba/internal/gba/input.h>
 #include <mgba/internal/gba/sio/lockstep.h>
+#include <mgba/internal/gba/dma.h>
 #include <mgba-util/png-io.h>
 #include <mgba-util/vfs.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -82,6 +88,133 @@ struct Player {
 };
 
 static struct Player players[MAX_GBAS];
+
+// --- --survey ---
+static int nplayers;  // defined below
+static const char *surveyPath;
+static struct Feature { char key[80]; unsigned frames, first, last, firstGba; } features[4096];
+static int nfeatures;
+static char frameKeys[MAX_GBAS][256][80];  // this frame's features per GBA (deduplicated when counted)
+static int nframeKeys[MAX_GBAS];
+static uint16_t (*origWriteVideoRegister[MAX_GBAS])(struct GBAVideoRenderer *, uint32_t, uint16_t);
+
+static void featureNote(int id, const char *fmt, ...) {
+	char k[80];
+	va_list ap;
+	va_start(ap, fmt);
+	vsnprintf(k, sizeof k, fmt, ap);
+	va_end(ap);
+	for (int i = 0; i < nframeKeys[id]; i++)
+		if (!strcmp(frameKeys[id][i], k)) return;
+	if (nframeKeys[id] < 256) strcpy(frameKeys[id][nframeKeys[id]++], k);
+}
+
+static void featureCount(int id, unsigned frame) {
+	for (int k = 0; k < nframeKeys[id]; k++) {
+		int i;
+		for (i = 0; i < nfeatures && strcmp(features[i].key, frameKeys[id][k]); i++);
+		if (i == nfeatures) {
+			if (nfeatures == 4096) continue;
+			strcpy(features[nfeatures].key, frameKeys[id][k]);
+			features[nfeatures].first = frame, features[nfeatures].firstGba = id;
+			nfeatures++;
+		}
+		features[i].frames++;
+		if (frame < features[i].first) features[i].first = frame, features[i].firstGba = id;
+		if (frame > features[i].last) features[i].last = frame;
+	}
+	nframeKeys[id] = 0;
+}
+
+// a video register written while lines 0-159 are drawn: the picture changes partway down the screen
+static uint16_t surveyWrite(struct GBAVideoRenderer *r, uint32_t address, uint16_t value) {
+	for (int id = 0; id < nplayers; id++) {
+		struct GBA *gba = players[id].core->board;
+		if (gba->video.renderer != r) continue;
+		if (gba->video.vcount < 160 && address != 0x04)  // DISPSTAT isn't a picture register
+			featureNote(id, "mid-frame write: reg 0x%02X", address);
+		return origWriteVideoRegister[id](r, address, value);
+	}
+	return value;
+}
+
+static void surveyFrame(int id) {
+	struct GBA *gba = players[id].core->board;
+	const uint16_t *io = gba->memory.io;
+	unsigned dispcnt = io[0], mode = dispcnt & 7, bldcnt = io[0x50 / 2], alpha = io[0x52 / 2];
+	featureNote(id, "mode %u", mode);
+	for (int b = 0; b < 4; b++) {
+		unsigned cnt = io[(0x08 + 2 * b) / 2];
+		int affine = (mode == 1 && b == 2) || (mode == 2 && b >= 2);
+		if (!(dispcnt & (0x100 << b)) || (mode >= 3 && b != 2) || (mode == 1 && b == 3) || (mode == 2 && b < 2)) continue;
+		if (affine) featureNote(id, "BG%d affine (size %u, wrap %u)", b, cnt >> 14, (cnt >> 13) & 1);
+		else if (mode < 3) featureNote(id, "BG%d text %s, size %u", b, cnt & 0x80 ? "256-colour" : "16-colour", cnt >> 14);
+		if (cnt & 0x40) featureNote(id, "BG mosaic (MOSAIC %04X)", io[0x4C / 2]);
+	}
+	if (dispcnt & 0x2000) featureNote(id, "window 0");
+	if (dispcnt & 0x4000) featureNote(id, "window 1");
+	if (dispcnt & 0x8000) featureNote(id, "sprite window");
+	if (dispcnt & 0xE000) {
+		unsigned in = io[0x48 / 2], out = io[0x4A / 2];
+		if ((in | out) & 0x2020) featureNote(id, "windows: effects on in some regions (WININ %04X WINOUT %04X)", in, out);
+		if (((in & 0x2020) != 0x2020 || (out & 0x2020) != 0x2020) && (bldcnt & 0xC0))
+			featureNote(id, "windows: effects off in some regions while an effect is set");
+	}
+	if (!(dispcnt & 0x40) && (dispcnt & 0x1000)) featureNote(id, "sprites: 2D tile mapping");
+	switch ((bldcnt >> 6) & 3) {
+	case 1: {
+		unsigned eva = alpha & 0x1F, evb = (alpha >> 8) & 0x1F;
+		featureNote(id, "blend alpha targets %02X/%02X", bldcnt & 0x3F, (bldcnt >> 8) & 0x3F);
+		featureNote(id, "blend alpha eva %u + evb %u%s", eva, evb, eva + evb == 16 ? "" : " (sum not 16)");
+		break;
+	}
+	case 2: featureNote(id, "blend brighten targets %02X", bldcnt & 0x3F); featureNote(id, "blend brighten evy %u", io[0x54 / 2] & 0x1F); break;
+	case 3: featureNote(id, "blend darken targets %02X", bldcnt & 0x3F); featureNote(id, "blend darken evy %u", io[0x54 / 2] & 0x1F); break;
+	}
+	if (dispcnt & 0x1000) {
+		const uint16_t *oam = (const uint16_t *) gba->video.oam.raw;
+		for (int i = 0; i < 128; i++) {
+			unsigned a0 = oam[i * 4], a1 = oam[i * 4 + 1];
+			if (!(a0 & 0x100) && (a0 & 0x200)) continue;  // hidden
+			unsigned y = a0 & 0xFF, x = a1 & 0x1FF;
+			int onscreen = (y < 160 || y > 192) && (x < 240 || x > 448);  // roughly: some part may be visible
+			if (!onscreen) continue;
+			if (a0 & 0x100) featureNote(id, "sprite affine%s", a0 & 0x200 ? " double-size" : "");
+			if (((a0 >> 10) & 3) == 1) {
+				featureNote(id, "sprite semi-transparent");
+				featureNote(id, "sprite semi-transparent, BLDCNT effect %u targets2 %02X eva %u evb %u", (bldcnt >> 6) & 3,
+				            (bldcnt >> 8) & 0x3F, alpha & 0x1F, (alpha >> 8) & 0x1F);
+			}
+			if (((a0 >> 10) & 3) == 2) featureNote(id, "sprite in sprite-window mode");
+			if (a0 & 0x1000) featureNote(id, "sprite mosaic");
+			if (a0 & 0x2000) featureNote(id, "sprite 256-colour");
+		}
+	}
+	for (int n = 0; n < 4; n++) {
+		struct GBADMA *d = &gba->memory.dma[n];
+		if (GBADMARegisterIsEnable(d->reg) && GBADMARegisterGetTiming(d->reg) == 2)
+			featureNote(id, "HBlank DMA%d to %08X%s", n, d->dest, GBADMARegisterIsRepeat(d->reg) ? " (repeat)" : "");
+	}
+	unsigned ie = io[0x200 / 2], dispstat = io[0x04 / 2];
+	if ((ie & 2) && (dispstat & 0x10)) featureNote(id, "HBlank interrupt");
+	if ((ie & 4) && (dispstat & 0x20)) featureNote(id, "VCount interrupt at line %u", dispstat >> 8);
+}
+
+static int featureOrder(const void *a, const void *b) {
+	const struct Feature *x = a, *y = b;
+	return strcmp(x->key, y->key);
+}
+
+static void surveyWriteReport(void) {
+	FILE *f = fopen(surveyPath, "w");
+	if (!f) { perror(surveyPath); return; }
+	qsort(features, nfeatures, sizeof *features, featureOrder);
+	fprintf(f, "# feature | frames seen (all GBAs) | first frame (GBA) | last frame\n");
+	for (int i = 0; i < nfeatures; i++)
+		fprintf(f, "%-72s %7u %7u (%u) %7u\n", features[i].key, features[i].frames, features[i].first,
+		        features[i].firstGba, features[i].last);
+	fclose(f);
+}
 static int nplayers = 1;
 static struct GBASIOLockstep lockstep;
 
@@ -356,6 +489,10 @@ static void onFrame(void *context) {
 	struct mCore *core = p->core;
 	unsigned frame = p->frame++;
 	if (frame >= frames) { p->done = 1; return; }
+	if (surveyPath) {
+		surveyFrame(id);
+		featureCount(id, frame);
+	}
 
 	if (watch) {
 		int v = core->busRead8(core, watch);
@@ -704,6 +841,7 @@ int main(int argc, char **argv) {
 		else if (!strcmp(o, "--loads")) { loadsPath = v; if (!(loads = fopen(v, "w"))) { perror(v); return 1; } }
 		else if (!strcmp(o, "--play")) play = v;
 		else if (!strcmp(o, "--view")) view = atoi(v);
+		else if (!strcmp(o, "--survey")) surveyPath = v;
 		else if (!strcmp(o, "--start")) start = v;
 		else if (!strcmp(o, "--save-states")) saveStates = strtoul(v, NULL, 0);
 		else if (!strcmp(o, "--trace")) traceDir = v;
@@ -805,6 +943,11 @@ int main(int argc, char **argv) {
 			GBASIOSetDriver(&gba->sio, &p->node.d, SIO_MULTI);
 			GBASIOSetDriver(&gba->sio, &p->node.d, SIO_NORMAL_32);
 		}
+		if (surveyPath) {
+			struct GBAVideoRenderer *vr = ((struct GBA *) core->board)->video.renderer;
+			origWriteVideoRegister[i] = vr->writeVideoRegister;
+			vr->writeVideoRegister = surveyWrite;
+		}
 		if (stateData) {
 			if (stateSize != core->stateSize(core) || !core->loadState(core, stateData)) {
 				fprintf(stderr, "cannot load %s\n", statePath);
@@ -868,6 +1011,7 @@ int main(int argc, char **argv) {
 		}
 		printf("recorded %u frames to %s\n", players[0].frame, play);
 	}
+	if (surveyPath) surveyWriteReport();
 	for (int i = 0; i < nplayers; i++) players[i].core->deinit(players[i].core);
 	if (loads) {
 		fclose(loads);

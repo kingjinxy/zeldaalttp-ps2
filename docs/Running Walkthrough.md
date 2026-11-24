@@ -966,3 +966,33 @@ What the extra area shows (PCSX2, two players with P1 walking, and one player at
 Not done: game side (map streaming, camera, culling, HUD), and a faster renderer. Found on the way, not from this
 change: with the A-only lobby replay, the EE executes a word that looks like a PS2 code address around frame 1770
 ("Unknown R5900 SPECIAL", then a TLB miss at 0x24a00), in the normal build too. To investigate.
+
+## Step 31: survey of the video features the game uses (2026-11-24)
+
+For the GS renderer plan: which GBA video features need GS support. `mgba_run --survey FILE` wraps mGBA's renderer
+so every video register write is seen with its scanline (any write during lines 0-159 is a mid-frame change,
+whatever caused it), and logs per frame: display mode, BG types, windows, blend settings, sprite attributes
+(visible sprites only), HBlank DMAs and HBlank/VCount interrupts. Runs: `tests/intro_linked.inputs` (boot, file
+select, name entry, game choice, to Choose a Stage; 1,700 frames) and session 1 (44,522 frames, one stage).
+
+Found:
+- **Mode 0 only**: four 16-colour text BGs. No rotating/scaling BGs, no bitmap modes, no 256-colour tiles. BG mosaic
+  bits are set on some screens, but the MOSAIC register stays 0 (no visible effect).
+- **Sprites**: rotating/scaling sprites in the stage (from frame 4388; double-size ones around frames 28,867-32,705).
+  No semi-transparent sprites, no sprite window, no sprite mosaic, no 256-colour sprites. 2D tile mapping on Choose a
+  Stage.
+- **Blending**, rare and on menus, apart from fades:
+  - full-screen fades: brighten or darken with every layer a first target (stage start and end);
+  - alpha eva 12 + evb 8 (sum 20, not 16), BG2 over BG3, file select and name entry (frames 337-837);
+  - alpha eva 4 + evb 12, BG1 over everything, the A Link to the Past / Four Swords choice fading in (847-940);
+  - brighten on BG2 only, the A Link to the Past title fading (1546-1585).
+- **Per-scanline effects**, two:
+  - HBlank DMA to WIN0H (the window's left/right edges per line) with a darken fade outside the window: the diagonal
+    wipe from Choose a Stage into the stage, and out of it (1701-1752, 44297-44415);
+  - HBlank DMA to BG3HOFS (BG3's horizontal scroll per line) during the game-choice transition (846-938).
+  A VCount interrupt at line 0 is on all the time, but writes no video registers mid-frame (DISPCNT on 4-6 frames
+  only, at transitions).
+- **Windows**: window 0 only: the wipe above, and on the file select/name entry (425-740). No window 1.
+
+Limits: one stage and the menus. Other stages, bosses, the pause and results screens and game over aren't covered;
+more recordings would need the same check.
