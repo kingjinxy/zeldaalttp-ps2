@@ -996,3 +996,31 @@ Found:
 
 Limits: one stage and the menus. Other stages, bosses, the pause and results screens and game over aren't covered;
 more recordings would need the same check.
+
+## Step 32: per-line effects (HBlank DMA) and the VCount interrupt (2026-11-24)
+
+The survey (step 31) found two per-line effects driven by HBlank DMA. The port drew neither.
+
+- **Why no HBlank DMA ever started:** the game starts it from its VCount interrupt, not VBlank. The VCount handler
+  alternates: at line 0 `process_dma_request` (src/main.c) starts DMA0 from a queued request and moves the match line
+  to 32; at line 32 `sub_0800B7FC` runs the m4a sound mixer and moves it back to 0. The port only raised VBlank.
+  `ps2_vblank_wait` (src/ps2/frame.c) now raises the VCount interrupts too, after VBlank and before the frame is
+  drawn, each line once a frame in line order. Three wrong turns:
+  - clearing DISPSTAT's VBlank flag for the VCount call hung the file select (`sub_0801484C` polls that flag): the
+    port keeps it set between frames, as before;
+  - the port calls the game's handler table entries directly (VBlank is `INTR_TABLE + 4`), not its dispatcher, so the
+    first try ran the VBlank handler twice; VCount is `INTR_TABLE + 8`;
+  - the line-32 handler reaches the sound mixer (`sub_081339D4`, native ARM, not translated). Shortcut until sound is
+    ported: frame.c does only its hand-back (DISPSTAT line 0, table entry back to `process_dma_request`). The table
+    holds the PS2 addresses of those C functions, not GBA addresses.
+- **Drawing:** `video.c` applies each active HBlank DMA's table while drawing: line y gets entry y - 1 (written
+  through the renderer's register write), and after line 159 entry 159 goes into the I/O register, where the GBA's
+  last transfer leaves it.
+- **Check against mGBA** (`recordings/fs_only.gba`, `tests/intro_linked.inputs`; the PS2 build is FS_ONLY, the full
+  ROM goes elsewhere): the HBlank DMA here is the window wipe that opens Choose a Stage (mGBA frames 1305-1409).
+  PS2 frames 1476-1496 are pixel-identical to mGBA frames 1306-1326, both players. From 1500, 19 pixels differ on line
+  0 (cause not found; the last-entry change didn't affect it). From 1508, 1,300-2,200 pixels along the wipe's edges, and no
+  mGBA frame matches exactly; the frame offset also changes by one (170 to 169) there, so probably a lag frame on
+  the GBA (interrupt-driven wipe vs main-loop clouds), which the port doesn't reproduce. Not proven.
+- No TLB misses in the run. The stage-entry wipe (HBlank DMA to WIN0H in session 1) and the BG3 wave (game choice,
+  not reached in FS_ONLY) use the same path.

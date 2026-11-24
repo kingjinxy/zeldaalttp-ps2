@@ -12,6 +12,8 @@
 #define GBA_W 240
 #define GBA_H 160
 #define MAX_INSTANCES 4
+#define IO16(o) (*(volatile u16 *)(0x04000000u + (o)))
+#define IO32(o) (*(volatile u32 *)(0x04000000u + (o)))
 
 // The view the renderer draws: the GBA's 240x160, or with WIDE_VIEW a bigger area of the same video memory (320x240
 // for one player, 640x240 each for two; three or four keep 240x160 to fit the grid). The game isn't changed: the extra
@@ -139,8 +141,42 @@ static void dump_frame(int inst, u32 n, const char *tag)
 }
 
 // draw the mapped instance's frame at the current view size: feed the renderer the current state, draw the lines
-static void render(struct GBAVideoRenderer *r)
+// HBlank DMAs (start timing 2): on the GBA each runs at the end of every visible line, copying the next entry of a table
+// into a register, so the next line draws with it (the game uses them for a window wipe into the stages and a wavy BG
+// scroll; docs Running Walkthrough step 31). The port draws after the frame, so it applies the table here instead:
+// line y gets entry y - 1. y = 160 (after the last line): entry 159 goes into the I/O register itself, where the GBA's
+// last transfer leaves it, so the next frame's line 0 uses it. Returns how many channels are active. Only video
+// registers are handled (all the game uses).
+static int hblank_dma(struct GBAVideoRenderer *r, int y)
 {
+    int n, active = 0;
+    for (n = 0; n < 4; n++) {
+        u32 base = 0xB0 + 12 * n, ctl = IO16(base + 10), count = IO16(base + 8), unit, i;
+        u32 src = IO32(base), dst = IO32(base + 4);
+        if ((ctl & 0xB000) != 0xA000)  // enabled, HBlank timing
+            continue;
+        active++;
+        if (y == 0 || dst - 0x04000000u >= 0x56)
+            continue;
+        unit = (ctl & 0x400) ? 4 : 2;
+        src += (u32)(y - 1) * count * unit * (((ctl >> 7) & 3) == 2 ? 0 : 1);  // fixed source: the same entry each line
+        for (i = 0; i < count * unit; i += 2) {
+            u32 o = dst - 0x04000000u + (((ctl >> 5) & 3) == 2 ? i % unit : i);
+            u16 v = *(const u16 *)(src + (((ctl >> 7) & 3) == 2 ? i % unit : i));
+            if (o >= 0x56)
+                continue;
+            if (y == GBA_H)
+                IO16(o) = v;
+            else
+                r->writeVideoRegister(r, o, v);
+        }
+    }
+    return active;
+}
+
+static int render(struct GBAVideoRenderer *r)
+{
+    int hdma = 0;
     const u16 *io = (const u16 *)0x04000000, *pal = (const u16 *)0x05000000;
     u32 a;
     int y;
@@ -151,9 +187,14 @@ static void render(struct GBAVideoRenderer *r)
     for (a = 0; a < 0x200; a++)
         r->writeOAM(r, a);
     r->writeVRAM(r, 0);  // VRAM changed: no scanline is clean
-    for (y = 0; y < VIEW_H; y++)
+    for (y = 0; y < VIEW_H; y++) {
+        if (y < GBA_H)  // the GBA's lines only; a taller view keeps the last entry
+            hdma = hblank_dma(r, y);
         r->drawScanline(r, y);
+    }
+    hblank_dma(r, GBA_H);
     r->finishFrame(r);
+    return hdma;
 }
 
 void ps2_video_render(int inst)
@@ -161,6 +202,7 @@ void ps2_video_render(int inst)
     struct GBAVideoRenderer *r = &sView[inst].renderer.d;
     u32 t0 = count(), n = ps2_frame + 1;
     int dump = n == 1300 || n == 1600 || n == 2000 || n == 2400 || n == 2800;
+    static int sHdmaDumps;  // the first frames drawn with an HBlank DMA, to compare with mGBA
     if (dump && VIEW_W != GBA_W) {  // wide view check: the GBA's own 240x160 from the same state, as _gba.ppm
         int w = VIEW_W, h = VIEW_H;
         ps2_view_w = GBA_W, ps2_view_h = GBA_H;
@@ -168,7 +210,8 @@ void ps2_video_render(int inst)
         dump_frame(inst, n, "_gba");
         ps2_view_w = w, ps2_view_h = h;
     }
-    render(r);
+    if (render(r) && sHdmaDumps < 24 && n % 4 == 0)
+        sHdmaDumps++, dump = 1;
     sFrameRender += count() - t0;
     if (dump)
         dump_frame(inst, n, "");

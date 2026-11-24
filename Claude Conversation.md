@@ -18551,3 +18551,205 @@ Both runs finished: the intro in 3 s, session 1 in about a minute. The results a
 
 - tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/survey/effects.png
 
+## Claude
+
+Committing the survey option and writing up the results:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat >> "docs/Run
+
+- tool `SendUserFile`: 
+
+## Claude
+
+A GS renderer only needs a small part of the GBA's video features, and in the stage itself almost none of the hard ones. The survey covered the intro (boot through file select and name entry to Choose a Stage, 1,700 frames) and session 1 (one full stage, 44,522 frames), with two linked GBAs. I sent a sheet showing where each effect first appears.
+
+**What Four Swords uses**
+- **Display mode 0 only:** four 16-colour tile backgrounds. There are no rotating/scaling backgrounds, no bitmap modes and no 256-colour tiles. Some screens set the mosaic bits, but the mosaic size stays 0, so nothing visible happens.
+- **Sprites:**
+  - rotating/scaling sprites in the stage, including some double-size ones (the item-get around frame 28,900);
+  - a different tile layout for sprites (2D mapping) on Choose a Stage;
+  - no see-through sprites, no sprite window, no sprite mosaic and no 256-colour sprites.
+- **Windows:** window 0 only, never window 1.
+
+**Blending:** almost all full-screen fades, which are the easy case for the GS.
+
+| Effect | Where | GS difficulty |
+|---|---|---|
+| Fade to black or white, all layers | Stage start and end | Easy: one rectangle over the screen |
+| BG2 blended over BG3, 12/16 + 8/16 (sum 20, not 16) | File select, name entry | Needs the two-pass method |
+| BG1 blended over everything, 4/16 + 12/16 | The A Link to the Past / Four Swords choice fading in | One pass |
+| Brighten BG2 only | The A Link to the Past title fading | Needs the marking pass |
+
+**Effects that change partway down the screen:** two, both short transitions, and both driven by an HBlank DMA reading a table. That's the easy kind to support, because the table is in memory when the frame is drawn.
+1. **The diagonal wipe into and out of a stage** (frames 1701–1752 and 44,297–44,415): window 0's left and right edges change on every line, and the area outside is darkened.
+2. **The game-choice transition** (frames 846–938): BG3's horizontal scroll changes per line.
+
+The game also has an interrupt at line 0 on all the time, but it doesn't change the picture mid-frame.
+
+**What this means for the plan**
+- The GS renderer's core is 16-colour tile backgrounds plus sprites, including rotating/scaling ones. That covers the whole stage apart from its fades.
+- The two-pass and marking-pass blend methods are needed only on menus. They can come after the stage is right.
+- The two per-line effects are currently wrong in the port, even with the software renderer, since the port ignores HBlank DMAs. Reading the DMA table at draw time would fix both renderers, and it's a small change.
+
+This only covers the menus and one stage (the Chambers of Insight). Other stages, bosses, and the pause, results and game-over screens weren't recorded, so more recordings would need the same survey. Running it takes about a minute.
+
+The survey is `mgba_run --survey FILE`, committed as `49d8810` with results in the walkthrough (Step 31). The intro recording passes through A Link to the Past's title, which is where the brighten-BG2 fade comes from.
+
+Next I'd suggest the per-line DMA fix in the software renderer first, so the comparison has a correct reference. Then the GS renderer's tiles and sprites, checked against the software renderer.
+
+## User
+
+Proceed
+
+## Claude
+
+First the per-line DMA fix in the software renderer. At draw time, before each line, the port applies the next entry of any active HBlank DMA table to the renderer's registers. While an HBlank DMA is active, it also dumps a few frames so I can compare them with mGBA.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "static void render" -A20 src/ps2/video.c | head -24; grep -n "int dump = " src/ps2/video.c
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' p='src/ps2/video.c'; s=open(p).read() def r(a,b):     global s; assert s.count(a)==1,a; s=s.replace(a,
+
+## Claude
+
+Built. Running the replay through the stage entry (wipe) to collect frames drawn with the HBlank DMA:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cp $S/replay_ori
+
+## Claude
+
+No frames were drawn with an HBlank DMA. Checking how far the run got and whether the game ever set one up:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep heartbeat $
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/hd.png
+
+## Claude
+
+The wipe happened between frames 1600 and 2000, but the port never saw an enabled HBlank DMA when drawing. Checking how game code starts DMAs on the PS2:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rn "ps2_io_poll\|PLATFORM_PS2" include/gba/macro.h include/*.h 2>/dev/null | head; grep -rn "define DmaSet" -A12 i
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "irq\|IRQ\|intr\|0x03007FFC\|INTR_VECTOR" src/ps2/frame.c src/ps2/bios.c src/ps2/main.c | head -20
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; ls src/ps2; grep -rln "VBlankIntrWait" src/ps2 | head; grep -rn "VBlankIntrWait" -A25 src/ps2/bios.c | head -50
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "ps2_vblank_wait" -A40 src/ps2/frame.c | head -60
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rn "VCount\|VCOUNT\|IntrTable\|gIntrTable\|INTR_FLAG_VCOUNT" src/*.c include/*.h 2>/dev/null | grep -v "^src/ps2" 
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 100,135p src/main.c; grep -n "IntrMain\|intr_main\|gUnknown_03007FFC\|INTR_VECTOR\|0x3007FFC" src/main.c asm/*.s 
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 255,330p src/main.c; grep -n "gIntrTable\|IntrTable" -r src/main.c src/*.c include | head
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 1,56p src/ps2/frame.c | grep -n "define\|include\|BIOS_IF\|INTR_TABLE" | head -20
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' p='src/ps2/frame.c'; s=open(p).read() a="""    REG16(BIOS_IF) |= 1;     REG16(REG_IF) &= ~1;     Wakeu
+
+## Claude
+
+It now stalls at frame 1676, around the stage start. Looking at the watchdog report:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -E "watch|TLB" $S/hd2.log | head -8
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; for a in 00081fe0 00b977c0 0014d638 00147f4c 0014de58 0014d76c 00147338; do /home/alex/ps2dev/ee/bin/mips64r5900el-ps2-e
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -n '/frame 1676/,$p' $S/hd2.log | grep -v "Cubeb\|DE
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; for a in 0010e000 001481a4 0010eac4 001055d8 0010541c 0010572c; do /home/alex/ps2dev/ee/bin/mips64r5900el-ps2-elf-addr2l
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; /home/alex/ps2dev/ee/bin/mips64r5900el-ps2-elf-readelf -lW build/ps2/zeldaalttp.elf | grep LOAD | head; /home/alex/ps2de
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rln "sub_0801484C" asm src | head; f=$(grep -rl "thumb_func_start sub_0801484C\|THUMB_FUNC_START sub_0801484C\|^su
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' p='src/ps2/frame.c'; s=open(p).read() a="""            REG16(REG_DISPSTAT) &= ~4;         }     }""" a
+
+## Claude
+
+No stall now, but still no frames drawn with the DMA. Adding a temporary log of the VCount handler calls and DMA0's control register to see what happens:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "ps2_log" src/ps2/frame.c | head -2; python3 - <<'EOF' p='src/ps2/frame.c'; s=open(p).read() a="""            RE
+
+## Claude
+
+The handler loop never ran. Logging the condition's inputs:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' p='src/ps2/frame.c'; s=open(p).read() a="""        u32 done = 0, line; """ s=s.replace(a,a+"""        
+
+## Claude
+
+The VCount call happens, but `DISPSTAT` never moves to line 32. So the game's VCount handler isn't being dispatched. Checking how the port runs `interrupt_main`:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rn "interrupt_main\|03000B70\|gInterruptMainBuf" src/ps2 include/gstate.h | head
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' import re p='src/ps2/frame.c'; s=open(p).read() s=re.sub(r"\n\s*\{ static int dbg2?;.*?\} \}","",s) a=
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; arm-none-eabi-nm zeldaalttp.elf | grep -i "process_dma_request\|sub_0800B7FC\|sub_081346FC\|sub_081339D4"; grep -rn "sub
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; head -30 asm/non_matching/rom5/sub_081346FC.inc; head -12 asm/non_matching/rom5/sub_081339D4.inc
+
+## Claude
+
+`sub_081346FC` only calls `sub_081339D4`, the m4a sound mixer (`SoundMain`: it checks the sound-info ident, then mixes). Looking at how the port handles other native-only routines:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "native GBA function not translated" -B5 -A5 -r src/ps2 include | head -30; grep -n "^[a-z].*(void)$\|^void sub_
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rn "ps2_native_missing" --include=*.c --include=*.h --include=*.py . 2>/dev/null | grep -v "^./build\|reference" |
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 380,400p tools/gstate2c.py; grep -n "NATIVE\|native" tools/gstate2c.py | head -20
+
+## Claude
+
+The simplest fix: the generic "native routine missing" trap treats the sound mixer as a known no-op, logged once, until the port has sound. It's a marked shortcut.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' p='src/ps2/frame.c'; s=open(p).read() a='void ps2_native_missing(const char *name) { ps2_fatal("native
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; for a in 0xae2ae4 0x00b97e60 0x00148078 0x00147bd8; do /home/alex/ps2dev/ee/bin/mips64r5900el-ps2-elf-addr2line -fe buil
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' import re p='src/ps2/frame.c'; s=open(p).read() i=s.index("// shortcut: sub_081339D4 is the m4a sound 
+
+## Claude
+
+Still reached. The table value must be stored differently from what I assumed. Logging it once:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -i 's|            if (vc == 0x0800B7FDu) {|            { static int d; if (d++ < 4) ps2_log("DBG vc %08x", vc); }\n 
+
+## Claude
+
+The table holds the PS2 addresses of the native C functions (`main.c` is compiled for the PS2), not GBA addresses. Comparing against the symbols instead:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' p='src/ps2/frame.c'; s=open(p).read() s=s.replace('            { static int d; if (d++ < 4) ps2_log("D
+
+## Claude
+
+The game runs, and frames 1476–1520 were drawn with an HBlank DMA active. Looking at them:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 -c " fro
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/hdma_ps2.png
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/m; mkdir -p $S; .
+
+## Claude
+
+mGBA's intro run used the full ROM, which went to A Link to the Past's title. The PS2 build boots straight into Four Swords, so the right reference is `recordings/fs_only.gba`. Rerunning with that:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/m; rm -f $S/*; ./
+
+## Claude
+
+Using a fresh output directory instead of clearing the old one:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/mfs; mkdir -p $S;
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<EOF 
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/hdma_diff.png
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<EOF 
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' p='src/ps2/video.c'; s=open(p).read() def r(a,b):     global s; assert s.count(a)==1,a; s=s.replace(a,
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; ls build/ps2/fra
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; systemd-run --us
+

@@ -54,6 +54,8 @@ void ps2_fatal(const char *fmt, ...)
 
 void ps2_native_missing(const char *name) { ps2_fatal("native GBA function not translated: %s", name); }
 
+void sub_0800B7FC(void), process_dma_request(void);  // src/main.c, the VCount handlers
+
 void ps2_vblank_wait(void)
 {
     u32 h = *(volatile u32 *)(INTR_TABLE + 4);
@@ -65,6 +67,33 @@ void ps2_vblank_wait(void)
         ps2_icall(h)();
     REG16(BIOS_IF) |= 1;
     REG16(REG_IF) &= ~1;
+    // VCount: the game's handlers move the match line on each time (src/main.c process_dma_request at line 0 starts
+    // the HBlank DMA for the frame and moves it to 32; sub_0800B7FC at 32 mixes sound and moves it back). On the GBA
+    // both come during the next frame; the port runs them here, before the frame is drawn, as it does VBlank. Each line
+    // at most once a frame, in line order.
+    {
+        u32 done = 0, line, vc;
+        while ((REG16(0x04000200u) & 4) && (REG16(REG_DISPSTAT) & 0x20) && (line = REG16(REG_DISPSTAT) >> 8) < 160 &&
+               !(done & (1u << (line / 8))) && (!done || line > 0)) {
+            done |= 1u << (line / 8);
+            REG16(REG_VCOUNT) = line;
+            REG16(REG_DISPSTAT) = (REG16(REG_DISPSTAT) & ~1) | 4;  // VCount match, not in VBlank
+            REG16(REG_IF) |= 4;
+            vc = *(volatile u32 *)(INTR_TABLE + 8);  // the VCount entry (main.c gUnknown_03000B70.unk8)
+            if (vc == (u32)sub_0800B7FC) {
+                // shortcut: sub_0800B7FC (line 32) mixes sound (m4a SoundMain, native ARM, not translated) and hands
+                // back to line 0; the port has no sound yet, so only the hand-back. Run it when sound is ported.
+                REG16(REG_DISPSTAT) = 0x28 | (REG16(REG_DISPSTAT) & 7);
+                *(volatile u32 *)(INTR_TABLE + 8) = (u32)process_dma_request;
+            } else if (vc)
+                ps2_icall(vc)();
+            REG16(REG_IF) &= ~4;
+            REG16(REG_DISPSTAT) &= ~4;
+        }
+        // the VBlank flag stays set between frames, as before: the port has no line timing, and code that waits for
+        // it (file select's sub_0801484C polls DISPSTAT) would wait forever
+        REG16(REG_DISPSTAT) |= 1;
+    }
     WakeupThread(ps2_main_thread);  // this instance's frame is done: main.c draws it
     SleepThread();                  // until its next frame (main.c has mapped this instance again)
 }
