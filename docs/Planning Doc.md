@@ -321,7 +321,12 @@ Requested by the user (2026-11-16). After Phase 4 works with 4 players.
       Step 50). Until there are more players, screens 5-8 repeat players 1-4. Cost with 4 players, shared world:
       render 11.4 M + game 0.58 M cycles (about 20 fps; 6.77 M at the first version's 284x160 views).
 - [ ] Players 5+ in a stage: lift the 4-player limits above (shared world); white Link palette for 5+ (GS CLUT at
-      draw time); pack the saved blocks at 512 KB (eight 1 MB blocks don't fit in 32 MB)
+      draw time).
+      - [x] Room for 8 (2026-11-24, walkthrough Step 52): saved blocks packed at 512 KB (8 fit); the player records,
+            key arrays, link key ring and packet struct moved in the PS2 build to 0x04001000 (the I/O TLB entry's
+            unused page) with room for 8 (`tools/ps2/moved.py`). No behaviour change: 2- and 4-player runs identical.
+      - [ ] Loops and four-way checks to a player count; `gUnknown_03006C80`'s per-player arrays (asm-only users to
+            decompile); the link exchange to 8; spawning players 5-8; the white palette.
 - [ ] Easier in the Phase 5 shared world (per-player arrays sized by a constant) than with linked instances
 
 ## Open decisions

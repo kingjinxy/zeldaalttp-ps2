@@ -47,6 +47,25 @@ WORLD = [
 ]
 
 
+sys.path.insert(0, "tools/ps2")
+from moved import MOVED as _M  # the arrays the PS2 build moves, here as live-block offsets: (old, size, new)
+
+
+def _off(a):  # a GBA RAM/I-O address as a live-block offset
+    return a - 0x02000000 if a < 0x03000000 else a - 0x03000000 + 0x40000 if a < 0x04000000 else a - 0x04000000 + 0x48000
+
+
+MOVED = [(_off(a), n, _off(b)) for a, n, b in _M]
+
+
+def move(a, b):  # a range's new place if it lies in a moved array, else as is
+    for o, n, w in MOVED:
+        if o <= a and b <= o + n:
+            return w + a - o, w + b - o
+    assert not any(a < o + n and o < b for o, n, w in MOVED), f"range {a:#x}-{b:#x} straddles a moved array"
+    return a, b
+
+
 BOUNDS = [0x40000, 0x48000, 0x4A000, 0x50000, 0x70000]  # live-block region starts after EWRAM
 
 
@@ -55,8 +74,11 @@ def region(off):
 
 
 def main():
-    d = bytearray(open(sys.argv[1], "rb").read())
+    d = bytearray(open(sys.argv[1], "rb").read()).ljust(0x78000, b"\0")
+    for o, n, w in MOVED:  # the map's bytes of moved arrays at their new place
+        d[w:w + n], d[o:o + n] = d[o:o + n], bytes(n)
     for a, b, _ in WORLD:
+        a, b = move(a, b)
         d[a:b] = bytes(b - a)
     runs, i = [], 0
     while i < len(d):
@@ -74,7 +96,7 @@ def main():
     # whole aligned words: the map comes from two GBAs, whose per-player values (player 0 and 1's record pointers,
     # 0x03006A30/0x03006AC0) can differ in one byte only; players 2-3's differ in more
     runs = [[a & ~3, (b + 3) & ~3] for a, b in runs]
-    runs += [[a, b] for a, b, _ in FIXED]
+    runs += [list(move(a, b)) for a, b, _ in FIXED]
     runs.sort()
     merged = []
     for a, b in runs:  # never across a region boundary: each region is mapped at its own GBA address
@@ -84,7 +106,7 @@ def main():
             merged.append([a, b])
     runs = []
     for a, b in merged:  # the world ranges cut out again (the merge bridges them)
-        for w0, w1, _ in WORLD:
+        for w0, w1 in (move(a, b) for a, b, _ in WORLD):
             if a < w1 and w0 < b:
                 if a < w0:
                     runs.append([a, w0])

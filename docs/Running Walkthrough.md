@@ -1432,3 +1432,23 @@ literal pools), so moving an array by linker symbol doesn't reach them; the firs
 place for bigger arrays: the EWRAM mirror (0x02040000), mapped today to the same memory as 0x02000000, can be given
 256 KB of its own. Not done yet: checking each `& 3` on a player number, and data tables of four in the ROM (spawn
 points, HUD slots) beyond the Link palettes (Step 45).
+
+## Step 52: room for 8 players (2026-11-24)
+
+- **Where:** a new TLB entry was the plan, but the kernel leaves exactly 9 entries free and the port uses all 9
+  ("tlb: no free TLB entry for 02080000"). The I/O entry maps 8 KB at 0x04000000 and the GBA's registers are only the
+  first 1 KB (`IO_()` in include/auto.h sends only 0x04000000-0x040003FF to io.c), so its second page, 0x04001000, is
+  plain memory inside every player's block (offset 0x49000). tlb.c's region table gets an entry there that is copied
+  per switch but not mapped (`NOMAP`). Saved blocks are 512 KB apart now (eight fit below 0x01D00000; `SHARED_CHECK`
+  uses block 8).
+- **What moves** (PS2 build only, `tools/ps2/moved.py`): `gUnknown_03006A30` (player records), `gUnknown_0200B1D0`
+  (link key ring), `gUnknown_03000940`/`gUnknown_03005E10` (keys held/pressed) and `gUnknown_03000FC0` (keys and link
+  packets), each with room for 8. `gba_syms.py` moves every symbol inside these ranges; the translated asm follows on
+  its own (its literal pools are relocations against the symbols, `.4byte gUnknown_03006A30`).
+- **The catch:** the first run showed both players' Links in other poses than the separate build: the ROM image the
+  game reads at 0x08xxxxxx is the original bytes, and its data tables (the record pointers at 0x08000FF4...) still
+  pointed at the old places. `fix_elf.py` now changes every aligned ROM word that points into a moved range (798;
+  shortcut: a plain number in those ranges would be changed too, none known). `overlay_ranges.py` translates the
+  per-player map and its fixed ranges to the new places.
+- **Result:** 2-player shared replay identical to the separate build at all 34 check frames; 4-player shared run
+  identical to Step 48's at all 88 saved frames; no TLB misses, same cost. The game still loops over four players.

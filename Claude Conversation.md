@@ -21877,3 +21877,217 @@ How many still-in-asm functions touch the per-player globals? Those can't be fix
 
 - tool `Bash`: Write the survey into docs and commit
 
+## Claude
+
+The docs were already current, and the 1:1 layout was committed as `07a713b`. Step 2, the survey of where the game assumes 4 players, is now in the plan, with walkthrough Step 51, committed as `0a24e0a`.
+
+**What the survey found:**
+- **Every per-player array has exactly 4 slots**, and each is packed against the next variable, so none can grow where it is. That covers:
+  - the player records (`gUnknown_03006A30`, 0x90 bytes each);
+  - the held and newly pressed keys;
+  - the 16-frame link key buffer;
+  - the link packets;
+  - about eight arrays inside `gUnknown_03006C80`.
+- **The code that walks them is small:** about 20 loops over 4 players and about 8 functions that check each of the four players one by one (the "which player pressed this button" checks).
+  - About 130 functions read the player records and 115 read `gUnknown_03006C80`.
+  - Nearly all of them already exist as C the PS2 build compiles, so they can be changed. Only about 2 per array are still asm only.
+- **No 2-bit player fields:** the player number and the entity fields that hold it are full bytes. Each `& 3` applied to a player number still has to be checked function by function.
+- **The link exchange is the port's own code,** so 8 packets are a port change. The game's packet code loops over 4.
+- **Room to grow:** the EWRAM mirror at 0x02040000 is currently mapped to the same memory as 0x02000000. Giving it its own memory provides 256 KB at a GBA address. The 8-player arrays could move there in the PS2 build only, so the GBA build and `make compare` aren't affected.
+- **Not checked yet:** ROM data that comes in fours besides the Link palettes, such as spawn points or HUD positions.
+
+**Proposed step 3, in this order:**
+1. Map the EWRAM mirror to its own memory, and pack the saved player blocks at 512 KB so that 8 fit in RAM.
+2. Move the per-player arrays there with 8 slots, in the PS2 build only.
+3. Raise the loops and the four-way checks to a player-count constant, and extend the link exchange to 8.
+4. Spawn players 5–8 and give their Links the white palette in the GS renderer.
+
+The first two items are groundwork with nothing visible on screen; a 5th Link appears with items 3–4. Should I start step 3?
+
+## User
+
+Why do we need to map the EWRAM mirror? Can't we just expand the memory space available for the game?
+
+## Claude
+
+You're right, it doesn't have to be the mirror. What the moved arrays need is:
+
+1. **An address the game's code can use.** The game reaches memory through 32-bit addresses, so any address that's mapped works, including ordinary PS2 memory outside the GBA ranges.
+2. **Inclusion in each player's memory block.** Outside a stage the players still run as separate game copies, and `ps2_tlb_select` swaps their memory in and out. Inside a stage, the overlay swaps their private bytes. Data outside the live block isn't swapped, so it would effectively be shared by everyone. That's fine for world data, but some of these arrays have per-player parts, and file select and the lobby run with separate copies.
+
+So the real requirement is a new region in tlb.c's region list, at an address the game never uses. I suggested 0x02040000 only out of convenience:
+- **It's free:** the existing EWRAM TLB entry already covers it as a mirror, so it costs no extra TLB entry.
+- **The game never uses the mirror,** since it always uses the 0x0200xxxx addresses.
+
+Any other unused address works the same way with one more TLB entry, and there are spare ones.
+
+Either way it's one new line in the region table. The new region is copied on every switch between separate copies, so it should only be as big as the arrays need, a few KB rather than 256 KB.
+
+If you prefer, I'll use a separate address instead of the mirror. That keeps the mirror behaving like the GBA's, in case some game code turns out to use it.
+
+## User
+
+How much work would it be to just consolidate all the GBA virtual memory addresses and have them all exist as PS2 EE and GS RAM?
+
+## Claude
+
+It would be a lot of work, and it would gain almost nothing, because the TLB mapping costs nothing at run time.
+
+**GS RAM can't hold game memory.** The EE can't read or write GS memory directly; it only gets there through DMA transfers. The game writes VRAM, palettes and OAM with ordinary stores, so those have to stay in EE RAM. That's already how it works: the renderer copies the tiles and palettes it needs into GS memory each frame.
+
+**EE RAM can't sit at the GBA addresses without the TLB.** The EE's 32 MB is at 0x00000000–0x01FFFFFF, and the GBA addresses start at 0x02000000 (EWRAM), 0x03000000 (IWRAM), 0x04000000 (I/O) and so on. There's no physical RAM there, so something has to map those addresses, and that's what the TLB entries do. The game's memory already is ordinary EE RAM, the 0x01800000 block; it's just reached through GBA addresses.
+
+**Dropping the GBA addresses means changing every address in the game.** They're built in everywhere:
+- constants in the decompiled and auto-translated code (`0x03000E31`, `0x06000000`, I/O registers);
+- thousands of pointers in ROM data tables, which would need relocating;
+- pointers the game stores in RAM at run time;
+- code the game copies into RAM and runs from there.
+
+The decomp would have to name and relink every one of them. That's close to finishing the whole decompilation, plus a native PS2 relink of all data. It's weeks of work at least, with many chances for subtle bugs. It would also break the instance switching, which relies on each player's memory sitting at the same fixed addresses.
+
+**What it would buy:** nothing measurable. The mapping is done once by hardware at no per-access cost. Memory isn't short either: each player's block is 480 KB and there's room for more.
+
+**Recommendation:** keep the mapping. Adding memory for bigger arrays is one line in tlb.c's region table, the cheap option from my last answer. Should I go ahead with step 3 that way?
+
+## User
+
+Yes
+
+## Claude
+
+Starting step 3 with the groundwork. First, how the PS2 build gets the GBA variables' addresses, since moving arrays depends on it:
+
+- tool `Bash`: See how GBA symbol addresses reach the PS2 build
+
+- tool `Bash`: List asm-only users of per-player arrays
+
+- tool `Bash`: Find plain asm users of per-player arrays
+
+- tool `Bash`: Check for raw-address asm users and plain includes
+
+## Claude
+
+fs_game.c has 21 plain asm includes, and file_select.c has 871 includes in all. Which plain includes, those without C under `NONMATCHING`, touch the per-player arrays? A script to check:
+
+- tool `Bash`: List asm-only functions using per-player globals
+
+- tool `Bash`: Correct the survey and commit
+
+## Claude
+
+I've stopped before changing any code, because this changes the cost of step 3.
+
+**Correction:** my survey said nearly all the code using the per-player arrays was already C. That's wrong. About 186 of those functions are still asm only, and the port runs them through the auto-translator, which takes each address straight from the ROM. Overriding a symbol in the PS2 build wouldn't move anything for them. The docs are corrected in `d4cb47a`.
+
+**Two options:**
+- **A. Relocate in the translator.** `tools/gstate2c.py` could rewrite any ROM address that falls inside a moved array to the array's new location. That fixes all 186 functions in one place for the standalone arrays: the player records, the held and pressed keys, the link key buffer and the packets.
+  - It can't move the arrays inside `gUnknown_03006C80`. Code reaches those fields as fixed offsets from the struct's start, and any field after a longer array would change offset.
+  - So that struct's per-player arrays would need something else: decompiling the asm-only functions that index them, or a separate 8-slot copy of just those arrays.
+- **B. Decompile all 186 functions first,** then change everything in C. It's the cleanest result and moves the main decomp goal forward, but it's far more work before a 5th Link shows up.
+
+I recommend **A**, plus a count of exactly which asm-only functions index the per-player fields of `gUnknown_03006C80`; those get decompiled. That's probably a few dozen functions, not 186.
+
+Should I go with A?
+
+## User
+
+Yes
+
+## Claude
+
+Going with A. First, how the translator handles a literal-pool load:
+
+- tool `Bash`: Find literal handling in the translator
+
+- tool `Bash`: Read how function copies are relocated
+
+- tool `Bash`: Confirm literal relocations; find hard-coded addresses
+
+- tool `Bash`: Find port code reading instance memory by address
+
+- tool `Bash`: See which addresses link.c uses
+
+- tool `Bash`: Read gba_syms tail, the packet struct, scratch uses
+
+- tool `Bash`: Show symbols following each array
+
+- tool `Bash`: Find numeric assignments inside the moved ranges
+
+## Claude
+
+Nothing numeric falls inside. Writing the changes:
+
+- tool `Bash`: Move arrays in the PS2 link; add the region
+
+## Claude
+
+Next, the overlay generator: the map and the fixed ranges refer to the old addresses, so they need translating to the new region.
+
+- tool `Bash`: Translate overlay ranges to the moved arrays
+
+- tool `Bash`: Build with moved arrays; 2-player regression check
+
+- tool `Bash`: See why the run produced no frames
+
+- tool `Bash`: Check I/O access handling
+
+- tool `Bash`: Move the region to the I/O entry's spare page
+
+## Claude
+
+Rebuilding and running the 2-player regression:
+
+- tool `Bash`: Rebuild and rerun the 2-player check
+
+## Claude
+
+It runs with no TLB misses, but every stage frame now differs for both players, while the pre-stage frames still match. Looking at frame 2000:
+
+- tool `Bash`: Compare stage frames visually
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/mv.png
+
+- tool `Bash`: Dump and compare palette memory
+
+- tool `Bash`: Check which dumps were written
+
+## Claude
+
+Only player 2's dumps exist; in the shared loop, player 1 is drawn outside the dump wrapper. Comparing player 2:
+
+- tool `Bash`: List palette entries that differ
+
+## Claude
+
+Palettes are identical, so the difference must be in which palette or tiles the sprites use. Comparing OAM and sprite VRAM:
+
+- tool `Bash`: Compare OAM and sprite tiles
+
+- tool `Bash`: Scan the ROM for words into moved ranges
+
+- tool `Bash`: Read the ELF's ROM image at sample spots
+
+- tool `Bash`: See how the ROM image is built
+
+## Claude
+
+I'll put the moved-ranges table in one small module, `tools/ps2/moved.py`, used by the symbol script, the overlay generator and `fix_elf.py`, which patches the ROM image:
+
+- tool `Bash`: Share the moved table; patch ROM pointers in fix_elf
+
+## Claude
+
+Same overlay output as before. Adding `moved.py` to the Makefile dependencies, then rebuilding and rerunning the 2-player check:
+
+- tool `Bash`: Rebuild with ROM patching and rerun the check
+
+- tool `Bash`: 4-player shared run vs the earlier good run
+
+- tool `Bash`: Confirm the 4-player comparison ran
+
+## Claude
+
+All 88 four-player frames are identical to the run before the move, with the same cost and no TLB misses. Committing this groundwork:
+
+- tool `Bash`: Default build, compare, docs and commit
+

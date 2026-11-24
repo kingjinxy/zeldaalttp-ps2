@@ -11,14 +11,16 @@
 //     +0x00000 EWRAM 256 KB (0x02000000, mirrored at 0x02040000)   +0x40000 IWRAM 32 KB (0x03000000)
 //     +0x48000 I/O 8 KB (0x04000000; io.c gives writes their effects) +0x4A000 palette 8 KB (0x05000000)
 //     +0x50000 VRAM 128 KB (0x06000000)                             +0x70000 OAM 8 KB (0x07000000)
-//   0x01900000 + i MB      instance i's copy of the live block while another instance runs (up to 4)
+//     +0x49000 (0x04001000, the I/O entry's unused second page): the PS2's own, per-player arrays moved out of the
+//     GBA's packed RAM with room for 8 players (tools/ps2/gba_syms.py MOVED); only 0x04000000-0x040003FF is I/O
+//   0x01900000 + i * 512 KB  instance i's copy of the live block while another instance runs (up to 8)
 #include <kernel.h>
 #include <string.h>
 
 #define PHYS_ROM 0x01000000u
 #define PHYS_EEPROM 0x017F0000u
 #define PHYS_LIVE 0x01800000u
-#define SAVED(i) ((u8 *)(0x80000000u + 0x01900000u + (u32)(i) * 0x100000u))  // kseg0: cached, unmapped
+#define SAVED(i) ((u8 *)(0x80000000u + 0x01900000u + (u32)(i) * 0x80000u))  // kseg0: cached, unmapped
 
 void ps2_fatal(const char *fmt, ...);
 void ps2_log(const char *fmt, ...);
@@ -46,6 +48,8 @@ static int map(u32 va, u32 pagemask, u32 phys0, u32 phys1)
     return -1;
 }
 
+#define NOMAP 0xFFFFFFFFu  // a range inside another entry's pages: copied per switch, not mapped again (the kernel
+                           // leaves 9 TLB entries free, all used)
 // the live block: virtual address, page mask, offset of the even and odd page, bytes the game uses (copied per switch)
 static const struct { u32 va, mask, even, odd, used; } sRegions[] = {
     { 0x02000000, 0x0007E000, 0x00000, 0x00000, 0x40000 },  // EWRAM, 2 x 256 KB (mirror)
@@ -54,6 +58,7 @@ static const struct { u32 va, mask, even, odd, used; } sRegions[] = {
     { 0x05000000, 0x00000000, 0x4A000, 0x4B000, 0x400 },    // palette
     { 0x06000000, 0x0001E000, 0x50000, 0x60000, 0x18000 },  // VRAM, 2 x 64 KB
     { 0x07000000, 0x00000000, 0x70000, 0x71000, 0x400 },    // OAM
+    { 0x04001000, NOMAP, 0x49000, 0x49000, 0x700 },          // the moved arrays (mapped by the I/O entry)
 };
 #define NREGIONS (sizeof(sRegions) / sizeof(sRegions[0]))
 
@@ -84,7 +89,8 @@ void ps2_tlb_map(int instances)
     map(0x0D000000, 0x00000000, PHYS_EEPROM, PHYS_EEPROM + 0x1000);  // the window's other end, same page
     memset((void *)0x0DFFE000, 0xFF, 0x2000);
     for (r = 0; r < NREGIONS; r++)
-        map(sRegions[r].va, sRegions[r].mask, PHYS_LIVE + sRegions[r].even, PHYS_LIVE + sRegions[r].odd);
+        if (sRegions[r].mask != NOMAP)
+            map(sRegions[r].va, sRegions[r].mask, PHYS_LIVE + sRegions[r].even, PHYS_LIVE + sRegions[r].odd);
     for (i = 0; i < instances; i++) {  // each instance starts zeroed (the GBA's crt0 clears RAM too)
         memset(SAVED(i), 0, 0x80000);
         *(volatile u16 *)(SAVED(i) + 0x48130) = 0x03FF;  // KEYINPUT is active low: no buttons held (input.c sets it)

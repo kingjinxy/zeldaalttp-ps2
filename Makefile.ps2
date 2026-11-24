@@ -69,7 +69,7 @@ objects: $(OBJS)
 ELF := $(B)/zeldaalttp.elf
 LIBS := -L$(PS2SDK)/ee/lib -L$(PS2DEV)/gsKit/lib -lgskit -ldmakit -lpad -leedebug -lm -lc -lkernel
 
-$(B)/gba_syms.ld: tools/ps2/gba_syms.py sym_ewram.txt sym_iwram.txt ldscript.txt
+$(B)/gba_syms.ld: tools/ps2/gba_syms.py tools/ps2/moved.py sym_ewram.txt sym_iwram.txt ldscript.txt
 	@mkdir -p $(dir $@)
 	python3 tools/ps2/gba_syms.py $@
 
@@ -84,7 +84,7 @@ $(B)/gba_copies.c: tools/ps2/gba_copies.py zeldaalttp.elf $(filter %_gstate_ps2.
 $(B)/gba_copies.o: $(B)/gba_copies.c
 	$(CC) $(PS2_CFLAGS) -c $< -o $@
 
-$(ELF): $(OBJS) $(B)/ps2/gbarom.o $(B)/gba_copies.o src/ps2/ps2.ld $(B)/gba_syms.ld tools/ps2/fix_elf.py
+$(ELF): $(OBJS) $(B)/ps2/gbarom.o $(B)/gba_copies.o src/ps2/ps2.ld $(B)/gba_syms.ld tools/ps2/fix_elf.py tools/ps2/moved.py
 	$(CC) -T src/ps2/ps2.ld -o $@ $(OBJS) $(B)/ps2/gbarom.o $(B)/gba_copies.o $(LIBS)
 	python3 tools/ps2/fix_elf.py $@
 

@@ -15,7 +15,7 @@
 #include "overlay_ranges.h"
 
 #define NOVERLAY (sizeof(sOverlay) / sizeof(sOverlay[0]))
-#define SAVED(i) ((u8 *)(0x80000000u + 0x01900000u + (u32)(i) * 0x100000u))  // kseg0, as tlb.c
+#define SAVED(i) ((u8 *)(0x80000000u + 0x01900000u + (u32)(i) * 0x80000u))  // kseg0, as tlb.c
 #define LIVE_SIZE 0x78000u
 
 void ps2_log(const char *fmt, ...);
@@ -153,8 +153,8 @@ static void view_pass(void)
     memcpy((void *)0x0203C000, cpu, sizeof(cpu));
 }
 
-#ifdef SHARED_CHECK  // the world bytes a view pass changes (it should change none), copied around it in block 5
-static void check_before(void) { memcpy(SAVED(5), live(0), 0x40000); memcpy(SAVED(5) + 0x40000, live(0x40000), 0x8000); }
+#ifdef SHARED_CHECK  // the world bytes a view pass changes (it should change none), copied around it in block 8
+static void check_before(void) { memcpy(SAVED(8), live(0), 0x40000); memcpy(SAVED(8) + 0x40000, live(0x40000), 0x8000); }
 static void check_after(int inst)
 {
     static u32 seen[64][2];
@@ -162,7 +162,7 @@ static void check_after(int inst)
     u32 o, a = 0, n = 0;
     for (o = 0; o <= 0x48000; o++) {
         int ch = o < 0x48000 && !(o >= 0x3C000 && o < 0x40000) && !(sPerPlayer[o / 8] >> (o % 8) & 1) &&
-                 SAVED(5)[o] != *(u8 *)live(o);
+                 SAVED(8)[o] != *(u8 *)live(o);
         if (ch && !n++)
             a = o;
         if (!ch && n && (o - a > n + 8 || o == 0x48000)) {  // a run (gaps up to 8) ended: log it once
@@ -233,7 +233,7 @@ int ps2_shared_try_leave(int instances)
 {
     static const u32 used[][2] = {  // the live block's used spans (tlb.c sRegions)
         { 0x00000, 0x40000 }, { 0x40000, 0x48000 }, { 0x48000, 0x48400 }, { 0x4A000, 0x4A400 }, { 0x50000, 0x68000 },
-        { 0x70000, 0x70400 },
+        { 0x70000, 0x70400 }, { 0x49000, 0x49700 },
     };
     int i;
     u32 u, o, r, a, b;
