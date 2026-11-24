@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define INSTANCES 2
+#define INSTANCES 4
 #define STACK_SIZE (256 * 1024)
 
 void ps2_tlb_map(int instances);

@@ -1,9 +1,8 @@
-// PS2: draws each game instance's GBA screen with mGBA's software renderer (src/ps2/mgba, MPL-2.0) and shows them side
-// by side through the Graphics Synthesizer with gsKit. The renderer reads VRAM straight from the mapped GBA video
+// PS2: draws each game instance's GBA screen with mGBA's software renderer (src/ps2/mgba, MPL-2.0) and shows them (side
+// by side, or 2x2 for 3-4 players) through the Graphics Synthesizer with gsKit. The renderer reads VRAM straight from the mapped GBA video
 // memory (main.c maps the instance first); registers, palette and OAM are handed to it each frame, then the 160 lines
 // are drawn into a 256-wide buffer that goes up as a CT32 texture.
 #include <kernel.h>
-#include <malloc.h>
 #include <stdio.h>
 #include <string.h>
 #include <gsKit.h>
@@ -22,8 +21,8 @@ static GSGLOBAL *sGs;
 static struct {
     GSTEXTURE tex;
     struct GBAVideoSoftwareRenderer renderer;
-    u32 *pixels;
 } sView[MAX_INSTANCES];
+static u32 sPixels[MAX_INSTANCES][TEX_W * GBA_H] __attribute__((aligned(128)));  // what each renderer draws
 
 static u32 count(void) { u32 c; __asm__ volatile("mfc0 %0, $9" : "=r"(c)); return c; }
 static u32 sRenderCycles, sOtherCycles, sLastEnd, sFrameRender;
@@ -45,16 +44,14 @@ void ps2_video_init(int instances)
     for (i = 0; i < instances; i++) {
         struct GBAVideoRenderer *r = &sView[i].renderer.d;
         GSTEXTURE *t = &sView[i].tex;
-        sView[i].pixels = memalign(128, TEX_W * GBA_H * 4);
-        memset(sView[i].pixels, 0, TEX_W * GBA_H * 4);
         t->Width = TEX_W;
         t->Height = GBA_H;
         t->PSM = GS_PSM_CT32;
-        t->Mem = sView[i].pixels;
+        t->Mem = sPixels[i];
         t->Filter = GS_FILTER_NEAREST;
         t->Vram = gsKit_vram_alloc(sGs, gsKit_texture_size(TEX_W, GBA_H, GS_PSM_CT32), GSKIT_ALLOC_USERBUFFER);
         GBAVideoSoftwareRendererCreate(&sView[i].renderer);
-        sView[i].renderer.outputBuffer = (color_t *)sView[i].pixels;
+        sView[i].renderer.outputBuffer = (color_t *)sPixels[i];
         sView[i].renderer.outputBufferStride = TEX_W;
         r->palette = (uint16_t *)0x05000000;  // every instance's video memory is mapped here when it's drawn
         r->vram = (uint16_t *)0x06000000;
@@ -62,7 +59,7 @@ void ps2_video_init(int instances)
         r->cache = NULL;
         r->init(r);
     }
-    ps2_log("video: %dx%d screen, %d GBA screens side by side", sGs->Width, sGs->Height, instances);
+    ps2_log("video: %dx%d screen, %d GBA screens", sGs->Width, sGs->Height, instances);
 }
 
 // frames written to host: (the ELF's folder) as PPM, to check output without a window
@@ -77,7 +74,7 @@ static void dump_frame(int inst, u32 n)
     fprintf(f, "P6\n%d %d\n255\n", GBA_W, GBA_H);
     for (y = 0; y < GBA_H; y++)
         for (x = 0; x < GBA_W; x++) {
-            u32 c = sView[inst].pixels[y * TEX_W + x];
+            u32 c = sPixels[inst][y * TEX_W + x];
             fputc(c & 0xFF, f), fputc((c >> 8) & 0xFF, f), fputc((c >> 16) & 0xFF, f);
         }
     fclose(f);
@@ -106,12 +103,15 @@ void ps2_video_render(int inst)
         dump_frame(inst, n);
 }
 
-// show every instance's screen side by side, wait for vsync
+// show every instance's screen, side by side for 2, in a 2x2 grid for 3-4; wait for vsync
 void ps2_video_present(int instances)
 {
-    int i;
+    int i, cols = instances > 2 ? 2 : instances, rows = instances > 2 ? 2 : 1;
     u32 n = ps2_frame + 1;
-    float w = sGs->Width / (float)instances, h = w * GBA_H / GBA_W, top = (sGs->Height - h) / 2;
+    float w = sGs->Width / (float)cols, h = w * GBA_H / GBA_W, top;
+    if (h * rows > sGs->Height)  // too tall: fit the height instead
+        h = sGs->Height / (float)rows, w = h * GBA_W / GBA_H;
+    top = (sGs->Height - h * rows) / 2;
     if (sLastEnd)  // the game's share of this frame: everything since the last present but drawing (memory switches too)
         sOtherCycles += count() - sLastEnd - sFrameRender;
     sRenderCycles += sFrameRender, sFrameRender = 0;
@@ -123,8 +123,9 @@ void ps2_video_present(int instances)
     FlushCache(0);
     gsKit_clear(sGs, GS_SETREG_RGBAQ(0, 0, 0, 0x80, 0));
     for (i = 0; i < instances; i++) {
+        float x = (sGs->Width - w * cols) / 2 + (i % cols) * w, y = top + (i / cols) * h;
         gsKit_texture_upload(sGs, &sView[i].tex);
-        gsKit_prim_sprite_texture(sGs, &sView[i].tex, i * w, top, 0, 0, (i + 1) * w, top + h, GBA_W, GBA_H, 1,
+        gsKit_prim_sprite_texture(sGs, &sView[i].tex, x, y, 0, 0, x + w, y + h, GBA_W, GBA_H, 1,
                                   GS_SETREG_RGBAQ(0x80, 0x80, 0x80, 0x80, 0));
     }
     gsKit_queue_exec(sGs);

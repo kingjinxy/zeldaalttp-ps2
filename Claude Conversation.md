@@ -16839,3 +16839,178 @@ Matching build is OK. Next: the walkthrough step, the conversation archive, then
 
 - tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 80,100p "docs/Planning Doc.md"
 
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; cat >> "docs/Running Walkthrough.md" <<'E'  ## Step 26: two game instances on the PS2 (2026-11-23)  Goal: two players, e
+
+## Claude
+
+No lines removed. Committing:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; git add include/auto.h include/gstate.h src/ps2/*.c "docs/Running Walkthrough.md" "docs/Planning Doc.md" "Claude Convers
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; git show --stat HEAD | tail -14; git status --short | grep -v "^??" | head
+
+- tool `ToolSearch`: 
+
+- tool `PushNotification`: 
+
+## Claude
+
+Two game instances now run side by side in PCSX2. Each reaches the file select with its own controller port and save file. The matching build still reports `zeldaalttp.gba: OK`, and the work is committed as `c22cf4a`.
+
+- **The crash:** the second instance died at once because of PCSX2 itself. Its EE recompiler fixes the memory location of a constant address when it compiles a block of code. So code first compiled while instance 0 was mapped kept reading and writing instance 0's memory after I switched the mapping to instance 1. A real PS2 wouldn't do this, but PCSX2 is the test bench.
+- **The fix:** the GBA address space is now mapped once onto a single "live" block. Switching instances copies the running instance's memory out and the next one's in, about 387 KB each way. The main loop now runs, draws and saves each instance in turn, so there are two switches per frame ([tlb.c](src/ps2/tlb.c), [main.c](src/ps2/main.c)).
+- **Speed:** the pair runs at 30 fps, not 60. Drawing two screens with mGBA's renderer takes about 8.4M of the 4.9M EE cycles available per frame. The two games plus the memory copies take about 2M more. Moving the drawing onto the Graphics Synthesizer would fix this, and it's needed for 4 players anyway.
+- **Still to fix:** PCSX2 reports "TLB Miss" lines at the file select: a sprite routine (`gs_sub_08003870`) reads fields through a null pointer. It only happens with the save file the game wrote for player 2. A one-instance run with that save does it too, so it's an existing bug, not a two-instance one. I've noted it in the walkthrough as the next thing to fix.
+
+After that, the agreed plan is sharing game data between the two players, then scripted input so the replay can be checked against mGBA.
+
+## User
+
+Send a screenshot of the two instances side by side
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/build/ps2; python3 -c " from PIL import Image a=Image.open('frame_p0_01500.ppm');b=Image.open('frame_p1_01500.ppm') w=Ima
+
+- tool `ToolSearch`: 
+
+- tool `SendUserFile`: 
+
+## Claude
+
+I've sent the screenshot. It shows frame 1500 of the last two-instance PCSX2 run: instance 0 on the left and instance 1 on the right, each on its own save, shown at 2x. It's built from the two frames the port saves to disk, not a capture of the PCSX2 window, and the gap between the screens is mine.
+
+The saved file is `/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/side_by_side.png`. The port also saves frames 60, 600 and 900 for each instance in `build/ps2/`.
+
+## User
+
+What does it look like as a screenshot from PCSX2?
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "add_argument\|screenshot\|import" ../tp-ps2/tools/ps2/pcsx2_run.py | head -30
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "DISPLAY\|Xvfb\|offscreen" ../tp-ps2/tools/ps2/pcsx2_run.py ../tp-ps2/tools/ps2/offscreen 2>/dev/null | head; wh
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; Xvfb :77 -screen
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/pcsx2_shot.png
+
+## Claude
+
+That capture landed after PCSX2 had already closed, so it came out blank. Retrying with the capture taken partway through the run:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; Xvfb :77 -screen
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/pcsx2_shot.png
+
+## Claude
+
+Still blank, and the log was empty at the 30-second mark. pcsx2_run probably starts its own hidden display rather than using mine. Checking how it launches PCSX2:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "show\|Popen\|env\[" ../tp-ps2/tools/ps2/pcsx2_run.py | head; tail -5 /tmp/claude-1000/-home-alex-Documents-zeld
+
+- tool `Bash`: which xdotool xwininfo import scrot 2>/dev/null; ls ~/.config/PCSX2/ 2>/dev/null; grep -n "Screenshot" ~/.config/PCSX2/inis/PCSX2.ini 2>/dev/null | head
+
+## Claude
+
+PCSX2 has its own screenshot key (F8) that saves to its snaps folder, which gets the actual rendered output without going through the X server. Trying that:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; ls ~/.config/PCS
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "QT_\|environ\|xvfb\|Xvfb\|-nogui\|platform" ../tp-ps2/tools/ps2/pcsx2_run.py | head; sed -n 120,135p ../tp-ps2/
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; Xvfb :77 -screen
+
+## Claude
+
+PCSX2 isn't opening a window on my hidden display: it's probably going to Wayland. I'll unset `WAYLAND_DISPLAY` the way the project's offscreen script does.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; Xvfb :77 -screen
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/pcsx2_shot.png
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "define INSTANCES" src/ps2/main.c; systemd-run --user --scope -q -p MemoryMax=6G make -f Makefile.ps2 -j2 elf 2>
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/pcsx2_shot.png
+
+- tool `SendUserFile`: 
+
+## Claude
+
+I've sent a capture of the PCSX2 window, taken about 30 seconds into a real-time run of the rebuilt two-instance build.
+
+- **Layout:** both file-select screens sit side by side across the top half of the 640x448 output, with black above and below. Player 1's save shows file "A" with its hearts and items. Player 2's slot 1 has a name banner but an empty info panel, because that's what the save the game wrote for it holds.
+- **Speed:** PCSX2's status bar reads 19 fps at 100% emulation speed. The 30 fps I quoted before came from an unthrottled run, so 19 fps is the real-time figure. It's the cost of two software renderers on the EE, and the fix is still moving the drawing to the Graphics Synthesizer.
+- **Specks:** both screens have small red and white specks in the empty file slots. They're in the one-instance capture too, so they come from the renderer or game state, not from running two instances. I'll look into them alongside the file-select null-pointer reads.
+
+One correction: the one-instance capture I took first came from a stale build. I'd switched the source back to two instances without rebuilding. The commit had the correct two-instance code throughout.
+
+The file is `/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/pcsx2_shot.png`.
+
+## User
+
+Have the second player use a copy of the first player's file, but with the name of "B"
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/build/ps2; xxd zeldaalttp.sav | grep -v "ffff ffff ffff ffff ffff ffff ffff ffff\|0000 0000 0000 0000 0000 0000 0000 0000
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/build/ps2; od -A x -t x1z -v zeldaalttp.sav | grep -v "ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff\|00 00 00 00 00 00
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rn "0x53344654\|0x54463453\|53344654" src asm include data --include=*.c --include=*.s --include=*.inc --include=*
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/reference/tmc; grep -n "Checksum\|checksum" src/save.c | head -20
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/reference/tmc; grep -n "^u16 CalculateChecksum" -A20 src/save.c; grep -n "^u32 VerifyChecksum" -A12 src/save.c
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/fssave.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<E ex
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<E ex
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/pcsx2_shot_b.png
+
+- tool `SendUserFile`: 
+
+## Claude
+
+Player 2 now loads a copy of player 1's file named "B". In the new PCSX2 screenshot, both screens show the same hearts and items, and the game accepted the edited file as valid.
+
+- **What I changed:** `build/ps2/zeldaalttp_p2.sav` is now player 1's save with the name changed to "B" in both copies the game keeps.
+- **Checksum:** the save stores a checksum for the block holding the name. It uses the same method as the Minish Cap save code, so I recalculated it. Without that, the game would have shown the file as empty.
+- **Old save:** player 2's previous save is backed up at `/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/p2.sav.bak`. Keep it: it's the one that triggers the file-select null-pointer reads I still need to fix.
+
+The edit was a one-off Python snippet, nothing committed. If you want this repeatable (for example, to give every player a copy of file 1 at startup), I can turn it into a small tool.
+
+## User
+
+In the future, we'll have a different save system, but for now, I want you to add players 3 and 4 in a similar way to how we just added P2.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "sav\|inst" src/ps2/save.c | head -20
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -i 's/^#define INSTANCES 2/#define INSTANCES 4/' src/ps2/main.c; python3 - <<'E' p='src/ps2/video.c';s=open(p).read(
+
+## Claude
+
+That replacement dropped the game-cost lines I added to `ps2_video_present` earlier. Restoring them:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='src/ps2/video.c';s=open(p).read() s=s.replace('''    top = (sGs->Height - h * rows) / 2; ''','''    t
+
+## Claude
+
+Now the save tool, generalised from the snippet:
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/tools/ps2/fs_save_copy.py
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cp build/ps2/zel
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; $PS2DEV/ee/bin/mips64r5900el-ps2-elf-addr2line -f -e build/ps2/zeldaalttp.elf 0xb347e8; $PS2DEV/ee/bin/mips64r5900el-ps2
+
+## Claude
+
+A `memset` is storing to address 0 at startup. That looks like an allocation returning NULL now that there are four screens' worth of buffers. Checking the screenshot and the startup log:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -vE "TLB Mi
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='src/ps2/video.c';s=open(p).read() s=s.replace('''    u32 *pixels; } sView[MAX_INSTANCES];''','''} sVi
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -i 's/"video: %dx%d screen, %d GBA screens side by side"/"video: %dx%d screen, %d GBA screens"/; /#include <malloc.h
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/pcsx2_shot_4p.png
+

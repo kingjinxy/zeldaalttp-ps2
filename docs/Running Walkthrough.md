@@ -838,3 +838,19 @@ runs at 30 fps. Moving the PPU work to the GS is the next performance step.
 Open: a save-dependent TLB miss in the file select (`gs_sub_08003870` reading a null pointer's fields at 0x0–0x10,
 loads only). It happens with one instance too when given the second instance's save, so it isn't a multi-instance
 bug. Next to fix.
+
+## Step 27: four game instances (2026-11-23)
+
+- `INSTANCES 4` (`src/ps2/main.c`); the screens are laid out 2x2 for 3-4 players (`ps2_video_present`).
+- Players 2-4 get copies of player 1's save renamed B, C, D: `tools/ps2/fs_save_copy.py <src> <dst> <letter>`.
+  It un-reverses mGBA's byte-reversed 8-byte EEPROM blocks, changes the name at 0x588 (game order) in both save
+  copies (0 and 0x1000), and fixes the file-1 status checksum at 0x70. That checksum is the Minish Cap algorithm
+  (tmc `CalculateChecksum`) over the status word plus the 64-byte record at 0x580. Its range was found by searching
+  every range for one that matches the stored value. It's a stand-in until the port has its own save system.
+- First run: `memset` stored to address 0 during video init. With four 256 KB thread stacks the heap (about 3 MB
+  between `_end` and the stack) no longer had room for the per-screen `memalign` buffers next to gsKit's queues.
+  Fix: the four 160 KB pixel buffers are static (.bss).
+
+State: four instances reach the file select, no TLB misses or fatal errors in 60 s. At real-time speed PCSX2
+shows about 12-14 fps: four software renderers cost about 4.2 M EE cycles each, against 4.9 M per frame for
+everything. Players 3-4 have no controller yet (multitap support is still to come).
