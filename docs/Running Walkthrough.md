@@ -1252,3 +1252,20 @@ The user asked to go ahead with the EE-side work for many screens (shared world 
 - `mgba_run --writes MAP` (new): every distinct Thumb store into a byte the map marks, with its caller. 1,010 store
   sites; by function and area in `docs/shared_world/per_player_writers.txt`. The 62 entity bytes are the "view code
   inside the entity update" risk from the plan; 72 functions write there (some only in the file select).
+
+## Step 44: shared world 5b, first pass: what kind of per-player state there is (2026-11-24)
+
+- `mgba_run --perplayer` now also walks the 8 entity lists (heads at 0x03005960, prev/next) in both GBAs' snapshots,
+  pairs entities by list position and counts differing fields per entity type/subtype (printed at the end). Session 1's
+  stage, 707 comparisons: the lists never differ in length. What differs:
+  - object 16, nearly every field, every comparison: `sub_08052B88`, the other players' off-screen arrows (form 0's
+    `sub_08052CE4` works out directions from this player's camera; `sub_08052C0C` creates an arrow per other player);
+  - players' Links (type 1) +0x50 (1,414 times) and several objects' +0x50: the sprite layer ORed with the camera
+    struct's +0x12 (`e->unk50 = layer | gUnknown_03000450.unk12`, file_select.c);
+  - object 65 +0x18 (3,435): `sub_0805BF9C`, a pickup: on the collecting player's GBA only, it adds to that player's
+    counter (`sub_0800D67C`) and sets +0x18;
+  - manager 9 +0x1F, object 46 a few fields now and then.
+- Drawing: `UpdateAllEntities` (arm_ports.c) runs each entity's handler and then its draw routine `sub_080008A8`, so
+  drawing for another camera can be a separate walk calling only the draw routine.
+- The kinds found (view-only entities, drawing attributes in shared entities, world events with "mine?" checks,
+  profile data, sound, view state) and what each becomes in a shared world: Planning Doc, Phase 5 step 5b.

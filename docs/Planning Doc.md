@@ -158,6 +158,25 @@ Phase 1: the world runs once (`FS_SHARED_WORLD`, breaks GBA matching on purpose)
     (The plan for 5a was: who writes the per-player bytes: a write watch (like `mgba_run --reads`) over step 3's ranges on the
         session 1 replay gives the view functions and their callers. More memory diffs across session 1 (other
         rooms, menus, the stage's end) to complete the 13 KB list.)
+  - [ ] 5b, first pass (2026-11-24, walkthrough Step 44). Kinds of per-player state found:
+        1. View-only entities: object 16 (`sub_08052B88`), the other players' off-screen arrows; form 0 computes
+           directions from this player's camera (`sub_08052CE4`), `sub_08052C0C` creates one arrow per other player.
+           Shared world: one set per player, in the per-player pass.
+        2. Drawing attributes stored in shared entities: +0x50 (sprite layer | camera struct `gUnknown_03000450`
+           +0x12, e.g. players' Links), +0x18 (object 65), +0x1F (manager 9). Shared world: worked out at draw time
+           per player.
+        3. World events with a "mine?" check: object 65 (`sub_0805BF9C`, a pickup) adds to the collector's own
+           counter (`sub_0800D67C`, profile area) only on the collector's GBA. Shared world: index the profile by the
+           collector (`e->form`) instead.
+        4. Profile area 0x02000000-0x02003000 (8.5 KB): per-player arrays.
+        5. Sound (4.4 KB): per player until the one mixer (Phase 3); the PS2 has no sound yet.
+        6. View state: camera struct `gUnknown_03000450`, OAM buffers (0x03005E60-0x03006450), HUD/text
+           (0x0202D000-0x0202E1E4), BG ring buffers.
+        Entity lists are always the same length on every GBA (707 comparisons), so entity slots stay in step.
+        Drawing is per entity right after its update (`UpdateAllEntities` calls the draw routine `sub_080008A8`
+        after each handler), so the per-player pass can be a draw-only walk of the lists with each camera.
+        Still to sort: the remaining step 4 readers and the profile, HUD and "other" writers in
+        `docs/shared_world/per_player_writers.txt`.
   - [ ] 5b. Sort each per-player function and the ~23 from step 4: view only (camera, BG map streaming, OAM,
         HUD, text, own sound: moves to the per-player pass); world code with a "mine?" check (e.g. `sub_08042DB0`:
         the check moves to the view pass if it only affects drawing, else the flag becomes per player); arrays

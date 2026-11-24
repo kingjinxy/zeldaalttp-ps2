@@ -20272,3 +20272,87 @@ Step 5a has its answer. Recording it in the plan and committing before step 5b, 
 
 - tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; mkdir -p docs/shared_world && python3 - $S/writes2.txt $
 
+- tool `Bash`: sed -i 's/^  - \[ \] 5a, as planned: Who writes the per-player bytes:/    (The plan for 5a was: who writes the per-player bytes:/' "docs/Planning Doc.md" && gre
+
+- tool `Bash`: sed -i '160s/to complete the 13 KB list. (~1 session)$/to complete the 13 KB list.)/' "docs/Planning Doc.md" && git commit -qam "Planning Doc: 5a plan text mark
+
+- tool `PushNotification`: 
+
+## Claude
+
+Step 5a of the shared world is done: I now know which memory differs between players during a stage, and which code writes it. Committed as `6ece8fc`, with the lists in [per_player_writers.txt](docs/shared_world/per_player_writers.txt), walkthrough Step 43 and the plan updated; `make compare` reports OK.
+
+**How:** two new mGBA runner options.
+- `--perplayer` compares both players' memory every 60 frames and maps every byte that ever differs.
+- `--writes` logs every store into those bytes, with the function and its caller.
+
+I limited the comparison to the stage part of session 1 (frames 1800–44200), because before linking each GBA runs its own file select and naturally differs.
+
+**What differs during the stage (14.9 KB, excluding stack leftovers):**
+
+| Area | Size | What it is (best guess) | Functions writing it |
+|---|---|---|---|
+| 0x02000000–0x02003000 | 8.5 KB | each player's own save/profile data | 10 |
+| Sound engine | 4.4 KB | each GBA plays its own set of sounds | 39 |
+| 0x0202D000–0x0202E1E4 | 0.7 KB | text and HUD | 13 |
+| 0x03005E60–0x03006450 | 0.65 KB | probably the sprite lists | 5 |
+| Entities | 62 bytes | per-player fields inside shared entities | 72 |
+| Everything else | ~0.5 KB | | 76 |
+
+The entity and "everything else" counts include some file-select code that runs before the stage.
+
+**What this tells us:**
+- **Most of it isn't game logic.** It's saved profile data, sound and display state. Profile data can simply become a per-player array, and sound becomes one mixer later.
+- **Entities are the risk the plan flagged,** where per-player view code sits inside the shared entity update. It's real but small: 62 bytes, across functions I still have to sort.
+- **The 6 KB difference at 0x0203C200 found earlier** doesn't appear in mGBA. It was the PS2 port's own memory, not the game's.
+
+**Next is step 5b:** sorting each of these functions, plus the 23 that read the player number, into view-only, world-with-a-"mine?"-check, or per-player arrays. That decides what runs once and what runs per player.
+
+## User
+
+Proceed
+
+## Claude
+
+Step 5b. Rather than read 200 functions one at a time, I'm going by area and starting with the deciding ones: the 62 entity bytes (which fields, and who writes them during the stage) and the sprite-list builders (whether drawing is a separate pass from updating).
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - $S/pp_stage.bin.nostack <<'EOF' import sys d=o
+
+- tool `Bash`: python3 -c " a='0x30010a0 0x3001120 0x3001168 0x30011a0 0x30013e8 0x3001468 0x30015e8 0x30017a0 0x3001920 0x300196f 0x30019a0 0x30019e8 0x3001a20 0x3001ba0 0x30
+
+- tool `Bash`: grep -n "struct Entity" include/types.h | head -3; sed -n "$(grep -n '^struct Entity' include/types.h | head -1 | cut -d: -f1),+75p" include/types.h
+
+- tool `Bash`: grep -rn "^struct Entity$\|^struct Entity {" include/*.h | head; f=$(grep -rln "^struct Entity$" include/ | head -1); sed -n "$(grep -n '^struct Entity$' $f | c
+
+- tool `Bash`: grep -rn "struct Entity$" include/ | head; grep -rn "^struct Entity" include/ | head
+
+- tool `Bash`: grep -rln "} *Entity;\|struct Entity *{" include src/*.h 2>/dev/null; grep -rn "struct Entity$" -r include src --include=*.h | head; grep -rn "^struct Entity" -
+
+- tool `Bash`: grep -rln "unk1F_0" include | head; grep -rn "unk1F_0" include | head -3
+
+## Claude
+
+Mapping the per-player entity bytes onto the entity struct's fields.
+
+- tool `Bash`: grep -nE "/\* ?0x(0B|18|1C|1E|1F|21|22|23|24|32|33|36|37|50|58|68|69|6C|6E|6F|70|72|73) ?\*/" include/entity.h | head -40
+
+- tool `Bash`: sed -n 1,100p include/entity.h
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - $S/writes2.txt $S/fsyms.txt <<'EOF' import sys
+
+- tool `Bash`: grep -n "UpdateAllEntities" -A40 src/ps2/glue/arm_ports.c | head -60
+
+- tool `Bash`: python3 - <<'EOF' p='tools/mgba_run.c'; s=open(p).read() def rep(old,new):     global s     assert old in s, old     s=s.replace(old,new,1) rep("""static unsign
+
+- tool `Bash`: grep -rn "DoObjectEntity" src/*.c | head -3; grep -rn "gObjectFunctions\|ObjectFunctions\|sObjectHandlers" src/*.c include/*.h | head -5
+
+- tool `Bash`: sed -n 6686,6710p src/fs_game.c; grep -n "gUnknown_08428F7C\|0x08428" src/fs_game.c | head -3
+
+- tool `Bash`: python3 - <<'EOF' import struct,re,subprocess r=open('baserom.gba','rb').read() out=subprocess.run(["arm-none-eabi-nm","zeldaalttp.elf"],capture_output=True,tex
+
+- tool `Bash`: for f in sub_08052B88 sub_08052C0C; do grep -n "^void $f\|^[a-z].* $f(" src/fs_game.c | head -2; done; n=$(grep -n "^void sub_08052B88" src/fs_game.c | cut -d: 
+
+- tool `Bash`: n=$(grep -n "^void sub_0805BF9C" src/fs_game.c | cut -d: -f1); sed -n "${n},$((n+40))p" src/fs_game.c; grep -n "unk50 = \|unk50 |=\|->unk50 &=" src/*.c | head -
+
+- tool `Bash`: python3 - <<'EOF' p='docs/Planning Doc.md'; s=open(p).read() old="""  - [ ] 5b. Sort each per-player function""" new="""  - [ ] 5b, first pass (2026-11-24, walk
+

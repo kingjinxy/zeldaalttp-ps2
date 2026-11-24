@@ -531,6 +531,25 @@ static const char *perPlayerPath;
 static unsigned perPlayerFrom, perPlayerTo = ~0u;  // --perplayer-frames A-B: only compare in that range
 static uint8_t perPlayerSnap[MAX_GBAS][0x48000], perPlayerDiff[0x48000];
 static unsigned perPlayerTaken[MAX_GBAS], perPlayerCompares;
+// entities that differ between GBAs, paired by position in the 8 lists (heads at 0x03005960, 8 bytes each: prev,
+// next): per type/subtype and field offset, how often; and list lengths that differ
+static unsigned entityDiff[256][256][0x88], entityListMismatch;
+static uint32_t snapWord(int id, uint32_t a) {
+	uint32_t o = a >> 24 == 2 ? (a & 0x3FFFF) : 0x40000 + (a & 0x7FFF);
+	return perPlayerSnap[id][o] | perPlayerSnap[id][o + 1] << 8 | perPlayerSnap[id][o + 2] << 16 | (uint32_t) perPlayerSnap[id][o + 3] << 24;
+}
+static void entityCompare(int k) {
+	for (uint32_t list = 0x03005960; list < 0x030059A0; list += 8) {
+		uint32_t a = snapWord(0, list + 4), b = snapWord(k, list + 4);
+		for (int n = 0; n < 128 && (a != list || b != list); n++) {
+			if (a == list || b == list || a >> 24 != 3 || b >> 24 != 3) { entityListMismatch++; break; }
+			uint8_t *ea = &perPlayerSnap[0][0x40000 + (a & 0x7FFF)], *eb = &perPlayerSnap[k][0x40000 + (b & 0x7FFF)];
+			for (int o = 8; o < 0x88 && (a & 0x7FFF) + o < 0x8000 && (b & 0x7FFF) + o < 0x8000; o++)
+				if (ea[o] != eb[o]) entityDiff[ea[8]][ea[9]][o]++;
+			a = snapWord(0, a + 4), b = snapWord(k, b + 4);
+		}
+	}
+}
 
 static void perPlayerFrame(int id, struct mCore *core, unsigned frame) {
 	if (frame % 60 || frame < perPlayerFrom || frame > perPlayerTo) return;
@@ -539,9 +558,11 @@ static void perPlayerFrame(int id, struct mCore *core, unsigned frame) {
 	perPlayerTaken[id] = frame + 1;
 	for (int k = 0; k < nplayers; k++)
 		if (perPlayerTaken[k] != frame + 1) return;
-	for (int k = 1; k < nplayers; k++)  // all GBAs have this frame now
+	for (int k = 1; k < nplayers; k++) {  // all GBAs have this frame now
 		for (unsigned i = 0; i < 0x48000; i++)
 			perPlayerDiff[i] |= perPlayerSnap[k][i] != perPlayerSnap[0][i];
+		entityCompare(k);
+	}
 	perPlayerCompares++;
 }
 
@@ -1089,6 +1110,16 @@ int main(int argc, char **argv) {
 		if (!f || fwrite(perPlayerDiff, 1, sizeof perPlayerDiff, f) != sizeof perPlayerDiff) perror(perPlayerPath);
 		if (f) fclose(f);
 		fprintf(stderr, "perplayer: %u comparisons\n", perPlayerCompares);
+		printf("entity lists of different length: %u\n", entityListMismatch);
+		for (int t = 0; t < 256; t++)
+			for (int st = 0; st < 256; st++) {
+				int any = 0;
+				for (int o = 0; o < 0x88; o++) any |= entityDiff[t][st][o] != 0;
+				if (!any) continue;
+				printf("entity type %d subtype %d:", t, st);
+				for (int o = 0; o < 0x88; o++) if (entityDiff[t][st][o]) printf(" +%02X:%u", o, entityDiff[t][st][o]);
+				printf("\n");
+			}
 	}
 	for (int i = 0; i < nplayers; i++) players[i].core->deinit(players[i].core);
 	if (loads) {
