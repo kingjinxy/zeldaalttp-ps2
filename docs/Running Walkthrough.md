@@ -764,3 +764,30 @@ no crash; no rendering yet).
   Hangs found with it: m4a waiting for VCOUNT 159 (VCOUNT now alternates 159/160), a DMA3 wait, EEPROM polling
   (the EEPROM window is mapped to all ones; no saves yet).
 - Next: rendering (mGBA's software renderer, MPL-2.0) and vsync pacing, input.
+
+## Step 25: graphics, input, and the file select screen on the PS2 (2026-11-23)
+
+- **Rendering:** mGBA 0.10.5's software renderer, vendored in `src/ps2/mgba` (MPL-2.0, with its LICENSE and a
+  README naming the commit; 51 files: the renderer and the headers it includes; a handful of mGBA functions it calls
+  are stubbed in `src/ps2/mgba_stubs.c`). `src/ps2/video.c` hands it the I/O registers, palette and OAM each frame
+  (VRAM it reads directly from the mapped GBA video memory), draws 160 lines into a 256-wide buffer (mGBA's 32-bit
+  colour is the GS's CT32 layout) and shows it with gsKit, waiting for vsync. Frames 60/600/900/1500 are written to
+  `host:` as PPM, to compare with `tools/mgba_run --shot` without a window.
+- **Bugs found on the way to the logo and title:**
+  - KEYINPUT read 0 (active low: every button held, including the reset combo) and the game reset every frame.
+  - `sub_0800D87C` is `void` but called through an `int` table in a `while` loop; on ARM r0 happened to be 0, on
+    MIPS v0 held garbage. It returns 0 now (matching unchanged).
+  - The global-state tables: GCC aligns each object's table to 8, entries were 12 bytes, so the section had gaps and
+    the binary search read shifted entries. A failed lookup made `gstate_run` call the copy's data as MIPS code,
+    which stopped the EE with interrupts off. Entries are 16 bytes on the PS2 now.
+- **Tools that found them:** the watchdog prints the interrupted pc (COP0 EPC); hand-written C is built with
+  `-finstrument-functions` into the same trace ring; a flag word (0x0203C1F0) makes all trace points print over SIO
+  for a window of frames.
+- **Input:** `src/ps2/input.c` reads controller 1 with libpad (XSIO2MAN/XPADMAN from rom0) into KEYINPUT each frame:
+  Circle A, Cross B, L1/R1 L/R, Start, Select, D-pad or left stick.
+- **State:** logo and title match mGBA's frames; the file select screen appears (files 2 and 3 "corrupted": the
+  EEPROM stub reads all ones). 60+ seconds (22,000 frames) without a crash. The heartbeat line now uses tp-ps2's
+  `heartbeat: vblank N frame M` format; without it `pcsx2_run.py` reported a stall after 15 real seconds that wasn't
+  one.
+- Not yet: saves (EEPROM), sound, HBlank-timed effects (per-scanline registers), link cable / multiplayer, and the
+  ARM-side replay check after this step's translator changes.

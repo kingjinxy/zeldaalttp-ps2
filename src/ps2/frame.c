@@ -16,6 +16,7 @@
 u32 (*ps2_icall(u32 target))();
 void ps2_io_vblank(void);
 void ps2_video_frame(void);
+void ps2_input_frame(void);
 
 static u32 sFrame;
 
@@ -55,12 +56,14 @@ void ps2_vblank_wait(void)
     REG16(BIOS_IF) |= 1;
     REG16(REG_IF) &= ~1;
     ps2_video_frame();  // draws, shows and waits for vsync: the game runs at the PS2's 60 Hz
+    ps2_input_frame();  // KEYINPUT for the frame the game is about to run
     if (++sFrame % 60 == 0 || sFrame <= 10)
         ps2_log("frame %u", sFrame);
 }
 
-// Watchdog: once a second (EE VBlank interrupt), the frame count and the last global-state functions entered
-// (ring at 0x0203C200, include/gstate.h GSTATE_TRACE), so a hang shows where the game is. SIO only, polled.
+// Watchdog: once a second (EE VBlank interrupt) a heartbeat with the frame count; when the frame count stops, the
+// interrupted pc and the last functions entered (ring at 0x0203C200, include/gstate.h GSTATE_TRACE) instead, so a hang
+// shows where the game is. SIO only, polled.
 static int watch_handler(int cause)
 {
     static u32 ticks, lastFrame;
@@ -75,8 +78,14 @@ static int watch_handler(int cause)
         u32 epc;
         int n;
         __asm__ volatile("mfc0 %0, $14" : "=r"(epc));  // the interrupted pc (EPC is still set in the handler)
-        n = snprintf(buf, sizeof(buf), "watch: frame %u%s pc %08x ring", sFrame, sFrame == lastFrame ? " (stuck)" : "",
-                     epc);
+        if (sFrame != lastFrame) {  // tp-ps2's pcsx2_run.py reads this line as the heartbeat
+            snprintf(buf, sizeof(buf), "heartbeat: vblank %u frame %u", ticks, sFrame);
+            sio_puts(buf);
+            lastFrame = sFrame;
+            ExitHandler();
+            return 0;
+        }
+        n = snprintf(buf, sizeof(buf), "watch: frame %u (stuck) pc %08x ring", sFrame, epc);
         for (k = 1; k <= 6 && n < 150; k++) {
             u32 j = (i + 1024 - k) % 1024;
             n += snprintf(buf + n, sizeof(buf) - n, " %08x", ring[1 + 3 * j]);
