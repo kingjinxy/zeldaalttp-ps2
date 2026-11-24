@@ -98,7 +98,7 @@ void ps2_video_frame(void)
     r->finishFrame(r);
     {  // cost per frame in EE cycles (294.912 MHz; 4.9 M cycles per 60 Hz frame): renderer vs everything else
         u32 t1 = count();
-        if ((sFrames + 1) % 600 == 0)
+        if ((sFrames + 1) % 600 == 540)  // start of the 60-frame window
             sRenderCycles = sGameCycles = 0;
         sRenderCycles += t1 - t0;
         if (sLastEnd)
