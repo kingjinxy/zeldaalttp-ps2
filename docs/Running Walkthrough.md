@@ -1420,3 +1420,12 @@ ROM:
 - **Result:** the GS drawing's centre 240x160 matches the software renderer pixel for pixel in every check (frames
   1300, 1600, 2000, all four players); a frame readback at 1700 shows the eight 426x240 views with the room in the
   middle and sand around it. Drawing costs 11.4 M cycles a frame (8 views; 6.77 M at 284x160): about 20 fps.
+
+## Step 51: survey of the 4-player limits (2026-11-24)
+
+Greps over the headers, the decompiled C and the asm, and the link map (details in the planning doc's "more than 4
+players" section). Every per-player array is exactly four long and packed against the next global, so none can grow
+in place; the code that walks them is 20 loops and a handful of unrolled four-way checks, nearly all already C. A
+place for bigger arrays: the EWRAM mirror (0x02040000), mapped today to the same memory as 0x02000000, can be given
+256 KB of its own. Not done yet: checking each `& 3` on a player number, and data tables of four in the ROM (spawn
+points, HUD slots) beyond the Link palettes (Step 45).

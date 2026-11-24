@@ -286,9 +286,25 @@ and stale tiles, because the game streams only a 256x192 window of the room. Wha
 
 ## Medium priority: more than 4 players
 Requested by the user (2026-11-16). After Phase 4 works with 4 players.
-- [ ] Find every 4-player limit: per-player arrays (`gUnknown_03006A30[4]`, `gUnknown_03006C80.unk28[4]`,
-      key arrays, the link ring buffer `gUnknown_0200B1D0[4][16]`), 2-bit player indices and masks
-      (`& 3`, `& 15`), loops `i <= 3`, and the link protocol itself
+- [x] Find every 4-player limit (survey 2026-11-24, walkthrough Step 51):
+      - **Arrays of four**, all packed against their neighbours (none can grow in place): the player records
+        `gUnknown_03006A30[4]` (0x90 each, ends at `gUnknown_03006C70`), keys held `gUnknown_03000940[4]` and newly
+        pressed `gUnknown_03005E10[4]`, the link key ring `gUnknown_0200B1D0[4][16]` (ends at 0x0200B250), the packets
+        `gUnknown_03000FC0.unk38[4]`, and inside `gUnknown_03006C80`: `unkC`, `unk28` (by `Entity.form`), `unk54`-`unk68`,
+        `unk70` (by `Entity.unk18`); `Struct...unkD8[4][8]`/`unk8[4]` (types.h 750).
+      - **Code:** 20 loops `i <= 3`/`i < 4` (fs_game.c 14, file_select.c 5, rom2.c 1); unrolled four-way checks
+        (`sub_0803781C`, `sub_080378F4`, `sub_080379BC`, `sub_08037A94`, `sub_08037B5C`, the `sub_08038A30`
+        start-button checks); player masks `& 15`/`gUnknown_03000BF0` bits 0-3 (`sub_08037B5C`). Users of the arrays:
+        about 130 functions for `gUnknown_03006A30`, 115 for `gUnknown_03006C80`, 20-30 each for the key arrays and
+        `gLCDRegisterBuffer` (the player number). Nearly all are C already (draft C beside the original asm in
+        `asm/non_matching`), so the PS2 build can change them; about 2 per global are still asm only.
+      - **Player number:** `Entity.form` and `Entity.unk18` are full bytes (no 2-bit fields found in the headers);
+        the player byte 0x03000414 is a byte. Masks `& 3` on them still need checking function by function.
+      - **Link protocol:** the PS2 port does the exchange itself (`ps2_link_exchange`), so 8 packets are a port change;
+        the game's packet code (`sub_08037574`, `sub_080368A0`) loops over four.
+      - **Room to grow:** the EWRAM mirror at 0x02040000 (tlb.c maps it to the same 256 KB as 0x02000000) can get
+        its own memory: 256 KB at a GBA address for 8-player copies of these arrays, moved by linker symbol in the
+        PS2 build only (the GBA build keeps them in place).
 - [ ] Data that comes in four (Link colours, palettes, HUD slots, spawn points, item/rupee splits)
       Link colours (2026-11-24, walkthrough Step 45): exactly four in the ROM (green, red, blue, purple at
       0x0844DD74-0x0844DDF3, the palette base; a copy at 0x0844DED4), sprite palettes 7-10 in a stage. All share

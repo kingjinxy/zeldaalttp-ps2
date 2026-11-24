@@ -21835,3 +21835,45 @@ The GS allocations came back 0 ("tiles 0, CLUTs 0"), then a crash in gsKit. Comp
 
 - tool `Bash`: Update docs and commit
 
+- tool `SendUserFile`: 
+
+## Claude
+
+Each of the eight cells is now drawn at 1:1: every player sees 426×240 of the world, pixel for pixel, about 2.7 times the GBA's area. In the image I sent, the small starting room sits in the middle of each view with sand filling the extra area. In every check the centre 240×160 matched the software renderer exactly, for all four players. Committed as `07a713b`; `make compare` is OK and the default build still compiles.
+
+**Overflow fixed:** at 1:1 an existing pixel check starts running for every screen, and its buffers for players 3 and 4 ran past the end of their memory pool. That overwrote gsKit's state, so it crashed at startup. All players now share one check buffer, which is safe because each check picture is used right away.
+
+**Still missing in the extra area:** sprites (Links, enemies and items outside the GBA's 240×160 middle), a camera that knows the view is bigger, the HUD at the view's edges, and full-size window effects.
+
+**Speed:** drawing eight 1:1 views costs 11.4M cycles a frame, against a 4.9M budget at 60 fps. That's about 20 fps, down from 30 at the earlier 1.5× views. The cost depends on the area drawn, so 60 fps with eight screens this size will need much cheaper drawing.
+
+Next is still step 2: a survey of every place the game assumes 4 players, written into the plan.
+
+## User
+
+Update docs, commit changes, and then continue
+
+## Claude
+
+Docs and commit were already done in the last step (`07a713b`), and the tree is clean. Moving on to step 2, the survey of 4-player limits. Starting with what the declarations show: arrays sized 4 in the headers.
+
+- tool `Bash`: Find 4-element arrays in the headers
+
+- tool `Bash`: Map per-player arrays to their globals
+
+## Claude
+
+Next, the code side: loops over 4 players and player numbers masked to 2 bits, in the decompiled C:
+
+- tool `Bash`: Count 4-player loops and indices in C
+
+## Claude
+
+How many still-in-asm functions touch the per-player globals? Those can't be fixed in C yet:
+
+- tool `Bash`: Count asm and C users of per-player globals
+
+- tool `Bash`: Check array neighbours and field widths
+
+- tool `Bash`: Write the survey into docs and commit
+
