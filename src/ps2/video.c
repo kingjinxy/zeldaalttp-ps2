@@ -75,8 +75,12 @@ static void dump_frame(u32 n)
 }
 
 // one GBA frame: feed the renderer the current state, draw, show, wait for vsync
+static u32 count(void) { u32 c; __asm__ volatile("mfc0 %0, $9" : "=r"(c)); return c; }
+static u32 sRenderCycles, sGameCycles, sLastEnd;
+
 void ps2_video_frame(void)
 {
+    u32 t0 = count();
     struct GBAVideoRenderer *r = &sRenderer.d;
     const u16 *io = (const u16 *)0x04000000, *pal = (const u16 *)0x05000000;
     u32 a;
@@ -92,6 +96,18 @@ void ps2_video_frame(void)
     for (y = 0; y < GBA_H; y++)
         r->drawScanline(r, y);
     r->finishFrame(r);
+    {  // cost per frame in EE cycles (294.912 MHz; 4.9 M cycles per 60 Hz frame): renderer vs everything else
+        u32 t1 = count();
+        if ((sFrames + 1) % 600 == 0)
+            sRenderCycles = sGameCycles = 0;
+        sRenderCycles += t1 - t0;
+        if (sLastEnd)
+            sGameCycles += t0 - sLastEnd;
+        if ((sFrames + 1) % 600 == 0) {  // every 10 s, averaged over the last 60 frames
+            ps2_log("cost: render %u cycles/frame, game %u cycles/frame (of 4915200)", sRenderCycles / 60, sGameCycles / 60);
+            sRenderCycles = sGameCycles = 0;
+        }
+    }
 
     sFrames++;
     if (sFrames == 60 || sFrames == 600 || sFrames == 900 || sFrames == 1500)
@@ -109,4 +125,5 @@ void ps2_video_frame(void)
                               GS_SETREG_RGBAQ(0x80, 0x80, 0x80, 0x80, 0));
     gsKit_queue_exec(sGs);
     gsKit_sync_flip(sGs);
+    sLastEnd = count();
 }
