@@ -1287,3 +1287,8 @@ The user asked to go ahead with the EE-side work for many screens (shared world 
   block list, not the count, decides.
 - Correction: the 8.5 KB at 0x02000000-0x02003000 isn't a Four Swords profile: A Link to the Past's inventory
   (`gBow`... from 0x02002320) and `gPaletteBuf1` (0x02000030) are there, i.e. the players' own save files as loaded.
+- The four unidentified calls are world or shared (tile animation `sub_08015C64`, `sub_08000434`, the spawner table
+  `sub_0802B74C`, the palette effect `sub_0800C118`). `--bracket` now also sees ARM and RAM code: the entity draw
+  routine (`sub_080008A8`, 0x03005AE0) changes 0.1 bytes a call and nothing per-player (it queues entities in a shared
+  draw list; `sub_08000BAC` builds the sprite list from it). The resulting 5c design (overlay of per-player bytes,
+  a view pass per other player, one port patch for pickups) is in the Planning Doc.

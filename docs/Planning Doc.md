@@ -201,6 +201,21 @@ Phase 1: the world runs once (`FS_SHARED_WORLD`, breaks GBA matching on purpose)
         just below `gPaletteBuf1Bitmask`), `sub_08000434` (0x03005000), `sub_0802B74C` (0x0202A700), `sub_0800C118`
         (0x02000000-0x020004FF, around `gPaletteBuf1`). Per-player bytes per stage frame: 21.6, of which 21.0 from
         `sub_08000BAC`.
+        The four left: `sub_08015C64` steps 8 tile-animation timers at `gUnknown_02002440` and loads the next tiles
+        (shared, once); `sub_08000434` runs the IWRAM `sub_080007C4` and `sub_0803A320` (world, 0x03005000);
+        `sub_0802B74C` runs `gUnknown_0813D678[]`, e.g. `sub_0802B778`, a spawner that picks a random player (world);
+        `sub_0800C118` runs a queued effect on the palette buffer, identical on every GBA (shared, once).
+        The entity draw routine (`sub_080008A8`, ARM at 0x03005AE0; `--bracket` now sees ARM and RAM code too):
+        4,200 calls, 0.1 bytes changed per call (0x03005000-0x030051FF), no per-player bytes: it queues the entity
+        in a shared draw list; `sub_08000BAC` builds each player's sprite list from it with the camera.
+        **5b result / 5c design (overlay):** instance 0 runs the whole frame as now (world + player 0's view). For
+        each other player, an overlay of the per-player bytes (the `--perplayer` map's 14.9 KB, plus the VRAM BG maps
+        0x0600C000-0x0600FFFF and OAM) is swapped in, the player number byte set, and the view pass run: camera
+        `sub_08015D9C`, the arrow objects' handlers (object 16), HUD `sub_0802CD3C`, `sub_08000BAC`, text
+        `sub_0800D788`, `sub_0802C940`, the flip `sub_0800B524` and the VBlank copies; then drawn and swapped out.
+        Kind 2 (the local-Link mark +0x50) comes with the overlay. Kind 3 needs a port patch: a pickup collected by
+        player n > 0 adds to n's overlay (`sub_0805BF9C` / `sub_0800D67C`). The overlay map comes from mGBA
+        (session 1) and is fixed into the build; scenes it doesn't cover may need more.
         Still to sort: the remaining step 4 readers and the profile, HUD and "other" writers in
         `docs/shared_world/per_player_writers.txt`.
   - [ ] 5b. Sort each per-player function and the ~23 from step 4: view only (camera, BG map streaming, OAM,

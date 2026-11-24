@@ -20,8 +20,8 @@
 // compares only between frames A and B.
 // --writes FILE: FILE is a --perplayer bitmap; every distinct Thumb store into a marked byte is logged as
 // "write PC LR ADDR WIDTH" (first address seen for that PC/LR). ARM code, DMA and BIOS copies aren't seen.
-// --bracket ADDR,ADDR,... (with --writes MAP): GBA 0, every 10th frame in --perplayer-frames: for each listed Thumb
-// function, memory is copied at its entry and compared at its return (callees included); the changed bytes are counted
+// --bracket ADDR,ADDR,... (with --writes MAP): GBA 0, every 10th frame in --perplayer-frames: for each listed
+// function (Thumb or ARM, ROM or RAM), memory is copied at its entry and compared at its return (callees included); the changed bytes are counted
 // as per-player (marked in MAP) or world (the IWRAM stack excluded). Printed per function at the end.
 // --survey FILE: which video features the game uses (for the PS2 GS renderer): per frame, display modes, windows,
 // blend settings, sprite attributes, HBlank DMA and HBlank/VCount interrupts, and video register writes during the
@@ -300,6 +300,8 @@ static void logLoad(const char *kind, uint32_t src, uint32_t dst, uint32_t n, ui
 
 // Before an instruction runs: a BIOS call that reads its source from ROM data, or a Thumb load from it
 static void loadsBefore(struct mCore *core, struct ARMCore *cpu) {
+	if (nbrackets && core == players[0].core)  // any code, ARM too (the IWRAM copies)
+		bracketStep(core, cpu->gprs[ARM_PC] - (cpu->executionMode == MODE_THUMB ? 2 : 4), cpu->gprs[ARM_LR]);
 	if (cpu->executionMode != MODE_THUMB) return;
 	uint32_t pc = cpu->gprs[ARM_PC] - 2;
 	if (pc >> 24 != 8) return;
@@ -348,7 +350,6 @@ decode:;
 			if (!readSeen[h]) { readSeen[h] = key; printf("read %08X %08X %u\n", pc, r[14] - 1, w); }
 		}
 	}
-	if (nbrackets && core == players[0].core) bracketStep(core, pc, r[14]);
 	if (writeMap) {
 		uint32_t wa = 0, ww = 0;
 		if ((op & 0xF800) == 0x6000) wa = r[op >> 3 & 7] + (op >> 6 & 31) * 4, ww = 4;          // str [rb, #imm]

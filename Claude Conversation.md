@@ -20427,3 +20427,74 @@ The docs and commit are already done: `c162655` holds the last update, and nothi
 
 - tool `Bash`: grep -n "gPaletteBuf\|gBG0Buffer\|gBG1Buffer\|gBG2Buffer\|gBG3Buffer\|gOAMBuffer" sym_ewram.txt sym_iwram.txt include/variables.h | head; grep -E "= 0x(0[0-9A-F
 
+- tool `Bash`: python3 - <<'EOF' p='docs/Planning Doc.md'; s=open(p).read() old="""        4. Profile area 0x02000000-0x02003000 (8.5 KB): per-player arrays.""" new="""       
+
+- tool `PushNotification`: 
+
+## Claude
+
+Step 5b has moved forward: most of the stage frame's calls are now sorted into view code, link code (which goes away) and world code. Committed as `03655fd` (the push notification gave the wrong commit hash). The plan, walkthrough Step 44 and the docs were already up to date from the previous step, so that part needed no new commit; `make compare` reports OK.
+
+**New since the last report:**
+
+1. **The stage's frame function** is `sub_08038A30`, and it shows the order of a frame:
+   - input and timers;
+   - the world update, where each entity is updated and then drawn;
+   - the camera, the background streaming and the HUD;
+   - finishing the sprite list.
+
+   After it, the main loop handles text boxes and the frame flip.
+
+2. **`mgba_run --bracket`** (new) copies memory when a function is entered and compares it when the function returns, callees included. I ran it on all of the stage frame's calls:
+
+   | Kind | Functions |
+   |---|---|
+   | View (only player-specific memory: camera, video registers, sprite data, text) | camera `sub_08015D9C`, background streaming `sub_08008ED8`, HUD `sub_0802CD3C`, sprite-list finish `sub_08000BAC`, text `sub_0800D788`, `sub_0802C940`, flip `sub_0800B524` |
+   | Link (goes away in a shared world) | `sub_0800C54C`, `sub_08037574`, `sub_080368A0`, `sub_08036864` |
+   | Changes nothing in the sample | `sub_08014900`, `sub_08013A60`, `sub_0803F284`, `sub_08052A88`, `sub_0802BFC4` |
+   | Still to identify | `sub_08015C64`, `sub_08000434`, `sub_0802B74C`, `sub_0800C118` (each writes one specific memory block; two of them sit next to the palette buffer) |
+
+   Two memory blocks change during almost every function. They're the link and sound interrupt handlers running in the middle of other code, so I ignored them.
+
+3. **Per-player changes are concentrated:** per stage frame, about 21.6 bytes of per-player state change, and 21 of those come from finishing the sprite list.
+
+4. **A correction:** the 8.5 KB area I'd called "profile data" is each player's own save file as loaded (it holds A Link to the Past's inventory) plus a palette buffer. It's static during play except when a pickup adds to a counter.
+
+**Plan for the view pass for players 2–4** (step 5c):
+- each player's camera;
+- a draw-only walk over the shared entity list;
+- the arrows to the other players;
+- the HUD;
+- finishing the sprite list, then text and the flip.
+
+The GS renderer already draws the backgrounds from the room data, so players 2–4 don't need the background streaming at all.
+
+**Next:**
+- identify the four remaining functions;
+- check that the draw routine `sub_080008A8` only writes view state;
+- then start 5c, the actual split in the port.
+
+## User
+
+Proceed
+
+## Claude
+
+Identifying the four remaining functions, starting with their code:
+
+- tool `Bash`: for f in sub_08015C64 sub_0802B74C sub_0800C118; do file=$(grep -l "$f" src/*.c | head -1); echo "=== $f ($file)"; awk -v f="void $f(" 'index($0,f)==1{p=1} p{pr
+
+- tool `Bash`: head -60 asm/non_matching/file_select/sub_08015C64.inc; echo ----; head -40 asm/non_matching/rom1/sub_08000434.inc
+
+- tool `Bash`: python3 - <<'EOF' import struct,subprocess r=open('baserom.gba','rb').read() out=subprocess.run(["arm-none-eabi-nm","zeldaalttp.elf"],capture_output=True,text=T
+
+- tool `Bash`: for f in sub_0802B778 sub_0802B8D4 sub_0802B964 sub_0802BD58 sub_0802BE4C; do echo "== $f"; awk -v f="void $f(" 'index($0,f)==1{p=1} p{print} p&&/^}/{exit}' src
+
+- tool `Bash`: python3 - <<'EOF' p='tools/mgba_run.c'; s=open(p).read() old="""static void loadsBefore(struct mCore *core, struct ARMCore *cpu) { 	if (cpu->executionMode != MO
+
+- tool `Bash`: bash tools/mgba_run.sh 2>&1 | grep error; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; time (timeout 
+
+- tool `Bash`: python3 - <<'EOF' p='docs/Planning Doc.md'; s=open(p).read() old="""        Still to sort: the remaining step 4 readers and the profile, HUD and "other" writers
+
+- tool `PushNotification`: 
+
