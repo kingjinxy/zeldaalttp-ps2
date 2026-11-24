@@ -271,6 +271,13 @@ Requested by the user (2026-11-16). After Phase 4 works with 4 players.
       key arrays, the link ring buffer `gUnknown_0200B1D0[4][16]`), 2-bit player indices and masks
       (`& 3`, `& 15`), loops `i <= 3`, and the link protocol itself
 - [ ] Data that comes in four (Link colours, palettes, HUD slots, spawn points, item/rupee splits)
+      Link colours (2026-11-24, walkthrough Step 45): exactly four in the ROM (green, red, blue, purple at
+      0x0844DD74-0x0844DDF3, the palette base; a copy at 0x0844DED4), sprite palettes 7-10 in a stage. All share
+      entries 1-2 and 8-15 (skin, hair, outline); entries 3-5 are the tunic, 6 a shared blue, 7 an accent. No unused
+      fifth colour: the only near-variant (0x0844F7D4, green with a pink entry 2 and orange entry 7) is loaded into
+      Link 1's slot by palette group 17 and overwritten by the same group's next record. Players 5+ need new colours
+      on the template (entries 3-7), and all 16 sprite palettes are in use in a stage: the GS renderer can give an
+      extra player's Link its own CLUT at draw time instead of a GBA palette slot.
 - [ ] Input beyond 4 pads on the PS2 (two multitaps give 8) and a screen layout for 5+ views
 - [ ] Easier in the Phase 5 shared world (per-player arrays sized by a constant) than with linked instances
 

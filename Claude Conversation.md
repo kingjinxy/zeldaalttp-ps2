@@ -20498,3 +20498,99 @@ Identifying the four remaining functions, starting with their code:
 
 - tool `PushNotification`: 
 
+## Claude
+
+Step 5b is finished, and the design for 5c (the actual split in the port) is written into the plan. Committed as `9806179`; `make compare` reports OK. The push notification gave the wrong commit hash again; I'll stop putting hashes in notifications before the commit exists.
+
+**The last four functions are world code or shared display state, not per-player view code:**
+
+| Function | What it does | Runs |
+|---|---|---|
+| `sub_08015C64` | tile-animation timers, loads the next tiles | once (same for everyone) |
+| `sub_08000434` | per-frame world processing | world |
+| `sub_0802B74C` | a table of handlers, e.g. a spawner that targets a random player | world |
+| `sub_0800C118` | a palette effect, identical on every GBA | once |
+
+**The entity draw routine** (ARM code run from IWRAM; `--bracket` now sees ARM and RAM code) writes almost nothing and nothing per-player. It only adds the entity to a shared draw list. Each player's sprite list is built later from that list and the camera by `sub_08000BAC`. So the view pass doesn't need to walk the entities.
+
+**Step 5c design:**
+1. Player 1's copy runs the whole frame exactly as now: the world plus player 1's view.
+2. For each other player, swap in a small overlay of only the bytes that differ between players. That's about 15 KB from the mGBA map, plus the background maps and the sprite table in video memory, against today's 387 KB copied in and out.
+3. Set that player's number and run a short view pass:
+   - camera;
+   - the arrows to the other players;
+   - HUD;
+   - building the sprite list;
+   - text;
+   - the frame flip and the VBlank copies.
+4. Draw that player's screen, then swap the overlay back out.
+
+Two loose ends:
+- **The "my Link" mark** comes along with the overlay automatically.
+- **Pickups need one port patch:** a pickup collected by player 2–4 must add to that player's overlay, because only player 1's copy runs the world.
+
+**Known limit:** the overlay map comes from session 1 (one stage). Scenes it doesn't cover (other stages, bosses, results) may have per-player bytes it misses. Step 7's check (comparing against the current build with separate game copies) finds those.
+
+**Next is 5c in the port:**
+- the overlay map built in;
+- the per-player swap;
+- the view pass;
+- the pickup patch.
+
+Then the comparison against the current build with separate game copies, which is also where the speed-up gets measured.
+
+## User
+
+There should be 4 different Link colors. Are there any unused palettes for him?
+
+## Claude
+
+I'll check the ROM: find the Link palettes in a stage's sprite palettes, then look at what sits next to them in the ROM.
+
+- tool `Bash`: python3 - <<'EOF' import struct m=open("build/ps2/mem_p0_f3000.bin","rb").read(); r=open("baserom.gba","rb").read() PAL=0x4A000 for p in range(16):     pal=m[PA
+
+- tool `Bash`: python3 - <<'EOF' import struct r=open("baserom.gba","rb").read() tpl=struct.unpack("<16H",r[0x44DD74:0x44DD94]) def rgb(c): return "#%02x%02x%02x"%((c&31)*255/
+
+## Claude
+
+Only the four known colours, twice. A looser search, matching only the skin/hair/outline entries 8–14 in case another variant changes entries 1–2 as well:
+
+- tool `Bash`: python3 - <<'EOF' import struct r=open("baserom.gba","rb").read() tpl=struct.unpack("<16H",r[0x44DD74:0x44DD94]) def rgb(c): return "#%02x%02x%02x"%((c&31)*255/
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; ls -la $S/loads.txt 2>/dev/null | head -2; grep -iE "084
+
+- tool `Bash`: arm-none-eabi-nm -n zeldaalttp.elf | awk '$1<="0800b974"' | tail -1; grep -rn "load_palette_from_gfx_group\|gGlobalGfxAndPalettes\|gUnknown_0844" src/rom2.c | h
+
+- tool `Bash`: grep -rn "^void load_palette\b\|^void load_palette(" -A25 src/*.c | head -40; sed -n 1,40p src/rom2.c
+
+- tool `Bash`: python3 - <<'EOF' import struct,subprocess r=open('baserom.gba','rb').read() out=subprocess.run(["arm-none-eabi-nm","zeldaalttp.elf"],capture_output=True,text=T
+
+## Claude
+
+The ROM has exactly four Link colours: green, red, blue and purple. There's no hidden fifth one. The only near-variant is a leftover that the game overwrites before it's ever shown. These are palette searches of our USA ROM, not a list of documented cut content.
+
+**Where the four colours are:** sprite palettes 7–10 in a stage. They share everything except the tunic and hat:
+- Entries 1–2 and 8–15 (skin, hair, outline) are identical in all four.
+- Only entries 3–7 change: three tunic shades, a blue shared by all four, and a light accent.
+
+| ROM address | Colour | Tunic shades | Accent |
+|---|---|---|---|
+| 0x0844DD74 | green | #107b29 #41a429 #10ff08 | #bdffa4 |
+| 0x0844DD94 | red | #7b1029 #ac3129 #ff0000 | #ffb4cd |
+| 0x0844DDB4 | blue | #10316a #2041ac #4a9cff | #aceeff |
+| 0x0844DDD4 | purple | #73207b #a420bd #f662ff | #e6cdff |
+
+**What I searched:**
+- **Exact template:** the whole ROM for every palette built on the same template. It found only these four, plus a second identical copy at 0x0844DED4 inside a larger block of palettes.
+- **Looser match:** matching only the skin/hair/outline entries. One near-match turned up at 0x0844F7D4: the green Link with entry 2 changed to pink and entry 7 to orange.
+
+**Why the near-match is never seen:** the game loads palettes through 18 palette groups. Group 17 loads a run of 12 palettes that puts this variant into the first Link's slot. The very next record of the same group then overwrites that slot with the normal green Link. It never loads in session 1 at all, but session 1 covers only one stage. It looks like a leftover rather than a usable colour.
+
+**For more than 4 players, new colours would have to be made.** That's straightforward because of the template: keep entries 1–2 and 8–15, and choose new tunic shades and an accent, e.g. yellow, orange, cyan, white and black for players 5–9. The colours are your design choice.
+
+**The harder part is palette slots.** In a stage all 16 GBA sprite palettes are in use, so there's no free slot for a fifth Link. With the GS renderer that limit isn't fixed: the renderer could give each extra player's Link its own palette at draw time, without the game needing more slots. That fits the "more than 4 players" work, which comes after the shared world.
+
+## User
+
+Note this in the docs, then proceed to step 5c
+

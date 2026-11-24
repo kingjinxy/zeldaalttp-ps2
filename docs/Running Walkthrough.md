@@ -1292,3 +1292,17 @@ The user asked to go ahead with the EE-side work for many screens (shared world 
   routine (`sub_080008A8`, 0x03005AE0) changes 0.1 bytes a call and nothing per-player (it queues entities in a shared
   draw list; `sub_08000BAC` builds the sprite list from it). The resulting 5c design (overlay of per-player bytes,
   a view pass per other player, one port patch for pickups) is in the Planning Doc.
+
+## Step 45: Link's palettes, for more than four players (2026-11-24)
+
+The user asked whether there are unused Link colours. Found from a stage's sprite palettes (the step 3 dump) and the
+ROM:
+- Sprite palettes 7-10 are the four Links, loaded in one copy (`swi 0x0C` from 0x0844DD74, 128 bytes, `load_palette`
+  via palette group 2). 0x0844DD74 is also the base all palette groups count from (`gUnknown_03000030`, main.c):
+  groups (`gUnknown_08429750`, 18) are records {u16 byte offset, u8 first slot, u8 count | 0x80 more}.
+- A search of the whole ROM for palettes on the Link template (entries 1-2 and 8-15 equal) finds only the four, and an
+  identical copy at 0x0844DED4 inside a 16-palette run (group 2 loads it, then the four again over it).
+- A looser search (entries 8-14) finds one near-variant at 0x0844F7D4: green with entry 2 pink and entry 7 orange.
+  Group 17 loads a 12-palette run that puts it in Link 1's slot, and the group's next record loads green Link over it,
+  so it's never shown. Session 1 never loads it at all.
+- So no fifth colour exists; the Planning Doc's "more than 4 players" section has what new ones would need.
