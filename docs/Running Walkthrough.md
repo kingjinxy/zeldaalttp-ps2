@@ -1143,3 +1143,29 @@ Both measured on the 2-player replay with temporary code that isn't kept: a pack
   - 0x03006730: 5 functions, mostly the file select.
 - These are the branches Phase 1 makes per player. Ones the session doesn't reach, ARM code and copies of the
   number held elsewhere still need a look then.
+
+## Step 39: where the room is kept, and how the DSi widened the view (2026-11-24)
+
+Two questions from the shared-world and wide-view work: is the whole room in memory both players share, and how did
+the DSi version change the view size.
+
+- **The room in shared memory.** From the step 3 dumps (2 players, frame 3000, in a stage): both metatile layers
+  (Step 23's buffers: map at +4, 64x64 halfwords, of 0x0201F020 top and 0x0200B320 bottom) are identical for both
+  players and cover 63x63 metatiles (1008x1008 pixels), the whole stage. Drawn from the dump with the live VRAM tiles
+  and palettes, the stage comes out complete. There's also a room-wide tile map, 128x128 tiles at 0x02016D90,
+  complete and shared; the second layer's at 0x020231D0 overlaps other data outside the room (some of it
+  per-player).
+- **How the game fills the background ring.** The ROM holds the layer addresses in literal pools at 0x08008E80
+  and 0x08009280: these belong to `sub_08008ED8`, Four Swords' `UpdateScrollVram` (Minish Cap's is at 0x08000108). It
+  calls the IWRAM copy of `sub_08008FA4` (ARM; `src/main.c` copies it to 0x03000530) with a buffer address and
+  0x02016D90. That routine copies a 32x24-tile window of the room tile map into the 32x32 ring (rows and columns
+  wrap with `and #31` / `and #60`), starting one tile left and two rows above the camera.
+- **The DSi version.** The ring-wrap instruction `and r3, r3, #60` occurs once in the DSi ARM9 (`reference/dsi/
+  extract/arm9.bin`), at 0x0207F884, inside a copy of the same routine (0x0207F7A0). It differs from the GBA one
+  in: columns wrap at 64 (`and #63`), 32 rows instead of 24, each row written as two 32-tile halves into two map
+  blocks (+0x800), and the margin subtractions removed (their branches left in place, skipping nothing). The source
+  is unchanged (room tile map, 256-byte stride). So the DSi uses a 64x32 map (512x256), redraws all of it, and
+  centres the camera on 128/96 (Step 23).
+- Plan for the PS2 wider view: Planning Doc, "Wider view". The DSi's route needs GBA background size 1 (64x32,
+  also supported by the GBA) and suits up to 320x240; 640-wide views need the PS2 renderer to draw from the room data
+  directly. The row/column scroll updates and the DSi's camera limits, sprite culling and HUD are still to read.

@@ -19712,3 +19712,92 @@ Shall I start with 5a?
 
 For now, write up a plan and table it
 
+- tool `Bash`: python3 - <<'EOF' p='docs/Planning Doc.md'; s=open(p).read() old="- [ ] 5. Split the frame: world update once, then per player with only that player's state blo
+
+## Claude
+
+The step 5 plan is written up in Phase 5 of [Planning Doc.md](docs/Planning Doc.md) and marked tabled, committed as `c429c10`. It has:
+
+- why splitting the frame this way is safe;
+- the main loop's calls, each marked as world, per player or going away;
+- sub-steps 5a–5d, each with its own checkbox and a session estimate;
+- the risks;
+- the expected first result: memory switches dropping from about 0.9M to about 0.05M cycles per player.
+
+Picking it back up starts at 5a, the write watch. Phase 0 is done, so the shared-world work is paused at step 5.
+
+The other open items:
+- the file-select null-pointer read that shows up with 4 players;
+- the bad-instruction crash around frame 1770;
+- 4 players running at 30 fps.
+
+## User
+
+Earlier we talked about looking at the DSi version to see how the player's viewport was expanded. In the work from earlier today, did we learn anything related to that?
+
+- tool `Bash`: cat ~/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/memory/fsae-features.md; grep -n -i "dsi\|wide" "docs/Running Walkthrough.md" "docs/Planning Doc.md" 
+
+- tool `Bash`: sed -n 715,725p "docs/Running Walkthrough.md"; sed -n 950,975p "docs/Running Walkthrough.md"
+
+## Claude
+
+Mostly indirectly. Nothing today looked at the DSi version itself. What we know about how it widened the view is still the earlier finding: the DSi's area-setup function centres the camera on 128/96 (half of its 256x192 screen) where the GBA uses 120/80 (half of 240x160). That's walkthrough Step 25's DSi notes.
+
+Several of today's results do bear on doing the same on the PS2:
+
+**1. Step 3 located the camera-dependent map data.** The players' memory differs in a ~6 KB EWRAM buffer (`gUnknown_0203A000`+0x2200) and in the background maps in VRAM at 0x0600C000–0x0600FFFF. Each player's map around their own camera lives there. That fits the Step 30 wide-view result: the background repeats every 256 pixels and the area below line 160 holds stale tiles, because the game only fills a 32-tile ring around the GBA-sized view. Widening the view means changing the code that fills these buffers.
+
+**2. Step 5a would find that code.** The planned write watch over the per-player bytes lists every function that writes them: camera, map streaming, sprite list, HUD. Those are the same functions a wider viewport has to change. Off-screen culling probably sits nearby, though the watch won't necessarily catch it. So 5a would also serve the resolution change.
+
+**3. A shared world may offer a way around the streaming code.** Step 3 found the world identical across players, and I expect that includes the room's full layer data. Minish Cap keeps whole-room layers in RAM, and our DSi notes show the GBA layer layout kept there too. I haven't checked this in our dumps. If it holds, the renderer could draw backgrounds for any viewport size straight from the room data, rather than from the game's 32-tile ring in VRAM. That would avoid rewriting the map streaming. Sprites and culling would still need game-side changes.
+
+**4. The wide view's speed problem is mostly solved.** Wide 2-player drawing with the software renderer cost about 19M cycles a frame (about 12 fps). The GS renderer draws a 240x160 screen for about 0.6M, and its cost grows with the number of tiles, not pixels. A 320x240 view is about twice the tiles, so roughly 1.2M per screen. The GS renderer doesn't support the wide view yet; that's a contained change.
+
+**Still not done:**
+- reading how the DSi code changed its map streaming and culling for the bigger screen (the camera-centre change is the only piece we have);
+- checking whether the room's full layer data is in the shared memory.
+
+Both would be a small add-on to step 5a when the shared-world plan comes off the table.
+
+## User
+
+Let's look into these two things right now
+
+- tool `Bash`: sed -n 660,735p "docs/Running Walkthrough.md"
+
+- tool `Bash`: python3 - <<'EOF' import struct a=open("build/ps2/mem_p0_f3000.bin","rb").read(); b=open("build/ps2/mem_p1_f3000.bin","rb").read() for name,base in (("top",0x1F
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - $S <<'EOF' import struct,sys,zlib from PIL imp
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/room_f3000_small.png
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/reference/tmc && grep -rln "gBG1Buffer\|gBG2Buffer\|gBG3Buffer" src | head; grep -n "^void\|^static void\|^u32" src/scrol
+
+- tool `Bash`: grep -rn "RenderMapLayer\|UpdateScrollVram\|sub_0801AE44\|DrawMapLayer\|mapLayer->subTileMap\|subTileMap" src include | head -20
+
+- tool `Bash`: grep -rn "UpdateScrollVram" asm src include data 2>/dev/null | grep -v "    UpdateScrollVram();" | head; grep -rn "^void UpdateScrollVram\|UpdateScrollVram:" -A
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2 && grep -rln "gUnknown_0200B320\|gUnknown_0201F020" asm src/*.c | head; grep -rn "gUnknown_0200B320\|gUnknown_0201F020" a
+
+- tool `Bash`: sed -n 30,80p asm/non_matching/file_select/sub_0802B9D0.inc; grep -n "sub_0802B9D0\|sub_0802BB24\|sub_0802BD58" src/*.c | grep -v "asm(" | head
+
+- tool `Bash`: grep -rln "0200B320\|0200b320\|0201F020\|0201f020" --include=*.s --include=*.inc --include=*.c . 2>/dev/null | grep -v "reference\|src/auto\|^./build" | head; p
+
+- tool `Bash`: arm-none-eabi-nm -n zeldaalttp.elf | awk '$1>="08008d00" && $1<="080092c0"'; grep -rn "sub_08008FA4\|sub_08008E\|sub_08009[0-2]" src/*.c | grep -v auto | head
+
+- tool `Bash`: cat asm/non_matching/rom1/sub_08008E5C.inc asm/non_matching/rom1/sub_08008ED8.inc asm/non_matching/rom1/sub_08008EFC.inc | head -120
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; dd if=baserom.gba of=$S/fsveneer.bin bs=1 skip=$((0x8ED8
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - $S <<'EOF' import struct,sys from PIL import I
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/tilemap_f3000_small.png
+
+- tool `Bash`: arm-none-eabi-objdump -D -b binary -marm --adjust-vma=0x02000000 --start-address=0x0207F7A0 --stop-address=0x0207F8C0 reference/dsi/extract/arm9.bin | tail -n +
+
+- tool `Bash`: grep -n -i "wide\|resolution" "docs/Planning Doc.md" | head
+
+- tool `Bash`: grep -n "^## \|^### " "docs/Planning Doc.md"
+
+- tool `Bash`: python3 - <<'EOF' p='docs/Planning Doc.md'; s=open(p).read() sec="""## Wider view (the DSi's resolution change, user priority 2 of the FSAE features) `WIDE_VIEW
+

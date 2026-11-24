@@ -178,6 +178,23 @@ Phase 2: rendering from shared graphics
 Phase 3: audio
 - [ ] 10. One mixer fed by the shared world
 
+## Wider view (the DSi's resolution change, user priority 2 of the FSAE features)
+`WIDE_VIEW` (walkthrough Step 30) draws more of the unchanged game: it shows the 32-tile background ring repeating
+and stale tiles, because the game streams only a 256x192 window of the room. What's known (2026-11-24, Step 39):
+- The game keeps the whole room in EWRAM, identical for every player: the two metatile layers (63x63 at
+  0x0201F024 top, 0x0200B324 bottom) and a room-wide tile map (128x128 tiles at 0x02016D90; the second layer's at
+  0x020231D0 overlaps other data outside the room).
+- The full redraw (`sub_08008FA4`, ARM, run from IWRAM through `sub_08008ED8`, Four Swords' `UpdateScrollVram`)
+  copies 32x24 tiles of the room tile map into a 32x32 ring. The DSi's copy of it (0x0207F7A0) copies 64x32 into a
+  64x32 map (512x256), without the one-tile margin; with the camera centred on 128/96.
+- [ ] Two routes: (a) as the DSi: 64x32 background maps (GBA BGCNT size 1, fine up to 320x240), a 64x32 redraw,
+      and the row/column scroll updates (`sub_080090A0`, `sub_08009106`?) and their DSi versions widened to match;
+      (b) the PS2 renderer draws the backgrounds straight from the room data at any size (needed beyond 512 wide,
+      e.g. 640x240), leaving the game's ring alone
+- [ ] Either way: the camera centre and limits, sprite culling, and the HUD for the bigger view; the DSi code for
+      those is still to find
+- [ ] The GS renderer with `WIDE_VIEW`
+
 ## Medium priority: more than 4 players
 Requested by the user (2026-11-16). After Phase 4 works with 4 players.
 - [ ] Find every 4-player limit: per-player arrays (`gUnknown_03006A30[4]`, `gUnknown_03006C80.unk28[4]`,
