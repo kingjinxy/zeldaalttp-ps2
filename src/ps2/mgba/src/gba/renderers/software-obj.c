@@ -151,8 +151,11 @@ int GBAVideoSoftwareRendererPreprocessSprite(struct GBAVideoSoftwareRenderer* re
 	if ((flags & FLAG_OBJWIN) && (renderer->currentWindow.priority < renderer->objwin.priority || renderer->d.disableOBJWIN)) {
 		return 0;
 	}
-	int32_t x = (uint32_t) GBAObjAttributesBGetX(sprite->b) << 23;
-	x >>= 23;
+	// PS2 port: x is negative only when the sprite wraps past 511 (the same as mGBA's sign extension for sprites that
+	// pass GBAVideoRendererCleanOAM in a 240-wide view; a wider view shows x 240-511 too)
+	int32_t x = GBAObjAttributesBGetX(sprite->b);
+	if (x + (width << (GBAObjAttributesAIsTransformed(sprite->a) && GBAObjAttributesAGetDoubleSize(sprite->a))) > 512)
+		x -= 512;
 	x += renderer->objOffsetX;
 	uint16_t* vramBase = &renderer->d.vram[BASE_TILE >> 1];
 	unsigned align = GBAObjAttributesAIs256Color(sprite->a) && !GBARegisterDISPCNTIsObjCharacterMapping(renderer->dispcnt);

@@ -26,6 +26,9 @@ endif
 ifdef INSTANCES  # players (default 4, src/ps2/main.c); touch src/ps2/main.c when changing it
 PS2_CFLAGS += -DINSTANCES=$(INSTANCES)
 endif
+ifdef WIDE_VIEW  # draw 320x240 (one player) or 640x240 (two) of the unchanged game's video memory (src/ps2/video.c); touch src/ps2/video.c when changing it
+PS2_CFLAGS += -DWIDE_VIEW
+endif
 ifdef VIDEO_MODE  # 0 240p, 1 480i, 2 480p, 3 480p 16:9, 4 720p (default: 240p for 1 player, else 480p, src/ps2/video.c); touch src/ps2/video.c when changing it
 PS2_CFLAGS += -DVIDEO_MODE=$(VIDEO_MODE)
 endif
@@ -97,8 +100,11 @@ $(B)/data/%.s: data/%.s
 $(B)/data/%.o: $(B)/data/%.s $(B)/asminclude/macro.inc
 	$(AS) -I$(B)/asminclude -I. $< -o $@
 
-# mGBA's software renderer (vendored, MPL-2.0)
-$(B)/mgba/%.o: src/ps2/mgba/src/gba/renderers/%.c
+# mGBA's software renderer (vendored, MPL-2.0); its headers set struct layouts shared with video.c, so a header change
+# rebuilds all of them
+MGBA_H := $(shell find src/ps2/mgba -name '*.h')
+$(B)/ps2/video.o $(B)/ps2/mgba_stubs.o: $(MGBA_H)
+$(B)/mgba/%.o: src/ps2/mgba/src/gba/renderers/%.c $(MGBA_H)
 	@mkdir -p $(dir $@)
 	$(CC) $(PS2_CFLAGS) -std=gnu11 -w -c $< -o $@
 

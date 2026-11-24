@@ -73,7 +73,7 @@ struct WindowControl {
 #define MAX_WINDOW 5
 
 struct Window {
-	uint8_t endX;
+	uint16_t endX;
 	struct WindowControl control;
 };
 
@@ -87,8 +87,8 @@ struct GBAVideoSoftwareRenderer {
 
 	GBARegisterDISPCNT dispcnt;
 
-	uint32_t row[GBA_VIDEO_HORIZONTAL_PIXELS];
-	uint32_t spriteLayer[GBA_VIDEO_HORIZONTAL_PIXELS];
+	uint32_t row[PS2_VIEW_MAX_W];
+	uint32_t spriteLayer[PS2_VIEW_MAX_W];
 	int32_t spriteCyclesRemaining;
 
 	// BLDCNT
@@ -135,12 +135,12 @@ struct GBAVideoSoftwareRenderer {
 	int16_t objOffsetX;
 	int16_t objOffsetY;
 
-	uint32_t scanlineDirty[5];
+	uint32_t scanlineDirty[(PS2_VIEW_MAX_H + 31) / 32];  // PS2 port: a bit per line of the tallest view
 	uint16_t nextIo[REG_SOUND1CNT_LO >> 1];
 	struct ScanlineCache {
 		uint16_t io[REG_SOUND1CNT_LO >> 1];
 		int32_t scale[2][2];
-	} cache[GBA_VIDEO_VERTICAL_PIXELS];
+	} cache[PS2_VIEW_MAX_H];
 	int nextY;
 
 	int start;

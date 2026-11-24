@@ -315,55 +315,75 @@ static uint16_t GBAVideoSoftwareRendererWriteVideoRegister(struct GBAVideoRender
 		}
 		break;
 	case REG_WIN0H:
-		softwareRenderer->winN[0].h.end = value;
-		softwareRenderer->winN[0].h.start = value >> 8;
-		if (softwareRenderer->winN[0].h.start > GBA_VIDEO_HORIZONTAL_PIXELS && softwareRenderer->winN[0].h.start > softwareRenderer->winN[0].h.end) {
+		softwareRenderer->winN[0].h.end = value & 0xFF;
+		softwareRenderer->winN[0].h.start = (value >> 8) & 0xFF;
+		if (softwareRenderer->winN[0].h.start > 240 && softwareRenderer->winN[0].h.start > softwareRenderer->winN[0].h.end) {
 			softwareRenderer->winN[0].h.start = 0;
 		}
-		if (softwareRenderer->winN[0].h.end > GBA_VIDEO_HORIZONTAL_PIXELS) {
-			softwareRenderer->winN[0].h.end = GBA_VIDEO_HORIZONTAL_PIXELS;
-			if (softwareRenderer->winN[0].h.start > GBA_VIDEO_HORIZONTAL_PIXELS) {
-				softwareRenderer->winN[0].h.start = GBA_VIDEO_HORIZONTAL_PIXELS;
+		if (softwareRenderer->winN[0].h.end > 240) {
+			softwareRenderer->winN[0].h.end = 240;
+			if (softwareRenderer->winN[0].h.start > 240) {
+				softwareRenderer->winN[0].h.start = 240;
 			}
+		}
+		if (softwareRenderer->winN[0].h.end == 240) { // PS2 port: the GBA screen's edge is the view's edge
+			softwareRenderer->winN[0].h.end = ps2_view_w;
+			if (softwareRenderer->winN[0].h.start == 240)
+				softwareRenderer->winN[0].h.start = ps2_view_w;
 		}
 		break;
 	case REG_WIN1H:
-		softwareRenderer->winN[1].h.end = value;
-		softwareRenderer->winN[1].h.start = value >> 8;
-		if (softwareRenderer->winN[1].h.start > GBA_VIDEO_HORIZONTAL_PIXELS && softwareRenderer->winN[1].h.start > softwareRenderer->winN[1].h.end) {
+		softwareRenderer->winN[1].h.end = value & 0xFF;
+		softwareRenderer->winN[1].h.start = (value >> 8) & 0xFF;
+		if (softwareRenderer->winN[1].h.start > 240 && softwareRenderer->winN[1].h.start > softwareRenderer->winN[1].h.end) {
 			softwareRenderer->winN[1].h.start = 0;
 		}
-		if (softwareRenderer->winN[1].h.end > GBA_VIDEO_HORIZONTAL_PIXELS) {
-			softwareRenderer->winN[1].h.end = GBA_VIDEO_HORIZONTAL_PIXELS;
-			if (softwareRenderer->winN[1].h.start > GBA_VIDEO_HORIZONTAL_PIXELS) {
-				softwareRenderer->winN[1].h.start = GBA_VIDEO_HORIZONTAL_PIXELS;
+		if (softwareRenderer->winN[1].h.end > 240) {
+			softwareRenderer->winN[1].h.end = 240;
+			if (softwareRenderer->winN[1].h.start > 240) {
+				softwareRenderer->winN[1].h.start = 240;
 			}
+		}
+		if (softwareRenderer->winN[1].h.end == 240) { // PS2 port: the GBA screen's edge is the view's edge
+			softwareRenderer->winN[1].h.end = ps2_view_w;
+			if (softwareRenderer->winN[1].h.start == 240)
+				softwareRenderer->winN[1].h.start = ps2_view_w;
 		}
 		break;
 	case REG_WIN0V:
-		softwareRenderer->winN[0].v.end = value;
-		softwareRenderer->winN[0].v.start = value >> 8;
-		if (softwareRenderer->winN[0].v.start > GBA_VIDEO_VERTICAL_PIXELS && softwareRenderer->winN[0].v.start > softwareRenderer->winN[0].v.end) {
+		softwareRenderer->winN[0].v.end = value & 0xFF;
+		softwareRenderer->winN[0].v.start = (value >> 8) & 0xFF;
+		if (softwareRenderer->winN[0].v.start > 160 && softwareRenderer->winN[0].v.start > softwareRenderer->winN[0].v.end) {
 			softwareRenderer->winN[0].v.start = 0;
 		}
-		if (softwareRenderer->winN[0].v.end > GBA_VIDEO_VERTICAL_PIXELS) {
-			softwareRenderer->winN[0].v.end = GBA_VIDEO_VERTICAL_PIXELS;
-			if (softwareRenderer->winN[0].v.start > GBA_VIDEO_VERTICAL_PIXELS) {
-				softwareRenderer->winN[0].v.start = GBA_VIDEO_VERTICAL_PIXELS;
+		if (softwareRenderer->winN[0].v.end > 160) {
+			softwareRenderer->winN[0].v.end = 160;
+			if (softwareRenderer->winN[0].v.start > 160) {
+				softwareRenderer->winN[0].v.start = 160;
 			}
+		}
+		if (softwareRenderer->winN[0].v.end == 160) { // PS2 port: the GBA screen's edge is the view's edge
+			softwareRenderer->winN[0].v.end = ps2_view_h;
+			if (softwareRenderer->winN[0].v.start == 160)
+				softwareRenderer->winN[0].v.start = ps2_view_h;
 		}
 		break;
 	case REG_WIN1V:
-		softwareRenderer->winN[1].v.end = value;
-		softwareRenderer->winN[1].v.start = value >> 8;
-		if (softwareRenderer->winN[1].v.start > GBA_VIDEO_VERTICAL_PIXELS && softwareRenderer->winN[1].v.start > softwareRenderer->winN[1].v.end) {
+		softwareRenderer->winN[1].v.end = value & 0xFF;
+		softwareRenderer->winN[1].v.start = (value >> 8) & 0xFF;
+		if (softwareRenderer->winN[1].v.start > 160 && softwareRenderer->winN[1].v.start > softwareRenderer->winN[1].v.end) {
 			softwareRenderer->winN[1].v.start = 0;
 		}
-		if (softwareRenderer->winN[1].v.end > GBA_VIDEO_VERTICAL_PIXELS) {
-			softwareRenderer->winN[1].v.end = GBA_VIDEO_VERTICAL_PIXELS;
-			if (softwareRenderer->winN[1].v.start > GBA_VIDEO_VERTICAL_PIXELS) {
-				softwareRenderer->winN[1].v.start = GBA_VIDEO_VERTICAL_PIXELS;
+		if (softwareRenderer->winN[1].v.end > 160) {
+			softwareRenderer->winN[1].v.end = 160;
+			if (softwareRenderer->winN[1].v.start > 160) {
+				softwareRenderer->winN[1].v.start = 160;
 			}
+		}
+		if (softwareRenderer->winN[1].v.end == 160) { // PS2 port: the GBA screen's edge is the view's edge
+			softwareRenderer->winN[1].v.end = ps2_view_h;
+			if (softwareRenderer->winN[1].v.start == 160)
+				softwareRenderer->winN[1].v.start = ps2_view_h;
 		}
 		break;
 	case REG_WININ:

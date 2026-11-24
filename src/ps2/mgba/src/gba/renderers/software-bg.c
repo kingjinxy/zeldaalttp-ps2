@@ -108,18 +108,18 @@ void GBAVideoSoftwareRendererDrawBackgroundMode3(struct GBAVideoSoftwareRenderer
 	BACKGROUND_BITMAP_INIT;
 
 	uint32_t color = renderer->normalPalette[0];
-	if (mosaicWait && localX >= 0 && localY >= 0 && (localX >> 8) < GBA_VIDEO_HORIZONTAL_PIXELS && (localY >> 8) < GBA_VIDEO_VERTICAL_PIXELS) {
-		LOAD_16(color, ((localX >> 8) + (localY >> 8) * GBA_VIDEO_HORIZONTAL_PIXELS) << 1, renderer->d.vram);
+	if (mosaicWait && localX >= 0 && localY >= 0 && (localX >> 8) < 240 && (localY >> 8) < 160) {
+		LOAD_16(color, ((localX >> 8) + (localY >> 8) * 240) << 1, renderer->d.vram);
 		color = mColorFrom555(color);
 	}
 
 	int outX;
 	uint32_t* pixel;
 	for (outX = renderer->start, pixel = &renderer->row[outX]; outX < renderer->end; ++outX, ++pixel) {
-		BACKGROUND_BITMAP_ITERATE(GBA_VIDEO_HORIZONTAL_PIXELS, GBA_VIDEO_VERTICAL_PIXELS);
+		BACKGROUND_BITMAP_ITERATE(240, 160);
 
 		if (!mosaicWait) {
-			LOAD_16(color, ((localX >> 8) + (localY >> 8) * GBA_VIDEO_HORIZONTAL_PIXELS) << 1, renderer->d.vram);
+			LOAD_16(color, ((localX >> 8) + (localY >> 8) * 240) << 1, renderer->d.vram);
 			color = mColorFrom555(color);
 			mosaicWait = mosaicH;
 		} else {
@@ -151,17 +151,17 @@ void GBAVideoSoftwareRendererDrawBackgroundMode4(struct GBAVideoSoftwareRenderer
 	if (GBARegisterDISPCNTIsFrameSelect(renderer->dispcnt)) {
 		offset = 0xA000;
 	}
-	if (mosaicWait && localX >= 0 && localY >= 0 && (localX >> 8) < GBA_VIDEO_HORIZONTAL_PIXELS && (localY >> 8) < GBA_VIDEO_VERTICAL_PIXELS) {
-		color = ((uint8_t*)renderer->d.vram)[offset + (localX >> 8) + (localY >> 8) * GBA_VIDEO_HORIZONTAL_PIXELS];
+	if (mosaicWait && localX >= 0 && localY >= 0 && (localX >> 8) < 240 && (localY >> 8) < 160) {
+		color = ((uint8_t*)renderer->d.vram)[offset + (localX >> 8) + (localY >> 8) * 240];
 	}
 
 	int outX;
 	uint32_t* pixel;
 	for (outX = renderer->start, pixel = &renderer->row[outX]; outX < renderer->end; ++outX, ++pixel) {
-		BACKGROUND_BITMAP_ITERATE(GBA_VIDEO_HORIZONTAL_PIXELS, GBA_VIDEO_VERTICAL_PIXELS);
+		BACKGROUND_BITMAP_ITERATE(240, 160);
 
 		if (!mosaicWait) {
-			color = ((uint8_t*)renderer->d.vram)[offset + (localX >> 8) + (localY >> 8) * GBA_VIDEO_HORIZONTAL_PIXELS];
+			color = ((uint8_t*)renderer->d.vram)[offset + (localX >> 8) + (localY >> 8) * 240];
 
 			mosaicWait = mosaicH;
 		} else {

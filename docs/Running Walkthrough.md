@@ -930,3 +930,39 @@ Aspect check against mGBA (user asked): PCSX2 screenshots looked too wide becaus
 `AspectRatio = 16:9`, which stretches the 4:3 output by 4/3 (a screen measured 316x158, ratio 2.0, against mGBA's
 240x160, 1.5). The port's output was right. Screenshot runs now pass `--set "AspectRatio=4:3"` to `pcsx2_run.py` (16:9
 for the 16:9 mode); with it the screens measure 306x204, 1.5. The earlier 240p/16:9 shots above were taken stretched.
+
+## Step 30: wide view, step 1: the renderer draws more than 240x160 (2026-11-24)
+
+Goal (user): try one player at 320x240 and two players at 640x240 each by drawing more of the game world, not
+stretching. Step 1 only changes the renderer, to see what the unchanged game puts in the extra area.
+
+- `make -f Makefile.ps2 WIDE_VIEW=1` (off by default): one player 320x240 (1:1 in 240p, 2x in 480p), two players
+  640x240 each, filling the 480p frame one above the other. Three or four keep 240x160.
+- mGBA renderer (`src/ps2/mgba`): `GBA_VIDEO_HORIZONTAL/VERTICAL_PIXELS` are now the variables `ps2_view_w/h`; line
+  buffers, the scanline cache and its dirty bits are sized for 640x240. Bitmap modes keep the GBA's 240x160 layout.
+  Sprites: x is negative only when the sprite wraps past 511 (mGBA sign-extended x 256-511, so a 320-wide view lost
+  them), and below a taller view means y up to 255. Window registers are 16-bit internally; a window edge at 240/160
+  (the GBA screen's edge) becomes the view's edge.
+- Memory: the four 640x240 pixel buffers didn't fit the ~2 MB EE heap (gsKit's allocation came back NULL, stores near
+  0x30000000). One 1.2 MB pool now holds two wide or four normal screens, and gsKit's draw queues are 64 KB/16 KB
+  instead of its 1.25 MB default (a clear and a sprite per screen each frame).
+- Check: at each dump frame the wide build also draws the GBA's own 240x160 from the same state
+  (`frame_p<n>_<frame>_gba.ppm`). Its pixels equal the wide frame's top-left 240x160 in all 10 dumps (title, Choose a
+  Stage, the stage while walking).
+- Build bug found on the way: mGBA objects didn't depend on mGBA's headers, so after the struct change
+  `software-mode0.o` (text backgrounds) kept the old layout and the stage drew with no backgrounds. `Makefile.ps2` now
+  rebuilds them (and `video.o`) when a header changes.
+
+What the extra area shows (PCSX2, two players with P1 walking, and one player at the lobby):
+- Backgrounds repeat every 256 pixels across: the maps are 256 wide (32 tiles), so the room, and the HUD layer with its
+  hearts and rupee counter, appear two and a half times on a 640-wide screen.
+- Below line 160: HUD-layer rows the game never fills (old tiles), black and stray tiles in the stage, tile data as
+  garbage on the title.
+- Sprites the GBA keeps out of sight become visible: the switches' sprites again below the screen, the "YOU / P1"
+  marker parked at x 250 in the lobby.
+- No other players or enemies appear in the extra area: the repeated room is the map wrapping, not more of the room.
+- Cost: wide two-player drawing is ~19M EE cycles a frame (4 frames of time), against ~6M for 240x160; about 12 fps.
+
+Not done: game side (map streaming, camera, culling, HUD), and a faster renderer. Found on the way, not from this
+change: with the A-only lobby replay, the EE executes a word that looks like a PS2 code address around frame 1770
+("Unknown R5900 SPECIAL", then a TLB miss at 0x24a00), in the normal build too. To investigate.

@@ -18060,3 +18060,304 @@ This is still uncommitted, along with the earlier 1:1 change in [video.c](src/ps
 
 Yes
 
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' p='docs/Running Walkthrough.md'; s=open(p).read() s=s.replace("two players at the largest size that fi
+
+## Claude
+
+Committed as `021be92`: two players at 1:1, stacked with no gap and centred in the 480p frame. The matching build still reports OK.
+
+The walkthrough's Step 29 now describes this layout and records the aspect-ratio finding. Your `PCSX2.ini` is set to 16:9, which stretched the screenshots; the port's output was correct. Screenshot runs now set the aspect ratio for each run, without changing your settings. The conversation archive is updated too, with no lines removed.
+
+## User
+
+What kind of work would it take to add an option to increase the emulated GBA screen size? I would like to try single player increased to 320x240 and two player increased to two 640x240 screens. We are NOT stretching the frame, but actually rendering more beyond the usual 240x160 of the GBA.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rli "widescreen\|wide screen\|aspect" reference/FourSwordsRecomp --include=*.md 2>/dev/null | head; grep -rn "DISP
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rln "DISPLAY_WIDTH\|DISPLAY_HEIGHT" reference/tmc/src | sed 's|reference/tmc/src/||' | tr '\n' ' '; echo; grep -c 
+
+## Claude
+
+It's doable, but it's a big job, and most of it is in the game rather than the renderer. The renderer is the easy part. The real work is getting the game to supply valid content for a bigger view.
+
+I haven't looked at Four Swords' own scrolling or sprite code yet. What follows comes from the Minish Cap engine it shares (`reference/tmc`), where the 240×160 screen size is used in 16 files.
+
+**1. Renderer (contained work).** mGBA's software renderer has 240×160 built in: line buffers, sprite clipping and window ranges. Making the width and height variables and the output buffers bigger is mechanical. The GS side is trivial: a 320×240 texture for one player, or 640×240 per player for two. The renderer also costs more as the area grows: two 640×240 screens are 8× the pixels of two 240×160 ones. Drawing is already the main cost per frame.
+
+**2. GBA hardware limits the extra area runs into.**
+- **Background maps** are at most 512×512 pixels and wrap around. 320×240 fits. A 640-wide view is wider than the largest map, so the left and right edges would show the same tiles.
+- **Sprite positions** are 9 bits across (0–511) and 8 bits down (0–255). Anything past x 511 wraps to the left side. For 640-wide screens, the port would need its own wider sprite coordinates, set where the game writes its sprite table.
+- **Window, mosaic and rotated-background registers** have similar 8-bit screen ranges. Effects like light circles and transitions use them.
+
+**3. The game itself (most of the work):**
+- **Tile streaming:** the engine writes only the map tiles near the visible screen, a column or row at a time as the camera moves. A wider view shows tiles that were never written.
+- **Camera limits:** the camera is clamped to room edges using 240 and 160. Many rooms are about one screen in size. A bigger view would show past the room edge unless there's a fill or a black border.
+- **Off-screen culling:** enemies and objects outside 240×160 (plus a margin) aren't drawn, and some aren't updated. Widening this could change gameplay, such as when enemies wake up.
+- **HUD and menus** (hearts, rupees, pause, "P1 PAUSE!") sit at fixed positions for 240×160. They need re-anchoring to the new edges.
+- **Fixed-size screens** like the title, file select, cutscenes and full-screen effects need a border or their own handling.
+
+**4. Our code base makes it harder.** Most Four Swords code is still assembly translated to C, not readable C. The 240 and 160 values are buried as constants inside that translated code, so each place has to be found and patched there. Or the functions involved get decompiled first, which is the slow part.
+
+**Suggested order:**
+1. **Renderer with a bigger area**, run on unchanged game code. This shows what goes wrong where (wrapped maps, missing tiles, culled sprites) without changing the game.
+2. **One player at 320×240 first.** It stays within the GBA's map and sprite limits, so only streaming, camera, culling and HUD need changes.
+3. **640×240 after that.** It also needs the wider sprite coordinates and a way past the 512-pixel map wrap.
+
+The DSi Anniversary Edition's wider screen (`reference/dsi`) may show how Nintendo handled HUD placement and room edges, and could be worth a look before designing step 3.
+
+Step 1 is a reasonable first experiment: probably a day or two of work. It would give screenshots showing how much each problem actually matters. Should I start there?
+
+## User
+
+Yes. Describe step 1 in more detail first
+
+- tool `Bash`: cd src/ps2/mgba; grep -rn "GBA_VIDEO_HORIZONTAL_PIXELS\|GBA_VIDEO_VERTICAL_PIXELS" --include=*.c --include=*.h . | awk -F: '{print $1}' | sort | uniq -c; grep -
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/src/ps2/mgba; grep -n "GBA_VIDEO_HORIZONTAL_PIXELS\|GBA_VIDEO_VERTICAL_PIXELS" include/mgba/gba/interface.h include/mgba/
+
+## Claude
+
+Step 1 makes the renderer draw a bigger area from the game's unchanged video memory and registers, then shows what appears in the extra part. No game code changes.
+
+**What changes**
+
+1. **mGBA renderer** ([src/ps2/mgba](src/ps2/mgba)): 240 and 160 are fixed constants in `interface.h`, used in 6 renderer files (35 places in `video-software.c`). I'd turn them into a view width and height set at startup. The per-line buffers would be sized for the largest view, 640×240. Two rules need adjusting, not just the size:
+   - **Sprite wraparound:** today a sprite at x ≥ 240 that ends before 512 is treated as hanging off the left edge. Below the screen it's y ≥ 160 that ends before 228. With a bigger view, those positions are on screen, so the test moves to the new width and height.
+   - **Window registers:** a game sets "right edge 240" or "bottom 160" to mean the whole screen. Taken literally, that clips everything past 240×160. I'd treat 240 and 160 as "to the edge of the view". It's a guess that may need cases.
+2. **Video output** ([video.c](src/ps2/video.c)):
+   - Pixel buffers become 640 wide (still 256 tall); texture sizes follow the view.
+   - GS memory: two 480p frame buffers (2.4 MB) plus two 640×240 textures (1.2 MB) fit in the GS's 4 MB, with little left over.
+   - Layouts: one player at 320×240 fills the 240p frame at 1:1 (2× in 480p). Two players at 640×240 each fill the 480p frame exactly, one above the other.
+3. **The option:** `make -f Makefile.ps2 VIEW=wide` (or similar), off by default, alongside `VIDEO_MODE`. Without it, the output stays exactly as now.
+
+**What it shows**
+
+The GBA picture stays at the top-left of the bigger view, and the extra area is to its right and below. That's where the problems show up:
+- **Map tiles never written:** the map wraps, or shows stale tiles from earlier rooms.
+- **Room edges:** beyond the room there's no fill, so whatever the map holds there appears.
+- **Culled objects:** enemies and objects past the old screen edge are missing, or freeze when they come into view.
+- **Hidden sprites:** sprites the game "hides" by parking them at x 240 or y 160 may now appear. On the GBA, that's just off screen.
+- **Fixed-size screens:** the title, file select and lobby show leftover tiles in the extra area.
+
+**Checks**
+- **Same picture where it overlaps:** with the option on, the top-left 240×160 of each screen should match the normal build's frame. Any difference is a renderer bug, not a game problem.
+- **Screenshots:** frame dumps at the title, file select, lobby, the stage, and some frames with the camera moving. Two players at 640×240, one player at 320×240. I'd send you the set with notes on what each shows.
+- **Usual run checks:** no TLB misses, `make compare` OK, a walkthrough entry, and a commit.
+
+**Cost and limits**
+- **Speed:** drawing two 640×240 screens is about 8 times the pixels of two 240×160 ones. Drawing already took about 4.2M EE cycles per screen out of 4.9M per frame. Wide two-player would run at only a few frames per second in PCSX2, which is fine for screenshots but not for play. Fixing that is a separate job: drawing on the GS instead of in software.
+- **Camera:** for step 1 the game camera isn't moved or centred, so each player's Link stays where they'd be on a 240×160 screen, top-left. Centring comes with the game-side changes.
+- **Map width:** at 640 wide, the right 128 pixels repeat the left of the 512-pixel map. That's expected, and the screenshots will show it.
+
+Estimate: about a day for the renderer and output, plus the screenshot run. Shall I go ahead?
+
+## User
+
+Yes
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/src/ps2/mgba; grep -n "GBA_VIDEO_HORIZONTAL_PIXELS\|GBA_VIDEO_VERTICAL_PIXELS\|VIDEO_VERTICAL_TOTAL" src/gba/renderers/*.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/src/ps2/mgba; sed -n 10,50p src/gba/renderers/common.c; sed -n 10,25p include/mgba/gba/interface.h; sed -n 975,990p src/g
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/src/ps2/mgba; grep -n "<< 23\|>>= 23\|GetX" src/gba/renderers/*.c; grep -n "VIDEO_VERTICAL_TOTAL_PIXELS\|VIDEO_HORIZONTAL
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/src/ps2/mgba; sed -n 140,175p src/gba/renderers/software-obj.c; cat include/mgba/flags.h 2>/dev/null | head; git -C /home
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/src/ps2/mgba; sed -n 314,372p src/gba/renderers/video-software.c; sed -n 440,452p src/gba/renderers/video-software.c
+
+## Claude
+
+Reworking the renderer's fixed 240×160 limits into a runtime view size; currently going through the window and sprite edge cases.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/src/ps2/mgba; grep -n "struct WindowRegion\|struct WindowN" -A6 include/mgba/internal/gba/renderers/video-software.h incl
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/src/ps2/mgba; grep -rn "struct GBAVideoWindowRegion {" -A4 include; grep -n "windows\[\|endX" include/mgba/internal/gba/r
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/src/ps2/mgba; grep -rn "GBAVideoWindowRegion\b" src include | grep -v "struct GBAVideoWindowRegion [hv];" ; grep -rn "\.e
+
+## Claude
+
+Applying the renderer edits.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/src/ps2/mgba; python3 - <<'EOF' import re def ed(p,pairs):     s=open(p).read()     for a,b,*n in pairs:         c=s.coun
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/src/ps2/mgba; sed -i -E 's/(winN\[[01]\]\.[hv]\.end) = value;/\1 = value \& 0xFF;/; s/(winN\[[01]\]\.[hv]\.start) = value
+
+## Claude
+
+Now the PS2 side: view size option, texture sizes and layout.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' p='src/ps2/video.c'; s=open(p).read() def r(a,b,n=1):     global s; c=s.count(a); assert c==n,(a,c); s
+
+## Claude
+
+Building the normal 2-player build first to check the renderer change leaves 240×160 output identical.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; mkdir -p $S/dump
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; ls -la build/ps2/*.elf; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scra
+
+## Claude
+
+The build didn't run (my grep filter broke the pipe), so that run used the old ELF. Rebuilding.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; systemd-run --user --scope -q -p MemoryMax=6G make -f Makefile.ps2 INSTANCES=2 -j4 elf > /tmp/claude-1000/-home-alex-Doc
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -i 's|))  // PS2: taller view: below it unless wrapping past 255 {|)) { // PS2: taller view: below it unless wrappin
+
+## Claude
+
+Those differences came from the old ELF too: the earlier dumps were from a run with saves present, so they're not a fair baseline. Using the run just done (old ELF, empty saves) as the baseline.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; rm -rf $S/dumps_
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -E "TLB Miss|FATAL|crash|epc|cause" $S/n2b.log | so
+
+## Claude
+
+EE ran out of memory: the bigger pixel buffers (2.4 MB for four 640×240 screens) left gsKit's allocation NULL. Wide view only needs two screens, so I'll share one 1.2 MB buffer instead.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' p='src/ps2/video.c'; s=open(p).read() def r(a,b,n=1):     global s; c=s.count(a); assert c==n,(a,c); s
+
+## Claude
+
+Still failing; finding what's at the faulting PC.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -m3 "TLB Mi
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "heap\|0x01[0-9A-Fa-f]*\|_stack" src/ps2/ps2.ld | head
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 66,80p src/ps2/ps2.ld
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' p='src/ps2/video.c'; s=open(p).read() a="    sGs = gsKit_init_global();\n"; assert s.count(a)==1 s=s.r
+
+## Claude
+
+It runs again, but every dump differs from the baseline. Checking whether that's the renderer or just game timing.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 -c " fro
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/cmp2000.png
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' p='src/ps2/video.c'; s=open(p).read() i=s.index("// draw the mapped instance's frame"); j=s.index("// 
+
+## Claude
+
+Also adding some walking to the replay so there are frames with the camera moving. Checking the end of the current replay script:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; wc -l build/ps2/replay_p*.inputs; tail -25 build/ps2/replay_p1.inputs | tr '\n' ' '; echo; tail -8 build/ps2/replay_p2.i
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; awk '$1>=1300 && $1<2000' build/ps2/replay_p1.inputs | tr '\n' ' '; echo; awk '$1>=1300 && $1<2000' build/ps2/replay_p2.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; mkdir -p $S/repl
+
+## Claude
+
+Running the wide build (slower drawing, so a longer run, in the background).
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; rm -f build/ps2/
+
+## Claude
+
+The wide 2-player run is going in the background (about 4½ minutes). Next I'll compare each screen's top-left 240×160 with the normal pass from the same frame.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat /tmp/claude-
+
+## Claude
+
+P1's screen matches its normal pass exactly at all five frames. P2's doesn't. Looking at why:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 -c " fro
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/p1cmp.png
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's|#defin
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/wide_stage.png
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; ffmpeg -loglevel error -y -i $S/n2d.png -vf crop=842:682
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/n2d_c.png
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/w2_c.png
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/src/ps2/mgba; git diff --stat .; grep -n "uint8_t\|int8_t" src/gba/renderers/software-mode0.c src/gba/renderers/software-
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/src/ps2/mgba; git diff src/gba/renderers/video-software.c | grep "^[-+]" | grep -v "PS2 port\|view_w\|view_h\|== 240\|== 
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/src/ps2/mgba; git diff src/gba/renderers/software-bg.c src/gba/renderers/common.c src/gba/renderers/software-obj.c includ
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; git diff src/ps2
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/old2_c.png
+
+## Claude
+
+Runs vary a lot in speed: this one reached only frame 1796, still on Choose a Stage. Rerunning longer so the old renderer reaches the same frames (2000–2800) as the dumps.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; rm -f build/ps2/
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/old_stage.png
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cp $S/video_wide
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/bis1.png
+
+## Claude
+
+Still broken with the window changes removed, so the cause is elsewhere. Looking at what else in the renderer is sized by the screen dimensions:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/src/ps2/mgba; grep -n "scanlineDirty\|VERTICAL_PIXELS\|HORIZONTAL_PIXELS\|\[5\]\|>> 5" include/mgba/internal/gba/renderer
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/src/ps2/mgba; grep -n "^void\|^static\|define BACKGROUND_BITMAP_ITERATE" -A0 src/gba/renderers/software-bg.c src/gba/rend
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rn "GBA_VIDEO_HORIZONTAL_PIXELS\|GBA_VIDEO_VERTICAL_PIXELS" src include --include=*.h --include=*.c | grep -v "src
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 99,104p Makefile.ps2; ls -la --time-style=+%H:%M build/ps2/mgba/
+
+## Claude
+
+Confirmed: `software-mode0.o` is from yesterday, compiled against the old struct. Adding header dependencies to the Makefile, restoring the full patch, and fixing the `scanlineDirty` size.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; git checkout src
+
+## Claude
+
+All mGBA objects rebuilt. Now running the normal 2-player build, then the wide one, with the walking replay (in the background, about 8 minutes).
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for p in 1 2; do
+
+## Claude
+
+The missing backgrounds were a build bug, not the renderer change. The Makefile didn't rebuild mGBA's objects when a header changed. `software-mode0.c`, which draws the stage's tile backgrounds, kept the old struct layout while the other files used the new one. The Makefile now rebuilds them when the headers change, and they've all been rebuilt.
+
+I also fixed a real bug that would have hit the wide view: the renderer's per-line dirty bits only covered 160 lines.
+
+Normal and wide 2-player runs are going now, with P1 walking in the stage.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat /tmp/claude-
+
+## Claude
+
+The top-left 240×160 matches the normal pass exactly at all 10 dumps. Looking at the wide frames:
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/wide_all.png
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -E "cost|video:" $S/w3.log | tail -2; grep -E "cost
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/w3_c.png
+
+## Claude
+
+Both runs logged TLB misses (50 lines each), so I'm checking those before anything else:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep "TLB Miss" 
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for f in nrm w3 w2 n2d; do echo "== $f"; grep -n -B3 -m1
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; touch src/ps2/vi
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/w1_c.png
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; touch src/ps2/vi
+

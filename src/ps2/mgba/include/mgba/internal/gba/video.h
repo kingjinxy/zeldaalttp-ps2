@@ -99,8 +99,8 @@ union GBAOAM {
 };
 
 struct GBAVideoWindowRegion {
-	uint8_t end;
-	uint8_t start;
+	uint16_t end;  // PS2 port: wider than 8 bits, so a window can reach past x 255 in the wide view
+	uint16_t start;
 };
 
 #define GBA_TEXT_MAP_TILE(MAP) ((MAP) & 0x03FF)

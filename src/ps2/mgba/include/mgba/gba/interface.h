@@ -17,6 +17,13 @@ enum {
 	GBA_VIDEO_HORIZONTAL_PIXELS = 240,
 	GBA_VIDEO_VERTICAL_PIXELS = 160,
 };
+// PS2 port: the renderer draws a view of ps2_view_w x ps2_view_h (240x160 normally; up to 640x240 with the wide view,
+// src/ps2/video.c), so the screen size is a variable from here on. GBA hardware sizes (bitmap modes) use 240/160.
+extern int ps2_view_w, ps2_view_h;
+#define GBA_VIDEO_HORIZONTAL_PIXELS ps2_view_w
+#define GBA_VIDEO_VERTICAL_PIXELS ps2_view_h
+#define PS2_VIEW_MAX_W 640
+#define PS2_VIEW_MAX_H 240
 
 enum GBASIOMode {
 	SIO_NORMAL_8 = 0,

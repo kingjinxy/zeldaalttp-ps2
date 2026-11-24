@@ -24,7 +24,7 @@ int GBAVideoRendererCleanOAM(struct GBAObj* oam, struct GBAVideoRendererSprite* 
 				width <<= GBAObjAttributesAGetDoubleSize(obj.a);
 				cycles = 10 + width * 2;
 			}
-			if (GBAObjAttributesAGetY(obj.a) >= GBA_VIDEO_VERTICAL_PIXELS && GBAObjAttributesAGetY(obj.a) + height < VIDEO_VERTICAL_TOTAL_PIXELS) {
+			if (GBAObjAttributesAGetY(obj.a) >= GBA_VIDEO_VERTICAL_PIXELS && GBAObjAttributesAGetY(obj.a) + height < (GBA_VIDEO_VERTICAL_PIXELS > 160 ? 256 : VIDEO_VERTICAL_TOTAL_PIXELS)) { // PS2: taller view: below it unless wrapping past 255
 				continue;
 			}
 			if (GBAObjAttributesBGetX(obj.b) >= GBA_VIDEO_HORIZONTAL_PIXELS && GBAObjAttributesBGetX(obj.b) + width < 512) {
