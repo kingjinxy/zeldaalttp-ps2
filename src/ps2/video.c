@@ -54,6 +54,17 @@ static const struct Mode {
     [VIDEO_480P_WIDE] = { GS_MODE_DTV_480P, 0, 640, 480, 854, 3, GS_PSM_CT32, "480p 16:9" },
     [VIDEO_720P] = { GS_MODE_DTV_720P, 0, 640, 720, 1280, 4, GS_PSM_CT16, "720p" },
 };
+#ifdef SCREENS  // the 3x3 grid (place()): 720p at its full 1280 width (the GS renderer draws no textures, so two
+                // 1280x720 16-bit buffers fit)
+#ifndef GS_RENDER
+#error "SCREENS needs GS_RENDER=1"
+#endif
+#define NSCREENS SCREENS
+#define CELL_W 426  // 1280 / 3, even
+#define CELL_H 240
+#else
+#define NSCREENS sInstances
+#endif
 #ifndef VIDEO_MODE
 #define VIDEO_MODE VIDEO_AUTO
 #endif
@@ -69,7 +80,17 @@ void ps2_video_init(int instances)
     int i, magh, dw, dx, dy;
     if (ps2_video_mode < 0 || ps2_video_mode > VIDEO_720P)
         ps2_video_mode = instances > 1 ? VIDEO_480P : VIDEO_240P;
+#ifdef SCREENS
+    {
+        static struct Mode m;
+        m = sModes[VIDEO_720P];
+        m.fbw = 1280;
+        ps2_video_mode = VIDEO_720P;
+        sMode = &m;
+    }
+#else
     sMode = &sModes[ps2_video_mode];
+#endif
     sInstances = instances;
 #ifdef WIDE_VIEW
     if (instances <= 2)
@@ -81,6 +102,9 @@ void ps2_video_init(int instances)
     if (instances == 2)
         ps2_view_w = 320, ps2_view_h = 480;
 #endif
+#endif
+#if defined(SCREENS) && defined(WIDE_VIEW)  // the cell's shape at 1.5x: 284x160 of the GBA's pixels
+    ps2_view_w = CELL_W * GBA_H / CELL_H & ~1, ps2_view_h = GBA_H;
 #endif
     sTexW = (VIEW_W + 63) & ~63;
     dmaKit_init(D_CTRL_RELE_OFF, D_CTRL_MFD_OFF, D_CTRL_STS_UNSPEC, D_CTRL_STD_OFF, D_CTRL_RCYC_8,
@@ -245,6 +269,13 @@ void ps2_video_render(int inst)
         int px, py, pw, ph;
         screen_rect(inst, &px, &py, &pw, &ph);
         ps2_gsr_draw(fb, sGs->Width / 64, px, py, pw, ph);
+#ifdef SCREENS  // shortcut: screens past the players show them again (cost and layout test) until there are more players
+        for (y = inst + sInstances; y < NSCREENS; y += sInstances) {
+            int qx, qy, qw, qh;
+            screen_rect(y, &qx, &qy, &qw, &qh);
+            ps2_gsr_draw(fb, sGs->Width / 64, qx, qy, qw, qh);
+        }
+#endif
         sFrameRender += count() - t0;
         for (y = 0; y < 4; y++)  // frames with an HBlank DMA (the window wipes) are checked too, as in the software path
             if ((IO16(0xBA + 12 * y) & 0xB000) == 0xA000 && sHdmaDumps < 24 && n % 4 == 0) {
@@ -311,6 +342,17 @@ static void place(int i, int instances, float *x, float *y, float *w, float *h)
     }
     else
         s = 1;
+#ifdef SCREENS  // 3x3 cells of CELL_W x CELL_H, the centre one black: the view as large as fits, centred in its cell
+    s = (float)CELL_H / VIEW_H;
+    if (s * VIEW_W > CELL_W)
+        s = (float)CELL_W / VIEW_W;
+    *w = VIEW_W * s, *h = VIEW_H * s;
+    i += i >= 4;  // skip the centre
+    *x = (aw - 3 * CELL_W) / 2 + (i % 3) * CELL_W + (CELL_W - *w) / 2;
+    *y = (ah - 3 * CELL_H) / 2 + (i / 3) * CELL_H + (CELL_H - *h) / 2;
+    (void)cw, (void)ch, (void)instances;
+    return;
+#endif
     *w = VIEW_W * s, *h = VIEW_H * s;
     if (instances == 1)
         *x = (cw - *w) / 2, *y = (ch - *h) / 2;
@@ -326,7 +368,7 @@ static void place(int i, int instances, float *x, float *y, float *w, float *h)
 static void screen_rect(int i, int *x, int *y, int *w, int *h)
 {
     float fx, fy, fw, fh, kx = (float)sMode->fbw / sMode->aw;
-    place(i, sInstances, &fx, &fy, &fw, &fh);
+    place(i, NSCREENS, &fx, &fy, &fw, &fh);
     *x = (int)(fx * kx + 0.5f), *y = (int)(fy + 0.5f), *w = (int)(fw * kx + 0.5f), *h = (int)(fh + 0.5f);
 }
 

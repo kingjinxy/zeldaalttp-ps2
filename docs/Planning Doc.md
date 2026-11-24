@@ -298,6 +298,11 @@ Requested by the user (2026-11-16). After Phase 4 works with 4 players.
       on the template (entries 3-7), and all 16 sprite palettes are in use in a stage: the GS renderer can give an
       extra player's Link its own CLUT at draw time instead of a GBA palette slot.
 - [ ] Input beyond 4 pads on the PS2 (two multitaps give 8) and a screen layout for 5+ views
+      Layout done (2026-11-24, walkthrough Step 49): `SCREENS=8` (GS renderer), a 3x3 grid of 426x240 cells at
+      1280x720, centre black; with `WIDE_VIEW=1` each view is 284x160 GBA pixels at 1.5x. Until there are more players,
+      screens 5-8 repeat players 1-4. Cost with 4 players, shared world: render 6.77 M + game 0.58 M cycles (30 fps).
+- [ ] Players 5+ in a stage: lift the 4-player limits above (shared world); white Link palette for 5+ (GS CLUT at
+      draw time); pack the saved blocks at 512 KB (eight 1 MB blocks don't fit in 32 MB)
 - [ ] Easier in the Phase 5 shared world (per-player arrays sized by a constant) than with linked instances
 
 ## Open decisions

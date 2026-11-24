@@ -21630,3 +21630,130 @@ The 2-player check still matches at all 34 frames. With 4 players the frame cost
 
 - tool `Bash`: Update docs, verify, archive and commit
 
+- tool `PushNotification`: 
+
+## Claude
+
+Four players now render in a stage with the shared world: four screens in a 2×2 layout, each with its own camera and YOU marker, at a steady 60 fps. A frame costs about 3.25M of the 4.9M-cycle budget (2.67M drawing, 0.58M game logic); the build with separate copies runs at 30 fps.
+
+**Inputs for now:** players 3 and 4 had no recording, so they sat on file select and the game never reached a stage. I copied player 2's recording to `build/ps2/replay_p3.inputs` and `replay_p4.inputs`. These are local build files, not committed, so players 3 and 4 just mirror player 2 until real inputs are done.
+
+**Bug fixed:** on the first run, players 3 and 4 had no hearts and an orange badge instead of blue. The cause was the list of memory each player keeps private. I built that list by comparing two linked GBAs, and their pointers to their own player record differ only in the lowest byte. So only that byte was private, and players 3 and 4 got the upper byte from player 1, which pointed them at the wrong record. The list generator now keeps whole 32-bit words private, which covers any other pointer or index with the same problem. Three other guesses before that didn't help.
+
+**Checks:**
+- No TLB misses with 4 players.
+- The 2-player replay still matches the separate build at all 34 check frames.
+- `make compare` reports OK.
+- Committed as `6befcb1`, with walkthrough Step 48 and the plan updated.
+
+**Not verified:** the 4-player run hasn't been compared pixel for pixel against the separate build. With the copied recordings the two builds reach the stage at different frames, so there's no matching frame to compare. At frame 2800 the separate build was paused and the shared one wasn't. That will be possible once there are real 4-player inputs. So far it's checked by eye on the screenshots and by the corrected HUD.
+
+## User
+
+For correction, the "orange badge" was actually the shield item currently equipped. The fix worked, but I wanted to correct that terminology
+
+## Claude
+
+Fix the doc wording.
+
+- tool `Bash`: Find badge mentions in docs
+
+- tool `Bash`: Correct the wording
+
+- tool `Bash`: Reword and commit
+
+## Claude
+
+Thanks for the correction. That fits the cause: the icon shows the equipped item, which comes from the player's record, and players 3 and 4 were reading the wrong record. So they showed the shield instead of their own item.
+
+Walkthrough Step 48 now describes it as players 3 and 4 showing the shield as their equipped item, read from the wrong player record. Committed as `fb7a212`.
+
+## User
+
+It was only the wrong color; all players do actually start with the shield equipped in this scenario
+
+- tool `Bash`: Fix wording again and commit
+
+## Claude
+
+Thanks, fixed. Walkthrough Step 48 now says players 3 and 4 showed the right item, the shield every player starts with here, but in the wrong colour. Committed as `a16da2b`.
+
+## User
+
+Now, let's try adding more players. For now, use a white palette for players beyond 4. Using the 1280x720p frame, arrange the players in a 3x3 grid, with the center left black. If my math is right, 422x240 gives the largest possible area for each player while keeping an even grid size.
+
+## Claude
+
+Before writing code, the plan's "more than 4 players" section, since the game's own arrays are sized for 4:
+
+- tool `Bash`: Find the >4 players plan
+
+- tool `Bash`: Read the >4 players section
+
+## Claude
+
+Most of this is a bigger job than the layout, so here's how I'd break it down before changing anything.
+
+**Getting 8 players into the game is most of the work.** The game is built for 4 everywhere:
+- per-player records: `gUnknown_03006A30[4]`, 0x90 bytes each;
+- the link packets and the key ring buffer `gUnknown_0200B1D0[4][16]`;
+- 2-bit player indices and `i <= 3` loops;
+- spawn points, HUD slots, and the four Link palettes.
+
+The plan already has "find every 4-player limit" as the first item under "more than 4 players". That has to be done before a 5th Link can exist in the world. The shared world makes it easier, because there's one world and per-player data is just my overlay, but it's still a search through the game code.
+
+**The 3×3 layout at 720p is separate, and I can do it now.**
+- **Size:** 1280/3 = 426.7 and 720/3 = 240, so 426×240 also gives an even grid and is slightly larger than 422×240 (3×426 = 1278 ≤ 1280). Is there a reason for 422, like a gap between screens? Otherwise I'd use 426.
+- **What each screen shows:** a 422/426×240 view isn't the GBA's 3:2 shape. Scaled ×1.5 to fill 240 rows, it shows about 281×160 GBA pixels, so it needs the wide view. That view currently widens only the backgrounds; sprites, HUD and camera are still unfinished steps 2–5.
+- **GS memory:** two 1280×720 16-bit frame buffers take 3.6 MB of the 4 MB. Tiles and palettes still fit, just barely.
+- **EE time:** drawing costs about 0.67M cycles per screen, so 8 screens come to about 5.3M per frame, over the 4.9M budget. Expect 30 fps until drawing gets cheaper.
+- **Memory:** each player's saved block now takes 1 MB, and 8 won't fit under 32 MB. I'd pack them at 512 KB; a block uses 480 KB.
+
+**The white palette** goes in the GS renderer as a separate palette for players 5–8's Links at draw time, as the plan's palette note suggests. This only matters once those Links exist.
+
+**My suggested order:**
+1. Layout: 8 view slots in the 3×3 grid at 720p, centre black, saved blocks packed. With 4 real players, slots 5–8 would show extra views of players 1–4, as a stand-in to test layout and cost.
+2. The 4-player limits survey, written up in the plan.
+3. Lifting those limits in the shared world, plus the white palette and spawning players 5–8.
+4. Inputs for 5–8 (multitap, or recordings).
+
+Should I start with step 1, and is 426 OK instead of 422?
+
+## User
+
+Yes and yes
+
+## Claude
+
+Starting step 1. First, the layout code in video.c:
+
+- tool `Bash`: Find layout code in video.c
+
+- tool `Bash`: Read video.c setup part
+
+- tool `Bash`: Read video.c render and place parts
+
+- tool `Bash`: Check flags and GS renderer frame width use
+
+## Claude
+
+Writing the changes in [Makefile.ps2](Makefile.ps2) and [video.c](src/ps2/video.c):
+
+- tool `Bash`: Add the SCREENS 3x3 layout
+
+## Claude
+
+Building with the shared world, wide view, 4 players and `SCREENS=8`, then taking a screenshot:
+
+- tool `Bash`: Build and run the 8-screen layout
+
+- tool `Bash`: Read video and cost lines
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/s8.png
+
+- tool `Bash`: Dump the full 1280x720 frame
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/full.png
+
+- tool `Bash`: Revert temp dump, update docs, commit
+

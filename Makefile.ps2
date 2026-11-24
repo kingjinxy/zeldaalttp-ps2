@@ -42,6 +42,10 @@ endif
 ifdef SHARED_WORLD  # in a stage the world runs once and the other players get a view pass (src/ps2/shared.c); touch src/ps2/main.c src/ps2/tlb.c src/ps2/shared.c when changing it
 PS2_CFLAGS += -DSHARED_WORLD
 endif
+ifdef SCREENS  # 5-9: a 3x3 grid of 426x240 screens at 720p, the centre black (GS renderer only; until there are more
+# than 4 players, screens 5-8 show players 1-4 again). Touch src/ps2/video.c when changing it
+PS2_CFLAGS += -DSCREENS=$(SCREENS)
+endif
 ifdef SHARED_CHECK  # with SHARED_WORLD: log world bytes a view pass changes
 PS2_CFLAGS += -DSHARED_CHECK
 endif

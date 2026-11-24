@@ -1392,3 +1392,16 @@ ROM:
 - **Result:** all four HUDs right; render 2.67 M + game 0.58 M cycles a frame of 4.9 M (60 fps); no TLB misses. The
   2-player replay is still identical to the separate build at all 34 check frames. The 4-player run isn't compared
   pixel for pixel: with the copied scripts the separate build reaches the stage at a different frame.
+
+## Step 49: a 3x3 layout for up to 8 screens at 720p (2026-11-24)
+
+- `make -f Makefile.ps2 SCREENS=8 WIDE_VIEW=1 GS_RENDER=1 SHARED_WORLD=1` (GS renderer only). 720p gets its full
+  1280-wide frame under `SCREENS` (the existing 720p mode is a 640-wide buffer doubled; two 1280x720 16-bit buffers
+  take 3.7 MB of the GS's 4 MB, and the GS renderer allocates only its 136 KB of tiles and CLUTs). `place()` puts
+  screen i in a 426x240 cell of a 3x3 grid (1280/3 rounded down to even; 720/3), skipping the centre, which stays black;
+  the view is the cell's shape at 1.5x, 284x160 GBA pixels with `WIDE_VIEW`, or 240x160 centred in the cell without.
+- Shortcut until the game has more than four players: screens past the instances repeat them (`ps2_video_render`
+  draws player i again at screens i+4...), so the drawing cost is that of eight views.
+- Checked with a one-off readback of the whole frame at frame 2800 (the PCSX2 window shrinks the 1280x720 output):
+  eight views in place, the centre black. Each view's HUD sits at the GBA screen's position (the wide view's HUD step
+  isn't done). Cost: render 6.77 M + game 0.58 M cycles a frame of 4.9 M, so 30 fps.
