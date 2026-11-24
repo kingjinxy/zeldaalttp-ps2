@@ -231,6 +231,12 @@ Phase 1: the world runs once (`FS_SHARED_WORLD`, breaks GBA matching on purpose)
         and the sprite list (5 extra shadow sprites: the draw walk queues entities the real frame doesn't). Next: make
         the stage frame's per-player branches (pause, its text) run in the view pass, and replace the draw walk with
         the entities that really reached `sub_08003688` this frame.
+  - [x] 5c, pause and sprites (2026-11-24, walkthrough Step 47): both players' screens identical to the separate build
+        at all 34 check frames of the 2-player replay (two pauses, an unpause), `SHARED_CHECK` clean, no TLB misses;
+        game share 0.39 M cycles a frame for two players (1.84 M separate). Left: player 1's memory still differs in
+        ~45 bytes that don't reach the screen (link packet bytes at 0x020305EF..., 0x03000490, 0x03001FF2,
+        0x03006C70/0x03006EF8/0x03006F0C); 4 players untested (players 3-4 have no recorded input); other stages,
+        bosses and the results screen untested; the pickup patch (kind 3).
   - [ ] 5c, as planned: Port, under `FS_SHARED_WORLD`: one world block plus a ~13 KB overlay per player, swapped by
         `ps2_tlb_select`. Frame: player 0 runs the whole frame as now; players 1-3 get their overlay, the player
         number byte (0x03000414) and only the view functions from 5b. Keys straight into the arrays the link

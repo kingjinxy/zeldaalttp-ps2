@@ -22,6 +22,7 @@ void ps2_log(const char *fmt, ...);
 void ps2_vblank_run(void);
 void ps2_input_frame(int inst);
 extern int ps2_cur_instance;
+extern u32 ps2_gstate_watch;
 
 int ps2_shared;           // 1 while the world runs once
 static int sHolder;       // whose per-player bytes are in the live block
@@ -86,27 +87,38 @@ unsigned char sub_0803781C(unsigned short);
 void DoObjectEntity(void *);
 extern u32 gUnknown_03000BF0;
 extern u8 gUnknown_03000FF8[];
-#define E20_UNK11 (*(volatile u8 *)0x03000E31)  // gUnknown_03000E20.unk11: the stage is paused
+#define E20_UNK11 (*(volatile u8 *)0x03000E31)  // gUnknown_03000E20.unk11: the stage is paused (world)
+#define PAUSE_UI (*(volatile u8 *)0x0201EF18)   // this player's pause screen state (sub_0802D988's table index)
 
 void sub_08003688(void *);
+extern u8 sub_08003688__base[];
 
-// every entity's draw step, in update order (UpdateAllEntities' lists): sub_08003688 puts a visible entity that's on
+// the entities whose draw step ran in instance 0's frame, in order (ps2_gstate_seen: the gstate entry watch on
+// sub_08003688). An entity draws only in some states (its handler decides), so the view pass replays this list rather
+// than every entity in the lists.
+static u32 sDrawn[512];
+static int sNDrawn;
+
+void ps2_gstate_seen(u32 r0)
+{
+    if (sHolder == 0 && ps2_cur_instance == 0 && sNDrawn < 512)  // instance 0's frame, not a view pass
+        sDrawn[sNDrawn++] = r0;
+}
+
+// the draw steps of instance 0's frame again, for this player's screen: sub_08003688 puts a visible entity that's on
 // this player's screen into the draw lists sub_08000BAC turns into sprites (instance 0's frame emptied them). The
-// off-screen arrows (object 16, sub_08052B88) run their whole update, positioned from this player's camera; it ends in
-// the same draw step. The sound queue sub_08003688 plays from is empty after instance 0's frame.
+// off-screen arrows (object 16, sub_08052B88) run their whole update instead, positioned from this player's camera; it
+// ends in the same draw step. The sound queue sub_08003688 plays from is empty after instance 0's frame.
+// shortcut: an arrow instance 0's frame didn't update isn't drawn; fine while every player has one (all Links in play).
 static void draw_entities(void)
 {
-    u8 *list;
-    for (list = (u8 *)0x03005960; list < (u8 *)0x030059A0; list += 8) {
-        u8 *e = *(u8 **)(list + 4);
-        while (e != list) {
-            u8 *next = *(u8 **)(e + 4);
-            if (e[8] == 6 && e[9] == 16)
-                DoObjectEntity(e);
-            else
-                sub_08003688(e);
-            e = next;
-        }
+    int k;
+    for (k = 0; k < sNDrawn; k++) {
+        u8 *e = (u8 *)sDrawn[k];
+        if (e[8] == 6 && e[9] == 16)
+            DoObjectEntity(e);
+        else
+            sub_08003688(e);
     }
 }
 
@@ -120,7 +132,9 @@ static void view_pass(void)
     gUnknown_03000BF0 = sub_0800C54C(gUnknown_03000FF8);
     sub_08036864();
     if (sub_08037554()) {
-        if (E20_UNK11 || sub_0803781C(8)) {
+        // the pause path also while this player's pause screen is still up: the unpause clears the world's flag in
+        // instance 0's frame, before this player's own last pause step (state 3 back to 0) has run
+        if (E20_UNK11 || sub_0803781C(8) || PAUSE_UI) {
             sub_0802D988();
             sub_0802CD3C();
         } else {
@@ -181,6 +195,7 @@ void ps2_shared_views(int instances, void (*render)(int inst))
         ps2_input_frame(i);  // keys for this player's next frame
     }
     overlay_swap(0);
+    sNDrawn = 0;  // for instance 0's next frame
 }
 
 // ---- entering and leaving ----------------------------------------------------------------------------------------------
@@ -205,6 +220,8 @@ int ps2_shared_try_enter(int instances, void (*select)(int inst))
             return 0;
     select(0);
     sHolder = 0;
+    sNDrawn = 0;
+    ps2_gstate_watch = (u32)sub_08003688__base;
     ps2_shared = 1;
     ps2_log("shared: the world runs once from here (%d players)", instances);
     return 1;
@@ -235,7 +252,11 @@ int ps2_shared_try_leave(int instances)
                     o = b;
             }
     ps2_shared = 0;
+    ps2_gstate_watch = 0;
     ps2_log("shared: separate instances again");
     return 1;
 }
+#else
+typedef unsigned int u32;
+void ps2_gstate_seen(u32 r0) { (void)r0; }  // the gstate entry watch is never set without the shared world
 #endif

@@ -19,8 +19,9 @@ struct GstateCpu {
 #define GSTATE_RING ((volatile u32 *)0x0203C200)
 #define GSTATE_TRACE(a) do { u32 i_ = GSTATE_RING[0] % 1024; GSTATE_RING[1 + 3 * i_] = (a); GSTATE_RING[2 + 3 * i_] = gCpu.r[13]; \
     GSTATE_RING[3 + 3 * i_] = lr; GSTATE_RING[0] = i_ + 1; GSTATE_TRACE_PRINT(a); } while (0)
-#ifdef PLATFORM_PS2  // src/ps2/frame.c: prints entries while ps2_trace_on is set
-#define GSTATE_TRACE_PRINT(a) do { if (ps2_trace_on) ps2_trace_print(a); } while (0)
+#ifdef PLATFORM_PS2  // src/ps2/frame.c: prints entries while ps2_trace_on is set; the shared world watches one entry
+#define GSTATE_TRACE_PRINT(a) do { if (ps2_trace_on) ps2_trace_print(a); \
+    if ((a) == ps2_gstate_watch) ps2_gstate_seen(gCpu.r[0]); } while (0)
 #else
 #define GSTATE_TRACE_PRINT(a) ((void)0)
 #endif

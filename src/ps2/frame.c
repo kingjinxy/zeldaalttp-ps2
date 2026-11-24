@@ -156,6 +156,7 @@ void ps2_watch_init(void)
 
 void ps2_trace_print(u32 a);
 extern volatile int ps2_trace_on;
+u32 ps2_gstate_watch;  // 0: nothing watched (shared.c sets it)
 
 // -finstrument-functions on hand-written game C (Makefile.ps2): each entry goes into the trace ring too, so the
 // watchdog names hand C as well

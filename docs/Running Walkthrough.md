@@ -1349,3 +1349,29 @@ ROM:
   player 0 runs now.
 - **Cost:** the game's share for two players 0.51 M cycles a frame (1.84 M separate), no memory switches; drawing
   1.3 M.
+
+## Step 47: shared world 5c, the pause and the sprites (2026-11-24)
+
+- **Two hand-added overlay ranges were too wide.** "Sprite-list buffer pointer" 0x03000E30-0x03000E3F also covered
+  `gUnknown_03000E20.unk11` (paused) and `.unk12` (stage cleared), and 0x03005E00-0x03005E0F was merged up to
+  0x03005E26, over `gUnknown_03005E10`, the players' newly pressed keys (`sub_08037750`, read by the pause check
+  `sub_0803781C(8)`). All three are world state the view pass reads but doesn't compute, so player 1 saw a stale
+  pause flag and stale keys. The ranges are now 0x03000E34 and 0x03005E04 (the symbols there), and
+  `overlay_ranges.py` has a WORLD list cut out after merging (0x03005E10-0x03005E17: the map marks them because the
+  GBAs ran a frame apart).
+- **That exposed a crash** (wild jump into the ELF's data, around frame 1370): bisected to the narrower overlay, then
+  found with memory dumps of both builds around it. The unpause clears the world's pause flag in instance 0's frame,
+  before player 1's own last pause step (`sub_0802D988`'s state 3 back to 0) has run, so player 1's pause UI state
+  stayed at 3 and the next pause ran past its table. The view pass now takes the pause path while the player's pause
+  UI state (0x0201EF18) is non-zero too.
+- **Draw replay instead of the draw walk.** `GSTATE_TRACE` (include/gstate.h) calls `ps2_gstate_seen(r0)` when the
+  entry address equals `ps2_gstate_watch` (one compare per gstate function entry; 0 unless the shared world sets
+  it). The shared world watches `sub_08003688` and records the entity of every call in instance 0's frame; the view
+  pass replays exactly those, in order (the arrows run their whole update). The 5 extra shadow sprites are gone.
+- **VRAM 0x06004000-0x06005FFF was too wide as well.** It held animated BG tiles (the wall gems) and the text glyphs,
+  which are world: player 1's gems were a frame of animation behind. Dumping both players of the separate build
+  (frames 1330-1375) showed only 0x06004C00 and 0x06005000 (64 bytes each) differ between players; with the
+  planning doc's 0x06004000 from session 1 those three tiles are the overlay now (shortcut: two scenes seen).
+- **Result** (2-player replay): both players' screens identical to the separate build at all 34 check frames, no TLB
+  misses, `SHARED_CHECK` silent. Overlay 224 ranges, 41 KB. Game share 0.39 M cycles a frame (1.84 M separate, 0.51 M
+  in Step 46); drawing 1.34 M. Player 1's memory still differs in ~45 bytes that don't reach the screen.

@@ -20780,3 +20780,709 @@ The cleaned build runs: shared mode from frame ~1225, no TLB misses. The game sh
 
 - tool `Bash`: python3 - <<'EOF' p='docs/Planning Doc.md'; s=open(p).read() old="""  - [ ] 5c. Port, under `FS_SHARED_WORLD`:""" new="""  - [ ] 5c, first version (2026-11-24, 
 
+- tool `Bash`: git show --stat HEAD | tail -14; git status --short | head
+
+- tool `PushNotification`: 
+
+## Claude
+
+The shared world runs in the port: during a stage the world is simulated once, and the game's cost for 2 players drops from 1.84M to 0.51M EE cycles per frame. Player 1's screen is pixel-identical to the separate-copies build, but player 2's screen is still wrong once someone pauses. It's off by default; build with `make -f Makefile.ps2 SHARED_WORLD=1`. Committed as `547cd02`, with walkthrough Step 46 and the plan updated; `make compare` reports OK.
+
+**How it works:**
+- **Before the stage** (file select, link setup), the game copies run separately as before, because the players really do differ there.
+- **Once every copy reaches the stage loop**, copy 0 runs each whole frame: the world plus player 1's view. Then, for each other player:
+  - That player's own memory is swapped in: about 49 KB, against 387 KB before.
+  - A view pass runs that player's keys and link packet, camera, sprites, HUD, text and VBlank work.
+  - Their screen is drawn.
+- **The link stays as it is.** Each player still sends real packets, so the game sees everyone's input unchanged.
+- **A built-in check** (`SHARED_CHECK=1`) logs any shared-world byte a view pass changes. It found the state that the mGBA comparison couldn't show because it stays equal between linked GBAs: the link state, sprite-buffer pointers, HUD/text and camera. In the last run it reports nothing.
+
+**Results on the 2-player replay, against the separate-copies build:**
+
+| | Result |
+|---|---|
+| Player 1 (whose copy runs the world) | memory and screen identical at all 34 check frames |
+| Player 2, until someone pauses | correct |
+| Player 2, paused | wrong (below) |
+| Game cost, 2 players | 0.51M cycles a frame, no memory switches (was 1.84M) |
+| TLB misses | none |
+
+**Bugs fixed on the way:**
+- **I/O registers never swapped.** The range generator merged the end of IWRAM with the I/O page into one copy, so player 1's screen got player 2's scroll registers.
+- **I had the draw routine wrong.** `sub_080008A8` builds collision lists. The actual draw step is `sub_08003688`, which the view pass now calls for each entity.
+- **My first debug memory dumps were invalid.** Large host-file writes from the game's mapped addresses wrote zeros. I redid them through a copy in plain RAM, and redid the comparisons that relied on them.
+
+**What's still wrong for player 2:**
+- **Pause:** each player's GBA decides for itself whether it shows the pause menu or the "P1 PAUSE!" bar. That decision sits inside the stage's frame function, which in the shared world only runs for player 1. So player 2's pause flag, pause screen and text don't follow.
+- **Sprites:** the view pass draws every entity, but the real frame skips some. Player 2 gets 5 extra shadow-like sprites, which push the other sprites down the list.
+
+**Not tested yet:**
+- 4 players: players 3 and 4 have no recorded input, so they never reach a stage.
+- Other stages, bosses and results.
+
+**Next:**
+1. Run the stage frame's per-player branches (pause and its text) in the view pass.
+2. Draw exactly the entities that reached their draw step in copy 0's frame, instead of all of them.
+
+## User
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+<system-reminder>
+<tools-used-before-summary>Bash, Edit, PushNotification, Read, SendUserFile, TaskStop, ToolSearch, Write</tools-used-before-summary>
+</system-reminder>
+Summary:
+1. Primary Request and Intent
+
+The user's requests this session, in order:
+1. Make the GS renderer the default. Test 4 players, drawn as four 240x160 screens in a split screen centred in the 640x480p frame.
+2. Return to the shared world (players share one world, each with a camera). Outline it and estimate the speed-up.
+3. "Create a plan for this and let's update it as we go forward. Let's start with phase 0 step 1."
+4. "Continue", then "Proceed" through phase 0 (steps 2–4).
+5. "Describe this part in more detail" (phase 1 step 5), then "For now, write up a plan and table it".
+6. Ask whether the earlier work taught anything about the DSi viewport expansion. Then "Let's look into these two things right now": whether the room data is in shared memory, and how the DSi widened the view.
+7. "Let's go with the second wide view option. What do you need to do?" then "Proceed": the GS renderer draws the backgrounds from the room data.
+8. "Just to see what it would look like, I want to see a vertical split screen, with two 320x480 screens side by side".
+9. "Why is GS memory tight? ... My hope was eventually to have 9 screens drawing on a 1280x720 canvas", then "Yes" to freeing GS memory.
+10. "Let's proceed with those changes": the EE-side work, starting with the shared world.
+11. "Proceed" (5b), "Update docs, commit, and then proceed", "Proceed".
+12. "There should be 4 different Link colors. Are there any unused palettes for him?"
+13. "Note this in the docs, then proceed to step 5c".
+
+Standing constraints (from CLAUDE.md and the user; keep verbatim):
+- "Web access: GitHub only without asking."
+- "Never access tcrf.net (The Cutting Room Floor) in any way."
+- "No `pkill -f <pattern>` in a command whose own command line contains the pattern."
+- "No ROM, BIOS or extracted asset is ever committed"; reference/ is never committed.
+- Never share the user's email address with external services.
+- Don't copy FourSwordsRecomp code (PolyForm NC).
+- Say "gstate", never "GS", for global state (GS = Graphics Synthesizer).
+- PCSX2 uses the software renderer.
+- Log over SIO, never printf, from game-reachable code.
+- "Never dismiss TLB Miss lines."
+- Commit only when `make compare` reports `zeldaalttp.gba: OK`.
+- Update `docs/Running Walkthrough.md`, `docs/Planning Doc.md` and `Claude Conversation.md` at milestones. For the archive: concatenate all jsonl files in `ls -tr` order, run `tools/ps2/archive_conversation.py`, and check that no lines were removed.
+- Push notification at milestones.
+- Run builds under `systemd-run --user --scope -q -p MemoryMax=6G`.
+- `rm` with a variable path must use `"${S:?}"`.
+- The user says "Proceed"/"Yes" to continue; don't start new major directions without them.
+
+2. Key Technical Concepts
+
+**Cost and memory measurements**
+- EE frame budget: 4.9M cycles at 60 fps. The cost log line shows render, game and memory-switch cycles (`ps2_switch_cycles` in tlb.c).
+- Copy-swap per instance: 387 KB copied in and out, about 0.9M cycles per player per frame. This was about 90% of the game's share; the game code itself is small.
+
+**Link and per-player memory**
+- Link packet: 12 halfwords per player:
+  - counter and status, then checksum;
+  - 20 bytes from `gUnknown_03000FD0`: a scene byte, the keys of the last 5 frames, a frame counter, 6 zero bytes.
+  - Inputs only.
+- Per-player memory during a stage: about 14.9 KB, IWRAM stack excluded.
+  - 0x02000000–0x02003000: the players' save files as loaded (ALttP inventory symbols at 0x02002320, `gPaletteBuf1` at 0x02000030).
+  - Sound: 0x0202E1E4–0x02032100.
+  - Text/HUD: 0x0202D000–0x0202E1E4.
+  - Sprite-list double buffer: 0x03005E60 and 0x03006260.
+  - A few entity bytes.
+- Player number: the byte at 0x03000414 (misnamed `gLCDRegisterBuffer`), set by `sub_080369B4` from the SIOCNT ID.
+- `gUnknown_03006730 = &gUnknown_03006A30[id]`.
+
+**Entities and the stage frame**
+- Entity lists: 8 list heads at 0x03005960 (prev/next).
+- `UpdateAllEntities` (arm_ports.c) calls each entity's handler, then `sub_080008A8` (collision lists, not drawing).
+- The draw step is `sub_08003688`: it queues a visible, on-screen entity (`sub_08003704` culling) into 4 draw lists via pointers at 0x08003508. `sub_08000BAC` builds the sprite list from those lists.
+- Stage frame function: `sub_08038A30`. Main state `gMainState` (0x03006D10) = 2, `gUnknown_03005050` (0x03005050) = 9.
+- Camera struct `gUnknown_03000450`: +0x18/+0x1A origin, +0x20/+0x22 camera x/y. Camera update `sub_08015D9C`.
+- The Links' +0x50 is 0x0E only on the local player's Link.
+- Object 16 = off-screen arrows (`sub_08052B88`/`sub_08052C0C`/`sub_08052CE4`). Object 65 = pickup (`sub_0805BF9C`, applies `sub_0800D67C` only for the collector).
+
+**Room data**
+- Room layers: top 0x0201F020, bottom 0x0200B320.
+  - Map at +4: 64x64 metatile numbers.
+  - Metatile tile entries at +0x7004 (four per metatile).
+  - Full room 63x63 metatiles, identical for all players.
+- Room tile map: 128x128 tiles at 0x02016D90.
+- BG2 = top layer, BG1 = bottom layer. Screen x = room pixel (cam − origin) + x.
+- FS `UpdateScrollVram` = `sub_08008ED8`. It calls the ARM `sub_08008FA4`, which copies 32x24 tiles into the 32x32 ring.
+- The DSi copy at 0x0207F7A0 copies 64x32 into a 64x32 map, without the margin; camera centred on 128/96.
+
+**GS renderer**
+- Default `GS_RENDER=1`.
+- Draws straight into gsKit's frame buffer `ScreenBuffer[ActiveBuffer & 1]`, a CT16 frame (1-bit alpha for the window mask or the blending flag).
+- Scale: `sKx`/`sKy` in 1/256ths. GBA coordinates are centred in the view via `sGx`/`sGy`. `sTBW` is the frame width in 64-pixel units.
+- Wide view: `room_check` validates the 31x21 tiles against the room data each frame. BG1/BG2 are drawn from the room data, BG3 repeats, BG0 and sprites stay in the GBA screen.
+- GS memory: about 1.4 MB (frame 2 × 0.6 MB, tiles 128 KB, CLUTs 8 KB).
+
+**Link palettes**
+- Four at 0x0844DD74–0x0844DDF3 (green, red, blue, purple), with a copy at 0x0844DED4.
+- Palette group base `gUnknown_0844DD74`; groups `gUnknown_08429750` are records {u16 offset, u8 slot, u8 count | 0x80}.
+- Near-variant at 0x0844F7D4 (group 17), overwritten by green right away, so never shown.
+
+**Shared world (SHARED_WORLD build)**
+- Instance 0's thread runs the whole frame.
+- For each other player, its overlay (per-player byte ranges) is swapped into the live block and a view pass runs on the main thread.
+- `ps2_inst_ptr` in shared mode: the player's saved block for overlay bytes, the live block otherwise.
+- Enter when all instances are in the stage loop; leave when instance 0 leaves it.
+
+**mgba_run options added**
+- `--reads ADDR`
+- `--perplayer FILE` and `--perplayer-frames A-B` (also counts entity-list differences)
+- `--writes MAP`
+- `--bracket ADDR,...` (any code, ARM/RAM included)
+
+3. Files and Code Sections
+
+**Makefile.ps2**
+- `GS_RENDER` default 1, set to 0 when `WIDE_VIEW` is set. A trailing-comment bug was fixed by putting the comment on its own line.
+- `-DWIDE_VIEW=$(WIDE_VIEW)`; `WIDE_VIEW=2` gives two players 320x480 each, side by side (GS only).
+- `SHARED_WORLD` → `-DSHARED_WORLD`; `SHARED_CHECK` → `-DSHARED_CHECK`.
+
+**src/ps2/video.c**
+- `place()`:
+  - 3–4 players: 1:1 2x2 block, centred.
+  - 2 players: tall views go side by side; otherwise stacked.
+- `screen_rect()` gives the rectangle in buffer pixels; `sInstances`.
+- Under GS:
+  - PSM CT16.
+  - No software texture VRAM allocation.
+  - `ps2_gsr_init(sGs)` plus a clear.
+  - `ps2_gsr_draw(fb, sGs->Width/64, px, py, pw, ph)`.
+  - The check reads back with `ps2_gsr_read(fb, fbw, px, py, w, h, gs)` (memalign buffer) and compares at 5-bit precision (`& 0xF8F8F8`).
+  - Present: `gsKit_sync_flip`, then clear the next buffer and `queue_exec`.
+- `WIDE_VIEW == 2`: 320x480 for 2 players (`#error` without `GS_RENDER`).
+- The cost log includes the memory switches (`extern u32 ps2_switch_cycles`).
+
+**src/ps2/gsrender.c**
+- Blank tiles are skipped (`sBlank[3072]`, computed during the upload swizzle).
+- Blended BG passes are copied rather than rebuilt (the `AGAIN()` macro in `draw_layer`).
+- `DRAW_QW` 28000.
+- Room drawing: `room_entry()`, `room_check()`, `sRoomLayer[4]`, `sRoomX/Y`.
+- `draw_bg` draws the tiles crossing `sBand`.
+- Full-view backdrop, mask and fade (`VX0..VY1`).
+- FRAME uses CT16 and `sTBW`.
+- `xyz` with `sPx`/`sKx` fixed point.
+- `ps2_gsr_init(GSGLOBAL*)`; `ps2_gsr_read` expands 16-bit pixels to 32-bit with `rgb8`.
+
+**src/ps2/tlb.c**
+- `ps2_switch_cycles` timing.
+- Under SHARED_WORLD, `ps2_inst_ptr` calls `ps2_shared_ptr(inst, sRegions[r].even + (a - va))` when `ps2_shared` is set.
+
+**src/ps2/frame.c**
+- `ps2_vblank_run()` split out of `ps2_vblank_wait()` (the VBlank handler, `ps2_io_vblank`, the VCount loop).
+
+**src/ps2/main.c** (SHARED_WORLD)
+- Prototypes, `ps2_shared_init()`.
+- In the loop: if shared, wake thread 0, render(0), input(0), save(0); then, unless `ps2_shared_try_leave`, run `ps2_shared_views(INSTANCES, ps2_video_render)` and save the others; then link exchange, present, frame counter, `continue`.
+- The normal loop calls `ps2_shared_try_enter(INSTANCES, ps2_tlb_select)` after the link exchange.
+- Shortcut: on the leave frame the other screens get one blank frame.
+
+**src/ps2/shared.c** (new, wrapped in `#ifdef SHARED_WORLD`)
+- `SAVED(i)` = 0x81900000 + i MB.
+- `live(off)` maps a live-block offset to its GBA address.
+- `sPerPlayer` bitmap; `ps2_shared_init`; `ps2_shared_ptr`.
+- `overlay_swap(inst)` (memcpy both ways per range; sets `sHolder` and `ps2_cur_instance`).
+- `draw_entities()`: for each list entity, `DoObjectEntity(e)` if type 6 subtype 16, otherwise `sub_08003688(e)`.
+- `view_pass()`:
+  - save gCpu (`memcpy` of 20 words at 0x0203C000);
+  - `rom2_read_keys`; `gUnknown_03000BF0 = sub_0800C54C(gUnknown_03000FF8)`; `sub_08036864`;
+  - `if (sub_08037554())`: if `E20_UNK11` (0x03000E31) or `sub_0803781C(8)`, the pause path `sub_0802D988` + `sub_0802CD3C`; otherwise `draw_entities` + `sub_08015D9C` + `sub_0802CD3C` + `sub_08000BAC`; then `sub_08037574`;
+  - `sub_080368A0`, `sub_0800D788`, `sub_0802C940`, `sub_0800B524`, `ps2_vblank_run`;
+  - restore gCpu.
+- `SHARED_CHECK`: copies EWRAM/IWRAM to `SAVED(5)` and logs changed non-overlay ranges.
+- `ps2_shared_views()`: for each i, swap, check, view pass, check, render(i), `ps2_input_frame(i)`; then `overlay_swap(0)`.
+- `in_stage()` uses offsets 0x46D10 and 0x45050.
+- `ps2_shared_try_enter()`: select(0), holder 0.
+- `ps2_shared_try_leave()`: copies the gap (world) bytes from live into each `SAVED(i)` within the used spans {0–0x40000, 0x40000–0x48000, 0x48000–0x48400, 0x4A000–0x4A400, 0x50000–0x68000, 0x70000–0x70400}.
+
+**tools/ps2/overlay_ranges.py** (new)
+- Map → `src/ps2/overlay_ranges.h` (`static const unsigned sOverlay[][2]`).
+- GAP 16, never merging across region boundaries (`BOUNDS`, assert).
+- FIXED ranges:
+
+| Offset range | What it covers |
+|---|---|
+| 0x30790–0x30AA0 | link state and packet buffers |
+| 0x40200–0x40210 | frame parity |
+| 0x40E30–0x40E40 | sprite-list buffer pointer |
+| 0x40FC0–0x41030 | keys and link packets |
+| 0x45E00–0x45E10 | sprite-list buffer pointers |
+| 0x02D40–0x02EA0 | written by the view pass (HUD?) |
+| 0x2A5E0–0x2A700 | text/HUD state |
+| 0x2D580–0x2D610, 0x2DD80–0x2DE10 | HUD records |
+| 0x1EF00–0x1EF20 | pause UI |
+| 0x40440–0x40450 | current entity |
+| 0x40450–0x40490 | camera struct |
+| 0x40494–0x40498 | link frame number |
+| 0x47B00–0x48000 | IWRAM stack top |
+| 0x48000–0x48400 | I/O |
+| 0x54000–0x56000 | VRAM per-player tiles |
+| 0x5C000–0x60000 | VRAM BG maps |
+| 0x70000–0x70400 | OAM |
+
+- Current output: 221 ranges, 49,394 bytes.
+
+**docs/shared_world/**
+- `per_player_writers.txt`: writers by area.
+- `per_player_map.bin`: session 1's stage plus the replay map.
+
+**tools/mgba_run.c**
+- New options: `--reads`, `--perplayer`, `--perplayer-frames`, `--writes`, `--bracket`.
+- Entity comparison per type/subtype.
+
+**Docs**
+- `docs/Planning Doc.md`, Phase 5: plan steps 1–10 with results; the 5b kinds; the 5c design; the 5c first-version status. Also a "Wider view" section and Link colours under "more than 4 players".
+- `docs/Running Walkthrough.md`: Steps 35–46.
+
+4. Errors and fixes
+
+**Rendering and build**
+- 4 players at 30 fps: packet building was optimised (blank tiles skipped, blended passes copied); 4 screens went from 4.6M to 2.6M cycles.
+- Makefile trailing comment made `GS_RENDER = "0  "`: the comment moved to its own line.
+- GS memory over 4 MB with wide targets: the software textures are no longer allocated under GS, then targets were removed entirely (direct CT16 drawing).
+- 8-bit fade values against the 5-bit frame: the check compares at 5 bits per channel.
+- Float scaling was slower: switched to integer fixed point. The remaining +0.14M is likely the clear's wait being counted as drawing (unproven).
+- Wrong commit hashes in push notifications (fc7d8bb, 7d3f3c4). Lesson: don't put hashes in notifications before the commit exists.
+
+**Shared world**
+- Never entered at first: it did enter at about frame 1225; the grep missed it.
+- `SHARED_CHECK` found world bytes changed by the view pass (link state etc.) → added to FIXED. The generated header isn't tracked by the Makefile: touch `src/ps2/shared.c` after regenerating.
+- The range merge across the IWRAM/I/O boundary copied past IWRAM instead of swapping I/O, so player 0 showed player 1's scroll. Fixed with region-aware merging.
+- Player 1 had no sprites: `sub_080008A8` was wrongly assumed to be the draw step. Fixed with `draw_entities` calling `sub_08003688`.
+- Debug dumps via large `fwrite` from TLB-mapped addresses wrote zeros. Fixed by staging through kseg0 0x81F00000, which invalidated the earlier comparisons.
+- Remaining: player 1's pause frames differ (see Current Work).
+
+5. Problem Solving
+
+Solved:
+- GS default; 4-player layout.
+- Wide view from the room data: centre 240x160 identical to the GBA.
+- Vertical split.
+- GS memory about 1.4 MB.
+- Phase 0 and 5a/5b analysis.
+- Shared world first version: player 0 identical at all 34 check frames; game share 0.51M against 1.84M for 2 players.
+
+Ongoing in the shared world:
+- Player 1's pause handling: per-GBA pause flag `gUnknown_03000E20`+0x11, pause UI 0x0201EF18, text and glyph tiles at VRAM 0x06005400+.
+- Camera fields past +0x27.
+- Some entity bytes.
+- 5 extra shadow sprites (tile 768/769 palette 1) from the draw walk queuing entities the real frame doesn't.
+
+Known open items:
+- `gs_sub_08003870` file-select null-pointer TLB miss (save-dependent).
+- Bad instruction around frame 1770 in the A-only replay.
+- 4 players not tested with the shared world (players 3–4 have no inputs).
+- Pickup patch (kind 3) not done.
+- Wide view steps 2–5 (sprites, camera, HUD, windows).
+
+6. All user messages
+- "Yes, let's make the GS renderer the default and try with 4 players. With 4 players, the 4 240x160 screens should be drawn in split screen, centered in the 640x480p frame"
+- "I want to return to the subject of having all players share a world instead of exchanging packets. Each player would then have a camera view into the same world space. This should speed up rendering to some degree. Provide an outline for how this plan could be achieved, and estimate how much of a speed up it would be."
+- "Create a plan for this and let's update it as we go forward. Let's start with phase 0 step 1."
+- "Continue"
+- "Proceed"
+- "Describe this part in more detail"
+- "For now, write up a plan and table it"
+- "Earlier we talked about looking at the DSi version to see how the player's viewport was expanded. In the work from earlier today, did we learn anything related to that?"
+- "Let's look into these two things right now"
+- "Let's go with the second wide view option. What do you need to do?"
+- "Proceed"
+- "Just to see what it would look like, I want to see a vertical split screen, with two 320x480 screens side by side"
+- "Why is GS memory tight? Is there anything we can do to free up RAM? My hope was eventually to have 9 screens drawing on a 1280x720 canvas"
+- "Yes"
+- "Let's proceed with those changes"
+- "Proceed"
+- "Update docs, commit, and then proceed"
+- "Proceed"
+- "There should be 4 different Link colors. Are there any unused palettes for him?"
+- "Note this in the docs, then proceed to step 5c"
+
+7. Pending Tasks
+- Shared world 5c continued:
+  - make the stage frame's per-player branches (pause menu/bar, its text, glyph tiles) run correctly in the view pass;
+  - replace the draw walk with the entities that really reached `sub_08003688` this frame;
+  - cover the camera fields and entity bytes;
+  - the pickup patch (a collector n > 0 adds to n's overlay).
+- Then step 7 verification against the separate build; 4-player testing; later the >4-player work.
+- Report the 5c first-version result to the user. Commit 547cd02 is done and the push notification was sent; the final text message has not been written yet.
+
+8. Current Work
+
+Just completed and committed (547cd02): "PS2 shared world, first version (SHARED_WORLD=1): world once, per-player overlay and view pass; player 0 identical, pause still wrong for the others".
+- Docs (Planning Doc 5c status, walkthrough Step 46) and the conversation archive are updated; `make compare` OK.
+- Push notification sent.
+- The local ELF is the default build (4 instances, GS).
+- Last run results: shared entered at frame about 1225, no TLB misses, game share 0.51M per frame (against 1.84M), render 1.3M.
+- Player 1 still differs in paused frames: missing "P1 PAUSE!" bar, extra shadow sprites, pause flag and text state.
+
+9. Optional Next Step
+
+Write the final report for the user's request "Note this in the docs, then proceed to step 5c". Cover:
+- what works: world once, player 0 pixel-identical, game share 1.84M → 0.51M for 2 players, no memory switches;
+- what's still wrong for players 2+: the pause UI decided per GBA inside the stage frame, extra shadow sprites from the draw walk, camera and text state;
+- the build flag `SHARED_WORLD=1`, off by default; commit 547cd02.
+
+Then propose the next 5c fix:
+- run the stage frame's per-player pause/text branches in the view pass;
+- record the entities that really reach `sub_08003688` during instance 0's frame, instead of calling it for all.
+
+Wait for the user's go-ahead before continuing.
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /home/alex/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9.jsonl
+Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.
+
+The messages after this summary are the most recent messages from before compaction, kept verbatim. The summary was written without seeing them, so something it says has not happened yet may already have happened in them.
+
+## User
+
+<command-name>/compact</command-name>
+            <command-message>compact</command-message>
+            <command-args></command-args>
+
+## User
+
+<local-command-stdout>Compacted </local-command-stdout>
+
+## User
+
+Continue
+
+## Claude
+
+Starting on the next 5c fix: the pause branches and the draw walk. First, the stage frame itself.
+
+- tool `Bash`: Find stage frame function and pause notes
+
+- tool `Bash`: Show the stage frame function's C
+
+## Claude
+
+The view pass skips `sub_08037750`, which runs just before the pause check. Looking at it:
+
+- tool `Bash`: Locate the pause-related functions
+
+- tool `Bash`: Show sub_08037750 and sub_0803781C
+
+## Claude
+
+`sub_08037750` reads every player's keys from the link buffers, and those buffers are the same on every GBA, so the pause decision should agree. Checking which pause bytes the overlay holds:
+
+- tool `Bash`: Check overlay coverage of pause bytes
+
+- tool `Bash`: Find symbols at the suspect addresses
+
+## Claude
+
+The real per-player symbols are `gUnknown_03000E34` and `gUnknown_03005E04`/`E08`. Narrowing both ranges and regenerating:
+
+- tool `Bash`: Narrow two fixed ranges and regenerate the header
+
+- tool `Bash`: Find the generator's usage
+
+- tool `Bash`: Regenerate the overlay header
+
+- tool `Bash`: Read the generator body
+
+## Claude
+
+Adding a WORLD list: bytes forced out of the overlay even where the map marks them.
+
+- tool `Bash`: Add world exclusions and regenerate
+
+## Claude
+
+The merge step joins the pieces on either side again. The exclusions need to be subtracted after merging:
+
+- tool `Bash`: Cut world ranges after merging; regenerate
+
+## Claude
+
+Now the second fix, the draw walk. Is `sub_08003688` in C, so I can record which entities call it during copy 0's frame?
+
+- tool `Bash`: Find sub_08003688's definition and callers
+
+- tool `Bash`: Locate sub_08003688 source
+
+## Claude
+
+It's still asm. On the PS2 it runs as generated C. Looking at how the port defines it:
+
+- tool `Bash`: Show the generated sub_08003688
+
+## Claude
+
+That's generated code, so I won't edit it. Does the port already have a way to hook a generated function?
+
+- tool `Bash`: Look for hook mechanisms and the body
+
+## Claude
+
+`GSTATE_TRACE` runs at every function entry. Checking what it expands to:
+
+- tool `Bash`: Find GSTATE_TRACE definition
+
+## Claude
+
+A trace-based hook would add a check to every function entry. Checking whether the gstate generator supports per-function hooks:
+
+- tool `Bash`: List PS2 tools and find the generator
+
+- tool `Bash`: Locate the gstate translator
+
+## Claude
+
+The trace macro already runs at every entry and writes a ring buffer, so one extra compare under `SHARED_WORLD` costs little. Looking at the macro:
+
+- tool `Bash`: Read gstate.h head
+
+- tool `Bash`: Check how SHARED_WORLD is passed
+
+- tool `Bash`: Find ps2_trace_on declarations
+
+## Claude
+
+Wiring it up: the watch in [gstate.h](include/gstate.h) and [auto.h](include/auto.h), the variable in [frame.c](src/ps2/frame.c), the recording and replay in [shared.c](src/ps2/shared.c).
+
+- tool `Bash`: Add the gstate entry watch hook
+
+## Claude
+
+Now the recording and replay in shared.c:
+
+- tool `Bash`: Record drawn entities and replay them
+
+## Claude
+
+Building. Then I'll rerun the 2-player replay with the same check as Step 46. Looking up the run command:
+
+- tool `Bash`: Find how step 46 ran its test
+
+- tool `Bash`: Recover the PCSX2 run command from the transcript
+
+## Claude
+
+That's the screenshot script. The 34-frame comparison against the separate-copies build used its own commands; finding the latest one:
+
+- tool `Bash`: Recover the shared-world test commands
+
+- tool `Bash`: Print the last full shared-world test command
+
+- tool `Bash`: Print the last dsh comparison commands
+
+## Claude
+
+The separate-copies reference dumps may still be in the scratchpad. If so, only the shared build needs a new run:
+
+- tool `Bash`: Check for reference dumps and dump code
+
+## Claude
+
+The dump code isn't in main.c any more. Recovering it from the transcript:
+
+- tool `Bash`: Find the memory dump code in the transcript
+
+- tool `Bash`: Search for dump code with fopen
+
+- tool `Bash`: Search the transcript for the dump code
+
+## Claude
+
+The latest version dumped player 2's memory (`mem0_p1`) for frames 1280–1300. Finding that exact code:
+
+- tool `Bash`: Find the per-player dump code
+
+- tool `Bash`: Show later dbg_dump edits
+
+## Claude
+
+Rebuilding that temporary dump patch as a reusable script, applied to a copy of main.c that I'll restore afterwards:
+
+- tool `Bash`: Build the shared build with dumps and run it
+
+## Claude
+
+Some trace call sites have no local `r0`. At function entry `gCpu.r[0]` holds the same value, so the hook can read it from there:
+
+- tool `Bash`: Use gCpu.r[0] in the hook; rebuild and run
+
+## Claude
+
+Dumps are in, but the log has 50 TLB-miss lines, and the last run had none. Looking at them:
+
+- tool `Bash`: Summarize the TLB miss lines
+
+## Claude
+
+It crashes 5 seconds after the world starts being shared. The first bad read is at pc 0xbcceac, then execution jumps to 0xc000. Finding that function:
+
+- tool `Bash`: Symbolize the crash pc and show the log before it
+
+- tool `Bash`: Symbolize the crash pc with the EE nm
+
+## Claude
+
+The crash pc is in the ELF's data area, so an EE function pointer jumped into garbage. What comes after the first miss:
+
+- tool `Bash`: Show log lines around the crash
+
+## Claude
+
+It crashes around frame 1400. Two changes are candidates: the draw replay and the narrower overlay. Bisecting: first a run with the draw replay off (nothing recorded):
+
+- tool `Bash`: Bisect: run with the draw replay disabled
+
+## Claude
+
+It still crashes, so the draw replay isn't the cause. Next run: the old overlay header with everything else unchanged:
+
+- tool `Bash`: Bisect: run with the old overlay ranges
+
+- tool `Bash`: Restore new overlay; check pine_read usage
+
+- tool `Bash`: Read the pine_read tool
+
+- tool `Bash`: Run until crash, read the gstate ring over PINE
+
+- tool `Bash`: Check pcsx2_run's PINE option
+
+## Claude
+
+PINE isn't on by default in this runner. Before setting that up, a look at the pause path's code, since it's in C:
+
+- tool `Bash`: Show sub_0802D988
+
+- tool `Bash`: Compare pause state bytes and find the table
+
+- tool `Bash`: Dump frames 1330-1375 from both builds and compare
+
+- tool `Read`: /home/alex/Documents/zeldaalttp-ps2/src/ps2/shared.c
+
+- tool `Bash`: Run the pause path while the pause UI is up; retest
+
+## Claude
+
+The link failed. Error output:
+
+- tool `Bash`: Show the link error
+
+- tool `Bash`: Find the actual link error
+
+## Claude
+
+frame.o was left over from the separate build, which has the stub. Moving the stub into shared.c's `#else` keeps the flag change limited to the files the Makefile comment already names:
+
+- tool `Bash`: Move the stub, rebuild, rerun
+
+## Claude
+
+Now it matches the separate build exactly through the unpause and the next pause, with no TLB misses. Next, a full memory diff of player 2 against the separate build for frames 1330–1375:
+
+- tool `Bash`: Diff player 2 memory, shared vs separate
+
+## Claude
+
+Player 2 still differs in its sprite-list buffers (0x03005E60/0x03006260) and in VRAM glyph tiles from 0x06005415. The output was cut off before PAL and OAM. Those parts, plus the sprite-list header:
+
+- tool `Bash`: Show OAM/PAL differences and sprite counts
+
+## Claude
+
+With the draw replay, player 2 shows only 8 sprites against 39 in the separate build. Frame 1340 is paused, so its sprites date from before the pause. Counting in the unpaused frames 1364–1371:
+
+- tool `Bash`: Count visible sprites in unpaused frames
+
+## Claude
+
+Replay yields nothing: a constant 8 sprites, probably just the HUD. So nothing is being recorded. Checking the file the PS2 actually compiles, `*_gstate_ps2.c`:
+
+- tool `Bash`: Check the PS2 generated file for the trace
+
+## Claude
+
+The trace is there. Adding a temporary log of the recorded count to see whether `ps2_gstate_seen` ever fires:
+
+- tool `Bash`: Log the recorded draw count
+
+## Claude
+
+My bisect edit was never reverted, so the watch was still off. Restoring it and removing the debug line:
+
+- tool `Bash`: Restore the watch, rerun and compare
+
+- tool `Bash`: Find frame image dumps
+
+- tool `Bash`: See when frames are dumped
+
+## Claude
+
+Screens are saved every 100 frames. I'll keep this run's images and compare them with a fresh run of the separate build:
+
+- tool `Bash`: Compare screens every 100 frames, shared vs separate
+
+## Claude
+
+Player 1 is identical everywhere. Player 2 differs at 1300 (paused) and at 2000, 2400 and 2800. Viewing those pairs side by side, shared build on the left:
+
+- tool `Bash`: Make side-by-side images and measure differences
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/cmp_02000.png
+
+## Claude
+
+They look the same to the eye, yet the same 40 pixels differ in every one of those frames. Which pixels, and what values:
+
+- tool `Bash`: List the differing pixels
+
+- tool `Bash`: List all VRAM differences for player 2
+
+- tool `Bash`: Dump both players in the separate build; classify VRAM bytes
+
+- tool `Bash`: Check the map's marks in the VRAM range
+
+- tool `Bash`: Check the map size and docs on the VRAM range
+
+- tool `Bash`: Narrow VRAM overlay, rerun and compare screens
+
+## Claude
+
+All 34 saved screens now match the separate build for both players, and there are no TLB misses. The cost line didn't print, so checking the log:
+
+- tool `Bash`: Check the cost line and log tail
+
+## Claude
+
+The game's share dropped further, to 0.39M cycles a frame, because the overlay is smaller. The pause path now runs in player 2's view pass and may write world bytes, so one `SHARED_CHECK` run:
+
+- tool `Bash`: Run the shared-world check build
+
+- tool `Bash`: Check why the check log is empty
+
+## Claude
+
+The run reached frame 3118, but no `shared:` lines at all, not even the entry message. Checking the previous run's log too:
+
+- tool `Bash`: Count shared-world log lines in each run
+
+- tool `Bash`: Look at the SHARED_CHECK make rule
+
+- tool `Bash`: Print the shared line raw
+
+## Claude
+
+`SHARED_CHECK` is clean: the view passes change no world byte, through two pauses and an unpause. Cleaning up, then `make compare`:
+
+- tool `Bash`: Check working tree and run make compare
+
+## Claude
+
+The default build (no shared world, 4 players) must still link with the stub:
+
+- tool `Bash`: Build the default ELF; find the plan entry
+
+- tool `Bash`: Read the plan entry to update
+
+## Claude
+
+Docs update and commit:
+
+- tool `Bash`: Update docs, archive, verify and commit
+
