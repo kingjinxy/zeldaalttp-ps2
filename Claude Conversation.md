@@ -14550,3 +14550,1441 @@ Stage maps now render cleanly, with the random-room slot showing as the blank gr
 
 - tool `Bash`: Add walkthrough step, check build, commit
 
+- tool `Bash`: Update conversation archive and commit
+
+- tool `ToolSearch`: 
+
+- tool `PushNotification`: 
+
+## Claude
+
+I've worked out how Four Swords stores its levels and written a tool that lists and renders them: [tools/fs_rooms.py](tools/fs_rooms.py). Run with `--png DIR`, it draws every stage map, and all 146 render correctly. The sub-rooms each stage is assembled from aren't drawn yet; that's the next piece. It's committed together with walkthrough Step 23 and the conversation archive; `make compare` still reports OK.
+
+The format turned out to be almost the same as Minish Cap's:
+
+- **Loader:** `sub_0801484C` is Minish Cap's map-data loader. It reads 12-byte records that each say where in the map data to read, where to load it, how big it is and whether it's compressed, or, for a destination of 0, which palette group to load.
+- **Map data:** one shared block of map data starting at 0x0854F7E8. That's where the DSi `zelmap.bin` starts matching the GBA ROM, so the DSi game very likely kept the same data.
+- **Stages:** 146 stages in 6 pools. Each stage has a fixed map of up to 63×63 metatiles in two layers, one of 6 tilesets, slots for random sub-rooms, four player start points, and a pointer to its enemies and objects.
+- **Sub-rooms:** 216 in 4 pools. Each time a stage loads, the game picks one at random for each slot and stamps it into the map. Their own sizes and maps are decoded.
+- **Tilesets:** tiles into VRAM, plus per-layer tables that say which tiles make up each metatile and what type each metatile is, plus a palette group.
+
+Most of the code involved was already NONMATCHING C from earlier work, so this step was mainly working out what the data means. I haven't hand-decompiled any more of it yet.
+
+One part is still unknown: which sub-room pool fills which stage pool. There are 6 stage pools but only 4 sub-room pools. My first renders filled every slot from the first sub-room pool and drew the wrong rooms, so the slots are left empty for now. Tracing the value both pickers index by in a replay should settle it.
+
+Next, I'd work out that pool mapping so sub-rooms render too, then run the same decoding on the DSi map files. The parts that turn out not to match GBA data should be the new levels.
+
+The renders are in `/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/rooms/`. Those were drawn before I removed the sub-room stamping, so their slots show the wrong rooms. `/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/r2/stage_2_01.png` shows the current output.
+
+## User
+
+Proceed
+
+- tool `Bash`: Tally slots per pool, selectors and keys
+
+- tool `Bash`: Stamp sub-rooms from matching pool and variant, re-render
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/sheet2.png
+
+## Claude
+
+The sub-rooms now fit their stages: same tileset, walls lined up, no seams. Next I'll commit, then turn to the DSi map file.
+
+- tool `Bash`: Commit, then inspect DSi zelmap.bin header
+
+## Claude
+
+The DSi `zelmap.bin` begins with an index of {offset, size | compressed-flag} pairs: 779 entries before the data starts at 0x1858. I'll check each entry against the GBA map data.
+
+- tool `Bash`: Match DSi zelmap entries to GBA map records
+
+## Claude
+
+Most DSi entries are recompressed with LZ type 0x11, so I'll compare the decompressed contents instead.
+
+- tool `Bash`: Compare decompressed DSi entries with GBA map data
+
+## Claude
+
+578 of the 779 DSi entries decompress to exactly the GBA data: 379 sub-room map parts, 196 stage map parts and 3 tileset parts. The other 201 are new or changed. I'll look at what those are.
+
+- tool `Bash`: Show where new DSi entries fall and which GBA maps are missing
+
+- tool `Bash`: Score new DSi map layers against nearest GBA layer
+
+- tool `Read`: /home/alex/Documents/zeldaalttp-ps2/tools/fs_rooms.py
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/tools/fs_rooms.py
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/tools/dsi_zelmap.py
+
+- tool `Bash`: Check refactor, run DSi comparison and render new stages
+
+- tool `Bash`: Show DSi entries around the new stages
+
+- tool `Bash`: Pair stage layers in order and re-render
+
+- tool `Bash`: Contact sheet of new DSi stages per tileset
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/newA.png
+
+- tool `Bash`: Document DSi comparison, check build, commit
+
+## Claude
+
+I'll make one cheap attempt at the tileset link: look for the GBA stage descriptors inside the DSi ARM9 code.
+
+- tool `Bash`: Search DSi ARM9 for GBA stage descriptors
+
+- tool `Bash`: Find descriptors of the new DSi stages
+
+- tool `Bash`: Find DSi stage pools and descriptors not in the GBA game
+
+- tool `Bash`: Relaxed search for new stage descriptors
+
+- tool `Bash`: Document DSi descriptor findings and commit
+
+## Claude
+
+I've found the Anniversary Edition's 18 new stages in the DSi map file. I can't render them with their real graphics yet: they use 9 new tilesets, and I haven't found how the DSi game defines those.
+
+**GBA side: sub-room pools.** A stage's random sub-rooms come from the room pool with the same number as its stage pool. Stage pools 4 and 5 have no slots, so only pools 0–3 need room pools. `tools/fs_rooms.py --png` now fills every slot with a valid sub-room, and they fit their stages: same tileset, walls lined up.
+
+**DSi map file ([tools/dsi_zelmap.py](tools/dsi_zelmap.py)):** it decompresses all 779 entries of `zelmap.bin` and compares each with the GBA map data.
+
+| | Entries |
+|---|---|
+| Identical to GBA data | 578 (379 sub-room layers, 196 stage layers, 3 tileset parts) |
+| Edited sub-room layers | 55, nearly all 90% or more the same as a GBA room |
+| Stage layers that differ | the 18 new stages (36 layers), plus edits to GBA stages |
+| New tile graphics and metatile tables | the rest, which make up the new tilesets |
+
+**New stages.** The DSi game stores its stages in the same order as the GBA game, then adds 18 after GBA stage 122. Its main program kept the GBA stage format, with only the pointers moved: 145 of the 146 GBA stage descriptors appear in it unchanged. Its pool at 0x02103DD4 lists the new stages 123–140 and their tilesets:
+
+| Stages | Tilesets |
+|---|---|
+| 123–131 | 6, 7, 8 (each used by three stages) |
+| 132–137 | 11, 12, 13 |
+| 138–140 | 14 |
+
+Rendered with the GBA tilesets, the new stages come out as level-shaped layouts with the wrong graphics. That matches them needing their own tilesets.
+
+**Next:** find the DSi table that says which `zelmap.bin` entries make up each of tilesets 6–14. That's the last missing link before the new stages can be decoded with their real graphics. I'll look for it in the DSi main program's data near the stage descriptors.
+
+Everything is committed with walkthrough entries, and the matching build still passes.
+
+## User
+
+Let's proceed with that
+
+- tool `Bash`: Search ARM9 for stage-map entry index tables
+
+## Claude
+
+Stage map *m* is simply entries 64+2*m and 65+2*m in `zelmap.bin`. I'll look for a record list in the main program that refers to entries 64 and 65 together.
+
+- tool `Bash`: Find records referencing zelmap entries 64 and 65
+
+- tool `Bash`: Dump DSi definition list area
+
+- tool `Bash`: Show sizes of tileset-referenced zelmap entries
+
+- tool `Bash`: Check entry 0x18-0x25 in zeldat.bin vs zelmap.bin
+
+- tool `Bash`: Compare DSi tileset-1 entries with GBA tileset 1 parts
+
+## Claude
+
+The tileset records don't map onto the GBA layout in any obvious way, so I'll stop guessing and write down what's established.
+
+- tool `Bash`: Document DSi tileset table findings and commit
+
+## Claude
+
+I found the DSi tileset table, but I can't decode the tileset contents yet. Comparing bytes has run out, so the next step is reading the DSi game's loader code.
+
+**Found:**
+- **Tileset table:** at 0x020D70F0 in the DSi main program, one pointer per tileset (0–14). Tilesets 3 and 5 share a list, just as on the GBA, which confirms the numbering. An animation table for the 15 tilesets follows straight after it.
+- **Records:** each tileset's list is the GBA format reworked. A record is {entry A + "more follows" bit, destination, entry B}; a destination of 0 means a palette group. The entry numbers point into `zelmap.bin` instead of a ROM offset. The destinations are DS background VRAM and four RAM buffers.
+- **Stage maps:** stage *m* is `zelmap.bin` entries 64+2*m and 65+2*m.
+
+**Not found: what the A and B entries hold.** So far B is always A+1. Their data doesn't line up with the GBA tileset parts: the GBA tilesets were compared against the DSi entries and agree by at most 30%. Some entries are just counting tables (0, 1, 2, …), and some are 0x8000 bytes, bigger than any GBA metatile table. So the DSi game converts the tiles and metatiles into its own layout. Guessing further from the bytes would waste time.
+
+**Next step: read the DSi loader code.** The function that walks these tileset records will say what A and B hold and how metatiles become tiles. It's a single function, quick to find in Ghidra (free, on GitHub) by searching for references to 0x020D70F0. Once it's read, `dsi_zelmap.py` can render the new stages with their real graphics.
+
+Everything is committed with walkthrough notes. Do you want me to set up Ghidra and read that loader, or go back to the main decomp work for now?
+
+## User
+
+Set up Ghidra and read the loader
+
+## Claude
+
+Before downloading Ghidra, I'll try the toolchain we already have: `arm-none-eabi-objdump` can disassemble the DSi ARM9 binary directly, and that may be enough to read a single function.
+
+- tool `Bash`: Extract ARM9 and find literal refs to tileset table
+
+- tool `Bash`: Disassemble code before the literal pool
+
+- tool `Bash`: Disassemble DSi map-data loader
+
+- tool `Bash`: Disassemble DSi palette group loader
+
+- tool `Bash`: Disassemble rest of palette loader and helper
+
+- tool `Bash`: Inspect pat.bin and all DSi tileset lists
+
+- tool `Bash`: Add DSi tileset/palette loading and render new stages
+
+- tool `Bash`: Contact sheet of DSi new stages
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/dsi_sheet.png
+
+- tool `Bash`: Compare DSi and GBA tileset 1 metatiles and graphics
+
+- tool `Bash`: Render GBA stage 31 via DSi pipeline, both palettes
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/t31.png
+
+## Claude
+
+With the GBA palette the tiles are right, so the problem is my reading of the DSi palette source. I'll look for the GBA palette's colours in the DSi files.
+
+- tool `Bash`: Locate GBA palette data inside DSi files
+
+- tool `Bash`: Find zeldat.bin entry holding the palette
+
+- tool `Bash`: Locate each GBA palette of group 0x18 in zeldat.bin
+
+## Claude
+
+The palettes are in `zeldat.bin`: entry 0x61 = 97 holds palette group 0x18's 16 palettes, with only the DSi's recolours differing. The fix is to read entry *lo* of `zeldat.bin`, not `pat.bin`.
+
+- tool `Bash`: Read palettes from zeldat.bin and re-render
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/dsi_sheet.png
+
+- tool `Bash`: Find DSi stage-map pointer table
+
+- tool `Bash`: Split DSi map table into stage and room maps
+
+- tool `Bash`: Find stage map table literal in DSi map loader
+
+- tool `Bash`: Get stage-map table address from DSi loader
+
+## Claude
+
+The DSi stage-map table is at 0x020D7660, indexed by the descriptor's map number, and that's the table to use. I'll render each new stage from its own descriptor: map lists, then tileset.
+
+- tool `Bash`: Show current png section
+
+- tool `Bash`: Render new stages from DSi descriptors and map table
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/dsi_sheet.png
+
+- tool `Bash`: Document loader findings, check build, commit
+
+- tool `PushNotification`: 
+
+## Claude
+
+I read the DSi loader, and [tools/dsi_zelmap.py](tools/dsi_zelmap.py) now renders all 18 new Anniversary Edition stages cleanly, each with its own tileset and palette. Ghidra wasn't needed: the extracted ARM9 binary and `arm-none-eabi-objdump` were enough to read the few functions involved.
+
+**What the code showed:**
+- **Area setup** (`0x02056F80`, the DSi version of `sub_08015DD8`): it centres the camera on 128/96, half of 256×192, where the GBA uses 120/80. That's the resolution change, and it sits in one easy-to-find place.
+- **Loader** (`0x02021EC4`, the DSi version of `sub_0801484C`): my earlier "entries A and B" were the two halves of one index pair (offset and size), so the entry number is A/2. With that fixed, DSi tileset 1 matches GBA tileset 1, and the RAM buffers keep the GBA layer layout.
+- **Palettes:** the palette groups are at 0x021039B8. They point into `zeldat.bin`, not `pat.bin` as I'd guessed.
+- **Stage maps:** the map table is at 0x020D7660, indexed by each stage descriptor's map number, as on the GBA.
+
+**The new tilesets:**
+
+| Tilesets | What they are |
+|---|---|
+| 11, 13, 14 | GBA tilesets 1, 3 and 0 with new palettes |
+| 12 | new tile graphics on tileset 2's metatiles |
+| 6–10 | new |
+
+**What they look like:** some stages are styled after earlier Zelda games: a castle, monochrome and 8-bit-style overworlds, and an 8-bit-style dungeon. Others are new trial dungeons, two of them built around a big "25".
+
+**For the port:** the new levels use the GBA game's own formats throughout:
+- stage descriptors, map-data records with entry numbers in place of ROM offsets;
+- the same metatile layout and palette groups.
+
+So our decompiled loaders can load them with only a small adapter that reads the DSi files.
+
+**Next** is what the new stages contain: their enemy and object layers (pointed to from each descriptor) and their sub-room pools. Those also use the GBA formats. Any new enemy or object types they use would need the DSi code that drives them.
+
+The renders are in `/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/dsi/`, with an overview at `/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/dsi_sheet.png`. Everything is committed with walkthrough notes, and the matching build still passes.
+
+## User
+
+Based on the resolution changes between versions, and the idea for changing resolution for the PS2 port, answer the following:
+1. Does the DSi game use the exact same maps as the GBA version?
+2. Would increasing the resolution to 320x240 in our PS2 port show areas outside the map boundaries?
+
+## Claude
+
+To answer both properly I need to check where the DSi edits to existing GBA stages actually are.
+
+- tool `Bash`: Count metatile differences between GBA and DSi stage maps
+
+- tool `Bash`: Diff GBA vs DSi stage maps actually used
+
+- tool `Bash`: Render GBA vs DSi stage maps with changes marked
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/diff1.png
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/diff58.png
+
+## Claude
+
+1. **No, but nearly.** The DSi game reuses most GBA maps unchanged, with small edits to some.
+2. **No, not past the map's own edges.** But 320×240 would show more of what lies just outside each play area: the filler around it, and sometimes separate parts of the same map that the GBA screen never showed at once.
+
+**1. Same maps?**
+
+I compared every GBA stage map the game uses with its DSi counterpart, metatile by metatile:
+- Of the 111 stage maps the stages use, 71 are identical and 40 differ.
+- The differences are small design tweaks, not changes for the bigger screen. Stage map 1 has a reshaped water channel; stage map 58 has a rearranged lake shoreline.
+- Most edits are in the middle of the maps, not at the borders. One outlier, stage map 94, has over 2,000 changed metatiles and is effectively reworked. I haven't looked at it yet.
+- Sub-rooms are similar: 379 layers are identical and 55 are small edits.
+- The 18 Anniversary stages are new.
+- The map size didn't change: every stage is still 63×63 metatiles (1008×1008 px).
+
+So the DSi's 256×192 screen needed no map changes. The DSi code centres the camera on 128/96 instead of 120/80 and clamps it to the same 1008-pixel map size.
+
+**2. Would 320×240 show outside the map?**
+
+- **Past the map edges: no.** The camera is clamped to the map size, as on the GBA and the DSi. At 320×240 it simply stops 320 px from the right edge and 240 px from the bottom.
+- **Past the playable areas inside a map: yes, more of it.** Each 1008×1008 map is a canvas holding one or more play areas surrounded by filler (rock, brick or sky patterns), and sometimes separate areas side by side. Compared with the GBA, 320×240 shows an extra 40 px on every side; the DSi shows only an extra 8 px left and right and 16 px top and bottom. The filler is drawn tiles, so it won't look broken. Near the edge of an area, though, players could see neighbouring rooms or hidden bonus areas that the GBA screen kept off-view. That's a design side effect rather than a rendering bug, and the DSi already accepts a milder version of it.
+
+Two bigger issues come with the wider view, and neither is about the maps:
+- **The map buffer is too small.** The GBA game streams the map into a 256×256 hardware tilemap that wraps around. A 320-pixel-wide view doesn't fit in it. The PS2 renderer has to draw from the full 64×64-metatile map in RAM instead of copying the GBA's background buffer. That's straightforward, since the full map sits in the layer buffers we've already decoded.
+- **Enemies and objects at the screen edges.** The game probably decides which objects to update and draw based on the 240×160 screen. If so, with a wider view, players would see enemies frozen or appearing late near the edges. The DSi must have widened those ranges too, so its code can show where.
+
+I haven't checked how the camera behaves in boss rooms, transitions, or any mode that sets a smaller camera area than the full map. Those are the places where a wider view is most likely to show something unintended.
+
+## User
+
+For now, let's save these notes to the docs folder and commit
+
+- tool `Bash`: List docs folder
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/docs/DSi Levels and Resolution.md
+
+- tool `Bash`: Commit the notes
+
+## Claude
+
+I saved the notes to [docs/DSi Levels and Resolution.md](docs/DSi%20Levels%20and%20Resolution.md) and committed them.
+
+The file covers:
+- **Level format:** how Four Swords on the GBA stores its stages and sub-rooms.
+- **DSi data:** the DSi file and table addresses, which maps changed and by how much, and the 18 new stages with their tilesets.
+- **Resolution:**
+  - what the DSi changed;
+  - why 320×240 can't show past a map's edges but does show more around each play area;
+  - the two pieces of port work a wider view needs (drawing from the full map, and the object update and draw ranges);
+  - what hasn't been checked yet.
+
+## User
+
+How much of the PS2 port will rely on decomp code, and how much on decomp?
+
+## Claude
+
+Your question names "decomp" twice, so I've read it as asking how much of the port will be the game's decompiled code and how much will be new code written for the PS2. If you meant hand-decompiled C against mechanically translated C, that's the earlier table: about 20% hand-written and 80% mechanical by code size.
+
+These estimates are by code size. The PS2 and DSi parts are projections, since that work hasn't started yet.
+
+**Code from the GBA ROM: the large majority**
+
+Everything the game itself does comes from the decomp: game logic, enemies and objects, the room and stage loading we just mapped, and items, text and menus. That's about 1.2 MB of original GBA code. Today 20% of it is hand-written C and 80% is mechanically translated, and it all runs in the replay checks. Over time the parts the port touches most get hand-written. The rest can stay mechanical, since it already behaves the same.
+
+**New PS2 code: a thin layer, probably a few tens of KB**
+
+| Piece | What it replaces |
+|---|---|
+| Rendering | The GBA graphics hardware: background tilemaps, sprites, palettes and blending, drawn with the PS2's Graphics Synthesizer (GS). This is the largest piece. |
+| Split screen | Four game states, or one shared state with four camera views (the design choice still to make), in place of linked GBAs. |
+| Audio | The GBA sound driver's output, through the PS2's sound processor. The sound driver itself is decompiled C, and a C version also exists in other pret projects. |
+| Input, saves, startup | Controllers instead of the GBA pad, memory card instead of EEPROM, PS2 startup instead of the GBA boot ROM. |
+| Link cable | Replaced by direct data passing between players, instead of emulating the serial port. |
+
+**From the DSi version: new code modelled on it, no DSi code copied**
+
+- **New levels:** mostly data. The 18 stages use the GBA formats, so the decompiled loaders take them with a small adapter. Any new enemy or object behaviour gets written in C from reading the DSi code.
+- **Wider view:** a few camera and range constants in decomp code, plus the renderer drawing from the full map.
+- **AI partner:** new code, the largest of the three, written from studying the DSi game.
+
+Overall, by code size, more than 90% of the port will be decompiled GBA code. The PS2 layer and the DSi-inspired features make up the rest. The new code is small, but the risk is concentrated there: the renderer, the split-screen design and the AI partner.
+
+## User
+
+At this point, can we get the port running on PS2? Recomp code we've made is fine
+
+## Claude
+
+Before planning this, I'll check which PS2 toolchain is installed and what the other ports use to build.
+
+- tool `Bash`: Check PS2 toolchain and other port layout
+
+- tool `Bash`: Look for TLB syscalls in ps2sdk and other ports
+
+- tool `Bash`: Check generated auto C and Makefile rules
+
+- tool `Bash`: Read AUTO_C build rules
+
+- tool `Bash`: Trial-compile one file set with EE gcc
+
+## Claude
+
+The errors come from the compiler defaulting to C23, where `f()` means "takes no arguments". The old GBA-style C needs `-std=gnu99`. I'll retry with that across every file.
+
+- tool `Bash`: Compile all C with EE gcc gnu99, list failures
+
+- tool `Bash`: Summarize EE compile errors
+
+- tool `Bash`: Split C vs assembler errors
+
+- tool `Bash`: Compile hand-written C separately and summarize
+
+- tool `Bash`: Recompile with relaxed errors and list real C errors
+
+## Claude
+
+Yes. Nothing I've found blocks it, and our existing C, both the translated and the hand-written, can be used as it is. But it's several sessions of work, not one. Here's where things stand and what it would take.
+
+**Compiling for the PS2 is close.** I built all of our C with the PS2 compiler (EE GCC with ps2sdk, both already installed). Once old-style C is allowed (`-std=gnu99`, plus a few warnings that newer GCC treats as errors), about 20 real C errors are left:
+- some casts used as lvalues;
+- a few conflicting function prototypes;
+- one duplicate `static`;
+- one struct-size check.
+
+All quick fixes. The other failures are assembly: `asm(".include")` lines for functions that aren't C yet, and Thumb entry stubs in the generated global-state files. The PS2 build drops both. The C translations of those functions already exist in `src/auto/`; the stubs need a few C replacements.
+
+**Memory addresses can stay as they are.** The game's C and the ROM's data tables are full of absolute GBA addresses (RAM at 0x02000000 and 0x03000000, ROM at 0x08000000). ps2sdk's `PutTLBEntry` can map those virtual addresses onto PS2 RAM. Every pointer then works unchanged, and the ROM data is read from the user's own `baserom.gba` at run time, so nothing gets committed. Hardware registers (0x04000000) and video memory get mapped to RAM the same way, and the PS2 side reads them each frame.
+
+**New PS2 code a first boot needs:**
+
+| Piece | Work |
+|---|---|
+| Startup | Map the memory, load the ROM, run the game's main loop. |
+| BIOS calls | About 15 C functions: memory copy and fill, decompression, division, square root. |
+| Interrupts | At each PS2 vsync, run the game's vblank handler and set the display status bits it polls. |
+| Rendering | A software version of the GBA graphics chip (background modes 0–2, sprites, palettes, basic blending) drawing 240×160 into a texture shown through the Graphics Synthesizer. This is the largest piece. |
+| Input | The PS2 pad written into the GBA's key register. |
+| Sound, saves | Muted and stubbed at first. |
+
+**Milestones:**
+1. Everything compiles and links into a PS2 ELF.
+2. It boots in PCSX2 (software renderer) without crashing, following the TLB-miss rules from CLAUDE.md.
+3. The title screen appears through the software graphics chip.
+4. One player can play Four Swords.
+5. Split-screen multiplayer, then sound, saves and the DSi features.
+
+**Risks:**
+- **Machine-level assumptions in the C.** Struct layout, unaligned reads (the GBA rotates them, the PS2 faults), and integer edge cases may differ between ARM and MIPS. The replay checks against mGBA, frame by frame, will catch these.
+- **The Four Swords game mode.** It expects linked GBAs, so getting past the multiplayer setup screens is likely to need the link-cable replacement earlier than planned.
+
+If you want to go ahead, I'll start on milestone 1: a PS2 build target, the C fixes, the stub replacements, and a link with the memory mapping.
+
+## User
+
+As far as rendering, what code can we reuse from mGBA?
+
+- tool `Bash`: Inspect mGBA software renderer files, deps, license
+
+## Claude
+
+Most of mGBA's software renderer can be reused, about 2,300 lines of plain C. Its license allows that, with one condition on the files we take.
+
+**What we can take**
+
+| File (in `reference/mgba`) | Lines | Does |
+|---|---|---|
+| `src/gba/renderers/video-software.c` | 1,059 | Frame and scanline driver, register handling, windows, blending and brightness |
+| `src/gba/renderers/software-mode0.c` | 588 | Tile backgrounds (the mode Four Swords uses) |
+| `src/gba/renderers/software-obj.c` | 421 | Sprites, including scaled and rotated ones |
+| `src/gba/renderers/software-bg.c` | 228 | Scaled and rotated, and bitmap, backgrounds (modes 1–5) |
+| `software-private.h`, `video-software.h`, `common.c` | ~220 | Shared helpers and the renderer struct |
+
+It's independent of mGBA's CPU emulation. It sits behind a small interface: we tell it about writes to video memory, palette, sprite data and video registers, ask it to draw each scanline, then collect the 240×160 frame. Its other dependencies are a few mGBA utility headers (memory, colour types, register names), which are easy to trim or stub.
+
+`gl.c` (mGBA's OpenGL renderer) isn't reusable on the PS2. It's still a useful model if we later render natively on the Graphics Synthesizer instead of in software.
+
+**License: MPL 2.0 (file-level copyleft)**
+- We can include those files in the port without changing the license of the rest of the project.
+- They keep their MPL notices.
+- Any changes we make to those files must be published under MPL as well, which happens anyway with the repo on GitHub.
+- No noncommercial restriction, unlike FourSwordsRecomp's PolyForm license.
+
+**How it fits our plan**
+- **Feeding it:** the game writes video memory and registers directly into the mapped GBA memory. Each frame, the PS2 side hands the renderer that memory and the register values, then draws the 160 lines.
+- **Mid-frame effects:** the game changes some registers partway through a frame, through its scanline table driven by direct memory transfers during horizontal blanking. Drawing line by line with those per-line values reproduces them, as mGBA does.
+- **Speed:** mGBA renders at full speed on much weaker machines while also emulating the CPU, so rendering one GBA screen on the EE is cheap. Four split-screen views means four renderer instances, which should still fit, but I'd measure it in PCSX2 early.
+
+**Where we'd change it**
+- **Wider resolution:** the renderer assumes a 240-pixel-wide screen, and its background wrap-around depends on the GBA's tilemap sizes. A 320×240 view needs those widened. That's a modification to MPL files, so those changes are published under MPL too.
+- **Output:** frames go to a Graphics Synthesizer texture via gsKit instead of mGBA's frontend.
+
+So the plan's biggest piece, the graphics-chip replacement, becomes mostly integration work instead of a from-scratch renderer.
+
+## User
+
+Let's proceed with the PS2 port
+
+## Claude
+
+I'll start with milestone 1, a linked PS2 ELF. First I need to see exactly what assembly remains in the generated files.
+
+- tool `Bash`: Inspect remaining asm in generated C
+
+- tool `Bash`: Find asm in gstate output and header
+
+- tool `Bash`: Read gstate runtime header and generated tail
+
+- tool `Bash`: Survey gstate2c emission points
+
+- tool `Bash`: Read gstate2c main and literal emission
+
+- tool `Bash`: Read gstate2c loader and call emission
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/tools/gstate2c.py
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/tools/gstate2c.py
+
+- tool `Bash`: Make PS2 tables writable and skip ARM address check on PS2
+
+- tool `Bash`: Header tweak, rebuild AUTO_C objects to generate PS2 gstate files
+
+- tool `Bash`: Check generated PS2 gstate files
+
+## Claude
+
+The PS2 global-state files are generated for all 27 objects. Next I'll try compiling them for the EE.
+
+- tool `Bash`: Compile PS2 gstate files with EE gcc
+
+- tool `Bash`: Use push/popsection for copy data
+
+- tool `Bash`: Regenerate and recompile PS2 gstate files
+
+## Claude
+
+All the PS2 global-state files compile now. Next is a PS2 makefile: the hand-written C with its `.include` lines filtered out, the generated C, and the data.
+
+- tool `Bash`: Survey top-level asm forms and data/asm sources
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/Makefile.ps2
+
+- tool `Bash`: Run PS2 object build, summarize errors
+
+- tool `Bash`: Locate inline Thumb asm blocks and the static assert
+
+- tool `Bash`: Inspect inline asm functions context
+
+- tool `Bash`: Check whether naked asm functions have C translations
+
+- tool `Bash`: Check naked function handling in asm2c
+
+- tool `Bash`: Count naked functions per file
+
+- tool `Bash`: Check THUMB_FUNC macros and naked function shape
+
+- tool `Bash`: List naked functions active in NONMATCHING builds
+
+- tool `Bash`: Check include directory naming and macro
+
+- tool `Bash`: Convert naked asm functions to .inc files and check matching
+
+- tool `Bash`: Inspect differing naked function syntax
+
+- tool `Bash`: Fix regex and rerun conversion, then compare
+
+## Claude
+
+Quick status: I'm converting the 14 remaining inline-assembly functions so the PS2 build can translate them; a pattern in my converter script needs adjusting.
+
+- tool `Bash`: Fix pattern, convert remaining, check matching build
+
+- tool `Bash`: See existing .inc header/footer convention
+
+- tool `Bash`: Drop END macro lines and recheck matching
+
+- tool `Bash`: Check include order in rom2.c
+
+- tool `Bash`: Expand macro inline in new incs, recheck matching
+
+## Claude
+
+The matching build is still OK after the naked-function conversion. Next I'll strip the ARM-only bits in the PS2 build's filter and fix the remaining C errors in the sources.
+
+- tool `Bash`: Update PS2 filters and rebuild
+
+## Claude
+
+Data assembles now. Next, the C errors one at a time, starting with the conflicting prototypes.
+
+- tool `Bash`: Find conflicting declarations
+
+- tool `Bash`: Show lvalue errors and static asserts
+
+- tool `Bash`: Locate failing static asserts and lvalue lines
+
+- tool `Bash`: Compute UnknownStruct7 member offsets with EE gcc
+
+- tool `Bash`: Find first diverging member vs ARM layout
+
+- tool `Bash`: Compare struct offsets agbcc vs EE gcc
+
+- tool `Bash`: Re-parse offsets and find first diverging member
+
+- tool `Bash`: Compare offsets with zero-init forced into data
+
+- tool `Bash`: Inspect how o_0 is emitted
+
+## Claude
+
+Quick status: the PS2 compiler lays out the game's big RAM struct differently from the GBA compiler. I'm comparing member offsets between the two to find where they diverge.
+
+- tool `Bash`: Find first diverging UnknownStruct7 member
+
+- tool `Bash`: See the member before the divergence
+
+- tool `Bash`: Read UnknownStruct8
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/tools/ps2/struct_align.py
+
+- tool `Bash`: Wire struct alignment filter into PS2 build, rebuild
+
+- tool `Bash`: Identify remaining static assert failure
+
+- tool `Bash`: Find next diverging member with aligned structs
+
+- tool `Bash`: See member at divergence
+
+- tool `Bash`: Restrict alignment to bitfield structs, rebuild
+
+## Claude
+
+The static asserts pass now. To be thorough I'll compare `sizeof` of every named struct and union between agbcc and the EE compiler.
+
+- tool `Bash`: Compare sizeof of all header structs ARM vs EE
+
+- tool `Bash`: Retry struct size comparison with all headers
+
+- tool `Bash`: Compare struct sizes, skipping incomplete types
+
+- tool `Bash`: Struct size comparison, minimal includes
+
+- tool `Bash`: Read definitions of size-mismatched structs
+
+- tool `Bash`: Align all non-packed structs and recompare sizes
+
+- tool `Bash`: Add cast-lvalue rewrite; check sBGMapSizes uses
+
+- tool `Bash`: Add PS2 prototypes, drop stray extern, check both builds
+
+- tool `Bash`: Find which file still has Thumb asm
+
+- tool `Bash`: Find remaining inline asm in sprite.c
+
+- tool `Bash`: Search sprite.c for asm usage
+
+- tool `Bash`: Show context before assembler errors
+
+## Claude
+
+Quick status: almost everything compiles for the PS2 now. One file still has inline Thumb assembly; I'm finding which function.
+
+- tool `Bash`: Check remaining naked functions in sprite2.c
+
+- tool `Bash`: Show the two remaining naked functions
+
+- tool `Bash`: Convert last two naked functions and check matching
+
+## Claude
+
+Matching is still OK. I'll regenerate the translated C so the converted functions get translations, then rebuild the PS2 objects.
+
+- tool `Bash`: Regenerate auto C and rebuild PS2 objects
+
+## Claude
+
+Every object now compiles for the PS2: hand-written C, translated C, global-state C and data. I'll commit this step.
+
+- tool `Bash`: Commit PS2 compile step
+
+## Claude
+
+Committed. Next is linking, and that depends on where the ROM data has to sit. Let me look at how `.rodata` is laid out in the matching build.
+
+- tool `Bash`: Show .rodata object layout in matching map
+
+- tool `Bash`: Check data sections and function pointer forms
+
+## Claude
+
+Function pointers in the data are plain `.4byte sub_X`, so on the PS2 they resolve to the real C functions. Next I need the GBA RAM symbol files and the ps2sdk linker script.
+
+- tool `Bash`: Inspect RAM symbol files and ps2sdk linkfile
+
+- tool `Bash`: Read ARM ldscript RAM part and ps2sdk linkfile
+
+- tool `Bash`: Read linkfile tail and total object sizes
+
+- tool `Bash`: Find game entry and interrupt setup
+
+- tool `Bash`: Write PS2 linker script and ROM-bytes asm
+
+- tool `Bash`: Write GBA symbol generator for PS2 link
+
+- tool `Bash`: See how tp-ps2 links an EE ELF
+
+## Claude
+
+Now a minimal `main` and a trial link to see what's undefined.
+
+- tool `Bash`: Add link rules, try linking, list undefined symbols
+
+- tool `Bash`: Fix PS2 runtime flags and relink
+
+- tool `Bash`: Investigate missing translated functions
+
+- tool `Bash`: Check lttp sprite2 build artifacts
+
+- tool `Bash`: Check asm2c handling of include paths
+
+- tool `Bash`: Run asm2c on sprite2 by hand
+
+## Claude
+
+`asm2c` rejects the `.TYPE` and `.GLOBAL` lines I expanded the macro into. I'll make it accept those directives.
+
+- tool `Bash`: Find asm2c directive handling
+
+- tool `Bash`: Read asm2c directive acceptance
+
+- tool `Bash`: Let asm2c ignore .type directives, retest
+
+## Claude
+
+That fixes the sprite functions: all 10 translate now. Next, the undefined `rom1` names. I'll check whether they're entry points in the middle of global-state functions.
+
+- tool `Bash`: Classify undefined rom1 symbols
+
+- tool `Bash`: Emit inner-label entries and aliases in PS2 gstate output
+
+- tool `Bash`: Regenerate everything and relink
+
+- tool `Bash`: Show the broken generated lines
+
+- tool `Bash`: Fix escapes and skip __base symbols; rebuild and relink
+
+- tool `Bash`: Trace where sub_080007C4 lives
+
+- tool `Bash`: Find which object defines those symbols
+
+## Claude
+
+Quick status: about 45 symbols are still undefined at link time, mostly BIOS functions I haven't written yet. I'm working out why a handful of `rom1` labels aren't exported.
+
+- tool `Bash`: Map labels to their containing copies
+
+- tool `Bash`: Look at sub_080007C4 asm and users
+
+- tool `Bash`: Locate range computation
+
+- tool `Bash`: Fix gstate2c copy range ends for inner Thumb labels
+
+- tool `Bash`: Track ARM vs Thumb labels inside copies
+
+- tool `Bash`: Regenerate with fixed ranges and relink
+
+## Claude
+
+While that runs, I'll check what the A Link to the Past `sub_080D0xxx` symbols are.
+
+- tool `Bash`: Locate lttp undefined funcs and veneer
+
+- tool `Bash`: Check unlinked lttp asm files
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/src/ps2/bios.c
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/src/ps2/bios.c
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/tasks/bcbmx9pee.output
+
+- tool `Bash`: See which build step is running
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/src/ps2/tlb.c
+
+- tool `Bash`: Check ps2sdk SIO and tp-ps2 runtime pieces
+
+- tool `Bash`: Inspect tp-ps2 crash reporter dependencies
+
+- tool `Bash`: Copy crash reporter from tp-ps2 and review
+
+- tool `Bash`: Read crt0 ARM routines
+
+## Claude
+
+`UpdateAllEntities` in `crt0.s` is the core entity loop and it's ARM code, so it needs a C port too. It calls IWRAM routines that `main.c` copies at startup. I'll see what gets copied where.
+
+- tool `Bash`: Read IWRAM code copies in main.c
+
+- tool `Bash`: Find indirect call forms and IWRAM routine users
+
+- tool `Bash`: Check background AUTO_C build progress
+
+## Claude
+
+No response requested.
+
+## User
+
+<command-name>/compact</command-name>
+            <command-message>compact</command-message>
+            <command-args></command-args>
+
+## User
+
+It sounds like the IDE crashed because the VM ran out of memory. Can you confirm that?
+
+- tool `Bash`: Check memory and kernel OOM-kill records
+
+- tool `Bash`: Top memory users and user-journal OOM entries
+
+## Claude
+
+I can't confirm it from logs, but memory exhaustion is likely.
+
+**What I could check:**
+- **No log access.** I can't read the kernel log (`dmesg` / `journalctl -k`), which is where an out-of-memory kill would be recorded. The user journal has no OOM entries.
+- **Swap is still almost full:** 4,023 of 4,095 MB used. RAM has recovered (6.8 GB available), so something pushed the VM hard enough to swap out nearly everything.
+- **The likely cause is my build.** agbcc had been compiling one huge generated file for over 10 minutes when the session died. That file is most likely `rom1`'s global-state C, which grew a lot after my change to translate code after mid-function labels. GCC 2.95 at `-O2` on one enormous function can use several GB of memory. That process is gone now.
+
+**What I'll change before continuing:**
+- Compile the generated global-state files at `-O0` or `-O1`, or split very large functions, so agbcc doesn't run away.
+- Run that build with a memory cap (`ulimit -v`) so it fails cleanly instead of taking down the IDE.
+- Build with fewer parallel jobs (`-j2` instead of `-j8`).
+
+If you want proof, `sudo dmesg | grep -i oom` or `journalctl -k -b -1 | grep -i oom` (previous boot, if the VM restarted) would show it. Both need root, which I don't have.
+
+## User
+
+This is the log:
+sudo dmesg | grep -i oom
+
+## Claude
+
+Your message has the command but not its output. Could you paste what it printed? An out-of-memory kill would show up as lines like `Out of memory: Killed process 12345 (agbcc)` or `oom-kill:...`.
+
+If it printed nothing, either no process was killed for memory or the log has already rotated. In that case, check the previous boot (if the VM restarted) with:
+
+```
+sudo journalctl -k -b -1 | grep -i -E "oom|killed process"
+```
+
+## User
+
+<pasted_content id="18f4">
+[704378.873833] language_server invoked oom-killer: gfp_mask=0x140cca(GFP_HIGHUSER_MOVABLE|__GFP_COMP), order=0, oom_score_adj=200
+[704378.873862]  oom_kill_process.cold+0x8/0x8d
+[704378.874054] [  pid  ]   uid  tgid total_vm      rss rss_anon rss_file rss_shmem pgtables_bytes swapents oom_score_adj name
+[704378.874771] oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=/,mems_allowed=0,global_oom,task_memcg=/user.slice/user-1000.slice/user@1000.service/app.slice/app-org.chromium.Chromium-3452.scope,task=python3,pid=2857783,uid=1000
+[704378.874786] Out of memory: Killed process 2857783 (python3) total-vm:6193004kB, anon-rss:5884616kB, file-rss:2544kB, shmem-rss:0kB, UID:1000 pgtables:11624kB oom_score_adj:200
+[924385.580386] systemd invoked oom-killer: gfp_mask=0x140cca(GFP_HIGHUSER_MOVABLE|__GFP_COMP), order=0, oom_score_adj=0
+[924385.580464]  oom_kill_process.cold+0x8/0x8d
+[924385.580742] [  pid  ]   uid  tgid total_vm      rss rss_anon rss_file rss_shmem pgtables_bytes swapents oom_score_adj name
+[924385.581255] oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=/,mems_allowed=0,global_oom,task_memcg=/user.slice/user-1000.slice/user@1000.service/app.slice/app-org.chromium.Chromium-770498.scope,task=agbcc,pid=853080,uid=1000
+[924385.581271] Out of memory: Killed process 853080 (agbcc) total-vm:5453056kB, anon-rss:5445336kB, file-rss:1176kB, shmem-rss:0kB, UID:1000 pgtables:10708kB oom_score_adj:200
+</pasted_content id="18f4">
+
+## Claude
+
+Yes, it ran out of memory, and the process the kernel killed was my build.
+
+- **The kill:** at `[924385]` the kernel killed `agbcc`, PID 853080. It had grown to about 5.4 GB of RAM. That's the same PID I saw earlier with 10 minutes of CPU time, compiling the huge generated global-state file. It ran inside the IDE's process group (`app-org.chromium.Chromium-770498.scope`), which is why the IDE went down with it.
+- **The earlier entry** at `[704378]` is a separate, older kill of a `python3` process at about 5.9 GB, roughly 2.5 days earlier by the timestamps. It may have been one of my analysis scripts from an earlier session. I haven't confirmed which.
+
+What caused it: my `gstate2c.py` fix made each global-state copy run up to the next real function instead of stopping at the first label inside it. For `rom1`, whose functions are all pinned in large groups, that produces a few enormous C functions. agbcc, GCC 2.95, at `-O2` on functions that size uses memory without bound.
+
+Fixes before I run that build again:
+1. **Compile generated global-state files at a lower optimization level.** For the ARM `AUTO_C` build that's agbcc `-O1` or `-O0`; the PS2 build already uses `-O1`. Speed isn't critical there; those files are a bridge until the code is hand-written.
+2. **Cap each compile's memory** with `ulimit -v`, about 3 GB, so a runaway compiler fails with an error instead of triggering the OOM killer.
+3. **Build with `-j2` instead of `-j8`** for these steps.
+4. **Run long builds outside the IDE's process group** (for example with `systemd-run --user --scope`), so even a kill can't take the IDE down.
+
+The uncommitted work since the last commit is still on disk. That includes the PS2 linker script, `bios.c`, `tlb.c` and the `gstate2c.py` changes; nothing was lost. Should I apply these safeguards and carry on with the PS2 link?
+
+## User
+
+Yes, apply safeguards and continue
+
+- tool `Bash`: Add memory caps and -O0 for generated gstate compiles
+
+## Claude
+
+Safeguards are in. Now the `AUTO_C` build: `-j2`, in its own systemd scope, in the background.
+
+- tool `Bash`: Run AUTO_C build in a capped scope
+
+## Claude
+
+While that builds, I'll make `asm2c` emit indirect calls through an `ICALL` macro.
+
+- tool `Bash`: Find indirect call emission sites
+
+- tool `Bash`: Switch indirect calls to ICALL macro
+
+- tool `Bash`: Define ICALL in auto.h
+
+## Claude
+
+Next is the PS2 side of `ICALL`: a small resolver plus C versions of the ARM routines. `sub_080008A8` (copied to 0x03005AE0) runs for every entity every frame, so it needs a port straight away.
+
+- tool `Bash`: Read ARM routine sub_080008A8
+
+- tool `Bash`: Read rest of sub_080007C4
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/src/ps2/glue/arm_ports.c
+
+- tool `Bash`: Tidy trampoline; read AUTO_C build result
+
+## Claude
+
+The build was terminated (exit 143). I'll check whether it hit the 6 GB scope cap.
+
+- tool `Bash`: Inspect why the build was terminated
+
+- tool `Bash`: Measure asm2c memory on file_select
+
+- tool `Bash`: Rerun asm2c on file_select with a cap and exit code
+
+## Claude
+
+On its own, `asm2c` finishes on `file_select` under a 4 GB cap, so the problem was two large runs at once. I'll rebuild with `-j1` inside the 6 GB scope.
+
+- tool `Bash`: Rebuild AUTO_C single-job in capped scope
+
+## Claude
+
+While that runs: hand-written C calls `gUnknown_03006C70` (the IWRAM copy of `UpdateAllEntities`) directly, not through `ICALL`. I'll check how it's used.
+
+- tool `Bash`: Find uses of the UpdateAllEntities pointer
+
+- tool `Bash`: Patch main.c pointer for PS2; add glue build rule
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/src/ps2/frame.c
+
+- tool `Bash`: Wire init and logging into PS2 main
+
+- tool `Bash`: Add symbols for native code and LttP stubs
+
+## Claude
+
+Waiting for the background `AUTO_C` build before linking.
+
+- tool `Bash`: Check build status
+
+## Claude
+
+It's still running; I'll continue when it finishes.
+
+## User
+
+Is it still running?
+
+- tool `Bash`: Check build process status
+
+## Claude
+
+Yes, it's still running. It's partway through the 27 objects, translating `interface` now: `asm2c` is using about 1.2 GB, and the build is running one job at a time, as set up after the earlier kill. Memory is fine: the build has a 6 GB cap and the IDE is outside it.
+
+With one job at a time this pass takes longer than the earlier `-j8` runs. I'd expect a few more minutes, plus whatever the big `rom1` global-state file takes to compile at `-O0`. When it finishes I'll build the PS2 objects and attempt the first full link.
+
+- tool `Bash`: Check AUTO_C result, build PS2 objects
+
+- tool `Bash`: Fix prototypes; find why rom1.o failed
+
+- tool `Bash`: Measure rom1 gstate file and largest functions
+
+- tool `Bash`: Keep copies' own names as range ends; regenerate rom1
+
+## Claude
+
+Back to a normal size: 1.3 MB, 387 functions in global-state C and 21 left native. I'll rerun both builds in the capped scope.
+
+- tool `Bash`: Full AUTO_C rebuild, PS2 objects and link
+
+## Claude
+
+This full pass is running in the background: the regenerated translations, then the PS2 objects, then the link. I'll report the link result when it's done.
+
+- tool `Bash`: Read build/link result
+
+## Claude
+
+Three symbols are still undefined. They're labels in the `rom1` copy that the game also copies to IWRAM. Let me see what was generated for them.
+
+- tool `Bash`: Look for the copy holding the missing labels
+
+- tool `Bash`: Check symbol values and ARM markers in the copy
+
+- tool `Bash`: Find which inc files define the labels
+
+- tool `Bash`: Inspect the incs holding the labels
+
+- tool `Bash`: Read ARM part and find handler addresses
+
+- tool `Bash`: List incs in the ARM region and mark ARM ones
+
+- tool `Bash`: Disassemble the IWRAM ARM routine from ROM
+
+- tool `Bash`: Read key parts of the ARM routine
+
+- tool `Bash`: Disassemble sub_08008F78 and sub_08009106 as Thumb
+
+- tool `Bash`: Check gstate presence of related functions
+
+- tool `Bash`: Add ports, redirect IWRAM routine, relink
+
+- tool `Bash`: Show linker error messages
+
+- tool `Bash`: Make all inner labels of translated copies C entries
+
+- tool `Bash`: Rebuild everything and link
+
+## Claude
+
+The rebuild and link are running in the background, inside the 6 GB scope. I'll pick up when they finish.
+
+- tool `Bash`: Read rebuild/link result
+
+## Claude
+
+It links: `build/ps2/zeldaalttp.elf`, 11.8 MB. I'll check the memory layout of the segments.
+
+- tool `Bash`: Inspect ELF segments and key symbols
+
+## Claude
+
+The layout is as planned: game code and data at 0x00100000–0x0041ADA0, and the GBA ROM image at physical 0x01000000. Next, the matching check, then a commit.
+
+- tool `Bash`: Matching check and working tree status
+
+- tool `Bash`: Commit link milestone
+
+## Claude
+
+Committed. Next, a first boot in PCSX2 with the software renderer. I'll check how tp-ps2's run script is used.
+
+- tool `Bash`: Read PCSX2 run script usage
+
+- tool `Bash`: Boot the PS2 ELF in PCSX2 for 15 seconds
+
+## Claude
+
+It runs. PCSX2 starts the ELF, our SIO log appears, and then `PutTLBEntry` fails on the first mapping (8 MB at 0x08000000). I'll check whether ps2sdk documents the kernel's limits on it.
+
+- tool `Bash`: Search ps2sdk sources for TLB functions
+
+- tool `Bash`: Dump TLB, add free-entry fallback, boot again
+
+- tool `Bash`: Log first frames and boot again
+
+- tool `Bash`: Map the faulting pc to a function
+
+- tool `Bash`: Inspect sub_08133E64 original and generated code
+
+- tool `Bash`: Show current copy emission code
+
+- tool `Bash`: Emit copies as one contiguous blob and test on rom5
+
+## Claude
+
+That compiles, and the blob for `rom5` is 316 KB of source. `gstate2c.py` changed, so this needs the full regeneration, PS2 build and a boot again, in the background.
+
+- tool `Bash`: Rebuild, link and boot in PCSX2
+
+## Claude
+
+Where it stands:
+- **It boots.** The PS2 ELF starts in PCSX2, maps the GBA memory (the kernel refuses `PutTLBEntry`, but its unused TLB entries 41–47 work), and enters the game's `AgbMain`.
+- **First real bug found and fixed.** Global-state code read literal pools from the neighbouring function, which only worked while the copies were contiguous, as on the GBA. They're now one blob per object on the PS2 too.
+
+The rebuild and the next boot are running in the background inside the 6 GB scope. I'll report what the game reaches next.
+
+- tool `Bash`: Read boot result
+
+- tool `Bash`: Add vblank watchdog and boot again
+
+- tool `Bash`: Map ring addresses to copy+offset
+
+## Claude
+
+The game is stuck in sound-driver code: the last global-state function entered is `sub_08134D88`, in the m4a sound library at 0x0813xxxx. I'll look for a loop that polls hardware.
+
+- tool `Bash`: Read sub_08134D88 asm
+
+- tool `Bash`: Toggle VCOUNT in the interrupt and boot again
+
+## Claude
+
+The game got further: a different place now. The ring shows a cycle in which `0x403AE7CC` marks a call from global-state code into C at 0x003AE7CC. I'll name those addresses.
+
+- tool `Bash`: Name ring addresses
+
+## Claude
+
+The cycle is `sub_08134DC4` → `sub_08134A70` → `sub_08133DFC`, called through its C wrapper's address. That's still m4a. Let me read them.
+
+- tool `Bash`: Read the three looping m4a functions
+
+## Claude
+
+`sub_08134DC4` is m4a's `MPlayOpen`, and `sub_08133DFC` just clears 64 bytes. So the loop must be in the caller, `m4aSoundInit`'s loop over the music players. I'll check who calls it.
+
+- tool `Bash`: Find callers of MPlayOpen
+
+- tool `Bash`: Read the caller loop around MPlayOpen
+
+- tool `Bash`: Look for level-2/perf hooks in ee_debug
+
+- tool `Bash`: Find asm2c prologue emission
+
+- tool `Bash`: Read prologue context in asm2c
+
+- tool `Bash`: Trace C-ABI function entries on PS2, rebuild, boot
+
+## Claude
+
+Building and booting again with entry tracing in the translated C, in the background. The watchdog line will then name the last function entered, whatever kind it is.
+
+- tool `Bash`: Read traced boot result
+
+- tool `Bash`: Read sub_08135D44
+
+- tool `Bash`: Read EE_RegFrame layout
+
+- tool `Bash`: Find EE_RegFrame definition
+
+- tool `Bash`: Read ee_debug.h header and frame typedef location
+
+- tool `Bash`: Read EE_RegFrame in ps2_debug.h
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/src/ps2/io.c
+
+- tool `Bash`: Map I/O read-only with alias, wire handler, boot
+
+- tool `Bash`: Log first trapped I/O stores
+
+- tool `Bash`: Read memory macros and DmaSet macro
+
+- tool `Bash`: Read DmaSet macro body
+
+## Claude
+
+Now I'll rewrite `io.c` around these macros and put the TLB mapping back to normal.
+
+- tool `Bash`: Route I/O through macros, simplify io.c and TLB
+
+## Claude
+
+Next, EEPROM status reads hit 0x0DFFFFxx, which isn't mapped. Until saves are implemented, a page of all ones there makes the chip look ready.
+
+- tool `Bash`: Map EEPROM port, rebuild PS2, boot
+
+## Claude
+
+`R32()` is used as an lvalue in a few places: my `AUTO_TRACE` macro, and possibly `gstate.h`. Those can't go through a function, so they need plain pointers.
+
+- tool `Bash`: Find lvalue uses of R macros; fix AUTO_TRACE
+
+- tool `Bash`: Rebuild PS2 and boot
+
+## Claude
+
+Past the DMA wait. Now the EEPROM ready-poll reads 0x0D000000, the other end of the EEPROM window. I'll map that page to the same all-ones block.
+
+- tool `Bash`: Map EEPROM base page too and boot
+
+## Claude
+
+The game's main loop is running on the PS2: frames 1–8 in the first quarter second. A longer run will show whether it keeps going.
+
+- tool `Bash`: Boot for 25 seconds and show the tail
+
+- tool `Bash`: Write walkthrough step, verify matching, commit
+
+- tool `PushNotification`: 
+
+## Claude
+
+The PS2 build now boots in PCSX2 and runs the game's main loop: more than 1,200 frames with no crash, TLB miss or stall. Nothing is drawn yet, so the only proof it's running is the frame counter and trace output over the serial console. It's committed, with walkthrough Step 24, and `make compare` still reports OK.
+
+**Memory safeguards.** You confirmed the OOM kill came from my agbcc build at about 5.4 GB. Generated files now compile at `-O0` with a memory cap, and long builds run in a 6 GB systemd scope. That scope later contained an `asm2c` blow-up without touching the IDE.
+
+**What it took to boot, beyond compiling and linking:**
+- **Memory mapping.** PCSX2's kernel refuses `PutTLBEntry`, so the GBA regions go into its unused TLB entries instead.
+- **ARM routines.** The game runs four ARM routines from IWRAM, including the entity update loop; they're now in C. Indirect calls to GBA addresses go through a resolver.
+- **Two bugs in my translators,** found here but present on the ARM side too:
+  - Code after a label inside a function was never translated. The ARM build hid it by running that code natively.
+  - Some functions read data stored inside the neighbouring function, which only worked because the code sat side by side.
+- **Hardware side effects.** DMA, interrupt flags, the scanline counter and the save chip each blocked boot until emulated. My first plan, trapping writes to the I/O page, doesn't work in PCSX2, which never raises the exception. The translated code now calls an I/O layer for those registers instead.
+- **Watchdog.** A once-a-second report names the last function entered, which is how each hang was found.
+
+**Not done:**
+- No rendering, so nothing appears on screen yet.
+- No vsync pacing (it runs at about 100 frames per second), no controller input, no sound.
+- Saves aren't implemented: the save chip always reports ready and reads back as empty.
+- The ARM-side replay check hasn't been rerun since the translator fixes; that's worth doing before relying on them.
+
+Next is rendering: integrating mGBA's software renderer to draw the GBA screen through the Graphics Synthesizer, plus vsync pacing. That will show whether the game is really reaching the title screen.
+
+## User
+
+Proceed
+
+## Claude
+
+First, the dependencies of mGBA's software renderer, to see how much of the mGBA headers it pulls in.
+
+- tool `Bash`: Survey renderer header dependencies
+
+- tool `Bash`: Trial-compile mGBA renderer for EE, list undefined
+
+- tool `Bash`: List header dependencies and total size
+
+## Claude
+
+49 files, about 235 KB, all MPL-2.0. I'll vendor them under `src/ps2/mgba/` with the license and the source version noted. First, mGBA's build flags (pixel format) and how tp-ps2 drives gsKit.
+
+- tool `Bash`: Check renderer color format and tp-ps2 gsKit usage
+
+## Claude
+
+mGBA's renderer outputs 32-bit colour, red in the low byte, which is the Graphics Synthesizer's CT32 format, so frames can be uploaded as they are. I'll vendor the files now.
+
+- tool `Bash`: Vendor mGBA renderer files with license
+
+## Claude
+
+Now the glue. First, the renderer interface fields I'll drive.
+
+- tool `Bash`: Read renderer interface and VRAM write handling
+
+- tool `Bash`: Check what writeVRAM and init do
+
+## Claude
+
+The renderer skips scanlines it thinks are unchanged (`scanlineDirty`), so one `writeVRAM` call per frame resets that. Next, gsKit initialization as tp-ps2 does it.
+
+- tool `Bash`: Read tp-ps2 gsKit init
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/src/ps2/video.c
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/src/ps2/mgba_stubs.c
+
+- tool `Bash`: Verify table; wire renderer into build and frame loop
+
+- tool `Bash`: Check rest of table; build with renderer
+
+## Claude
+
+The table matches mGBA's and the ELF builds. I'll boot for 30 seconds and check the frame dumps.
+
+- tool `Bash`: Boot with renderer and collect frame dumps
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/frames.png
+
+- tool `Bash`: Take mGBA reference screenshots at same frames
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/ref.png
+
+- tool `Bash`: Log display registers at dumped frames
+
+- tool `Bash`: Find interrupt table setup
+
+- tool `Bash`: Read interrupt table data and bg-reg update
+
+- tool `Bash`: Log vblank handler pointer and game display buffer
+
+- tool `Bash`: Log real main state and capture symbols
+
+- tool `Bash`: Name the looping functions; show main state
+
+- tool `Bash`: Read main state table and loop body
+
+- tool `Bash`: Read the splash screen state function
+
+- tool `Bash`: Find gSubState address
+
+- tool `Bash`: Log real display buffer and substate
+
+- tool `Bash`: Set KEYINPUT idle, boot, dump frames
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/frames.png
+
+## Claude
+
+No frames were dumped at all this time, so it now stops before frame 60, which means it gets further. I'll check the watchdog.
+
+- tool `Bash`: Check watchdog after the keypad fix
+
+- tool `Bash`: Name the newest ring entries
+
+## Claude
+
+Now it hangs in the first frame. Sub-state 1 calls `sub_0800C41C`, which calls m4a's `sub_08134028`, and it gets stuck there. Let me read it.
+
+- tool `Bash`: Read sub_08134028
+
+## Claude
+
+m4a's vsync routine has no loop, so the hang must be back in `sub_0800C41C`, either a loop inside it or code it calls that isn't traced. Let me read it.
+
+- tool `Bash`: Read sub_0800C41C
+
+- tool `Bash`: Instrument hand C entries and name the hang
+
+## Claude
+
+No hand-written C entries appear. The flag change alone didn't make `make` rebuild those objects, so I'll force it.
+
+- tool `Bash`: Rebuild instrumented hand C and name the hang
+
+- tool `Bash`: Print interrupted PC in watchdog
+
+- tool `Bash`: Name the repeated hand C function
+
+- tool `Bash`: Read sub_0800D87C and its callers
+
+- tool `Bash`: Find callers of sub_0800D87C
+
+- tool `Bash`: Read the table holding sub_0800D87C
+
+- tool `Bash`: Read the code dispatching the textbox table
+
+- tool `Bash`: Read the while loop over the textbox table
+
+- tool `Bash`: Return 0 explicitly; check matching build
+
+## Claude
+
+The matching build is still OK. Other entries of these two tables may have the same problem, so I'll check how each is declared.
+
+- tool `Bash`: Check return types of table entries
+
+## Claude
+
+All the others already return `int`, so `sub_0800D87C` was the only one. Rebuilding and booting with frame dumps:
+
+- tool `Bash`: Rebuild, boot 30s, dump frames
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/frames.png
+
+- tool `Bash`: Commit renderer milestone
+
+- tool `PushNotification`: 
+
+## Claude
+
+Now the stall after the title. First, the last watchdog lines before it.
+
+- tool `Bash`: Show last watchdog lines before the stall
+
+- tool `Bash`: Test without the frame-300 dump
+
+- tool `Bash`: Read PINE tool usage
+
+- tool `Bash`: Catch and drop stores to the kernel area
+
+- tool `Bash`: Trace hand C entries around the stall
+
+- tool `Bash`: Read entity allocation and registration
+
+- tool `Bash`: Read sub_08012728
+
+- tool `Bash`: Find entity list initialization
+
+- tool `Bash`: Find asm referencing the entity lists
+
+- tool `Bash`: Read list init asm and its translation
+
+- tool `Bash`: Find where list heads are set to themselves
+
+- tool `Bash`: Read list-head initializer
+
+- tool `Bash`: Add verbose trace printing for all trace kinds
+
+- tool `Bash`: Rebuild and trace all entries near the stall
+
+## Claude
+
+Now it's precise: after `CreateObject`, the last entries are `sub_08003688` and then `sub_08003704` (both global-state code), and nothing follows. Let me read `sub_08003704`.
+
+- tool `Bash`: Read sub_08003704 asm
+
+- tool `Bash`: Disassemble the region and see generated code
+
+- tool `Bash`: Check table entries for the cross-copy target
+
+- tool `Bash`: Print gstate_run targets near the stall
+
+- tool `Bash`: Verify table sorting and lookup at startup
+
+## Claude
+
+The tables are sorted, but the lookup of 0x00B731CE fails even though the source has that entry. I'll look at what actually ended up in the linked table near that address.
+
+- tool `Bash`: Inspect linked table entries near the address
+
+- tool `Bash`: Look at raw table values and section layout
+
+- tool `Bash`: Pad table entries to 16 bytes, rebuild, boot
+
+- tool `Bash`: Boot 40s, collect frames
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/frames.png
+
+- tool `Bash`: Commit file-select milestone
+
+- tool `PushNotification`: 
+
+## Claude
+
+Next, the stall after the file select. I'll check what the watchdog shows before it stops.
+
+- tool `Bash`: Watchdog output before the late stall
+
+- tool `Bash`: mGBA reference around frame 5500
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/ref2.png
+
+- tool `Bash`: Check whether the late stall frame is deterministic
+
+- tool `Bash`: Read the run script's heartbeat logic
+
+- tool `Bash`: Print heartbeat in the script's format; run 60s
+
+## Claude
+
+No stall at all: it ran the full 60 seconds, 22,000+ frames, steady. Next is controller input. tp-ps2 already has a working pad module, so I'll look at it.
+
+- tool `Bash`: Read tp-ps2 pad driver
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/src/ps2/input.c
+
+- tool `Bash`: Wire controller input, build, check init
+
+## Claude
+
+The controller port opens in PCSX2. Headless runs can't press buttons, so you'll need to try it interactively. I'll commit, add the walkthrough entry and update the conversation archive.
+
+- tool `Bash`: Walkthrough, commit, archive conversation
+
+- tool `PushNotification`: 
+
