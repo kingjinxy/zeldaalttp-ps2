@@ -23,7 +23,7 @@
 // --play DIR (built with SDL2, tools/mgba_run.sh): a window to play GBAs 0 and 1 in real time. Writes the
 // starting pair (saveP.sav, stateP.ss) to DIR, records each GBA's buttons to DIR/inputsP, and writes the
 // final EEPROM to DIR/end_saveP.sav and GBA 0's frame count to DIR/frames. FRAMES is ignored; Esc or
-// closing the window stops. Replay with
+// closing the window stops. --view 1 shows the same window during a scripted run, e.g. a recording's replay. Replay with
 //   mgba_run ROM N --players 2 --start DIR --inputs0 DIR/inputs0 --inputs1 DIR/inputs1
 // Keys: GBA 0: WASD, F=A G=B R=L T=R 1=Start 2=Select. GBA 1: arrows, /=A .=B ;=L '=R Enter=Start
 // RShift=Select. A game controller (d-pad or left stick, A, B, shoulders or triggers = L/R, Start, Back = Select)
@@ -91,6 +91,7 @@ static int ndumps;
 static unsigned frames, watch;
 static const char *coverage;
 static const char *play;            // --play DIR
+static int view;                    // --view 1: show the window during a scripted run (real time, keys from the scripts)
 static const char *start;           // --start DIR
 static unsigned saveStates = ~0u;   // --save-states FRAME
 static int liveKeys[MAX_GBAS];      // --play: keys from the keyboard
@@ -396,6 +397,7 @@ static void onFrame(void *context) {
 		printf("\n");
 	}
 	// Keys for the next frame
+	if (id == 0 && view) frameReady = 1;
 	if (play) {
 		if (id == 0) frameReady = 1;
 		if (id < 2 && (liveKeys[id] != p->keys || frame == 0)) {
@@ -701,6 +703,7 @@ int main(int argc, char **argv) {
 		else if (!strcmp(o, "--coverage")) coverage = v;
 		else if (!strcmp(o, "--loads")) { loadsPath = v; if (!(loads = fopen(v, "w"))) { perror(v); return 1; } }
 		else if (!strcmp(o, "--play")) play = v;
+		else if (!strcmp(o, "--view")) view = atoi(v);
 		else if (!strcmp(o, "--start")) start = v;
 		else if (!strcmp(o, "--save-states")) saveStates = strtoul(v, NULL, 0);
 		else if (!strcmp(o, "--trace")) traceDir = v;
@@ -730,6 +733,8 @@ int main(int argc, char **argv) {
 			if (!(rec[i] = fopen(path, "w"))) { perror(path); return 1; }
 			setvbuf(rec[i], NULL, _IOLBF, 0);
 		}
+	}
+	if (play || view) {
 		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER)) { fprintf(stderr, "SDL: %s\n", SDL_GetError()); return 1; }
 		win = SDL_CreateWindow("mgba_run: GBA 1 (WASD) | GBA 2 (arrows)", SDL_WINDOWPOS_CENTERED,
 		                       SDL_WINDOWPOS_CENTERED, 240 * 2 * 2, 160 * 2, SDL_WINDOW_RESIZABLE);
@@ -741,7 +746,7 @@ int main(int argc, char **argv) {
 			tex[i] = SDL_CreateTexture(ren, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, 240, 160);
 	}
 #else
-	if (play) { fprintf(stderr, "--play needs a build with SDL2 (tools/mgba_run.sh)\n"); return 1; }
+	if (play || view) { fprintf(stderr, "--play/--view need a build with SDL2 (tools/mgba_run.sh)\n"); return 1; }
 #endif
 	setvbuf(stdout, NULL, _IOLBF, 0);
 	static struct mLogFilter quietFilter;
@@ -841,7 +846,7 @@ int main(int argc, char **argv) {
 		if (all) break;
 		if (!ran) { fprintf(stderr, "link deadlock: every GBA is waiting\n"); return 1; }
 #ifdef MGBA_RUN_SDL
-		if (play && frameReady) {
+		if ((play || view) && frameReady) {
 			frameReady = 0;
 			if (!present(ren, tex)) break;
 		}
