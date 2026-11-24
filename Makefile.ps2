@@ -29,7 +29,8 @@ endif
 # GS_RENDER (default 1): the Graphics Synthesizer draws the GBA screens (src/ps2/gsrender.c); 0: mGBA's software
 # renderer (also the default with WIDE_VIEW, which the GS renderer doesn't do yet). Touch src/ps2/video.c when changing it
 ifdef WIDE_VIEW
-GS_RENDER ?= 0  # the software renderer draws the wide view as the game left it; GS_RENDER=1 draws the room from its data
+# (the software renderer shows the wide view as the game left it; GS_RENDER=1 draws the room from its data)
+GS_RENDER ?= 0
 endif
 GS_RENDER ?= 1
 ifneq ($(GS_RENDER),0)
