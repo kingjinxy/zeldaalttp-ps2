@@ -162,9 +162,9 @@ Phase 1: the world runs once (`FS_SHARED_WORLD`, breaks GBA matching on purpose)
         1. View-only entities: object 16 (`sub_08052B88`), the other players' off-screen arrows; form 0 computes
            directions from this player's camera (`sub_08052CE4`), `sub_08052C0C` creates one arrow per other player.
            Shared world: one set per player, in the per-player pass.
-        2. Drawing attributes stored in shared entities: +0x50 (sprite layer | camera struct `gUnknown_03000450`
-           +0x12, e.g. players' Links), +0x18 (object 65), +0x1F (manager 9). Shared world: worked out at draw time
-           per player.
+        2. Drawing attributes stored in shared entities: +0x50 low bits = 0x0E on the local player's Link only (the
+           camera setup writes 14 into the followed entity, file_select.c; other Links 0), +0x18 (object 65), +0x1F
+           (manager 9). Shared world: worked out at draw time per player (e.g. "is this the viewer's Link").
         3. World events with a "mine?" check: object 65 (`sub_0805BF9C`, a pickup) adds to the collector's own
            counter (`sub_0800D67C`, profile area) only on the collector's GBA. Shared world: index the profile by the
            collector (`e->form`) instead.

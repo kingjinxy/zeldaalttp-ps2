@@ -20356,3 +20356,9 @@ Mapping the per-player entity bytes onto the entity struct's fields.
 
 - tool `Bash`: python3 - <<'EOF' p='docs/Planning Doc.md'; s=open(p).read() old="""  - [ ] 5b. Sort each per-player function""" new="""  - [ ] 5b, first pass (2026-11-24, walk
 
+- tool `Bash`: grep -n "gUnknown_03000450.unk12\|03000450.unk12" src/*.c | head -20
+
+- tool `Bash`: sed -n 1850,1880p src/file_select.c; sed -n 2010,2030p src/file_select.c; grep -rn "#0x12\]\|#18\]" asm/non_matching/*/*.inc | grep -i "" | head -0; S=/tmp/clau
+
+- tool `Bash`: cp tools/mgba_run.c /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/mgba_run_keep2.c && python3 - <<'EOF' p
+

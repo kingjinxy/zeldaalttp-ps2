@@ -1269,3 +1269,7 @@ The user asked to go ahead with the EE-side work for many screens (shared world 
   drawing for another camera can be a separate walk calling only the draw routine.
 - The kinds found (view-only entities, drawing attributes in shared entities, world events with "mine?" checks,
   profile data, sound, view state) and what each becomes in a shared world: Planning Doc, Phase 5 step 5b.
+- Links' +0x50 (a temporary print of the values, not kept): on every GBA the local player's Link has 0x0E in the low
+  bits (0x400E / 0x000E), the other Links 0 (0x4000 / 0x0000). The camera setup (file_select.c, `gUnknown_03000450.unk12
+  = 14; e->unk50 = 14` for the followed entity) puts it there: a "this is my Link" drawing attribute. The camera
+  struct itself differs only in +0x00 (followed entity) and +0x20-0x27 (camera and target positions).
