@@ -55,9 +55,18 @@ u32 ps2_io_read(u32 a, u32 size)
     return size == 1 ? IO8(o) : size == 2 ? IO16(o) : IO32(o);
 }
 
+void ps2_log(const char *fmt, ...);
+
 void ps2_io_write(u32 a, u32 v, u32 size)
 {
     u32 o = a - 0x04000000u;
+    if (a < 0x00100000u) {  // GBA BIOS area / null pointer: the GBA ignores these stores, the PS2 kernel lives here
+        static int logged;
+        if (logged < 16)
+            logged++, ps2_log("io: dropped %u-byte store of %08x to %08x (from %p)", size, v, a,
+                              __builtin_return_address(0));
+        return;
+    }
     u16 oldIF = IO16(0x202);
     if (size == 1)
         IO8(o) = v;

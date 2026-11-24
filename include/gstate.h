@@ -18,12 +18,20 @@ struct GstateCpu {
 // debugging: every global-state function entry appends (address, sp, lr) to a 1024-entry ring at 0x0203C200
 #define GSTATE_RING ((volatile u32 *)0x0203C200)
 #define GSTATE_TRACE(a) do { u32 i_ = GSTATE_RING[0] % 1024; GSTATE_RING[1 + 3 * i_] = (a); GSTATE_RING[2 + 3 * i_] = gCpu.r[13]; \
-    GSTATE_RING[3 + 3 * i_] = lr; GSTATE_RING[0] = i_ + 1; } while (0)
+    GSTATE_RING[3 + 3 * i_] = lr; GSTATE_RING[0] = i_ + 1; GSTATE_TRACE_PRINT(a); } while (0)
+#ifdef PLATFORM_PS2  // src/ps2/frame.c: prints entries while the flag at 0x0203C1F0 is set
+#define GSTATE_TRACE_PRINT(a) do { if (GSTATE_RING[-4]) ps2_trace_print(a); } while (0)
+#else
+#define GSTATE_TRACE_PRINT(a) ((void)0)
+#endif
 
 struct GstateEntry {
     u32 addr;
     void (*fn)(u32);
     u32 off;
+#ifdef PLATFORM_PS2
+    u32 pad;  // 16 bytes: GCC aligns each object's table to 8, and 12-byte entries would leave gaps in the section
+#endif
 };
 
 #define GSTATE_LOCALS u32 r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, lr, n, z, c, v
@@ -79,6 +87,7 @@ static void gstate_run(u32 a)
         u32 i_ = GSTATE_RING[0] % 1024;
         GSTATE_RING[1 + 3 * i_] = a | 0x40000000u, GSTATE_RING[2 + 3 * i_] = gCpu.r[13], GSTATE_RING[3 + 3 * i_] = gCpu.r[14];
         GSTATE_RING[0] = i_ + 1;
+        GSTATE_TRACE_PRINT(a | 0x40000000u);
     }
     f = gstate_find(__gstatetable_start, __gstatetable_end, b);
     if (!f)

@@ -250,6 +250,17 @@ void ps2_glue_init(void)
 {
     sort_table(__gstatetable_start, __gstatetable_end);
     sort_table(__gstatetablew_start, __gstatetablew_end);
+    {  // check: sorted, and a known entry found
+        extern u8 sub_08003714__base[];
+        void ps2_log(const char *fmt, ...);
+        const struct GstateEntry *p;
+        u32 bad = 0, a = (u32)sub_08003714__base + 0x2A;
+        for (p = __gstatetable_start + 1; p < __gstatetable_end; p++)
+            bad += (p[-1].addr & ~1u) > (p->addr & ~1u);
+        p = find_entry(a);
+        ps2_log("gstate tables: %d + %d entries, %u out of order; %08x -> %08x off %x", (int)(__gstatetable_end - __gstatetable_start),
+                (int)(__gstatetablew_end - __gstatetablew_start), bad, a, p ? p->addr : 0, p ? p->off : 0);
+    }
 }
 
 // ---- symbols of native GBA code ------------------------------------------------------------------------------------

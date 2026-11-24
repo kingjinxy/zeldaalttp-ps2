@@ -94,6 +94,8 @@ void ps2_watch_init(void)
     EnableIntc(INTC_VBLANK_S);
 }
 
+void ps2_trace_print(u32 a);
+
 // -finstrument-functions on hand-written game C (Makefile.ps2): each entry goes into the trace ring too, so the
 // watchdog names hand C as well
 __attribute__((no_instrument_function)) void __cyg_profile_func_enter(void *fn, void *site)
@@ -103,5 +105,15 @@ __attribute__((no_instrument_function)) void __cyg_profile_func_enter(void *fn, 
     (void)site;
     ring[1 + 3 * i] = (u32)fn;
     ring[0] = i + 1;
+    if (ring[-4])
+        ps2_trace_print((u32)fn);
+}
+
+// verbose tracing (flag at 0x0203C1F0, set for a window of frames by ps2_vblank_wait): every traced entry over SIO
+__attribute__((no_instrument_function)) void ps2_trace_print(u32 a)
+{
+    char b[16];
+    snprintf(b, sizeof(b), "T %08x", a);
+    sio_puts(b);
 }
 __attribute__((no_instrument_function)) void __cyg_profile_func_exit(void *fn, void *site) { (void)fn, (void)site; }

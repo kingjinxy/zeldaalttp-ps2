@@ -17,14 +17,16 @@ typedef signed int s32;
 u32 ps2_io_read(u32 a, u32 size);
 void ps2_io_write(u32 a, u32 v, u32 size);
 #define IO_(a) ((u32)(a) - 0x04000000u < 0x400u)
+// stores below 0x00100000 (the GBA BIOS area, null pointers) would land in the PS2 kernel: io.c logs and drops them
+#define WIO_(a) (IO_(a) || (u32)(a) < 0x00100000u)
 #define R8(a) (IO_(a) ? (u8)ps2_io_read((u32)(a), 1) : *(volatile u8 *)(a))
 #define R16(a) (IO_(a) ? (u16)ps2_io_read((u32)(a), 2) : *(volatile u16 *)(a))
 #define R32(a) (IO_(a) ? ps2_io_read((u32)(a), 4) : *(volatile u32 *)(a))
 #define RS8(a) ((u32)(s32)(s8)R8(a))
 #define RS16(a) ((u32)(s32)(s16)R16(a))
-#define W8(a, x) (IO_(a) ? ps2_io_write((u32)(a), (u8)(x), 1) : (void)(*(volatile u8 *)(a) = (u8)(x)))
-#define W16(a, x) (IO_(a) ? ps2_io_write((u32)(a), (u16)(x), 2) : (void)(*(volatile u16 *)(a) = (u16)(x)))
-#define W32(a, x) (IO_(a) ? ps2_io_write((u32)(a), (u32)(x), 4) : (void)(*(volatile u32 *)(a) = (u32)(x)))
+#define W8(a, x) (WIO_(a) ? ps2_io_write((u32)(a), (u8)(x), 1) : (void)(*(volatile u8 *)(a) = (u8)(x)))
+#define W16(a, x) (WIO_(a) ? ps2_io_write((u32)(a), (u16)(x), 2) : (void)(*(volatile u16 *)(a) = (u16)(x)))
+#define W32(a, x) (WIO_(a) ? ps2_io_write((u32)(a), (u32)(x), 4) : (void)(*(volatile u32 *)(a) = (u32)(x)))
 #else
 #define R8(a) (*(volatile u8 *)(a))
 #define R16(a) (*(volatile u16 *)(a))
@@ -51,8 +53,9 @@ void ps2_io_write(u32 a, u32 v, u32 size);
 // PS2 debugging: entries of translated C-convention functions go into the global-state trace ring (0x0203C200,
 // include/gstate.h) as GBA address | 0x80000000
 #ifdef PLATFORM_PS2
+void ps2_trace_print(u32 a);
 #define AUTO_TRACE(a) do { volatile u32 *r_ = (volatile u32 *)0x0203C200; u32 i_ = r_[0] % 1024; \
-    r_[1 + 3 * i_] = (a) | 0x80000000u; r_[0] = i_ + 1; } while (0)
+    r_[1 + 3 * i_] = (a) | 0x80000000u; r_[0] = i_ + 1; if (r_[-4]) ps2_trace_print((a) | 0x80000000u); } while (0)
 #else
 #define AUTO_TRACE(a) ((void)0)
 #endif

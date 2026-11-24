@@ -94,7 +94,7 @@ void ps2_video_frame(void)
     r->finishFrame(r);
 
     sFrames++;
-    if (sFrames == 60 || sFrames == 300 || sFrames == 600 || sFrames == 900 || sFrames == 1500)
+    if (sFrames == 60 || sFrames == 600 || sFrames == 900 || sFrames == 1500)
     {
         dump_frame(sFrames);
         ps2_log("video %u: DISPCNT %04x BG0-3CNT %04x %04x %04x %04x BLDCNT %04x BLDY %04x vram %08x pal %04x %04x", sFrames,
