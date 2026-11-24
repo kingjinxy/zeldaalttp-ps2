@@ -143,22 +143,23 @@ void ps2_video_render(int inst)
 }
 
 // Where screen i goes, in square pixels of the aw x fbh screen. One player: centred at the mode's scale. Two: one above
-// the other, each centred in its half at the largest size that fits (1.5x in 480p). Three or four: a 2x2 grid.
+// the other, each 1:1 (240x160), touching,
+// the pair centred in the frame. Three or four: a 2x2 grid.
 static void place(int i, int instances, float *x, float *y, float *w, float *h)
 {
     float aw = sMode->aw, ah = sMode->fbh, cw = aw, ch = ah, s;
     if (instances == 1)
         s = sMode->scale;
+    else if (instances == 2)
+        ch = ah / 2, s = 1;
     else {
-        if (instances == 2)
-            ch = ah / 2;
-        else
-            cw = aw / 2, ch = ah / 2;
+        cw = aw / 2, ch = ah / 2;
         s = cw / GBA_W < ch / GBA_H ? cw / GBA_W : ch / GBA_H;
     }
     *w = GBA_W * s, *h = GBA_H * s;
     *x = (instances > 2 ? (i % 2) * cw : 0) + (cw - *w) / 2;
-    *y = (instances > 1 ? (instances > 2 ? i / 2 : i) * ch : 0) + (ch - *h) / 2;
+    *y = instances == 2 ? (ah - 2 * *h) / 2 + i * *h  // the pair stacked together, centred as one block
+                        : (instances > 2 ? (i / 2) * ch : 0) + (ch - *h) / 2;
 }
 
 // show every instance's screen; wait for vsync

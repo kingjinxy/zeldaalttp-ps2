@@ -916,7 +916,7 @@ the top half and P2 on the bottom half, each centred.
   DISPLAY1/2 get MAGH = DW / buffer width - 1, centred. 720p is a 640x720 buffer doubled horizontally, 16-bit so two
   buffers fit in GS memory. 16:9 is a 640-wide buffer: square-pixel widths are scaled by 640/854.
 - Layout (`place`): one player at the mode's scale (720p: 4x, 960x640; 480i: 2x, both my choice, the spec didn't
-  say); two players at the largest size that fits a half, 1.5x (360x240) in 480p; three or four in a 2x2 grid.
+  say); two players at 1:1 (240x160), stacked with no gap, the 240x320 pair centred in the frame (the user's choice after trying 1.5x and 1:1 centred per half); three or four in a 2x2 grid.
   Non-integer sizes (1.5x, the 16:9 squeeze) use bilinear filtering, whole multiples stay nearest.
 - Not in a menu yet: `ps2_video_mode` comes from `make -f Makefile.ps2 VIDEO_MODE=0..4` (240p, 480i, 480p, 480p 16:9,
   720p); without it, 240p for one player and 480p for more.
@@ -925,3 +925,8 @@ Checked in PCSX2 (software renderer): two players in 480p reach the stage one ab
 480p 16:9 and 720p shows the centred title screen. No TLB misses. One player alone stops at "Linking with other
 systems" since Four Swords needs a link partner; single player is a later feature. 480i and plain 480p one-player
 weren't run (same code paths as 480p).
+
+Aspect check against mGBA (user asked): PCSX2 screenshots looked too wide because the user's `PCSX2.ini` has
+`AspectRatio = 16:9`, which stretches the 4:3 output by 4/3 (a screen measured 316x158, ratio 2.0, against mGBA's
+240x160, 1.5). The port's output was right. Screenshot runs now pass `--set "AspectRatio=4:3"` to `pcsx2_run.py` (16:9
+for the 16:9 mode); with it the screens measure 306x204, 1.5. The earlier 240p/16:9 shots above were taken stretched.

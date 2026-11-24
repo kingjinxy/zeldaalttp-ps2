@@ -17929,3 +17929,134 @@ All five layouts check out. Restoring the 2-player build, then the docs and comm
 
 - tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; touch src/ps2/video.c src/ps2/main.c; systemd-run --user --scope -q -p MemoryMax=6G make -f Makefile.ps2 INSTANCES=2 -j4
 
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; cat >> "docs/Running Walkthrough.md" <<'EOF'  ## Step 29: video modes and the two-player layout (2026-11-24)  The user's
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; git add -A Makefile.ps2 src/ps2/video.c "docs/Running Walkthrough.md" "Claude Conversation.md" && git commit -qm "PS2: v
+
+- tool `ToolSearch`: 
+
+- tool `SendUserFile`: 
+
+- tool `PushNotification`: 
+
+## Claude
+
+The video modes are in, and two players now show one above the other in 4:3 480p, P1 on top and P2 below, each centred. That's the screenshot I sent; both screens play the stage in PCSX2 with no TLB misses. I tested 240p, 480p 16:9 and 720p with one player in PCSX2. I didn't run 480i or plain 480p with one player, though 480p is the same mode the two-player run uses.
+
+**Modes** ([video.c](src/ps2/video.c)):
+
+| Mode | Single player | Tested in PCSX2 |
+|---|---|---|
+| 240p (single-player default) | 1:1, centred in 320×240 | yes |
+| 480i | 480×320, centred in 640×480 | no |
+| 480p | 480×320, centred in 640×480 | no (two-player run uses it) |
+| 480p 16:9 | 720×480 inside the 854×480 anamorphic frame | yes |
+| 720p | 960×640, centred in 1280×720 | yes |
+
+- **Your spec didn't cover two sizes:** 480i single player and 720p single player. I picked 2× for 480i and 4× for 720p.
+- **Two-player size:** each screen is 360×240 (1.5×), the largest that fits a half.
+- **Filtering:** sizes that aren't a whole multiple (1.5×, and the 16:9 frame squeezed into a 640-wide buffer) use smoothing, so pixels don't come out uneven. Whole multiples stay sharp.
+- **How the mode is chosen:** until there's a menu, it's set at build time with `make -f Makefile.ps2 VIDEO_MODE=0..4`. Without it, the build uses 240p for one player and 480p for more.
+- **16:9 looks narrow in PCSX2,** because PCSX2 shows it at 4:3. A TV set to 16:9 stretches it to the right shape.
+- **One player stops at "Linking with other systems...":** Four Swords waits for a link partner, so single player needs its own work later.
+
+The matching build still reports OK. Committed as `57ab202`, with a Step 29 entry in the walkthrough. The dividing line between the two screens isn't done yet; it's still on the list as low priority.
+
+## User
+
+Change the two player mode in 480p to use 2 240x160 screens centered in the frame and show me the result
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' p='src/ps2/video.c'; s=open(p).read() s=s.replace("""    if (instances == 1)         s = sMode->scale;
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/v2p1x_c.png
+
+- tool `SendUserFile`: 
+
+## Claude
+
+Each player's screen is now 240×160 at 1:1, centred in its half of the 640×480 frame: P1 on top, P2 below. I sent the PCSX2 screenshot from a run that reached the stage with no TLB misses.
+
+At 1:1, each screen fills only part of its half, so there's a lot of black border around both.
+
+The change is a couple of lines in `place()` in [video.c](src/ps2/video.c). I haven't committed it or updated the walkthrough yet (Step 29 still says 1.5×). I'll do both if you're keeping this size.
+
+## User
+
+The aspect ratio still doesn't look right. Check this against mGBA and tell me what you find before proceeding
+
+- tool `Bash`: grep -rn "AspectRatio\|FMVAspect\|StretchY\|Crop" ~/.config/PCSX2/inis/PCSX2.ini | head; grep -n "AspectRatio\|ini" ../tp-ps2/tools/ps2/pcsx2_run.py | head; ls 
+
+## Claude
+
+PCSX2 is set to show 16:9. Measuring the screenshot precisely and getting an mGBA frame to compare against.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 -c " fro
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 -c " fro
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/aspect_cmp.png
+
+## Claude
+
+The port's output is the right shape. PCSX2 is stretching it: your `PCSX2.ini` has `AspectRatio = 16:9` (line 125), so it widens the 4:3 picture by a third.
+
+**Measurements:**
+
+| | Size | Width ÷ height |
+|---|---|---|
+| mGBA frame | 240×160 | 1.50 (correct) |
+| P1's screen in the PCSX2 screenshot | 316×158 | 2.00 |
+
+- **The stretch is PCSX2's:** 2.00 ÷ 1.50 is exactly 4/3, the factor between 16:9 and 4:3 display.
+- **The game's output is fine:** the 640×480 frame shows as 840×472 in the window, which is 16:9. Inside that frame, the screen takes 240×160 buffer pixels, as intended.
+- **What I sent you:** a side-by-side image of mGBA (left) and PCSX2's top screen (right). The frames are from different moments, so only the shapes compare. The PCSX2 one is visibly wider.
+
+**What this changes in my earlier checks:**
+- The 240p, two-player 1.5× and 1:1 screenshots were all stretched the same way, so they looked wider than they should.
+- I said the 16:9 mode looked narrow in PCSX2 because it was shown at 4:3. That was wrong: PCSX2 was already showing 16:9, so that screenshot was the correct shape and the stretched ones were the others.
+- In 240p, PCSX2 shows only 224 of the 240 lines (its status bar said 320×224). That moves the screen off-centre by up to 8 lines. It's a smaller, separate thing to look at.
+
+**Proposed fix:** have the run script override the setting for each run, with `--set "AspectRatio=4:3"`. For the 16:9 mode, it would pass 16:9 instead. `pcsx2_run.py` already works on a private copy of `PCSX2.ini`, so your own settings stay as they are. Then I'd retake the 1:1 two-player screenshot.
+
+I haven't changed anything for this yet. Should I go ahead with the override?
+
+## User
+
+Yes.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's|--real
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/v2p43_c.png
+
+- tool `SendUserFile`: 
+
+## Claude
+
+With PCSX2 set to 4:3, the two-player screens now have the same shape as mGBA's. Each measures 306×204 in the window, a ratio of 1.50, the same as mGBA's 240×160. They sit one above the other at 1:1, centred, and the run reached the stage with no TLB misses. I've sent you the new screenshot.
+
+The 4:3 override is in my scratchpad screenshot script, which every run uses, so no repo files changed for it. A 16:9-mode run would pass 16:9 instead. Your own `PCSX2.ini` still says 16:9.
+
+The 1:1 layout change in [video.c](src/ps2/video.c) still isn't committed, and the walkthrough still says 1.5×. Should I update it and commit, or do you want a different size first?
+
+## User
+
+Move the two screens so that they are vertically and horizontally centered in the 640x480 frame
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' p='src/ps2/video.c'; s=open(p).read() old="""    *y = (instances > 1 ? (instances > 2 ? i / 2 : i) * c
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/v2pc_c.png
+
+- tool `SendUserFile`: 
+
+## Claude
+
+The two screens now sit together as one 240×320 block in the middle of the 640×480 frame. P1 is on top and P2 directly below, with no gap. That leaves 200 pixels of black on each side and 80 above and below. I've sent you the PCSX2 screenshot (4:3 display); the run reached the stage with no TLB misses.
+
+Since the screens now touch, the dividing line you mentioned would go on their shared edge, at line 240.
+
+This is still uncommitted, along with the earlier 1:1 change in [video.c](src/ps2/video.c). Should I commit them and update the walkthrough?
+
+## User
+
+Yes
+
