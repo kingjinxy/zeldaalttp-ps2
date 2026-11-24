@@ -20413,3 +20413,17 @@ The docs and commit are already done: `c162655` holds the last update, and nothi
 
 - tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - $S/writes2.txt $S/fsyms.txt <<'EOF' import sys
 
+- tool `Bash`: python3 - <<'EOF' p='docs/Planning Doc.md'; s=open(p).read() old="""        Still to sort: the remaining step 4 readers and the profile, HUD and "other" writers
+
+- tool `Bash`: python3 - <<'EOF' p='tools/mgba_run.c'; s=open(p).read() def rep(old,new):     global s     assert old in s, old     s=s.replace(old,new,1) rep("""// --survey F
+
+- tool `Bash`: sed -i '605s/.*/	unsigned frame = p->frame++;\n	if (id == 0) bracketFrame = frame + 1;/' tools/mgba_run.c && sed -n 84,96p tools/mgba_run.c && grep -n "^static 
+
+- tool `Bash`: L=$(for f in sub_08038A30 sub_08014900 sub_08015D9C sub_08015C64 sub_08013A60 sub_08008ED8 sub_0802CD3C sub_08000434 sub_0803F284 sub_08052A88 sub_08000BAC sub_
+
+- tool `Bash`: python3 - <<'EOF' p='tools/mgba_run.c'; s=open(p).read() def rep(old,new):     global s     assert old in s, old     s=s.replace(old,new,1) rep("static uint64_t
+
+- tool `Bash`: grep -E "= 0x(24[0-9A-F]{2}|0[0-4][0-9A-F]{2});" sym_ewram.txt | head -30; grep -E "= 0x(50[0-9A-F]{2}|4F[0-9A-F]{2});" sym_iwram.txt; grep -E "= 0x2A[5-7][0-9A
+
+- tool `Bash`: grep -n "gPaletteBuf\|gBG0Buffer\|gBG1Buffer\|gBG2Buffer\|gBG3Buffer\|gOAMBuffer" sym_ewram.txt sym_iwram.txt include/variables.h | head; grep -E "= 0x(0[0-9A-F
+

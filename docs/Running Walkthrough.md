@@ -1278,3 +1278,12 @@ The user asked to go ahead with the EE-side work for many screens (shared world 
   camera (`sub_08015D9C`, whose callees `sub_08008B4A`/`sub_08008C02` are the camera struct's writers in the stage),
   a draw-only walk of the entities, the arrows, the HUD, the sprite-list finish and the flip. `sub_0800B524` (the flip)
   swaps two sprite-list buffers at 0x03005E60 and 0x03006260, which settles what that per-player area is.
+- `mgba_run --bracket ADDR,...` (new, with `--writes MAP`): GBA 0, every 10th frame in `--perplayer-frames`: memory is
+  copied when a listed Thumb function is entered and compared when it returns (callees included); changed bytes are
+  counted as per-player (in the map) or not, and the non-per-player ones by 256-byte block. Run over the stage frame's
+  calls (session 1, frames 1800-12000): the sort is in the Planning Doc (5b). Two blocks change under almost every
+  function (0x02030700-0x020309FF, 0x03000B00): interrupt handlers (link, sound) running mid-function, ignored. A
+  view function can also change a byte that happens to be equal on both GBAs (two cameras at the same spot), so the
+  block list, not the count, decides.
+- Correction: the 8.5 KB at 0x02000000-0x02003000 isn't a Four Swords profile: A Link to the Past's inventory
+  (`gBow`... from 0x02002320) and `gPaletteBuf1` (0x02000030) are there, i.e. the players' own save files as loaded.

@@ -168,7 +168,9 @@ Phase 1: the world runs once (`FS_SHARED_WORLD`, breaks GBA matching on purpose)
         3. World events with a "mine?" check: object 65 (`sub_0805BF9C`, a pickup) adds to the collector's own
            counter (`sub_0800D67C`, profile area) only on the collector's GBA. Shared world: index the profile by the
            collector (`e->form`) instead.
-        4. Profile area 0x02000000-0x02003000 (8.5 KB): per-player arrays.
+        4. Save data 0x02000000-0x02003000 (8.5 KB): each player's own file as loaded (A Link to the Past's
+           inventory symbols `gBow`... sit at 0x02002320; `gPaletteBuf1` at 0x02000030). Static during play except
+           events (kind 3). Shared world: per-player copies.
         5. Sound (4.4 KB): per player until the one mixer (Phase 3); the PS2 has no sound yet.
         6. View state: camera struct `gUnknown_03000450`, OAM buffers (0x03005E60-0x03006450), HUD/text
            (0x0202D000-0x0202E1E4), BG ring buffers.
@@ -189,6 +191,16 @@ Phase 1: the world runs once (`FS_SHARED_WORLD`, breaks GBA matching on purpose)
         draws from the room data at the viewer's camera). To confirm for each: that it writes only per-player bytes
         (the write watch per function), and which of `sub_08014900`, `sub_08015C64`, `sub_08013A60`, `sub_08000434`,
         `sub_0803F284`, `sub_0802BFC4` are world and which view.
+        Measured (`mgba_run --bracket`, memory diffed around each call incl. callees, session 1 frames 1800-12000,
+        every 10th; blocks 0x02030700-0x020309FF and 0x03000B00 change under nearly every function: interrupt-time
+        link/sound state, ignored): view (per-player bytes, or the camera struct / video-register buffer at
+        0x03000400 / sprite data 0x03000900, 0x03005C00): `sub_08015D9C`, `sub_08008ED8`, `sub_0802CD3C`,
+        `sub_08000BAC`, `sub_0800D788`, `sub_0802C940`, `sub_0800B524`; link (goes away): `sub_0800C54C`,
+        `sub_08037574` (0x03000F00), `sub_080368A0`, `sub_08036864`; nothing outside the noise: `sub_08014900`,
+        `sub_08013A60`, `sub_0803F284`, `sub_08052A88`, `sub_0802BFC4`; to identify: `sub_08015C64` (0x02002400-0x0200247F,
+        just below `gPaletteBuf1Bitmask`), `sub_08000434` (0x03005000), `sub_0802B74C` (0x0202A700), `sub_0800C118`
+        (0x02000000-0x020004FF, around `gPaletteBuf1`). Per-player bytes per stage frame: 21.6, of which 21.0 from
+        `sub_08000BAC`.
         Still to sort: the remaining step 4 readers and the profile, HUD and "other" writers in
         `docs/shared_world/per_player_writers.txt`.
   - [ ] 5b. Sort each per-player function and the ~23 from step 4: view only (camera, BG map streaming, OAM,

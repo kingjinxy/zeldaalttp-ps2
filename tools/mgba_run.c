@@ -20,6 +20,9 @@
 // compares only between frames A and B.
 // --writes FILE: FILE is a --perplayer bitmap; every distinct Thumb store into a marked byte is logged as
 // "write PC LR ADDR WIDTH" (first address seen for that PC/LR). ARM code, DMA and BIOS copies aren't seen.
+// --bracket ADDR,ADDR,... (with --writes MAP): GBA 0, every 10th frame in --perplayer-frames: for each listed Thumb
+// function, memory is copied at its entry and compared at its return (callees included); the changed bytes are counted
+// as per-player (marked in MAP) or world (the IWRAM stack excluded). Printed per function at the end.
 // --survey FILE: which video features the game uses (for the PS2 GS renderer): per frame, display modes, windows,
 // blend settings, sprite attributes, HBlank DMA and HBlank/VCount interrupts, and video register writes during the
 // visible lines (a register changed mid-frame, from any source). Written to FILE at the end: one line per feature
@@ -243,6 +246,36 @@ static FILE *loads;                 // --loads FILE
 static uint32_t readWatch;          // --reads ADDR
 static uint8_t *writeMap;           // --writes FILE: the per-player bitmap
 static uint64_t writeSeen[1 << 14];
+#define MAX_BRACKETS 32
+static uint32_t bracketAddr[MAX_BRACKETS], bracketRet[MAX_BRACKETS];
+static int nbrackets;
+static uint8_t bracketSnap[MAX_BRACKETS][0x48000];
+static uint64_t bracketCalls[MAX_BRACKETS], bracketWorld[MAX_BRACKETS], bracketPP[MAX_BRACKETS];
+static uint32_t bracketBlock[MAX_BRACKETS][0x48000 / 256];  // world bytes changed per 256-byte block
+static unsigned perPlayerFrom, perPlayerTo = ~0u;  // --perplayer-frames A-B: only compare in that range
+static unsigned bracketFrame;  // GBA 0's frame
+static void bracketCopy(struct mCore *core, uint8_t *d) {
+	for (unsigned i = 0; i < 0x48000; i++)
+		d[i] = core->busRead8(core, i < 0x40000 ? 0x02000000 + i : 0x03000000 + i - 0x40000);
+}
+static void bracketStep(struct mCore *core, uint32_t pc, uint32_t lr) {
+	if (bracketFrame % 10 || bracketFrame < perPlayerFrom || bracketFrame > perPlayerTo) return;
+	for (int b = 0; b < nbrackets; b++) {
+		if (bracketRet[b] && pc == bracketRet[b]) {
+			bracketRet[b] = 0;
+			bracketCalls[b]++;
+			for (unsigned i = 0; i < 0x48000; i++) {
+				if (i >= 0x40000 + 0x7B00) break;
+				uint8_t v = core->busRead8(core, i < 0x40000 ? 0x02000000 + i : 0x03000000 + i - 0x40000);
+				if (v != bracketSnap[b][i]) { if (writeMap[i]) bracketPP[b]++; else bracketWorld[b]++, bracketBlock[b][i / 256]++; }
+			}
+		}
+		if (pc == bracketAddr[b] && !bracketRet[b]) {
+			bracketCopy(core, bracketSnap[b]);
+			bracketRet[b] = (lr & ~1u);
+		}
+	}
+}
 static uint64_t readSeen[4096];     // --reads: PC/LR pairs logged
 static const char *loadsPath;
 static uint8_t ramWord[0x48000 / 4];  // --loads: EWRAM (0x40000) and IWRAM words read by a 32-bit CPU load
@@ -315,6 +348,7 @@ decode:;
 			if (!readSeen[h]) { readSeen[h] = key; printf("read %08X %08X %u\n", pc, r[14] - 1, w); }
 		}
 	}
+	if (nbrackets && core == players[0].core) bracketStep(core, pc, r[14]);
 	if (writeMap) {
 		uint32_t wa = 0, ww = 0;
 		if ((op & 0xF800) == 0x6000) wa = r[op >> 3 & 7] + (op >> 6 & 31) * 4, ww = 4;          // str [rb, #imm]
@@ -528,7 +562,6 @@ static void lsUnload(struct mLockstep *l, int id) {
 // --- Per-frame work (videoFrameEnded) ---
 
 static const char *perPlayerPath;
-static unsigned perPlayerFrom, perPlayerTo = ~0u;  // --perplayer-frames A-B: only compare in that range
 static uint8_t perPlayerSnap[MAX_GBAS][0x48000], perPlayerDiff[0x48000];
 static unsigned perPlayerTaken[MAX_GBAS], perPlayerCompares;
 // entities that differ between GBAs, paired by position in the 8 lists (heads at 0x03005960, 8 bytes each: prev,
@@ -571,6 +604,7 @@ static void onFrame(void *context) {
 	int id = p - players;
 	struct mCore *core = p->core;
 	unsigned frame = p->frame++;
+	if (id == 0) bracketFrame = frame + 1;
 	if (frame >= frames) { p->done = 1; return; }
 	if (surveyPath) {
 		surveyFrame(id);
@@ -928,6 +962,10 @@ int main(int argc, char **argv) {
 		else if (!strcmp(o, "--survey")) surveyPath = v;
 		else if (!strcmp(o, "--reads")) readWatch = strtoul(v, NULL, 0);
 		else if (!strcmp(o, "--perplayer")) perPlayerPath = v;
+		else if (!strcmp(o, "--bracket")) {
+			for (char *t = (char *) v; *t && nbrackets < MAX_BRACKETS; t += *t == ',')
+				bracketAddr[nbrackets++] = strtoul(t, &t, 0) & ~1u;
+		}
 		else if (!strcmp(o, "--perplayer-frames")) { char *e; perPlayerFrom = strtoul(v, &e, 0); perPlayerTo = strtoul(e + 1, NULL, 0); }
 		else if (!strcmp(o, "--writes")) {
 			FILE *wf = fopen(v, "rb");
@@ -1105,6 +1143,21 @@ int main(int argc, char **argv) {
 		printf("recorded %u frames to %s\n", players[0].frame, play);
 	}
 	if (surveyPath) surveyWriteReport();
+	for (int b = 0; b < nbrackets; b++)
+		printf("bracket %08X: %llu calls, world bytes changed %.1f per call, per-player %.1f per call\n", bracketAddr[b],
+		       (unsigned long long) bracketCalls[b], bracketCalls[b] ? (double) bracketWorld[b] / bracketCalls[b] : 0.0,
+		       bracketCalls[b] ? (double) bracketPP[b] / bracketCalls[b] : 0.0);
+	for (int b = 0; b < nbrackets; b++) {  // the 6 blocks with the most world bytes changed
+		printf("bracket %08X world blocks:", bracketAddr[b]);
+		for (int n = 0; n < 6; n++) {
+			unsigned best = 0, bi = 0;
+			for (unsigned i = 0; i < 0x48000 / 256; i++) if (bracketBlock[b][i] > best) best = bracketBlock[b][i], bi = i;
+			if (!best) break;
+			printf(" %08X:%u", bi < 0x400 ? 0x02000000 + bi * 256 : 0x03000000 + (bi - 0x400) * 256, best);
+			bracketBlock[b][bi] = 0;
+		}
+		printf("\n");
+	}
 	if (perPlayerPath) {
 		FILE *f = fopen(perPlayerPath, "wb");
 		if (!f || fwrite(perPlayerDiff, 1, sizeof perPlayerDiff, f) != sizeof perPlayerDiff) perror(perPlayerPath);
