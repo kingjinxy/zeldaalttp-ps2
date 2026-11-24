@@ -235,16 +235,22 @@ void ps2_video_render(int inst)
             }
         if (dump) {  // check: the software renderer's picture of the same state, pixel by pixel
             static u32 gs[256 * 160] __attribute__((aligned(64)));
-            int x, diff = 0, first = -1;
+            int x, diff = 0, far = 0, first = -1;
             render(r);
             if (!ps2_gsr_read(inst, gs))
                 ps2_log("gsrender: readback stuck");
             for (y = 0; y < GBA_H; y++)
                 for (x = 0; x < GBA_W; x++)
-                    if ((gs[y * 256 + x] & 0xFFFFFF) != (PIXELS(inst)[y * sTexW + x] & 0xFFFFFF) && !diff++)
+                {
+                    u32 a = gs[y * 256 + x], b = PIXELS(inst)[y * sTexW + x], c, d = 0;
+                    if (((a ^ b) & 0xFFFFFF) && !diff++)
                         first = y * 256 + x;
-            ps2_log("gsrender: frame %u screen %d: %d pixels differ from the software renderer%s (first at %d,%d: gs %06x sw %06x)",
-                    n, inst, diff, "", first % 256, first / 256, first < 0 ? 0 : gs[first] & 0xFFFFFF,
+                    for (c = 0; c < 24; c += 8)  // more than one level off in a channel (blending may round once)
+                        d |= ((a >> c) & 0xFF) - ((b >> c) & 0xFF) + 1 > 2;
+                    far += d;
+                }
+            ps2_log("gsrender: frame %u screen %d: %d pixels differ from the software renderer, %d by more than one level (first at %d,%d: gs %06x sw %06x)",
+                    n, inst, diff, far, first % 256, first / 256, first < 0 ? 0 : gs[first] & 0xFFFFFF,
                     first < 0 ? 0 : PIXELS(inst)[(first / 256) * sTexW + first % 256] & 0xFFFFFF);
             dump_frame(inst, n, "");
             memcpy(PIXELS(inst), gs, sizeof(gs));

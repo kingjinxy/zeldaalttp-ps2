@@ -18907,3 +18907,59 @@ All four backgrounds use 32×32 maps, and on both screens the bad column is map 
 
 - tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; systemd-run --us
 
+## Claude
+
+Committed (`8eb3d0f`). Next, alpha blending. Checking which blend settings the Four Swords-only intro uses:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep "blend alpha\|semi" $S/survey/fs_intro.txt
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep "brighten targets\|darken targets\|effects" $S/surv
+
+## Claude
+
+The Choose a Stage opening is a brighten fade outside window 0, which is already implemented, so its 22,000 differences point to a bug. Looking at it:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 -c " fro
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/gs_open.png
+
+## Claude
+
+The brighten isn't applied at all outside the window. The inside region matches, so the mask works. Logging the blend registers at frame 1476:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' p='src/ps2/gsrender.c'; s=open(p).read() a="""    win0h_lines();     upload();""" assert a in s s=s.re
+
+## Claude
+
+The registers are as expected: brighten, strength 15, effects outside the window only. So the fade's drawing code is at fault. Reading it:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "static void fade_fn" -A16 src/ps2/gsrender.c; grep -n "eff = \|in_regions(5" -B2 -A6 src/ps2/gsrender.c | head 
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' import re p='src/ps2/gsrender.c'; s=open(p).read() s=re.sub(r"\n    \{ extern u32 ps2_frame; if \(ps2_
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "static void in_regions" -A16 src/ps2/gsrender.c; grep -n "^void ps2_gsr_draw" -A60 src/ps2/gsrender.c | sed -n 
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "static inline unsigned _mix" -A40 src/ps2/mgba/src/gba/renderers/software-private.h | sed -n '/#else/,/#endif/p
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rn "_mix(" src/ps2/mgba/src/gba/renderers/*.h src/ps2/mgba/src/gba/renderers/*.c | head -3; grep -rn "unsigned _mi
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 83,125p src/ps2/mgba/include/mgba/core/interface.h
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' p='src/ps2/gsrender.c'; s=open(p).read() def r(a,b,n=1):     global s; c=s.count(a); assert c==n,(a,c)
+
+## Claude
+
+Also updating the comparison to report pixels off by more than one level per channel separately:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'EOF' p='src/ps2/video.c'; s=open(p).read() def r(a,b):     global s; assert s.count(a)==1,a; s=s.replace(a,
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep "frame 1300
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/gs1300b.png
+
+## Claude
+
+Blending works. The 3,261 lobby pixels that still differ are each off by exactly one level, the expected rounding of the two-pass blend, and none by more. Checking the cost, then committing:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep cost $S/gs1
+

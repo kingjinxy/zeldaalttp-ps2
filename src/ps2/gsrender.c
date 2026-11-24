@@ -31,6 +31,7 @@ static u64 sUpload[UPLOAD_QW * 2] __attribute__((aligned(64)));  // tiles and CL
 #define DRAW_QW 16000
 static u64 sDraw[DRAW_QW * 2] __attribute__((aligned(64)));
 static u64 *sP;           // write pointer into sDraw
+static u64 sPrim;         // the PRIM for tiles (sprite, textured; blended or not)
 static int sBand[4];      // x0, x1, y0, y1 of the scissor rectangle being drawn: only what crosses it is sent
 #define FULL() (sP - sDraw > (DRAW_QW - 64) * 2)  // packet nearly full: drop the rest (logged once a frame)
 static int sDropped;
@@ -56,6 +57,20 @@ static void ad(u64 reg, u64 v)
 }
 
 static u64 xyz(int x16, int y16) { return GS_SETREG_XYZ2(sOffX + x16, sOffY + y16, 0); }
+
+static void close_list(void);
+
+// an untextured rectangle of one colour (alpha a), blended when abe (ALPHA_1): PRIM, RGBAQ, XYZ2, XYZ2 as A+D
+static void flat(int abe, u32 r, u32 g, u32 b, u32 a, int x0, int y0, int x1, int y1)
+{
+    close_list();
+    *sP++ = GIF_TAG(4, 0, 0, 0, GSKIT_GIF_FLG_PACKED, 1);
+    *sP++ = GIF_AD;
+    *sP++ = GS_SETREG_PRIM(GS_PRIM_PRIM_SPRITE, 0, 0, 0, abe, 0, 0, 0, 0), *sP++ = GS_PRIM;
+    *sP++ = GS_SETREG_RGBAQ(r, g, b, a, 0), *sP++ = GS_RGBAQ;
+    *sP++ = xyz(x0 << 4, y0 << 4), *sP++ = GS_XYZ2;
+    *sP++ = xyz(x1 << 4, y1 << 4), *sP++ = GS_XYZ2;
+}
 
 // textured sprite (8x8 tile or a sprite's rectangle): TEX0 (palette), UV, XYZ2, UV, XYZ2, NOP as one REGLIST loop
 static void tex_rect(u64 tex0, int x0, int y0, int x1, int y1, int u0, int v0, int u1, int v1)
@@ -138,11 +153,13 @@ static void upload(void)
     send(sUpload, p);
 }
 
-// CLD 4: load the CLUT only when CBP differs from the last one loaded (consecutive tiles mostly share a palette)
+// CLD 4: load the CLUT only when CBP differs from the last one loaded (consecutive tiles mostly share a palette).
+// MODULATE with the vertex colour (0x80 = x1): colour unchanged, alpha = texture alpha x vertex alpha, which carries
+// the second-target flag while blending (see blending below)
 static u64 tex0(int obj, int pal, int load)
 {
     (void)load;
-    return GS_SETREG_TEX0(sTexAddr / 256, 4, GS_PSM_T4, 8, 10, 1, 1, (sClutAddr + (obj * 16 + pal) * 256) / 256,
+    return GS_SETREG_TEX0(sTexAddr / 256, 4, GS_PSM_T4, 8, 10, 1, 0, (sClutAddr + (obj * 16 + pal) * 256) / 256,
                           GS_PSM_CT32, 0, 0, 4);
 }
 
@@ -157,15 +174,7 @@ static void set_scissor(int x0, int x1, int y0, int y1)
     ad(GS_SCISSOR_1, GS_SETREG_SCISSOR(x0, x1 - 1, y0, y1 - 1));
 }
 
-static void flat_rect(int x0, int y0, int x1, int y1, u32 a)
-{
-    close_list();
-    *sP++ = GIF_TAG(1, 0, 1, GS_SETREG_PRIM(GS_PRIM_PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0), GSKIT_GIF_FLG_PACKED, 3);
-    *sP++ = GS_RGBAQ | (u64)GS_XYZ2 << 4 | (u64)GS_XYZ2 << 8;
-    *sP++ = GS_SETREG_RGBAQ(0, 0, 0, a, 0), *sP++ = GS_RGBAQ;
-    *sP++ = xyz(x0 << 4, y0 << 4), *sP++ = GS_XYZ2;
-    *sP++ = xyz(x1 << 4, y1 << 4), *sP++ = GS_XYZ2;
-}
+static void flat_rect(int x0, int y0, int x1, int y1, u32 a) { flat(0, 0, 0, 0, a, x0, y0, x1, y1); }
 
 static int win_inside_v(int y)
 {
@@ -204,18 +213,74 @@ static void draw_mask(u32 fbp)
 typedef void (*DrawFn)(int arg);
 static int sAlphaTest = 1;  // layers: alpha test on (colour 0 isn't drawn); fades: off
 
+// ---- blending ------------------------------------------------------------------------------------------------------
+// Alpha blending (BLDCNT effect 1): where the top layer A is a first target and the layer under it B a second target,
+// A * eva + B * evb (clamped). While it's on, the render target's alpha holds "the layer here is a second target"
+// (bit 7: 0x80 yes, 0x40 no; vertex alpha through MODULATE), and a first-target layer is drawn in four passes:
+// the frame buffer scaled by evb where the flag is set, plus the layer x eva there (the GS can't weight both in one
+// pass: may differ from mGBA's (a * eva + b * evb) / 16 by one level), the layer as it is where the flag isn't set,
+// then its own flag. Windows are scissor rectangles then (the alpha is taken): static window 0 only.
+
+static int sBlend, sEva, sEvb;
+static u32 sFbp;
+
+static void frame_mask(u32 m) { ad(GS_FRAME_1, GS_SETREG_FRAME(sFbp, 4, GS_PSM_CT32, m)); }
+static void test(int date, int datm) { ad(GS_TEST_1, GS_SETREG_TEST(sAlphaTest, 5, 0x40, 0, date, datm, 1, 1)); }
+static void prim(int abe)
+{
+    sPrim = GS_SETREG_PRIM(GS_PRIM_PRIM_SPRITE, 0, 1, 0, abe, 0, 1, 0, 0);
+    ad(GS_PRIM, sPrim);
+}
+
+static void draw_layer(int bit, DrawFn fn, int arg, int effects)
+{
+    int first = sBldcnt >> bit & 1, second = sBldcnt >> (8 + bit) & 1;
+    ad(GS_RGBAQ, GS_SETREG_RGBAQ(0x80, 0x80, 0x80, second || !sBlend ? 0x80 : 0x40, 0));
+    if (!sBlend || !first || !effects) {
+        fn(arg);
+        return;
+    }
+    frame_mask(0xFF000000);  // colour only: the flag below stays for the passes
+    test(1, 1);
+    prim(1);
+    ad(GS_ALPHA_1, GS_SETREG_ALPHA(2, 1, 2, 1, (16 - sEvb) * 8));  // Cd - Cd * (16 - evb) / 16
+    fn(arg);
+    ad(GS_ALPHA_1, GS_SETREG_ALPHA(0, 2, 2, 1, sEva * 8));  // + Cs * eva / 16 (COLCLAMP clamps)
+    fn(arg);
+    prim(0);
+    test(1, 0);  // where the layer under isn't a second target: drawn as it is
+    fn(arg);
+    frame_mask(0x00FFFFFF);  // and its own flag everywhere it's drawn
+    test(0, 0);
+    fn(arg);
+    frame_mask(0);
+}
+
 // draw fn(arg) where layer bit `bit` (0-3 BGs, 4 sprites, 5 effects) shows
 static void in_regions(int bit, DrawFn fn, int arg)
 {
     int in = sWinIn >> bit & 1, out = sWinOut >> bit & 1, masked = (sDispcnt & 0x2000) && in != out;
     if ((sDispcnt & 0x2000) && !in && !out)
         return;
+    if (sBlend && (sDispcnt & 0x2000)) {  // static window: the inside rectangle and up to four around it
+        int l = sWin0H[0] >> 8, rr = sWin0H[0] & 0xFF, t = sWin0V >> 8, bt = sWin0V & 0xFF, k;
+        int rect[5][5] = { { l, rr, t, bt, 1 }, { 0, 240, 0, t, 0 }, { 0, 240, bt, 160, 0 }, { 0, l, t, bt, 0 },
+                           { rr, 240, t, bt, 0 } };
+        for (k = 0; k < 5; k++) {
+            int ins = rect[k][4];
+            if (rect[k][0] >= rect[k][1] || rect[k][2] >= rect[k][3] || !((ins ? sWinIn : sWinOut) >> bit & 1))
+                continue;
+            set_scissor(rect[k][0], rect[k][1], rect[k][2], rect[k][3]);
+            draw_layer(bit, fn, arg, (ins ? sWinIn : sWinOut) >> 5 & 1);
+        }
+        return;
+    }
     if (masked)
-        ad(GS_TEST_1, GS_SETREG_TEST(sAlphaTest, 5, 0x80, 0, 1, in, 1, 1));
+        ad(GS_TEST_1, GS_SETREG_TEST(sAlphaTest, 5, 0x40, 0, 1, in, 1, 1));
     set_scissor(0, 240, 0, 160);
-    fn(arg);
+    draw_layer(bit, fn, arg, !(sDispcnt & 0x2000) || (sWinOut >> 5 & 1));
     if (masked)
-        ad(GS_TEST_1, GS_SETREG_TEST(sAlphaTest, 5, 0x80, 0, 0, 0, 1, 1));
+        ad(GS_TEST_1, GS_SETREG_TEST(sAlphaTest, 5, 0x40, 0, 0, 0, 1, 1));
 }
 
 // ---- layers --------------------------------------------------------------------------------------------------------
@@ -271,7 +336,7 @@ static void affine_tile(u64 t0, float m[4], float cx, float cy, float hw, float 
     // back to sprites for the next tex_rect
     *sP++ = GIF_TAG(1, 0, 0, 0, GSKIT_GIF_FLG_PACKED, 1);
     *sP++ = GIF_AD;
-    *sP++ = GS_SETREG_PRIM(GS_PRIM_PRIM_SPRITE, 0, 1, 0, 0, 0, 1, 0, 0), *sP++ = GS_PRIM;
+    *sP++ = sPrim, *sP++ = GS_PRIM;
 }
 
 static void draw_objs(int prio)
@@ -333,12 +398,7 @@ static void fade_fn(int brighten)
     *sP++ = GIF_TAG(1, 0, 0, 0, GSKIT_GIF_FLG_PACKED, 1);
     *sP++ = GIF_AD;
     *sP++ = GS_SETREG_ALPHA(brighten ? 0 : 2, 1, 2, 1, sEvy * 8), *sP++ = GS_ALPHA_1;
-    close_list();
-    *sP++ = GIF_TAG(1, 0, 1, GS_SETREG_PRIM(GS_PRIM_PRIM_SPRITE, 0, 0, 0, 1, 0, 0, 0, 0), GSKIT_GIF_FLG_PACKED, 3);
-    *sP++ = GS_RGBAQ | (u64)GS_XYZ2 << 4 | (u64)GS_XYZ2 << 8;
-    *sP++ = GS_SETREG_RGBAQ(0xFF, 0xFF, 0xFF, 0x80, 0), *sP++ = GS_RGBAQ;
-    *sP++ = xyz(0, 0), *sP++ = GS_XYZ2;
-    *sP++ = xyz(240 << 4, 160 << 4), *sP++ = GS_XYZ2;
+    flat(1, 0xFF, 0xFF, 0xFF, 0x80, 0, 0, 240, 160);
 }
 
 // ---- per-line window edges from an HBlank DMA (video.c applies others in the software renderer) -----------------------
@@ -395,8 +455,25 @@ void ps2_gsr_draw(int inst)
     win0h_lines();
     upload();
     sP = sDraw, sTag = NULL, sDropped = 0;
-    ad(GS_FRAME_1, GS_SETREG_FRAME(sTarget[inst] / 8192, 4, GS_PSM_CT32, 0));
-    ad(GS_TEST_1, GS_SETREG_TEST(1, 5, 0x80, 0, 0, 0, 1, 1));  // alpha >= 0x80: colour 0 (alpha 0) isn't drawn
+    sFbp = sTarget[inst] / 8192;
+    sBlend = ((sBldcnt >> 6) & 3) == 1;
+    sEva = IO16(0x52) & 0x1F, sEvb = (IO16(0x52) >> 8) & 0x1F;
+    if (sEva > 16) sEva = 16;
+    if (sEvb > 16) sEvb = 16;
+    if (sBlend && (sDispcnt & 0x2000)) {  // blending needs a static, unwrapped window 0 (scissor rectangles)
+        int y, ok = (sWin0H[0] >> 8) <= (sWin0H[0] & 0xFF) && (sWin0V >> 8) <= (sWin0V & 0xFF);
+        for (y = 1; y < 160 && ok; y++)
+            ok = sWin0H[y] == sWin0H[0];
+        if (!ok) {
+            static int logged;
+            if (!logged++)
+                ps2_log("gsrender: blending with a per-line or wrapping window isn't done: drawn without blending");
+            sBlend = 0;
+        }
+    }
+    frame_mask(0);
+    ad(GS_TEST_1, GS_SETREG_TEST(1, 5, 0x40, 0, 0, 0, 1, 1));  // alpha >= 0x40: colour 0 (alpha 0) isn't drawn
+    ad(GS_COLCLAMP, 1);
     ad(GS_TEX1_1, 0);
     ad(GS_CLAMP_1, 0);
     ad(GS_PABE, 0);
@@ -404,20 +481,16 @@ void ps2_gsr_draw(int inst)
     ad(GS_ZBUF_1, GS_SETREG_ZBUF(0, 0, 1));  // no depth writes
     set_scissor(0, 240, 0, 160);
     // backdrop (palette entry 0); forced blank (DISPCNT bit 7) is white
-    *sP++ = GIF_TAG(1, 0, 1, GS_SETREG_PRIM(GS_PRIM_PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0), GSKIT_GIF_FLG_PACKED, 3);
-    *sP++ = GS_RGBAQ | (u64)GS_XYZ2 << 4 | (u64)GS_XYZ2 << 8;
     if (sDispcnt & 0x80)
         bd = 0x7FFF;
-    *sP++ = GS_SETREG_RGBAQ(c8(bd & 0x1F), c8((bd >> 5) & 0x1F), c8((bd >> 10) & 0x1F), 0x80, 0),
-    *sP++ = GS_RGBAQ;
-    *sP++ = xyz(0, 0), *sP++ = GS_XYZ2;
-    *sP++ = xyz(240 << 4, 160 << 4), *sP++ = GS_XYZ2;
-    if (sDispcnt & 0x2000)
-        draw_mask(sTarget[inst] / 8192);
-    ad(GS_TEST_1, GS_SETREG_TEST(1, 5, 0x80, 0, 0, 0, 1, 1));
+    flat(0, c8(bd & 0x1F), c8((bd >> 5) & 0x1F), c8((bd >> 10) & 0x1F), !sBlend || (sBldcnt & 0x2000) ? 0x80 : 0x40,
+         0, 0, 240, 160);  // backdrop's second-target flag while blending
+    if ((sDispcnt & 0x2000) && !sBlend)
+        draw_mask(sFbp);
+    ad(GS_TEST_1, GS_SETREG_TEST(1, 5, 0x40, 0, 0, 0, 1, 1));
     sAlphaTest = 1;
     if (!(sDispcnt & 0x80) && (sDispcnt & 7) == 0) {
-        ad(GS_PRIM, GS_SETREG_PRIM(GS_PRIM_PRIM_SPRITE, 0, 1, 0, 0, 0, 1, 0, 0));
+        prim(0);
         for (prio = 3; prio >= 0; prio--) {
             for (b = 3; b >= 0; b--)
                 if ((sDispcnt & (0x100 << b)) && (IO16(0x08 + 2 * b) & 3) == prio) {

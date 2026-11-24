@@ -1054,3 +1054,19 @@ ones as textured triangles), window 0 with per-line edges, and brighten/darken f
   pixels different on both screens; Choose a Stage 7 pixels; the lobby (3,820) and Choose a Stage's opening
   (6,000-22,000) differ by their alpha blending, not done yet. Drawing both screens: ~1.5M EE cycles a frame (the
   software renderer: ~6M); no TLB misses.
+
+## Step 34: GS renderer: fades fixed, alpha blending (2026-11-24)
+
+- The fade, window-mask and backdrop rectangles were sent with a PACKED GIF tag naming RGBAQ/XYZ2 but data written as
+  A+D pairs (PACKED register formats differ), so they drew garbage: the brighten outside Choose a Stage's opening
+  window did nothing. One A+D helper (`flat`) now draws them. Choose a Stage's opening (window wipe + brighten) became
+  identical to the software renderer.
+- Alpha blending (BLDCNT effect 1; the lobby, BG2 over BG3, eva 12 + evb 8): the render target's alpha carries "the
+  layer here is a second target" (0x80 / 0x40, vertex alpha through MODULATE; the alpha test keeps colour 0 out at
+  0x40). A first-target layer is drawn in four passes: frame buffer x evb where the flag is set, + layer x eva there
+  (COLCLAMP), the layer as is where it isn't, then its own flag. Windows are scissor rectangles while blending (the
+  alpha is taken); a per-line or wrapping window with blending isn't done (logged, drawn unblended) — the survey has
+  none.
+- Result, intro replay, 2 players, 34 frames compared per screen: 33 identical; the lobby has 3,261 pixels one level
+  off (the GS adds b * evb / 16 and a * eva / 16 rounded separately, mGBA rounds the sum), none further.
+- Cost: both screens drawn in ~1.5M EE cycles a frame against ~6M for the software renderer.
