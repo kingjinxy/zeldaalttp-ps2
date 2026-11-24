@@ -187,13 +187,18 @@ and stale tiles, because the game streams only a 256x192 window of the room. Wha
 - The full redraw (`sub_08008FA4`, ARM, run from IWRAM through `sub_08008ED8`, Four Swords' `UpdateScrollVram`)
   copies 32x24 tiles of the room tile map into a 32x32 ring. The DSi's copy of it (0x0207F7A0) copies 64x32 into a
   64x32 map (512x256), without the one-tile margin; with the camera centred on 128/96.
+- [x] Route (b) chosen (user, 2026-11-24). Step 1 done (walkthrough Step 40): `WIDE_VIEW=1 GS_RENDER=1` draws BG1/BG2
+      from the room data across the whole view, the GBA screen in the middle matching the GBA exactly
+- [ ] Step 2: sprites outside the GBA screen (the game's culling and 9-bit OAM x: a port-side sprite list)
+- [ ] Step 3: camera centred on the bigger view and clamped to the room; step 4: HUD placement; step 5: windows
+- [ ] Cost: two 640x240 views take 3.35 M cycles to draw (240x160: 1.2 M)
 - [ ] Two routes: (a) as the DSi: 64x32 background maps (GBA BGCNT size 1, fine up to 320x240), a 64x32 redraw,
       and the row/column scroll updates (`sub_080090A0`, `sub_08009106`?) and their DSi versions widened to match;
       (b) the PS2 renderer draws the backgrounds straight from the room data at any size (needed beyond 512 wide,
       e.g. 640x240), leaving the game's ring alone
 - [ ] Either way: the camera centre and limits, sprite culling, and the HUD for the bigger view; the DSi code for
       those is still to find
-- [ ] The GS renderer with `WIDE_VIEW`
+- [x] The GS renderer with `WIDE_VIEW` (Step 40)
 
 ## Medium priority: more than 4 players
 Requested by the user (2026-11-16). After Phase 4 works with 4 players.

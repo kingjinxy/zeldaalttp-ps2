@@ -3,6 +3,7 @@
 // memory (main.c maps the instance first); registers, palette and OAM are handed to it each frame, then the 160 lines
 // are drawn into a 256-wide buffer that goes up as a CT32 texture.
 #include <kernel.h>
+#include <malloc.h>
 #include <stdio.h>
 #include <string.h>
 #include <gsKit.h>
@@ -106,9 +107,11 @@ void ps2_video_init(int instances)
         t->PSM = GS_PSM_CT32;
         t->Mem = PIXELS(i);
         t->Filter = GS_FILTER_NEAREST;
+#ifndef GS_RENDER  // the GS renderer's targets are the textures (below)
         t->Vram = gsKit_vram_alloc(sGs, gsKit_texture_size(sTexW, VIEW_H, GS_PSM_CT32), GSKIT_ALLOC_USERBUFFER);
         if (t->Vram == GSKIT_ALLOC_ERROR)
             ps2_log("video: out of GS memory for screen %d", i);
+#endif
         GBAVideoSoftwareRendererCreate(&sView[i].renderer);
         sView[i].renderer.outputBuffer = (color_t *)PIXELS(i);
         sView[i].renderer.outputBufferStride = sTexW;
@@ -119,9 +122,6 @@ void ps2_video_init(int instances)
         r->init(r);
     }
 #ifdef GS_RENDER  // the GS draws each screen into a render target, shown as the texture (no upload)
-#ifdef WIDE_VIEW
-#error "GS_RENDER doesn't do WIDE_VIEW yet"
-#endif
     {
         u32 ps2_gsr_init(GSGLOBAL *gs, int instances), ps2_gsr_target(int inst);
         ps2_gsr_init(sGs, instances);
@@ -215,6 +215,7 @@ void ps2_video_render(int inst)
     int dump = n == 1300 || n == 1600 || n == 2000 || n == 2400 || n == 2800;
     static int sHdmaDumps;  // the first frames drawn with an HBlank DMA, to compare with mGBA
     int y;
+#ifndef GS_RENDER  // (the GS path's check below does this)
     if (dump && VIEW_W != GBA_W) {  // wide view check: the GBA's own 240x160 from the same state, as _gba.ppm
         int w = VIEW_W, h = VIEW_H;
         ps2_view_w = GBA_W, ps2_view_h = GBA_H;
@@ -222,6 +223,7 @@ void ps2_video_render(int inst)
         dump_frame(inst, n, "_gba");
         ps2_view_w = w, ps2_view_h = h;
     }
+#endif
 #ifdef GS_RENDER
     {
         void ps2_gsr_draw(int inst);
@@ -233,16 +235,24 @@ void ps2_video_render(int inst)
                 sHdmaDumps++, dump = 1;
                 break;
             }
-        if (dump) {  // check: the software renderer's picture of the same state, pixel by pixel
-            static u32 gs[256 * 160] __attribute__((aligned(64)));
-            int x, diff = 0, far = 0, first = -1;
+        if (dump) {  // check: the software renderer's picture of the same state, pixel by pixel (a wider view: its
+                     // middle 240x160, where the GBA screen is drawn)
+            static u32 *gs;
+            int x, diff = 0, far = 0, first = -1, w = VIEW_W, h = VIEW_H, ox = (w - GBA_W) / 2, oy = (h - GBA_H) / 2;
+            if (!gs && !(gs = memalign(64, sTexW * VIEW_H * 4)))
+                ps2_log("gsrender: no memory for the check");
+            if (!gs)
+                return;
+            ps2_view_w = GBA_W, ps2_view_h = GBA_H;
             render(r);
+            dump_frame(inst, n, "");
+            ps2_view_w = w, ps2_view_h = h;
             if (!ps2_gsr_read(inst, gs))
                 ps2_log("gsrender: readback stuck");
             for (y = 0; y < GBA_H; y++)
                 for (x = 0; x < GBA_W; x++)
                 {
-                    u32 a = gs[y * 256 + x], b = PIXELS(inst)[y * sTexW + x], c, d = 0;
+                    u32 a = gs[(y + oy) * sTexW + x + ox], b = PIXELS(inst)[y * sTexW + x], c, d = 0;
                     if (((a ^ b) & 0xFFFFFF) && !diff++)
                         first = y * 256 + x;
                     for (c = 0; c < 24; c += 8)  // more than one level off in a channel (blending may round once)
@@ -250,10 +260,10 @@ void ps2_video_render(int inst)
                     far += d;
                 }
             ps2_log("gsrender: frame %u screen %d: %d pixels differ from the software renderer, %d by more than one level (first at %d,%d: gs %06x sw %06x)",
-                    n, inst, diff, far, first % 256, first / 256, first < 0 ? 0 : gs[first] & 0xFFFFFF,
+                    n, inst, diff, far, first % 256, first / 256,
+                    first < 0 ? 0 : gs[(first / 256 + oy) * sTexW + first % 256 + ox] & 0xFFFFFF,
                     first < 0 ? 0 : PIXELS(inst)[(first / 256) * sTexW + first % 256] & 0xFFFFFF);
-            dump_frame(inst, n, "");
-            memcpy(PIXELS(inst), gs, sizeof(gs));
+            memcpy(PIXELS(inst), gs, sTexW * VIEW_H * 4);
             dump_frame(inst, n, "_gs");
         }
         return;

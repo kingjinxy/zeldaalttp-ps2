@@ -19801,3 +19801,166 @@ Let's look into these two things right now
 
 - tool `Bash`: python3 - <<'EOF' p='docs/Planning Doc.md'; s=open(p).read() sec="""## Wider view (the DSi's resolution change, user priority 2 of the FSAE features) `WIDE_VIEW
 
+- tool `SendUserFile`: 
+
+## Claude
+
+Both answers are yes. The whole room sits in memory every player shares, and the DSi widened the view by editing the GBA's own background-drawing routine. Committed as `b0c529f`, with walkthrough Step 39 and a new "Wider view" section in the Planning Doc; `make compare` reports OK.
+
+**1. The whole room is in shared memory.** I checked the memory dumps from a 2-player stage frame:
+- Both map layers cover the full stage: 63x63 blocks of 16x16 pixels, 1008x1008 pixels. Both are identical for the two players.
+- Drawn from the dump with the tiles and palettes already loaded, the whole stage comes out complete (attached image). Each GBA only ever shows 240x160 of it.
+- There's also a ready-made tile map of the whole room (128x128 tiles at 0x02016D90), complete and shared. A second one for the other layer, at 0x020231D0, isn't usable: outside the room it overlaps other data.
+
+**2. How the game draws the background, and what the DSi changed.**
+- `sub_08008ED8` is Four Swords' equivalent of Minish Cap's `UpdateScrollVram`. It runs an ARM routine, `sub_08008FA4`, that copies a 32x24-tile window of the room tile map into the 32x32 background map the GBA displays. So the GBA redraws 256x192 at a time.
+- The DSi code has a copy of the same routine at 0x0207F7A0, with these changes:
+
+| | GBA | DSi |
+|---|---|---|
+| Background map | 32 tiles wide (256 px) | 64 tiles wide (512 px), two map blocks |
+| Rows redrawn | 24 | 32 |
+| Tiles per row | 32 | 64 |
+| One-tile margin around the view | yes | removed |
+| Source | room tile map | the same room tile map |
+
+  Together with the camera centred on 128/96 (found earlier), that's the DSi's widening. The source data is unchanged; only the copy got wider.
+
+**What this means for the PS2's wider view.** There are two routes:
+- **Do what the DSi did:** a 64x32 background map, a wider redraw, and wider row/column updates while scrolling. The GBA's video hardware supports that map size too. It covers views up to about 320x240, not 640 wide.
+- **Draw from the room data in the PS2 renderer:** the backgrounds are drawn straight from the shared room data at any size, and the game's background map is left alone. This is the only option for the 640x240 two-player view.
+
+**Not yet read in the DSi code:**
+- the row/column scroll updates;
+- the camera's edge limits;
+- the culling that hides off-screen sprites;
+- the HUD layout for the bigger screen.
+
+Those are the next things to look at whenever the wider view comes back.
+
+## User
+
+Let's go with the second wide view option. What do you need to do?
+
+- tool `Bash`: python3 -c " import struct;r=open('baserom.gba','rb').read();print(hex(struct.unpack_from('<I',r,0x927c)[0]))"; grep -n "03000450\b\|gUnknown_03000450 " sym_iwr
+
+## Claude
+
+# Wide view, option 2: drawing the backgrounds from the room data
+
+The renderer stops relying on the game's 32-tile background map and draws the room itself, straight from the shared room data, at whatever size the view is. Backgrounds need almost no game changes. Sprites, the camera and the HUD do.
+
+## What the renderer needs each frame
+
+The camera position is in `gUnknown_03000450`, which is Four Swords' version of Minish Cap's room-controls struct. The GBA's own redraw routine reads these fields:
+
+| Fields | Meaning |
+|---|---|
+| +0x18 / +0x1A | room origin |
+| +0x1C / +0x1E | room size |
+| +0x20 / +0x22 | camera x / y |
+
+Together with the room data from Step 39, the renderer can draw any rectangle of the room.
+
+## Steps, in order
+
+**1. Backgrounds from the room data.** GS renderer only; no game changes.
+- Draw the two room layers from the 63x63 metatile layers. Each metatile is four tile entries from the layer's metatile table, using the tiles already in video memory. I'd use the metatile layers for both layers, because the second layer's room-wide tile map isn't usable.
+- Place the view so the GBA's 240x160 sits in its centre: view origin = camera − (W−240)/2, (H−160)/2.
+- Draw only in scenes where the room layers are in use (a stage). Menus, the lobby and Choose a Stage keep today's 240x160 drawing, centred. To tell which background is a room layer, I'd match its map address against the ones the game's redraw writes to. That's a small check to work out.
+- **Check:** the centre 240x160 of each wide frame must match the GBA's own frame pixel for pixel. The wide build already writes those comparison images.
+- **Risk:** live tile changes (cut grass, switches). Minish Cap writes those into the layer data too, but I'll confirm it in a replay.
+
+**2. Sprites.** This needs the game's sprite code. The game only puts on-screen sprites into its sprite list, by its own 240x160 culling, and the list's 9-bit x coordinate can't address 640 pixels anyway.
+- Find the code that builds the sprite list and does the culling, using the write watch from the shared-world plan (step 5a) on the sprite buffer.
+- In the PS2 build, widen the culling bounds and write a port-side sprite list with 16-bit coordinates. The renderer reads that list.
+
+  Enemies and objects off a player's screen are still simulated, because the world is the same on every GBA. Only drawing is culled, so nothing else changes there.
+- **Check:** within the centre 240x160, sprites must still match the GBA exactly.
+
+**3. Camera.** The game centres on the player at 120/80 and stops at the room edges for a 240x160 screen. With step 1's centred offset, the view near an edge shows the area outside the room, drawn as the backdrop. That's acceptable at first. The proper fix is the DSi's: centre on half the view size and clamp with the bigger size. The camera is per-player state, so changing it can't desync the world (Phase 0 step 2).
+
+**4. HUD.** The HUD layer is laid out for 240x160. It would first be drawn as-is in a 240-wide strip at the top centre; it's at the top, left to right. Spreading it to the corners (hearts left, rupees right) is a later rewrite of the HUD drawing.
+
+**5. Windows and fades.** Fades cover the whole view. Window 0, used in the stage wipe, gets its coordinates offset into the wide view, with the area outside the 240x160 treated as outside the window.
+
+## Sizes and cost
+
+| Players | View per player |
+|---|---|
+| 1 | 320x240 |
+| 2 | 640x240 each, stacked |
+| 3–4 | 320x240 each, 2x2 grid |
+
+On the GS, cost grows with the number of tiles. 640x240 is about 4.5 times the tiles of 240x160, roughly 1.5–2.5M cycles for two screens, if the tile-graphics upload is shared once the world is shared. That's affordable once the memory-switch cost is dealt with.
+
+## Effort
+
+| Step | Sessions | Result |
+|---|---|---|
+| 1 | about 1 | correct backgrounds in the whole wide view |
+| 2 | 1–2 | depends on how readable the sprite code is (decompiled C or asm) |
+| 3–5 | about 1 together | |
+
+Step 2 overlaps with the shared-world plan's step 5a, since both need the same write watch.
+
+I'd start with step 1: it needs no game changes and shows the result straight away. Shall I go ahead?
+
+## User
+
+Proceed
+
+- tool `Bash`: sed -n 1,40p src/ps2/gsrender.c; grep -n "240\|160\|256" src/ps2/gsrender.c | head -60
+
+- tool `Bash`: grep -n "WIDE_VIEW\|VIEW_W\|VIEW_H\|sTexW\|ps2_view_w\|GBA_W\b" src/ps2/video.c | head -50; grep -n "PS2_VIEW\|ps2_view" src/ps2/mgba/interface.h 2>/dev/null | 
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/roommap.py <<'EOF' import struct,sys def load(p
+
+- tool `Bash`: python3 - <<'EOF' import struct h=lambda m,o: struct.unpack_from("<H",m,o)[0] for f in ("build/ps2/mem_p1_f3000.bin","build/ps2/mem_p0_f3000.bin"):     m=open(f
+
+- tool `Read`: /home/alex/Documents/zeldaalttp-ps2/src/ps2/gsrender.c
+
+- tool `Read`: /home/alex/Documents/zeldaalttp-ps2/src/ps2/video.c
+
+- tool `Bash`: python3 - <<'EOF' p='src/ps2/gsrender.c'; s=open(p).read() def rep(old,new,cnt=1):     global s     assert s.count(old)>=1, old     s=s.replace(old,new) if cnt=
+
+- tool `Bash`: python3 - <<'EOF' p='src/ps2/video.c'; s=open(p).read() def rep(old,new):     global s     assert old in s, old     s=s.replace(old,new,1) rep("""        t->Vra
+
+- tool `Bash`: python3 - <<'EOF' p='src/ps2/video.c'; s=open(p).read() old=s[s.index("        if (dump) {  // check: the software renderer's picture of the same state, pixel b
+
+## Claude
+
+Builds. Running the 2-player replay with the wide GS build:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; bash $S/pshot.sh wgs 110; grep -E "gsrender|video:|cost:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; tail -20 $S/wgs.log | cut -c1-200
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -aE "gsrender|video:|cost:|\] frame " $S/wgs.log | 
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; bash $S/pshot.sh wgs 230 >/dev/null; grep -c "TLB Miss" 
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; date; ls -la $S/wgs.log; grep -a "gsrender: frame" $S/wg
+
+## Claude
+
+Every check frame through the stage matches exactly in the centre, with no TLB misses. Looking at the wide stage frames:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/build/ps2 && S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; pyth
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/wide_room.png
+
+## Claude
+
+The room continues correctly across all 640 pixels, with no repeat, for both players' cameras. The HUD stays in the centre strip. Checking that the normal 240x160 GS build is unaffected:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2 && touch src/ps2/main.c src/ps2/video.c && systemd-run --user --scope -q -p MemoryMax=6G make -f Makefile.ps2 INSTANCES=2
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -a "pixels differ" $S/n2.log | sed 's/.*: \([0-9]*\
+
+## Claude
+
+Normal build unchanged: 34 of 34 identical, 1.2M cycles. Updating the docs and committing.
+
+- tool `Bash`: python3 - <<'EOF' p='docs/Planning Doc.md'; s=open(p).read() old="""- [ ] Two routes: (a) as the DSi""" new="""- [x] Route (b) chosen (user, 2026-11-24). Step 1
+

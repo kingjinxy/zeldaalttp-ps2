@@ -1169,3 +1169,34 @@ the DSi version change the view size.
 - Plan for the PS2 wider view: Planning Doc, "Wider view". The DSi's route needs GBA background size 1 (64x32,
   also supported by the GBA) and suits up to 320x240; 640-wide views need the PS2 renderer to draw from the room data
   directly. The row/column scroll updates and the DSi's camera limits, sprite culling and HUD are still to read.
+
+## Step 40: wide view, step 1: the GS renderer draws the room from the room data (2026-11-24)
+
+Route (b) from Step 39: the PS2 renderer draws the backgrounds from the room data at any size, leaving the game's
+background maps alone. `make -f Makefile.ps2 WIDE_VIEW=1 GS_RENDER=1` (the wide view still defaults to the software
+renderer, which shows the game's maps as they are).
+
+- Host prototype first, on the step 3 dumps (two cameras): BG2 shows the top layer (characters at 0x06000000), BG1
+  the bottom one (0x06004000); screen pixel x is room pixel (camera - origin) + x, with the camera at
+  `gUnknown_03000450` +0x20/+0x22 and the origin at +0x18/+0x1A, and the scroll registers equal that modulo 512.
+  Room tile = metatile layer entry, its four tile entries from the layer's metatile table. All 651 visible tiles of
+  both BGs match for both players.
+- `gsrender.c`: the render target is view-sized (frame width `sTBW` 64-pixel units, readback likewise). Drawing
+  stays in GBA screen coordinates with the 240x160 in the middle of the view (`sGx`, `sGy` added in `xyz` and the
+  scissor). The backdrop, window mask clear (outside the GBA screen counts as outside window 0) and fades cover the
+  whole view; BG0 (HUD) and sprites stay in the GBA screen; BG1-3 cover the view. `draw_bg` draws the tiles crossing
+  the scissor band instead of a fixed 31x21. `room_check` each frame: BG1/BG2 use the room data only when their
+  scroll equals the camera and the GBA screen's 31x21 tiles equal the room data; otherwise (menus, lobby, room
+  changes) they're drawn from their own maps, repeating. Tiles outside the 128x128 room map show the backdrop. The
+  draw packet grew from 16,000 to 28,000 quadwords.
+- `video.c`: no software-renderer textures in GS memory with the GS renderer (two 640x240 ones plus the targets and
+  the double-buffered 640x480 frame wouldn't fit in 4 MB). The check now draws the GBA's 240x160 with the software
+  renderer and compares it with the middle of the GS frame; the `_gs` dump is the whole view.
+- Result (2-player replay, 640x240 each): every check frame, 34 per screen from the lobby to the stage, is identical
+  to the software renderer in the middle 240x160; no TLB misses. The stage frames show the room continuing to both
+  sides, with BG3's sand pattern outside the cliffs, and the HUD in the middle strip. The normal 240x160 GS build is
+  unchanged (34 of 34 identical, 1.2 M cycles).
+- Cost: 3.35 M EE cycles a frame for two 640x240 views (1.2 M at 240x160); with the game's 1.84 M that's over the
+  4.9 M budget, so this runs below 60 fps for now. Writing a wide check image to host: takes about 3 s.
+- Still GBA-sized: sprites (only what the game puts in OAM, culled to its screen), the camera (centred for 240x160),
+  the HUD and window 0.
