@@ -155,9 +155,9 @@ Phase 1: the world runs once (`FS_SHARED_WORLD`, breaks GBA matching on purpose)
         OAM buffers (?) 0x03005E60-0x03006450 0.65 KB, entities 62 bytes, the rest ~0.5 KB. Writers by area:
         `docs/shared_world/per_player_writers.txt` (10 profile, 13 0x0202D/E, 39 sound, 72 entity, 5 OAM-buffer, 76 other
         functions; entity and other lists include file-select code from before the stage).
-  - [ ] 5a, as planned: Who writes the per-player bytes: a write watch (like `mgba_run --reads`) over step 3's ranges on the
+    (The plan for 5a was: who writes the per-player bytes: a write watch (like `mgba_run --reads`) over step 3's ranges on the
         session 1 replay gives the view functions and their callers. More memory diffs across session 1 (other
-        rooms, menus, the stage's end) to complete the 13 KB list. (~1 session)
+        rooms, menus, the stage's end) to complete the 13 KB list.)
   - [ ] 5b. Sort each per-player function and the ~23 from step 4: view only (camera, BG map streaming, OAM,
         HUD, text, own sound: moves to the per-player pass); world code with a "mine?" check (e.g. `sub_08042DB0`:
         the check moves to the view pass if it only affects drawing, else the flag becomes per player); arrays
