@@ -35,7 +35,11 @@ static struct {
 // what the renderers draw, screen i at i * sTexW * 240 lines: room for two 640x240 or four 256x160 (the EE has no room for
 // four wide ones: gsKit's allocations failed)
 static u32 sPixelPool[2 * PS2_VIEW_MAX_W * PS2_VIEW_MAX_H] __attribute__((aligned(128)));
+#ifdef GS_RENDER  // the software renderer only draws the check's picture, used at once: one buffer for every screen
+#define PIXELS(i) ((void)(i), sPixelPool)
+#else
 #define PIXELS(i) (sPixelPool + (i) * sTexW * PS2_VIEW_MAX_H)  // not VIEW_H: the wide check pass changes it
+#endif
 
 static u32 count(void) { u32 c; __asm__ volatile("mfc0 %0, $9" : "=r"(c)); return c; }
 static u32 sRenderCycles, sOtherCycles, sLastEnd, sFrameRender;
@@ -103,8 +107,8 @@ void ps2_video_init(int instances)
         ps2_view_w = 320, ps2_view_h = 480;
 #endif
 #endif
-#if defined(SCREENS) && defined(WIDE_VIEW)  // the cell's shape at 1.5x: 284x160 of the GBA's pixels
-    ps2_view_w = CELL_W * GBA_H / CELL_H & ~1, ps2_view_h = GBA_H;
+#if defined(SCREENS) && defined(WIDE_VIEW)  // the whole cell at 1:1: 426x240 of the world, pixel for pixel
+    ps2_view_w = CELL_W, ps2_view_h = CELL_H;
 #endif
     sTexW = (VIEW_W + 63) & ~63;
     dmaKit_init(D_CTRL_RELE_OFF, D_CTRL_MFD_OFF, D_CTRL_STS_UNSPEC, D_CTRL_STD_OFF, D_CTRL_RCYC_8,

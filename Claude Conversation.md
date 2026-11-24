@@ -21757,3 +21757,81 @@ Building with the shared world, wide view, 4 players and `SCREENS=8`, then takin
 
 - tool `Bash`: Revert temp dump, update docs, commit
 
+- tool `ToolSearch`: 
+
+- tool `SendUserFile`: 
+
+## Claude
+
+The 3×3 layout works: eight 426×240 screens fill a 1280×720 frame with the centre cell black. The game still has only 4 players, so screens 5–8 repeat players 1–4 for now. The image I sent is a readback of the whole frame at frame 2800.
+
+To build it: `make -f Makefile.ps2 SCREENS=8 WIDE_VIEW=1 GS_RENDER=1 SHARED_WORLD=1`. It's committed as `02fb1c4`, with walkthrough Step 49 and the plan updated; `make compare` is OK and the default build still compiles.
+
+- **Frame:** with `SCREENS`, 720p now uses a true 1280-wide frame instead of 640 pixels doubled. Two of them take 3.7 MB of the GS's 4 MB.
+- **Views:** each one shows 284×160 GBA pixels scaled to 1.5×, so with `WIDE_VIEW=1` they fill their cells. Without it, the 240×160 view is centred in its cell.
+- **HUD:** it stays at the GBA screen's position in the middle of each view, because moving it out to the edges is an unfinished step of the wide view.
+- **Speed:** drawing eight views costs 6.77M cycles a frame plus 0.58M for the game, against a 4.9M budget at 60 fps. So it runs at 30 fps; drawing has to get cheaper to reach 60.
+
+Next is step 2: a survey of every place the game assumes 4 players, written into the plan, before lifting those limits and adding players 5–8 with the white palette.
+
+## User
+
+Have the 4 and 8 player screenshots been using the expanded view where everything is still drawn pixel perfect, but the actual visible world is larger?
+
+## Claude
+
+No. Neither set was what you describe:
+
+| Screenshots | View | Visible world | Pixel scale |
+|---|---|---|---|
+| 4 players (Step 48) | normal GBA view | 240×160, same as the GBA | 1:1, pixel perfect |
+| 8 players (Step 49) | expanded | 284×160, only 44 columns wider | 1.5×, not pixel perfect |
+
+The 8-player views were scaled up to fill each 426×240 cell rather than showing more of the world. At 1.5×, GBA pixels alternate between 1 and 2 screen pixels wide, so they're slightly uneven.
+
+**What you're describing** is drawing each cell at 1:1 with a 426×240 view: every GBA pixel stays one screen pixel, and each player sees 426×240 of the world instead of 240×160. That's about 2.7 times the area, more in both directions. The renderer can already draw from the room data like this, so for the layout it's a small change.
+
+**What's missing in the extra area** (the wide view's unfinished steps):
+- **Sprites:** enemies, other Links and items outside the GBA's 240×160 middle aren't drawn yet, because the game only puts on-screen ones in its sprite list.
+- **Camera:** it still centres the player as on the GBA and stops at room edges for a 240×160 screen.
+- **HUD:** it stays at the GBA screen's position in the middle of the view.
+- **Window effects:** wipes and fades cover only the GBA-sized middle.
+
+Drawing cost would also rise with the bigger area, so 8 screens would stay at 30 fps or below for now.
+
+Should I switch the 3×3 layout to 1:1 at 426×240? The extra world would show backgrounds only until the sprites and camera steps are done.
+
+## User
+
+Yes
+
+- tool `Bash`: Find view buffer limits
+
+- tool `Bash`: Switch to 1:1 426x240 views and run
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/full1.png
+
+## Claude
+
+Crashed: 50 TLB-miss lines. Looking at where:
+
+- tool `Bash`: Find the crash context
+
+- tool `Bash`: Symbolize the crash pcs
+
+## Claude
+
+The GS allocations came back 0 ("tiles 0, CLUTs 0"), then a crash in gsKit. Comparing with the earlier `SCREENS` run, which worked:
+
+- tool `Bash`: Compare GS allocation logs
+
+- tool `Bash`: Share one check buffer; rebuild and run
+
+- tool `Bash`: Read the run log
+
+- tool `Bash`: Dump the full frame at 1700
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/full1.png
+
+- tool `Bash`: Update docs and commit
+

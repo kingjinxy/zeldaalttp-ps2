@@ -1405,3 +1405,18 @@ ROM:
 - Checked with a one-off readback of the whole frame at frame 2800 (the PCSX2 window shrinks the 1280x720 output):
   eight views in place, the centre black. Each view's HUD sits at the GBA screen's position (the wide view's HUD step
   isn't done). Cost: render 6.77 M + game 0.58 M cycles a frame of 4.9 M, so 30 fps.
+
+## Step 50: the 3x3 layout at 1:1 (2026-11-24)
+
+- Step 49's views were 284x160 GBA pixels scaled 1.5x into the cells (uneven pixels, little more world). With
+  `SCREENS` and `WIDE_VIEW` each view is now the whole 426x240 cell at 1:1: about 2.7 times the GBA's area, every
+  pixel drawn once. Only the backgrounds fill the extra area for now (the wide view's sprite, camera, HUD and window
+  steps are still to do).
+- **Overflow found on the way:** at 1:1 the GS renderer's pixel check runs, and each screen's software-renderer
+  buffer was a slice of a fixed pool (two 640x240 views); at a 448-pixel stride the third and fourth slices ran past
+  it, and the renderers' setup cleared gsKit's state (the log showed a 155963028x-1974037311 frame and the GS
+  allocations at 0, then TLB misses in `gsKit_set_test`). Under the GS renderer the software renderer only draws the
+  check's picture, which is used at once, so every screen now shares the first slice.
+- **Result:** the GS drawing's centre 240x160 matches the software renderer pixel for pixel in every check (frames
+  1300, 1600, 2000, all four players); a frame readback at 1700 shows the eight 426x240 views with the room in the
+  middle and sand around it. Drawing costs 11.4 M cycles a frame (8 views; 6.77 M at 284x160): about 20 fps.
