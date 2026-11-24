@@ -93,6 +93,11 @@ u32 ps2_io_read(u32 a, u32 size)
     if (o == 6)  // VCOUNT: a line further on each read (0-227), so waits for a line end (m4a's SampleFreqSet)
         IO16(6) = (IO16(6) + 1) % 228;
     dma_check(0);
+    if (o - 0x128 < 2) {  // SIOCNT: the link status bits (link.c)
+        u32 ps2_link_siocnt(int inst, u32 v);
+        u32 v = ps2_link_siocnt(ps2_cur_instance, IO16(0x128));
+        return size == 1 ? (o == 0x128 ? v & 0xFF : v >> 8) : size == 2 ? v : v | (u32)IO16(0x12A) << 16;
+    }
     return size == 1 ? IO8(o) : size == 2 ? IO16(o) : IO32(o);
 }
 

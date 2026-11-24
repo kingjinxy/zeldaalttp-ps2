@@ -854,3 +854,53 @@ bug. Next to fix.
 State: four instances reach the file select, no TLB misses or fatal errors in 60 s. At real-time speed PCSX2
 shows about 12-14 fps: four software renderers cost about 4.2 M EE cycles each, against 4.9 M per frame for
 everything. Players 3-4 have no controller yet (multitap support is still to come).
+
+## Step 28: the link between instances, scripted input, and a linked replay on the PS2 (2026-11-24)
+
+Goal: run a recorded replay in PCSX2. Both recordings are linked two-GBA runs, so the instances needed a link first.
+(`tools/fs_walk.inputs` turned out to walk into A Link to the Past: mGBA shows its intro from frame 1,500. Its main
+loop busy-waits on a RAM flag its VBlank interrupt sets, which the port doesn't run outside VBlankIntrWait.)
+
+- **Link, at the transfer level (`src/ps2/link.c`).** The game's link layer is in `src/rom2.c`: `sub_0800C41C`
+  init, `sub_0800C658` queues a 20-byte payload, `sub_0800C75C` (VBlank, parent only) starts a packet,
+  `sub_0800C54C`/`sub_0800C6A8` take received ones. It also has the serial/Timer3 handler `sub_0800C7E8` (copied to
+  EWRAM). A packet is 13 16-bit transfers: the parent's 0xFEFE, then 12 halfwords from every player.
+  `ps2_link_exchange` runs after every instance's frame. While the parent's SIOCNT busy bit is set, it gathers each
+  instance's SIOMLT_SEND, writes SIOMULTI0-3 into every instance, and runs a C port of the handler on each
+  instance's memory (`ps2_inst_ptr`: the mapped memory for the running instance, else its saved copy). SIOCNT
+  reads (`io.c`) report the cable's status: SD high, SI low only on instance 0 (parent), ID = instance.
+  No serial timing or interrupts. Packets land between frames.
+- **The EWRAM helper.** `sub_0800C6A8` calls an ARM routine the game copies to 0x02030950 (from 0x08000318) through
+  a cast function pointer. On the PS2 that jumped into GBA bytes and executed them as MIPS, and the EE died with
+  interrupts off. `ps2_link_take` is that routine in C, under `PLATFORM_PS2`.
+- **AgbMain returns** to switch games (crt0 then runs init again): `instance_main` loops.
+- **Scripted input (`src/ps2/input.c`)**: `host:replay_p<n>.inputs`, the mGBA runner's format, replaces pad n;
+  keys for frame k+1 are set after frame k, as in the runner.
+- **FS_ONLY on the PS2** (`Makefile.ps2`, default on): picking a file starts Four Swords, as `recordings/fs_only.gba`
+  does, so `tests/intro_linked.inputs` applies. `INSTANCES=n` sets the player count.
+- **The lobby.** `sub_080368D8` resets the link whenever a player who was ever received is missing from this frame's
+  packets. Every frame must carry everyone, which the between-frames exchange does. Both instances reached
+  "Linking with other systems…" with the right badges, then the lobby step-5 hold (`gUnknown_03000FC0` = 02 05).
+  The PS2 gets there about 200 frames later than mGBA, so the recorded presses run out first. With A/Start presses
+  added after frame 1,400 (`build/ps2/replay_p*.inputs`, not the test file), the instances go on to Choose a Stage
+  and into a stage together.
+- **Code kept as bytes in the asm.** Five fixes on the way into the stage:
+  - `sub_08008CB4.inc` held three Thumb handlers and their jump table (0x08008D00) as `.byte`s, so the translator
+    never generated them. They're now written as instructions with labels (`sub_08008D0C/D24/D50`,
+    `gUnknown_08008D00`, `gUnknown_08008CC0`). The literal pool in `sub_08008E5C.inc` names them, and
+    `sub_08008D8C`, symbolically. Same bytes: `make compare` OK.
+  - General fix: such raw ROM addresses can't be relocated by the PS2 link. `tools/ps2/gba_copies.py` lists every
+    global-state copy's GBA address (from the matching ELF). `gstate_run` and `find_entry` map a ROM address with
+    no entry to the same offset in the copy's PS2 bytes (`ps2_gba_copy`).
+  - `gstate2c.py`: a function whose offset 0 doesn't decode (hand-written rom1 routines that start with their
+    tables, e.g. `sub_0800505C`) is no longer dropped when other entries decode. 24 native-only functions down
+    to 18.
+  - Division by zero: GCC guards divisions with `teq`, the GBA's libgcc returns 0 (`Ldiv0`), and the game relies
+    on it (`sub_08012B64`, a random pick among none). The trap handler (`crash.c`) now sets HI = LO = 0 and
+    continues. `crash.c` reports over SIO (it used `printf`, which never showed).
+- **Debugging aids:** the watchdog's stuck report lists the EE threads' states (that's how the "everything asleep"
+  cases were told apart); `ps2_icall` stops on targets below 0x00100000 instead of jumping into the kernel.
+
+State: two instances go from empty saves through the link lobby into the same Four Swords stage in PCSX2 (15,000+
+frames, no crash or TLB miss). Not yet: frame-exact comparison with mGBA (the PS2 runs a different number of frames
+through loading), the original replay scripts unmodified, A Link to the Past.

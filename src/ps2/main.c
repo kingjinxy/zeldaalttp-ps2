@@ -5,7 +5,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifndef INSTANCES  // players (make -f Makefile.ps2 INSTANCES=2)
 #define INSTANCES 4
+#endif
 #define STACK_SIZE (256 * 1024)
 
 void ps2_tlb_map(int instances);
@@ -28,11 +30,15 @@ int ps2_main_thread;
 static int sThread[INSTANCES];
 static u8 sStack[INSTANCES][STACK_SIZE] __attribute__((aligned(16)));
 u32 ps2_frame;  // frames shown
+int ps2_instances = INSTANCES;
+void ps2_link_exchange(void);
 
 static void instance_main(void *arg)
 {
-    ps2_log("instance %d: entering AgbMain", (int)arg);
-    AgbMain();
+    for (;;) {  // AgbMain returns to switch games (the game-select screen); crt0 then runs init, which calls it again
+        ps2_log("instance %d: entering AgbMain", (int)arg);
+        AgbMain();
+    }
 }
 
 int main(void)
@@ -73,6 +79,7 @@ int main(void)
             ps2_input_frame(i);
             ps2_save_vblank(i);
         }
+        ps2_link_exchange();  // the packet the parent started this frame reaches everyone
         ps2_video_present(INSTANCES);  // waits for vsync: the game runs at the PS2's 60 Hz
         if (++ps2_frame % 600 == 0 || ps2_frame <= 5)
             ps2_log("frame %u", ps2_frame);

@@ -17,6 +17,15 @@ CFLAGS := -std=gnu99 -O1 -G0 -fno-builtin -fno-strict-aliasing -w -DNONMATCHING 
 # PS2 runtime (src/ps2): ps2sdk headers, not the game's
 PS2_CFLAGS := -D_EE -O2 -G0 -Wall -I$(PS2SDK)/ee/include -I$(PS2SDK)/common/include -I$(PS2DEV)/gsKit/include \
               -Isrc/ps2/mgba/include -Isrc/ps2/mgba/src -include mgba/flags.h -DNDEBUG
+# The port is Four Swords only: picking a file starts it, as the FS_ONLY ROM does (src/fs_only.c). FS_ONLY=0: the
+# original game-select screen (A Link to the Past doesn't run on the PS2 yet: its main loop waits on an IRQ flag)
+FS_ONLY ?= 1
+ifneq ($(FS_ONLY),0)
+CFLAGS += -DFS_ONLY
+endif
+ifdef INSTANCES  # players (default 4, src/ps2/main.c); touch src/ps2/main.c when changing it
+PS2_CFLAGS += -DINSTANCES=$(INSTANCES)
+endif
 MGBA_C := $(wildcard src/ps2/mgba/src/gba/renderers/*.c)
 
 GAME_C := $(wildcard src/*.c src/lttp/*.c)
@@ -42,8 +51,15 @@ $(B)/ps2/gbarom.o: src/ps2/gbarom.S baserom.gba
 	@mkdir -p $(dir $@)
 	$(CC) -c $< -o $@
 
-$(ELF): $(OBJS) $(B)/ps2/gbarom.o src/ps2/ps2.ld $(B)/gba_syms.ld tools/ps2/fix_elf.py
-	$(CC) -T src/ps2/ps2.ld -o $@ $(OBJS) $(B)/ps2/gbarom.o $(LIBS)
+# GBA addresses of the global-state copies (from the matching build's ELF: the PS2 keeps the original ROM layout)
+$(B)/gba_copies.c: tools/ps2/gba_copies.py zeldaalttp.elf $(filter %_gstate_ps2.c,$(AUTO_C))
+	python3 tools/ps2/gba_copies.py $@ zeldaalttp.elf $(filter %_gstate_ps2.c,$(AUTO_C))
+
+$(B)/gba_copies.o: $(B)/gba_copies.c
+	$(CC) $(PS2_CFLAGS) -c $< -o $@
+
+$(ELF): $(OBJS) $(B)/ps2/gbarom.o $(B)/gba_copies.o src/ps2/ps2.ld $(B)/gba_syms.ld tools/ps2/fix_elf.py
+	$(CC) -T src/ps2/ps2.ld -o $@ $(OBJS) $(B)/ps2/gbarom.o $(B)/gba_copies.o $(LIBS)
 	python3 tools/ps2/fix_elf.py $@
 
 elf: $(ELF)

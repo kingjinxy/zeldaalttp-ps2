@@ -96,6 +96,16 @@ static int watch_handler(int cause)
             n += snprintf(buf + n, sizeof(buf) - n, " %08x", ring[1 + 3 * j]);
         }
         sio_puts(buf);
+        {  // thread states: who is stuck where (status 1 running, 2 ready, 4 waiting; wait 1 sleep, 2 semaphore)
+            int t;
+            for (t = 1; t <= 6; t++) {
+                ee_thread_status_t st;
+                if (iReferThreadStatus(t, &st) >= 0) {
+                    snprintf(buf, sizeof(buf), "watch: thread %d status %d wait %d id %d prio %d", t, st.status, st.waitType, st.waitId, st.current_priority);
+                    sio_puts(buf);
+                }
+            }
+        }
         lastFrame = sFrame;
     }
     ExitHandler();

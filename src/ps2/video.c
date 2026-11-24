@@ -99,7 +99,7 @@ void ps2_video_render(int inst)
         r->drawScanline(r, y);
     r->finishFrame(r);
     sFrameRender += count() - t0;
-    if (n == 60 || n == 600 || n == 900 || n == 1500)
+    if (n == 1300 || n == 1600 || n == 2000 || n == 2400 || n == 2800)
         dump_frame(inst, n);
 }
 

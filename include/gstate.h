@@ -92,6 +92,14 @@ static void gstate_run(u32 a)
     f = gstate_find(__gstatetable_start, __gstatetable_end, b);
     if (!f)
         f = gstate_find(__gstatetablew_start, __gstatetablew_end, b);
+#ifdef PLATFORM_PS2
+    if (!f && b - 0x08000000u < 0x00800000u) {  // a GBA ROM address the PS2 link couldn't relocate (data kept as bytes)
+        u32 ps2_gba_copy(u32 a);                  // src/ps2/glue/arm_ports.c: the same place in a copy's PS2 bytes
+        u32 c = ps2_gba_copy(b);
+        if (c)
+            f = gstate_find(__gstatetable_start, __gstatetable_end, c);
+    }
+#endif
     if (f) {
         f->fn(f->off);
         return;

@@ -8,6 +8,7 @@ sub_08008CB4: @ 0X08008CB4
 	pop {r4, r5, r6, r7, pc}
 	.byte 0x00
 	.byte 0x00
+gUnknown_08008CC0:  @ a table, read through sub_08008E5C's literal pool
 	.byte 0x01
 	.byte 0xff
 	.byte 0x00
@@ -72,120 +73,69 @@ sub_08008CB4: @ 0X08008CB4
 	.byte 0xfc
 	.byte 0x02
 	.byte 0x00
-	.byte 0x0d
-	.byte 0x8d
-	.byte 0x00
-	.byte 0x08
-	.byte 0x25
-	.byte 0x8d
-	.byte 0x00
-	.byte 0x08
-	.byte 0x51
-	.byte 0x8d
-	.byte 0x00
-	.byte 0x08
-	.byte 0x62
-	.byte 0x4a
-	.byte 0x12
-	.byte 0x68
-	.byte 0x2c
-	.byte 0x32
-	.byte 0x62
-	.byte 0x4b
-	.byte 0x1b
-	.byte 0x68
-	.byte 0x5c
-	.byte 0x88
-	.byte 0xa4
-	.byte 0x08
-	.byte 0x54
-	.byte 0x80
-	.byte 0x9c
-	.byte 0x88
-	.byte 0xa4
-	.byte 0x08
-	.byte 0x94
-	.byte 0x80
-	.byte 0xf7
-	.byte 0x46
-	.byte 0x5e
-	.byte 0x4a
-	.byte 0x12
-	.byte 0x68
-	.byte 0x2c
-	.byte 0x32
-	.byte 0x5e
-	.byte 0x4b
-	.byte 0x1b
-	.byte 0x68
-	.byte 0xc5
-	.byte 0x6a
-	.byte 0x5d
-	.byte 0x4e
-	.byte 0xad
-	.byte 0x1b
-	.byte 0xc5
-	.byte 0x62
-	.byte 0x2d
-	.byte 0x0c
-	.byte 0x5c
-	.byte 0x88
-	.byte 0x2d
-	.byte 0x19
-	.byte 0x55
-	.byte 0x80
-	.byte 0x06
-	.byte 0x6b
-	.byte 0x59
-	.byte 0x4f
-	.byte 0xf6
-	.byte 0x1b
-	.byte 0x06
-	.byte 0x63
-	.byte 0x36
-	.byte 0x0c
-	.byte 0x9c
-	.byte 0x88
-	.byte 0x36
-	.byte 0x19
-	.byte 0x96
-	.byte 0x80
-	.byte 0xf7
-	.byte 0x46
-	.byte 0x56
-	.byte 0x4a
-	.byte 0x12
-	.byte 0x68
-	.byte 0x2c
-	.byte 0x32
-	.byte 0x56
-	.byte 0x4b
-	.byte 0x1b
-	.byte 0x68
-	.byte 0xc5
-	.byte 0x6a
-	.byte 0x55
-	.byte 0x4e
-	.byte 0xad
-	.byte 0x1b
-	.byte 0xc5
-	.byte 0x62
-	.byte 0x2d
-	.byte 0x0c
-	.byte 0x5c
-	.byte 0x88
-	.byte 0x2d
-	.byte 0x19
-	.byte 0x55
-	.byte 0x80
-	.byte 0x9c
-	.byte 0x88
-	.byte 0xa4
-	.byte 0x08
-	.byte 0x94
-	.byte 0x80
-	.byte 0xf7
-	.byte 0x46
+gUnknown_08008D00:
+	.4byte sub_08008D0C+1  @ 0x08008D00: the handler table sub_08008D74 indexes
+	.4byte sub_08008D24+1
+	.4byte sub_08008D50+1
+@ three Thumb handlers stored after the table at 0x08008D00 that points to them (sub_08008D74 calls them through it);
+@ written as code, not bytes, so the global-state translator generates them (same bytes)
+	THUMB_FUNC_START sub_08008D0C
+sub_08008D0C:
+	ldr r2, [pc, #392]
+	ldr r2, [r2, #0]
+	adds r2, #44
+	ldr r3, [pc, #392]
+	ldr r3, [r3, #0]
+	ldrh r4, [r3, #2]
+	lsrs r4, r4, #2
+	strh r4, [r2, #2]
+	ldrh r4, [r3, #4]
+	lsrs r4, r4, #2
+	strh r4, [r2, #4]
+	mov pc, lr
+	THUMB_FUNC_START sub_08008D24
+sub_08008D24:
+	ldr r2, [pc, #376]
+	ldr r2, [r2, #0]
+	adds r2, #44
+	ldr r3, [pc, #376]
+	ldr r3, [r3, #0]
+	ldr r5, [r0, #44]
+	ldr r6, [pc, #372]
+	subs r5, r5, r6
+	str r5, [r0, #44]
+	lsrs r5, r5, #16
+	ldrh r4, [r3, #2]
+	adds r5, r5, r4
+	strh r5, [r2, #2]
+	ldr r6, [r0, #48]
+	ldr r7, [pc, #356]
+	subs r6, r6, r7
+	str r6, [r0, #48]
+	lsrs r6, r6, #16
+	ldrh r4, [r3, #4]
+	adds r6, r6, r4
+	strh r6, [r2, #4]
+	mov pc, lr
+	THUMB_FUNC_START sub_08008D50
+sub_08008D50:
+	ldr r2, [pc, #344]
+	ldr r2, [r2, #0]
+	adds r2, #44
+	ldr r3, [pc, #344]
+	ldr r3, [r3, #0]
+	ldr r5, [r0, #44]
+	ldr r6, [pc, #340]
+	subs r5, r5, r6
+	str r5, [r0, #44]
+	lsrs r5, r5, #16
+	ldrh r4, [r3, #2]
+	adds r5, r5, r4
+	strh r5, [r2, #2]
+	ldrh r4, [r3, #4]
+	lsrs r4, r4, #2
+	strh r4, [r2, #4]
+	mov pc, lr
 	.byte 0x00
 	.byte 0x00
 	.syntax unified

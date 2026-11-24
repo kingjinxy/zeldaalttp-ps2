@@ -17014,3 +17014,602 @@ A `memset` is storing to address 0 at startup. That looks like an allocation ret
 
 - tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/pcsx2_shot_4p.png
 
+- tool `SendUserFile`: 
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; cat >> "docs/Running Walkthrough.md" <<'E'  ## Step 27: four game instances (2026-11-23)  - `INSTANCES 4` (`src/ps2/main
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; git add src/ps2/main.c src/ps2/video.c tools/ps2/fs_save_copy.py "docs/Running Walkthrough.md" "Claude Conversation.md";
+
+## Claude
+
+Players 3 and 4 are in. All four instances reach the file select in a 2x2 grid, showing files A, B, C and D, each a copy of player 1's save. In 60 seconds of real-time PCSX2 there were no crashes and no "TLB Miss" lines. The matching build still reports `zeldaalttp.gba: OK`, and it's committed as `7721bd1`.
+
+- **Saves:** [fs_save_copy.py](tools/ps2/fs_save_copy.py) turns the one-off rename from before into a tool: `python3 tools/ps2/fs_save_copy.py build/ps2/zeldaalttp.sav build/ps2/zeldaalttp_p3.sav C`. It refuses a save whose checksum doesn't match the layout it expects, rather than writing a broken file. It reproduced the earlier player 2 save byte for byte.
+- **Startup crash fixed:** the first four-player run wrote to address 0 during video setup. Four game threads leave too little free memory for the four screen buffers, so one allocation failed. The buffers are now reserved at build time instead.
+- **Speed:** PCSX2 shows 12 fps at real-time speed. Each screen's software renderer costs nearly a whole frame's CPU time on its own. Moving the drawing to the Graphics Synthesizer matters more now.
+- **Controllers:** players 3 and 4 have no input yet. Only ports 1 and 2 are read; they need multitap support.
+
+The walkthrough has a Step 27 entry, and I updated the conversation archive.
+
+## User
+
+Now, let's return to running the replay in PCSX2
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n -i "fs_walk\|replay\|recording" "docs/Running Walkthrough.md" | tail -15; ls tools | head -50
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; head -30 tools/fs_walk.inputs; wc -l tools/fs_walk.inputs; ls recordings/ recordings/session1 2>/dev/null | head -30
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 -c " import json for l in open('/home/alex/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 -c " import json for l in open('/home/alex/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 205,222p "docs/Running Walkthrough.md"; grep -n "replay\|power\|state" tools/mgba_run.sh | head
+
+## Claude
+
+I'm checking how the session 1 replay starts and what linked play needs, so I can plan the PS2 replay.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 -c " import json for l in open('/home/alex/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "'A'\|case 'S'\|keymap\|\"ABSs\|strchr" tools/mgba_run.c | head; grep -n "inputs\|--frames\|--shot\|--dump" tool
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 5,22p tools/mgba_run.c; sed -n 190,225p tools/mgba_run.c; grep -n "frame\b\|frames\[\|curFrame\|nframe" tools/mgb
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "mgba_run" tools/check_nonmatching.sh tools/mgba_run.sh | head; sed -n 540,556p "docs/Running Walkthrough.md"; t
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 44,52p tools/check_nonmatching.sh; grep -n "^## Step\|link\b\|SIO\|multiplayer" "docs/Running Walkthrough.md" | g
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/reference/FourSwordsRecomp; grep -n "^## \|^### " docs/DESIGN.md | head -40
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/reference/FourSwordsRecomp; sed -n 420,560p docs/DESIGN.md; sed -n 147,205p docs/DESIGN.md
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rln "08000318\|sub_08000318" asm src include | head; arm-none-eabi-objdump -D -b binary -marm --adjust-vma=0x08000
+
+## Claude
+
+That's a small buffer-swap helper, not the serial handler. Looking at the interrupt table setup to find the serial and Timer3 handlers:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "setup_interrupt_handler" -A25 src/main.c src/*.c | grep -v "^--$" | head -40; grep -rn "INTR_TABLE\|gIntrTable\
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 -c " import struct r=open('baserom.gba','rb').read() print([hex(x) for x in struct.unpack_from('<13I',r,0x42735C
+
+## Claude
+
+Table entry 0 handles both serial and Timer3 (IF bits 6 and 7). It points to 0x02030591, Thumb code the game copies from 0x0800C7E8. That's the link handler. Finding it in the disassembly:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rln "0800C7E8" asm src | head; grep -rn "0800C7E8" asm/*.s asm/non_matching -l | head -3
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; wc -l asm/non_matching/rom2/sub_0800C7E8.inc; cat asm/non_matching/rom2/sub_0800C7E8.inc | head -150
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rl "gUnknown_02030790\|0x04000128\|0x0400010E\|0x0400010e" asm/non_matching src/*.c asm/*.s 2>/dev/null | head -20
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "Struct02030790" -B2 -A25 include/*.h src/rom2.c | head -50; sed -n 640,800p src/rom2.c
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; for f in sub_0800C41C sub_0800C4E8 sub_0800C4FC; do echo "== $f"; grep -v "^\s*$" asm/non_matching/rom2/$f.inc | head -9
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rln "0x0400012[0-9A-Fa-f]\|0x04000134\|0x0400013" asm/non_matching asm/*.s src/*.c 2>/dev/null | head; grep -n "0x
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 55,75p asm/non_matching/fs_game/sub_080369B4.inc; grep -n "0x0400012\|0x0400013" asm/non_matching/rom3/sub_080694
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; cat >> src/ps2/tlb.c <<'E'  // where GBA address a of instance inst is now: the mapped address for the running instance,
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='src/ps2/main.c';s=open(p).read() s=s.replace("#define INSTANCES 4\n","#ifndef INSTANCES  // players (
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 18,20p Makefile.ps2; python3 - <<'E' p='Makefile.ps2';s=open(p).read() i=s.index('MGBA_C :=') s=s[:i]+'''ifdef IN
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; mkdir -p $S/save
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; rm -f build/ps2/frame_p*.ppm; systemd-run --user --scope -q -p MemoryMax=6G make -f Makefile.ps2 -j2 elf INSTANCES=2 2>&
+
+## Claude
+
+Scripts and saves load, but no frames were dumped. Looking at the end of the log:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; timeout 200 python3 ../tp-ps2/tools/ps2/pcsx2_run.py build/ps2/zeldaalttp.elf --seconds 30 --heartbeat 2>&1 | grep -v "o
+
+## Claude
+
+It stops after frame 1, and the watchdog heartbeat never appears either. Checking what the watchdog needs to print:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "heartbeat" -B25 src/ps2/frame.c | sed -n 1,60p
+
+## Claude
+
+Nothing at all after frame 1, not even the watchdog's "stuck" report, so EE interrupts look disabled. Bisecting: first without the input scripts.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/build/ps2; mv replay_p1.inputs r1.bak; mv replay_p2.inputs r2.bak; cd ../..; timeout 200 python3 ../tp-ps2/tools/ps2/pcsx
+
+## Claude
+
+Not the scripts. Next: the link code switched off (`ps2_instances` = 1, which disables both the exchange and the SIOCNT override):
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -i 's/^int ps2_instances = INSTANCES;/int ps2_instances = 1;/' src/ps2/main.c; systemd-run --user --scope -q -p Memo
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; systemd-run --user --scope -q -p MemoryMax=6G make -f Makefile.ps2 -j2 elf INSTANCES=2 2>&1 | grep -E " error"; timeout 
+
+## Claude
+
+PINE can read EE memory while it's hung. Reading the port's debug counters (I/O reads and last I/O address, frame, current instance) and the trace ring, twice:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; NM=$PS2DEV/ee/bin/mips64r5900el-ps2-elf-nm; for s in ps2_io_reads ps2_io_last ps2_frame ps2_cur_instance; do echo "$s $(
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; (timeout 100 pyt
+
+- tool `ToolSearch`: 
+
+- tool `TaskStop`: 
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 88,96p ../tp-ps2/tools/ps2/pcsx2_run.py; grep -n "PINE" ../tp-ps2/tools/ps2/pcsx2_run.py | head -5
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; (timeout 60 pyth
+
+## Claude
+
+PINE refuses the connection, so I'll fall back to SIO logging: a log line for each exchange and for the first SIOCNT reads.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='src/ps2/link.c';s=open(p).read() s=s.replace('''    v &= ~0x7Cu;''','''    static int logged;  // tem
+
+## Claude
+
+The exchange ran once with no transfer pending, then instance 0 hung on its next frame, with no further SIOCNT reads. I still need PINE to see where, so checking how the other ports enable it:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rn "PINE" ../tp-ps2/docs/*.md ../tp-ps2/tools/ps2/*.py 2>/dev/null | grep -i "set\|ini\|enable" | head -5
+
+## Claude
+
+The tp-ps2 notes describe the same symptom: a call through a null function pointer reaches syscall 0, and EE interrupts are dead afterwards. Checking this log for that:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; timeout 200 python3 ../tp-ps2/tools/ps2/pcsx2_run.py build/ps2/zeldaalttp.elf --seconds 15 --all 2>&1 | grep -i "syscall
+
+## Claude
+
+No syscall errors. I'll turn on the full entry trace from frame 1 and see where instance 0 stops:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='src/ps2/main.c';s=open(p).read() s=s.replace('''        ps2_link_exchange();  // the''','''        { 
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; $PS2DEV/ee/bin/mips64r5900el-ps2-elf-addr2line -f -e build/ps2/zeldaalttp.elf 0x14cc10 0x14e428 0x14e2bc | paste - - 
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "#include" src/rom2.c | head; grep -rn "ICALL" src/*.c | head -3
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='src/rom2.c';s=open(p).read() old='''    u8 ok = ((u8 (*)(void))gUnknown_02030950)(); ''' assert old i
+
+## Claude
+
+That stub was wrong. It runs in the live instance, so it can use the GBA addresses directly. Writing it properly:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='src/ps2/link.c';s=open(p).read() s=s.replace('''u8 ps2_link_take(void) {     u8 r = P8(ps2_cur_instan
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; $PS2DEV/ee/bin/mips64r5900el-ps2-elf-addr2line -f -e build/ps2/zeldaalttp.elf 0x5bbd70 | head -1; for a in 08068cfc 0806
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -v "^\s*$" asm/non_matching/rom3/sub_0806995C.inc | head -60
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "case\|Sleep\|Halt\|Stop\|SoftReset" src/ps2/bios.c | head -40
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 1,30p asm/crt0.s | grep -n "init\|sp\|msr" | head; python3 - <<'E' p='src/ps2/main.c';s=open(p).read() s=s.replac
+
+## Claude
+
+Not that: AgbMain never returned. Some other sleep. Checking how `IntrWait` is handled, since this path could wait on a non-VBlank interrupt:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "IntrWait" -A6 src/ps2/bios.c | head -20; grep -n "swi\|svc" asm/non_matching/rom3/sub_08069458.inc asm/non_matc
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; timeout 200 python3 ../tp-ps2/tools/ps2/pcsx2_run.py build/ps2/zeldaalttp.elf --seconds 25 --heartbeat 2>&1 | grep -E "s
+
+## Claude
+
+No save write either. Turning the trace on from frame 585 to see the exact path into the stall:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='src/ps2/main.c';s=open(p).read() s=s.replace('''        ps2_link_exchange();  // the''','''        { 
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -v 8806995c $S/tr4.txt | tail -40 | tr '\n' ' '; ec
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='src/ps2/main.c';s=open(p).read() s=s.replace('''            SleepThread();             ps2_video_rend
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "^[a-z].*(\|Sleep\|printf\|sio\|ps2_log\|SetVTLBRefill\|SetVCommon\|SetVInterrupt" src/ps2/crash.c | head -20; g
+
+## Claude
+
+It reports with `printf`, which may not reach the SIO log, and I can't see where it's installed. Checking:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 1,60p src/ps2/crash.c; grep -rn "crash" src/ps2/*.c src/ps2/glue/*.c | grep -v "^src/ps2/crash.c" | head
+
+## Claude
+
+Installed as a constructor, but it reports with `printf`; the project rule is to log over SIO. Switching it to `ps2_log`:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -i 's/^#include <stdio.h>$/void ps2_log(const char *fmt, ...);/; s/    printf("CRASH/    ps2_log("CRASH/; s|// threa
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 186,200p src/ps2/bios.c; grep -n "swi\|svc" asm/non_matching/rom3/sub_0806995C.inc asm/non_matching/rom3/sub_0806
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -v "^\s*$" asm/non_matching/rom3/sub_08068CFC.inc | head -70
+
+## Claude
+
+That one is trivial, so the stall is in its caller `sub_08069544` after the call returns:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -v "^\s*$" asm/non_matching/rom3/sub_08069544.inc | grep -n "" | sed -n 1,200p | grep -n -A40 "sub_08068CFC" | head
+
+## Claude
+
+After `sub_08068CFC`, the trace shows `sub_0806995C` called about 80 times and then nothing. Logging every `ps2_vblank_wait` from frame 588, to see whether the instance reaches it:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='src/ps2/frame.c';s=open(p).read() s=s.replace('''    u32 h = *(volatile u32 *)(INTR_TABLE + 4); ''','
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "stuck" src/ps2/frame.c | head -3
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 90,100p src/ps2/frame.c; python3 - <<'E' p='src/ps2/frame.c';s=open(p).read() s=s.replace('''        sio_puts(buf
+
+## Claude
+
+That insert landed in the wrong function (the first match was in `ps2_fatal`). Moving it to the stuck report:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='src/ps2/frame.c';s=open(p).read() blk_start=s.index('        {  // temporary: thread states') blk_end
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; systemd-run --user --scope -q -p MemoryMax=6G make -f Makefile.ps2 -j2 elf INSTANCES=2 2>&1 | grep -E " error"; timeout 
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -i 's/st.wait_type, st.wait_id/st.waitType, st.waitId/' src/ps2/frame.c; systemd-run --user --scope -q -p MemoryMax=
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='src/ps2/glue/arm_ports.c';s=open(p).read() old='''    if (b < 0x02000000u || b >= 0x0A000000u)       
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rn "sub_0806995C" src/*.c src/auto/*.c asm/non_matching --include=*.c --include=*.inc | grep -v "^src/auto/.*gstat
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -v "^\s*$" asm/non_matching/rom3/sub_0806941C.inc; grep -rn "sub_0806941C" src/*.c asm/non_matching --include=*.c -
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -v "^\s*$" asm/non_matching/rom3/sub_080682EC.inc | head -60
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -v "^\s*$" asm/non_matching/rom3/sub_080682EC.inc | sed -n 60,130p
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 1,40p tools/fs_walk.inputs | tr '\n' ' '; echo; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-e
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; mkdir -p $S/mref
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/mref2/strip.png
+
+## Claude
+
+In mGBA the replay also passes through "Choose a Game" with A Link to the Past on screen around frame 499–599, then goes black. Checking mGBA's later frames to see where fs_walk actually goes:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 -c " from PIL import Image fs=[599,1499,1999,249
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/mref/strip.png
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; ls tests/; head -3 tests/intro_linked*.inputs; wc -l tests/intro_linked*.inputs; grep -n "intro_linked" "docs/Running Wa
+
+## Claude
+
+That script is for the "FS_ONLY" ROM (`recordings/fs_only.gba`), not the retail ROM. Checking what FS_ONLY is:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rn "FS_ONLY" Makefile* src include --include=*.c --include=*.h --include=Makefile* | head; grep -n "FS_ONLY\|fs_on
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; cat src/fs_only.c | head -30; sed -n 5,30p src/main.c
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "^CFLAGS" -A3 Makefile.ps2 | head -5; python3 - <<'E' p='Makefile.ps2';s=open(p).read() i=s.index('ifdef INSTANC
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; touch src/main.c
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cd /home/alex/Documents/zeldaalttp-ps2; python3 -c " fro
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/cmp3.png
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='src/ps2/link.c';s=open(p).read() s=s.replace('''    { static int logged; if (logged < 8) logged++, ps
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; timeout 300 python3 ../tp-ps2/tools/ps2/pcsx2_run.py build/ps2/zeldaalttp.elf --seconds 25 2>&1 | grep -E "link" | grep 
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='src/ps2/link.c';s=open(p).read() s=s.replace('''    if (n == 16)         ps2_log("link: the parent ke
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -i 's/if (ps2_frame % 60 == 0 || (n \&\& ps2_frame < 800)) ps2_log("link %u: %d transfers", ps2_frame, n);/{ static 
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rln "bl sub_0800C54C\|sub_0800C54C(" asm/non_matching src/*.c | head; grep -rln "bl sub_0800C4E8\|sub_0800C4E8(" a
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "sub_0800C54C" -B5 -A25 src/main.c | head -60
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rn "^void sub_08036864\|^void sub_080368A0" -A30 src/*.c | head -80
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='src/ps2/link.c';s=open(p).read() s=s.replace('''        if (ps2_frame % 60 == 0)             for (i =
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='src/ps2/link.c';s=open(p).read() s=s.replace('''        if (ps2_frame % 60 == 0 || (ps2_frame >= 1215
+
+## Claude
+
+The lobby gets to state 02 05 and stays there. Getting mGBA's values for the same bytes:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; D=""; for f in $
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; ./tools/mgba_run
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; D=""; for f in $
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; D=""; for f in $
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 -c " import struct r=open('baserom.gba','rb').read() print([hex(x) for x in struct.unpack_from('<8I',r,0x427B84)
+
+## Claude
+
+The table is indexed by the first byte (02), so the handler is `sub_080369B4`, still in asm; the 05 is its internal step. Reading it:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -v "^\s*$" asm/non_matching/fs_game/sub_080369B4.inc | grep -n "" | sed -n 1,400p | grep -v "\.byte" | head -330 | 
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -v "^\s*$" asm/non_matching/fs_game/sub_080369B4.inc | grep -v "\.byte" | sed -n 330,470p
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -v "^\s*$" asm/non_matching/fs_game/sub_080369B4.inc | grep -v "\.byte" | sed -n 1,30p; grep -v "^\s*$" asm/non_mat
+
+## Claude
+
+Step 5 calls `sub_08036948`, plus the connection check. That function is in `fs_game.c`:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n '/^void sub_08036948/,/^}/p' src/fs_game.c; grep -n "sub_08036948" src/fs_game.c | head -3
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; awk '$1>=900' tests/intro_linked.inputs | tr '\n' ' '
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; { grep -v "^1400 -" tests/intro_linked.inputs; for f in $(seq 1400 60 2600); do echo "$f A"; echo "$((f+5)) -"; echo "$(
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; rm -f build/ps2/zeldaalttp*.sav; timeout 300 python3 ../tp-ps2/tools/ps2/pcsx2_run.py build/ps2/zeldaalttp.elf --seconds
+
+## Claude
+
+All threads are asleep, including both instances, which is what the crash handler does after it reports. Searching the whole log:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; rm -f build/ps2/zeldaalttp*.sav; timeout 300 python3 ../tp-ps2/tools/ps2/pcsx2_run.py build/ps2/zeldaalttp.elf --seconds
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rn "08008D50\|08008D4\|sub_08008D74" asm/*.s asm/non_matching -l 2>/dev/null | head; grep -n "08008D[0-9A-F][0-9A-
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "_08008D50\|bl\|bx\|mov pc\|ICALL\|0x08008D5" asm/non_matching/rom2/sub_08008D74.inc | head; grep -n "sub_08008D
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; cat asm/non_matching/rom1/sub_08008D74.inc | head -30; arm-none-eabi-nm -n zeldaalttp.elf | awk '$1>="08008c80" && $1<="
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; arm-none-eabi-objdump -d --start-address=0x08008CB4 --stop-address=0x08008D74 zeldaalttp.elf | tail -40; grep -n "sub_08
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "8D0C\|_08008D0C\|8d0c\|0x68124A62\|68124a62\|_08008D00\|0x08008D0D" -i asm/non_matching/rom1/sub_08008CB4.inc |
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; arm-none-eabi-objdump -D -b binary -marm -Mforce-thumb --adjust-vma=0x08000000 --start-address=0x08008D0C --stop-address
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 87p asm/non_matching/rom1/sub_08008CB4.inc; sed -n 188,192p asm/non_matching/rom1/sub_08008CB4.inc; grep -rn "mac
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rn "THUMB_FUNC_START" --include=*.inc --include=*.s -l asm/macros* asm/*.inc include 2>/dev/null | head -3; grep -
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rn "THUMB_FUNC_START" --include=*.h --include=*.inc --include=*.s include asm/macros* 2>/dev/null | grep -i "defin
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rln "THUMB_FUNC_START" --exclude-dir=reference --exclude-dir=build . 2>/dev/null | grep -v "non_matching\|src/auto
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "THUMB_FUNC_START" -A6 asminclude/macro.inc | head -10; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/9
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='asm/non_matching/rom1/sub_08008CB4.inc' L=open(p).read().split('\n') assert L[86].strip()=='.byte 0x6
+
+## Claude
+
+The matching build is still OK with the handlers written as code. Now I'm regenerating the translated C so the three handlers get translated; this is the slow single-job AUTO_C build.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "AUTO_C=1" "docs/Running Walkthrough.md" | tail -4; grep -n "gstate.list" Makefile | head -5
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; (systemd-run --user --scope -q -p MemoryMax=6G make NONMATCHING=1 AUTO_C=1 -j1 objects > /tmp/claude-1000/-home-alex-Doc
+
+## Claude
+
+The three handlers are now translated, as entries into `sub_08008CB4`'s translation. Rebuilding the PS2 ELF and running the replay again:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; systemd-run --user --scope -q -p MemoryMax=6G make -f Makefile.ps2 -j2 elf INSTANCES=2 2>&1 | grep -E " error"; rm -f bu
+
+## Claude
+
+Still failing on the same address, so the new entry isn't what `ps2_icall` looks up. Checking the table the new entries landed in:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 38985,38998p src/auto/rom1_gstate_ps2.c; grep -n "sub_08008D50" src/auto/rom1_gstate_ps2.c | head; grep -n "find_
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "GstateEntry gGstateTable" -A4 src/auto/rom1_gstate_ps2.c | head -12; grep -n "def ps2_file" -A5 tools/gstate2c.
+
+## Claude
+
+The main table is keyed by GBA address (`NAME__base + offset`); the W table by the PS2 wrapper's address. Checking whether the main table got the new entries:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "sub_08008CB4__base" src/auto/rom1_gstate_ps2.c | head; grep -n "sub_08008CB4__base\|sub_08008CB4\b" build/ps2/g
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 75,86p asm/non_matching/rom1/sub_08008CB4.inc | tr '\n' ' '; echo; python3 - <<'E' p='asm/non_matching/rom1/sub_0
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "4byte\|\.word" asm/non_matching/rom1/sub_08008D74.inc | head -20; grep -c "" asm/non_matching/rom1/sub_08008D74
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; cat asm/non_matching/rom1/sub_08008D74.inc; arm-none-eabi-objdump -s --start-address=0x08008E90 --stop-address=0x08008EC
+
+## Claude
+
+The pool word at 0x08008E90 is the table address (0x08008D00) and the next one is the return address (0x08008CB5). Finding where those words are defined:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rn "0x08008D00\|0x8008d00\|0x08008CB5\|_08008D00" -i asm/non_matching/rom1/ src/rom1.c | head
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; arm-none-eabi-nm -n zeldaalttp.elf | awk '$1>="08008d74" && $1<="08008ec0"'; grep -ln "08008D90\b\|sub_08008D90" asm/non
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -ln "sub_08008E5C:" asm/non_matching/rom1/*.inc; f=$(grep -ln "sub_08008E5C:" asm/non_matching/rom1/*.inc); grep -n
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='asm/non_matching/rom1/sub_08008E5C.inc' L=open(p).read().split('\n') idx=[i for i,l in enumerate(L) i
+
+## Claude
+
+The table address appears twice in that pool (another function uses it too). Replacing every word-aligned occurrence:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='asm/non_matching/rom1/sub_08008E5C.inc' L=open(p).read().split('\n') idx=[i for i,l in enumerate(L) i
+
+## Claude
+
+The matching build fails, so at least one of those matches wasn't a real pointer word. Checking where the bytes differ:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 tools/first_diff.py 2>&1 | head -8
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='asm/non_matching/rom1/sub_08008E5C.inc' s=open(p).read() s=s.replace('sub_08008CB4+0x4C  @ 0x08008D00
+
+## Claude
+
+Matching build OK again. Fixing that label comment, then regenerating the translated C and rerunning the PS2 replay:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -i "s|gUnknown_08008CC0:  @ a table sub_08008D74's neighbours read through literals|gUnknown_08008CC0:  @ a table, r
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='asm/non_matching/rom1/sub_08008E5C.inc' L=open(p).read().split('\n') # rebuild address map: walk line
+
+## Claude
+
+Only that one. Replacing it with `.4byte sub_08008D8C` (the Thumb bit comes from the symbol):
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='asm/non_matching/rom1/sub_08008E5C.inc' L=open(p).read().split('\n') idx=[i for i,l in enumerate(L) i
+
+## User
+
+[Request interrupted by user for tool use]
+
+## User
+
+Continue
+
+## Claude
+
+Checking what the interrupted command finished before continuing:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "sub_08008D8C  @" asm/non_matching/rom1/sub_08008E5C.inc; systemd-run --user --scope -q -p MemoryMax=6G make com
+
+## Claude
+
+The pool edit went in and the matching build is OK; nothing is left running. Regenerating the translated C:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; systemd-run --user --scope -q -p MemoryMax=6G make NONMATCHING=1 AUTO_C=1 -j1 objects > /tmp/claude-1000/-home-alex-Docu
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; rm -f build/ps2/zeldaalttp*.sav build/ps2/frame_p*; timeout 300 python3 ../tp-ps2/tools/ps2/pcsx2_run.py build/ps2/zelda
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "gGstateTable_%s\|__base) + \|__base + \|gstatetable\"" tools/gstate2c.py | head; sed -n 370,395p tools/gstate2c
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; cat tools/ps2/gba_syms.py; grep -n "gba_syms" Makefile.ps2
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; cat > tools/ps2/gba_copies.py <<'E' #!/usr/bin/env python3 """Writes build/ps2/gba_copies.c: the GBA address of every gl
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 36,60p Makefile.ps2
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='Makefile.ps2';s=open(p).read() s=s.replace('''$(ELF): $(OBJS) $(B)/ps2/gbarom.o src/ps2/ps2.ld $(B)/g
+
+## Claude
+
+All 630 copies resolved. Running the replay:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; rm -f build/ps2/zeldaalttp*.sav build/ps2/frame_p*; timeout 300 python3 ../tp-ps2/tools/ps2/pcsx2_run.py build/ps2/zelda
+
+## Claude
+
+Past the raw-address problem, and the crash reporter now shows a real crash: a trap (most likely GCC's divide-by-zero check) at 0x0010A684 in instance 0. Finding it:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; $PS2DEV/ee/bin/mips64r5900el-ps2-elf-addr2line -f -e build/ps2/zeldaalttp.elf 0x10A684; $PS2DEV/ee/bin/mips64r5900el-ps2
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rn "sub_08012B64" src/*.c | head -3; f=$(grep -ln "^[a-z].*sub_08012B64(" src/*.c | head -1); sed -n "/^[a-zA-Z].*
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; arm-none-eabi-nm zeldaalttp.elf | grep -i "umodsi3\|div0\|udivsi3"; A=$(arm-none-eabi-nm zeldaalttp.elf | awk '$3=="__um
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; arm-none-eabi-objdump -d --start-address=0x08136238 --stop-address=0x08136248 zeldaalttp.elf | tail -6; arm-none-eabi-ob
+
+- tool `Bash`: grep -n "hi\|lo\b\|epc\|typedef struct" $PS2SDK/ee/include/ee_debug.h | head -20; for a in 081360ac 081361b4 0813622e; do arm-none-eabi-objdump -d --start-addre
+
+- tool `Bash`: f=$(find $PS2SDK -name ee_debug.h | head -1); echo $f; grep -n "hi\|lo\|epc\|} EE_RegFrame" $f | head
+
+- tool `Bash`: grep -rn "EE_RegFrame;" -B45 $PS2SDK/ee/include/*.h | grep -n "hi\|lo\|epc\|RegFrame" | head
+
+- tool `Bash`: grep -rln "EE_RegFrame" $PS2SDK/ee/include/ | head; grep -rn "EE_RegFrame" $PS2SDK/ee/include/ | head -3
+
+- tool `Bash`: grep -rn "st_EE_RegFrame" -A3 $PS2SDK/ee/include/ | head -5; grep -rln "struct st_EE_RegFrame\b *$\|struct st_EE_RegFrame {" $PS2SDK/ee/include/ $PS2SDK/common/
+
+- tool `Bash`: sed -n 60,111p $PS2SDK/common/include/ps2_debug.h | grep -n "hi\|lo\|epc\|cause" 
+
+## Claude
+
+I'm adding a GBA-style divide-by-zero rule to the trap handler. The ps2sdk frame has `hi`/`lo`, which it restores on return. Implementing:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='src/ps2/crash.c';s=open(p).read() old='''static int crash_handler(EE_RegFrame* frame) {     s_frame =
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='include/gstate.h';s=open(p).read() old='''    f = gstate_find(__gstatetable_start, __gstatetable_end,
+
+## Claude
+
+Further again. Now 0x080050C5 isn't found even with the fallback. Checking what's there:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; arm-none-eabi-nm -n zeldaalttp.elf | awk '$1>="08005000" && $1<="080050d0"' | tail -4; grep -n "sub_080050C4" src/auto/*
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -ln "sub_0800505C:" asm/non_matching/*/*.inc; grep -n "sub_0800505C" src/auto/gstate.list; f=$(grep -ln "sub_080050
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; cat > /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/byteruns.py <
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; arm-none-eabi-objdump -t zeldaalttp.elf | grep -c ' \$d'; arm-none-eabi-objdump -t zeldaalttp.elf | grep ' \$d' | head -
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "def \|entries\b.*=\|reach\|worklist\|linear" tools/gstate2c.py | head -40
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 398,470p tools/gstate2c.py; sed -n 200,230p tools/gstate2c.py
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 166,175p Makefile; grep -n "gstate.list\|extra" tools/asm2c.py | head -12; python3 -c " import struct r=open('bas
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; arm-none-eabi-objdump -D -b binary -marm -Mforce-thumb --adjust-vma=0x08000000 --start-address=0x080050C4 --stop-address
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 158,200p tools/gstate2c.py
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' 2>&1 | tail -8 import sys, importlib.util sys.argv=['x'] spec=importlib.util.spec_from_file_location('g'
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; tail -3 tools/gstate2c.py; python3 - <<'E' 2>&1 | tail -8 import sys, types src=open('tools/gstate2c.py').read().replace
+
+## Claude
+
+Decoding from 0x68 works fine in isolation, so the entry should exist. Checking the generated table:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "sub_0800505C__base + 0x" src/auto/rom1_gstate_ps2.c | head; grep -n "case 0x68" src/auto/rom1_gstate_ps2.c | he
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "^void gs_sub_0800505C" -A16 src/auto/rom1_gstate_ps2.c | head -20; grep -n "sub_0800505C" src/auto/rom1_gstate_
+
+## Claude
+
+The whole of `sub_0800505C` failed to translate, so it's a `ps2_native_missing` stub on the PS2, along with several other rom1 functions. Finding the failure reasons:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rn "sub_0800505C" src/auto/rom1_gstate.c | grep -i "fail\|native\|/\*" | head -3; grep -c "ps2_native_missing(\"" 
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "failed" tools/gstate2c.py | head; grep -n "sub_0800505C" src/auto/rom1_gstate.c | head -5
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 278,284p tools/gstate2c.py; grep -n "native:\|sub_0800505C:" /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep "kept native" /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep "kept native" /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='tools/gstate2c.py';s=open(p).read() old='''    entries = {0}     ins, ext, rets = {}, set(), set()   
+
+## Claude
+
+Regenerating and checking how many functions are still left native:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; systemd-run --us
+
+## Claude
+
+Down from 24 to 18 native functions, and `sub_0800505C` now translates. Rebuilding the PS2 ELF and running:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; systemd-run --user --scope -q -p MemoryMax=6G make -f Makefile.ps2 -j2 elf INSTANCES=2 2>&1 | grep -E " error"; rm -f bu
+
+## Claude
+
+It ran for over 15,000 frames with no crashes or TLB misses. Looking at the frames (top row player 1, bottom row player 2):
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cd /home/alex/Documents/zeldaalttp-ps2; python3 -c " fro
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/ps2_link.png
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' import re p='src/ps2/link.c';s=open(p).read() a=s.index('    {  // temporary: the link state once a seco
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "check_nonmatching.sh" "docs/Running Walkthrough.md" | tail -2; head -12 tools/check_nonmatching.sh | grep -n "O
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; JOBS=1 AUTO_C=1 
+
+## Claude
+
+While that runs (it rebuilds the generated C, so I'll hold off on PS2 builds), I'm writing up this step in the walkthrough:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; cat >> "docs/Running Walkthrough.md" <<'E'  ## Step 28: the link between instances, scripted input, and a linked replay 
+
+## Claude
+
+The GBA-side replay check is still running in the background. When it finishes, I'll check for regressions against the baseline, rebuild the PS2 ELF, and commit.
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; tail -1 $S/chk7.log; diff <(grep FAIL $S/chk5.log | cut 
+
+## Claude
+
+Same as baseline. Rebuilding the PS2 ELF (default 4 players and the 2-player replay build), a final check run, then commit:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; touch src/ps2/main.c; systemd-run --user --scope -q -p MemoryMax=6G make -f Makefile.ps2 -j2 elf INSTANCES=2 2>&1 | grep
+

@@ -750,7 +750,12 @@ u8 sub_0800C6A8(u8 *dst)
     s32 i;
     u32 j;
     s32 sum;
+#ifdef PLATFORM_PS2  // the copy is ARM code: src/ps2/link.c has it in C
+    u8 ps2_link_take(void);
+    u8 ok = ps2_link_take();
+#else
     u8 ok = ((u8 (*)(void))gUnknown_02030950)();
+#endif
 
     gUnknown_02030790.unk3 = 0;
     if (ok) {

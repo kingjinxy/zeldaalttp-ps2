@@ -29,10 +29,7 @@ sub_08008E5C: @ 0X08008E5C
 	.byte 0x02
 	.byte 0x00
 	.byte 0x03
-	.byte 0xc0
-	.byte 0x8c
-	.byte 0x00
-	.byte 0x08
+	.4byte gUnknown_08008CC0
 	.byte 0x20
 	.byte 0xf0
 	.byte 0x01
@@ -49,14 +46,8 @@ sub_08008E5C: @ 0X08008E5C
 	.byte 0x04
 	.byte 0x00
 	.byte 0x03
-	.byte 0x00
-	.byte 0x8d
-	.byte 0x00
-	.byte 0x08
-	.byte 0xb5
-	.byte 0x8c
-	.byte 0x00
-	.byte 0x08
+	.4byte gUnknown_08008D00  @ the handler table (sub_08008CB4.inc)
+	.4byte sub_08008CB4
 	.byte 0xa0
 	.byte 0x59
 	.byte 0x00
@@ -94,14 +85,8 @@ sub_08008E5C: @ 0X08008E5C
 	.byte 0x04
 	.byte 0x00
 	.byte 0x03
-	.byte 0x00
-	.byte 0x8d
-	.byte 0x00
-	.byte 0x08
-	.byte 0x8d
-	.byte 0x8d
-	.byte 0x00
-	.byte 0x08
+	.4byte gUnknown_08008D00  @ the handler table (sub_08008CB4.inc)
+	.4byte sub_08008D8C  @ the return address sub_08008D74 gives its handlers
 	.byte 0x00
 	.byte 0x40
 	.byte 0x00

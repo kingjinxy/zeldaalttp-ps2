@@ -85,3 +85,16 @@ void ps2_tlb_map(int instances)
         *(volatile u16 *)(SAVED(i) + 0x48130) = 0x03FF;  // KEYINPUT is active low: no buttons held (input.c sets it)
     }
 }
+
+// where GBA address a of instance inst is now: the mapped address for the running instance, else its saved copy
+void *ps2_inst_ptr(int inst, u32 a)
+{
+    u32 r;
+    if (inst == ps2_cur_instance)
+        return (void *)a;
+    for (r = 0; r < NREGIONS; r++)
+        if (a - sRegions[r].va < sRegions[r].used)
+            return SAVED(inst) + sRegions[r].even + (a - sRegions[r].va);
+    ps2_fatal("ps2_inst_ptr: %08x isn't instance memory", a);
+    return 0;
+}

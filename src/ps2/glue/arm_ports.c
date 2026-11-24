@@ -7,10 +7,34 @@ void ps2_fatal(const char *fmt, ...);
 
 // ---- global-state entry with chosen registers ----------------------------------------------------------------------
 
+// GBA ROM address a, inside a global-state copy: the same place in the copy's PS2 bytes, else 0. For addresses the
+// asm still keeps as bytes (data pools, jump tables), which the PS2 link can't relocate (tools/ps2/gba_copies.py).
+extern const struct { unsigned gba; const unsigned char *ps2; } ps2_gba_copies[];
+extern const int ps2_gba_ncopies;
+u32 ps2_gba_copy(u32 a)
+{
+    int lo = 0, hi = ps2_gba_ncopies;  // the last copy starting at or before a
+    while (hi - lo > 1) {
+        int m = (lo + hi) / 2;
+        if (ps2_gba_copies[m].gba <= a)
+            lo = m;
+        else
+            hi = m;
+    }
+    if (ps2_gba_ncopies == 0 || ps2_gba_copies[lo].gba > a)
+        return 0;
+    return (u32)ps2_gba_copies[lo].ps2 + (a - ps2_gba_copies[lo].gba);
+}
+
 static const struct GstateEntry *find_entry(u32 a)
 {
     const struct GstateEntry *f = gstate_find(__gstatetable_start, __gstatetable_end, a & ~1u);
-    return f ? f : gstate_find(__gstatetablew_start, __gstatetablew_end, a & ~1u);
+    u32 c;
+    if (!f)
+        f = gstate_find(__gstatetablew_start, __gstatetablew_end, a & ~1u);
+    if (!f && a - 0x08000000u < 0x00800000u && (c = ps2_gba_copy(a & ~1u)))  // only exact entries count
+        f = gstate_find(__gstatetable_start, __gstatetable_end, c);
+    return f;
 }
 
 // call GBA code at a with r0-r11 from regs (r4-r11 matter for code outside the C convention); returns r0
@@ -215,6 +239,8 @@ static u32 port_update(void) { UpdateAllEntities(); return 0; }
 u32 (*ps2_icall(u32 a))()
 {
     u32 b = a & ~1u;
+    if (b < 0x00100000u)  // the GBA BIOS or a null pointer: on the PS2 the kernel lives here
+        ps2_fatal("ICALL to %08x (from %p)", a, __builtin_return_address(0));
     if (b < 0x02000000u || b >= 0x0A000000u)
         return (u32 (*)())a;  // PS2 code
     if (b == 0x03000E40u)

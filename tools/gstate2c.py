@@ -401,8 +401,14 @@ def translate(data, relocs, start, end, name, taken, gsnames, decls, swis, tag):
     entries = {0}
     ins, ext, rets = {}, set(), set()
     targets = set(entries)
-    # entry 0 must decode; other addresses taken by pointers may be data (tables inside the code): try them
-    flow(data, relocs, start, end, [0], ins, targets, entries, ext, rets)
+    # addresses taken by pointers may be data (tables inside the code): try them. Entry 0 too: some hand-written
+    # rom1 routines start with their tables (sub_0800505C), and only the labels other code reaches are code.
+    try:
+        flow(data, relocs, start, end, [0], ins, targets, entries, ext, rets)
+    except Fail as e:
+        if not possible:
+            raise
+        first, entries, targets, ins, ext, rets = e, set(), set(), {}, set(), set()
     for p in possible:
         trial = (dict(ins), set(targets), set(entries), set(ext), set(rets))
         try:
@@ -411,6 +417,8 @@ def translate(data, relocs, start, end, name, taken, gsnames, decls, swis, tag):
             flow(data, relocs, start, end, [p], ins, targets, entries, ext, rets)
         except Fail:
             ins, targets, entries, ext, rets = trial
+    if not entries:
+        raise first
     return finish(data, relocs, start, end, name, gsnames, decls, swis, tag, ins, targets, entries, ext, rets)
 
 
