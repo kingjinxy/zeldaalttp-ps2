@@ -19434,3 +19434,78 @@ Updating the Phase 5 plan in the Planning Doc first, then adding the timer aroun
 
 - tool `Bash`: python3 - <<'EOF' p='docs/Planning Doc.md'; s=open(p).read() old="- [ ] 1. Time the memory switches (`ps2_tlb_select`) apart from the game code" new="""- [x] 1.
 
+## Claude
+
+Step 1 changes the estimate: almost all of the game's time goes to copying each player's memory in and out, not to running the game four times.
+
+I wrote the plan into Phase 5 of [Planning Doc.md](docs/Planning Doc.md), with phases 0–3, steps 1–10 and a checkbox for each, and I'll update it as we go. Step 1 is checked off with its numbers, and Step 36 of the walkthrough has the details. Committed as `40bbdaa`; `make compare` reports OK.
+
+**What I measured:** the 10-second cost line now separates the player memory switches from the game code ([tlb.c](src/ps2/tlb.c)). The game code is everything else in the game's share, including link exchange, input and saves. Cycles per frame, out of 4.9M at 60 fps:
+
+| Run | Game's share | Memory switches | Game code |
+|---|---|---|---|
+| 4 players, lobby and file select | 3.92M | 3.57M | 0.35M |
+| 2 players, lobby | 2.42M | 1.78M | 0.64M |
+| 2 players, stage, idle after the recording ends | 1.84M | 1.78M | 0.05M |
+
+- **Switches:** each one copies 387 KB out and 387 KB in, about 0.9M cycles per player per frame. They take about 90% of the game's share.
+- **Game code:** small in every scene measured. My estimate assumed the four simulations were the expensive part, and they aren't.
+- **Not measured:** a busy 4-player stage, because there's no 4-player input recording yet. The stage numbers come from players standing idle, so real gameplay will cost more.
+
+**What this means for the plan:**
+- A shared world would still be fast, mostly because it removes the switches. Running the game once saves little on top of that.
+- Making the switches cheap would reach 60 fps with 4 players on its own: about 2.6M rendering plus 0.35M game code, with no game changes. Ways to do that include copying only the memory that changed, using faster copies, or not copying at all.
+- The shared world's other reasons (one camera per player into one world, easier support for more than 4 players) don't depend on speed.
+
+I'd do steps 2 and 3 next as planned (decode the link packet and compare the players' memory). Step 3 also shows which memory differs between players, and that would tell us how little a cheap switch needs to copy.
+
+## User
+
+Continue
+
+- tool `Bash`: sed -n 25,116p src/ps2/link.c
+
+## Claude
+
+Step 2: logging every link packet in the 2-player replay, then finding what the game puts in them.
+
+- tool `Bash`: grep -rn "sub_0800C658\|sub_0800C6A8\|sub_0800C54C" src/*.c | grep -v "^src/auto" | head -20
+
+- tool `Bash`: sed -n 60,125p src/main.c; sed -n 80,130p src/fs_game.c; sed -n 675,745p src/rom2.c; grep -rn "03000FD0\|03000FF8" include/*.h sym*.txt 2>/dev/null | head
+
+- tool `Bash`: sed -n 540,610p include/types.h; grep -rln "03000FC0\.unk1[0-9a-f]\b\|gUnknown_03000FD0" src/*.c | head
+
+- tool `Bash`: python3 - <<'EOF' p='src/ps2/link.c'; s=open(p).read() old="""        for (i = 0; i < ps2_instances; i++)             handler(i, m);     }""" new="""        for
+
+- tool `Bash`: sed -i 's/        if (m\[0\] == 0xFEFE)  \/\/ PACKETLOG: a packet starts\n            sPk = 0;/X/' src/ps2/link.c && python3 - <<'EOF' p='src/ps2/link.c'; s=ope
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - $S/pkts.txt <<'EOF' import sys,collections row
+
+## Claude
+
+Step 2 result: in this replay the link packet carries only inputs plus sync data. Now step 3: dumping each instance's memory at the same frames so I can diff them on the host.
+
+- tool `Bash`: sed -n 1,40p src/ps2/tlb.c; sed -n 1,30p src/ps2/main.c
+
+- tool `Bash`: python3 - <<'EOF' p='src/ps2/main.c'; s=open(p).read() old="""        ps2_link_exchange();  // the packet the parent started this frame reaches everyone """ new
+
+## Claude
+
+Dumps are in. Diffing the two players' memory by region and mapping the differences to symbols.
+
+- tool `Bash`: ls sym*.txt; head -3 sym_ewram.txt; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/memdiff.py 
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - <<'EOF' import collections for f in (1400,3000
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/md2.png
+
+## Claude
+
+P1 has the game paused in the stage, and each screen's camera follows its own Link, so this is a fair stage frame. Grouping the frame-3000 differences by symbol:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/memdiff.py build/ps2/mem_p0_f3000.bin build/p
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 $S/memdiff.py build/ps2/mem_p0_f3000.bin build/p
+
+- tool `Bash`: git checkout src/ps2/main.c src/ps2/link.c && git status --short && python3 - <<'EOF' p='docs/Planning Doc.md'; s=open(p).read() old="- [ ] 2. Log and decode th
+

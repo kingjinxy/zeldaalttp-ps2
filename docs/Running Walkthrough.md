@@ -1111,3 +1111,21 @@ ones as textured triangles), window 0 with per-line edges, and brighten/darken f
   A shared world still removes the switches, but making the switches cheaper (copying less, or not at all) would also
   put 4 players at 60 fps (2.6 M rendering + ~0.35 M game) without changing the game. A busy 4-player stage still
   needs measuring; there's no 4-player replay yet.
+
+## Step 37: phase 0 steps 2 and 3, the link packet and per-player memory (2026-11-24)
+
+Both measured on the 2-player replay with temporary code that isn't kept: a packet log in `ps2_link_exchange`
+(every transfer's words, one line per packet and player) and a dump of every instance's saved block at frames 1400,
+3000 and 4000 from the main loop (`host:mem_p<i>_f<n>.bin`), diffed on the host by region and symbol
+(`sym_ewram.txt`, `sym_iwram.txt`).
+
+- Packet (7,656 logged, frames 681-4509): 12 halfwords per player. After the parent's 0xFEFE: frame counter and
+  status, checksum (`sub_0800C658`), then `gUnknown_03000FD0`'s 20 bytes: a scene byte, the keys of the last 5
+  frames, a frame counter, 6 zero bytes. Only inputs: the world isn't sent, each GBA computes it. A first log was off
+  by one word (the 0xFEFE transfer counted as data).
+- Memory (frame 3000, a stage with P1's pause menu open, each camera on its own Link): 12.9 KB of 480 KB differ, in
+  31 of 120 pages. Details in the Planning Doc, Phase 5 step 3. Palettes and every sprite tile are identical, so a
+  shared tile upload (Phase 2) holds; the BG maps differ (each camera's own).
+- A note for cheaper switches: swapping only the differing pages isn't possible while every instance runs the
+  world, because shared pages would get the world update once per instance. That only works once the world runs
+  once (Phase 1).

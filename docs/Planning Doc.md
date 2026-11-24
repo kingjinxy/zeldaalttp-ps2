@@ -108,9 +108,22 @@ Phase 0: measure and map (no game changes)
       was 30-300 K per instance in the scenes measured (lobby, file select, an idle stage). Revised estimate: the
       shared world's speed-up comes from dropping the switches; cheaper switches alone would also reach 60 fps
       (4 players: 2.6 M rendering + ~0.35 M game). Still to measure: game code in a busy 4-player stage.
-- [ ] 2. Log and decode the link packet (12 halfwords per player per frame): does it carry little more than inputs?
-- [ ] 3. Diff the instances' memory at the same frame: what differs is per-player state (camera, scroll, BG maps,
-      OAM buffer, HUD, player ID, per-player sprite tiles?), the rest is the shared world
+- [x] 2. Log and decode the link packet (12 halfwords per player per frame): does it carry little more than inputs?
+      Yes (2026-11-24, 2-player replay: lobby, stage choice, stage, pause). Per player per frame: a frame counter
+      and status byte, a checksum, then the 20 data bytes of `gUnknown_03000FD0`: a scene byte (0x20/0x21/0x40/0x50/
+      0x150), the keys 5 times (the last 5 frames' keys, as a resend), a frame counter, 6 bytes always zero. Nothing
+      about the world crosses the cable: every GBA simulates it from the inputs alone. Not yet seen: shop, results,
+      item choice, a 4-player stage.
+- [x] 3. Diff the instances' memory at the same frame: what differs is per-player state (2026-11-24, 2 players,
+      frames 1400 lobby, 3000 and 4000 stage). 12-13 KB of the 480 KB differ, in 31 of 120 4 KB pages:
+      - EWRAM ~10 KB: `gUnknown_0203A000`+0x2200 (~6 KB, a BG map buffer around the camera, it seems), the save
+        data at 0x02001C00-0x02003090 (each player has their own file), `gTextbox`, `gUnknown_0202A5E0`,
+        `gUnknown_0202D250`/`0202DA50` (per-player 28/43-byte records), `gUnknown_02030790` (link state)
+      - IWRAM ~0.7 KB: `gLCDRegisterBuffer` (scroll), `gUnknown_03005E60` and `gUnknown_03006226` (~300 bytes each,
+        an OAM buffer?), a few entity bytes
+      - VRAM ~4.4 KB: BG maps at 0x0600C000-0x0600FFFF, 64 bytes of tiles at 0x06004000/0x06005000; OAM 35 bytes
+      - The same everywhere: palettes, all sprite tiles, the world (entities, room data)
+      Naming each block is Phase 1 step 5's job.
 - [ ] 4. Find every read of the player's own number (SIOCNT ID, the link state) in game code
 
 Phase 1: the world runs once (`FS_SHARED_WORLD`, breaks GBA matching on purpose)
