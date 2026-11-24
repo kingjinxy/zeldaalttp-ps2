@@ -268,7 +268,7 @@ void ps2_video_render(int inst)
 
 // Where screen i goes, in square pixels of the aw x fbh screen. One player: centred at the mode's scale. Two: one above
 // the other, each 1:1 (240x160), touching,
-// the pair centred in the frame. Three or four: a 2x2 grid.
+// the pair centred in the frame. Three or four: a 2x2 grid of 1:1 screens, touching, centred as one block.
 static void place(int i, int instances, float *x, float *y, float *w, float *h)
 {
     float aw = sMode->aw, ah = sMode->fbh, cw = aw, ch = ah, s;
@@ -279,16 +279,15 @@ static void place(int i, int instances, float *x, float *y, float *w, float *h)
         if (s * VIEW_H > ah)
             s = ah / VIEW_H;
     }
-    else if (instances == 2)
-        ch = ah / 2, s = 1;
-    else {
-        cw = aw / 2, ch = ah / 2;
-        s = cw / VIEW_W < ch / VIEW_H ? cw / VIEW_W : ch / VIEW_H;
-    }
+    else
+        s = 1;
     *w = VIEW_W * s, *h = VIEW_H * s;
-    *x = (instances > 2 ? (i % 2) * cw : 0) + (cw - *w) / 2;
-    *y = instances == 2 ? (ah - 2 * *h) / 2 + i * *h  // the pair stacked together, centred as one block
-                        : (instances > 2 ? (i / 2) * ch : 0) + (ch - *h) / 2;
+    if (instances == 1)
+        *x = (cw - *w) / 2, *y = (ch - *h) / 2;
+    else if (instances == 2)  // the pair stacked together, centred as one block
+        *x = (aw - *w) / 2, *y = (ah - 2 * *h) / 2 + i * *h;
+    else  // 2x2, P1 P2 on top, P3 P4 below
+        *x = (aw - 2 * *w) / 2 + (i % 2) * *w, *y = (ah - 2 * *h) / 2 + (i / 2) * *h;
 }
 
 // show every instance's screen; wait for vsync

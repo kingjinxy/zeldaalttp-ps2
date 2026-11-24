@@ -1070,3 +1070,23 @@ ones as textured triangles), window 0 with per-line edges, and brighten/darken f
 - Result, intro replay, 2 players, 34 frames compared per screen: 33 identical; the lobby has 3,261 pixels one level
   off (the GS adds b * evb / 16 and a * eva / 16 rounded separately, mGBA rounds the sum), none further.
 - Cost: both screens drawn in ~1.5M EE cycles a frame against ~6M for the software renderer.
+
+## Step 35: GS renderer by default; four players 1:1 in a 2x2 block (2026-11-24)
+
+- `GS_RENDER` defaults to 1 (`Makefile.ps2`); `GS_RENDER=0` builds the software renderer, which stays the default with
+  `WIDE_VIEW` (the GS renderer doesn't do the wide view yet).
+- Three or four players: four 240x160 screens at 1:1, touching, the 480x320 block centred in the 640x480 frame
+  (`place()` in `src/ps2/video.c`; it used to scale each screen to fill a quarter of the frame).
+- Four players cost 4.6 M EE cycles a frame to draw, about 1.1 M per screen. Timing `ps2_gsr_draw` split that into
+  the VRAM-to-texture swizzle in `upload()` (about 0.3 M per screen) and building the draw packet (about 0.85 M;
+  sending both is small). Two changes to the packet building:
+  - Tiles of colour 0 only are found during the swizzle (`sBlank`) and skipped in `draw_bg`.
+  - A blended BG's tile list is built once and its packet copied for the other three passes (`draw_layer`).
+    Sprites are still listed again each pass, since their list may switch PRIM.
+  Four screens now cost 2.6 M a frame, two 1.2 M. Pictures are unchanged: the 2-player replay's 34 compared frames are
+  all identical to the software renderer, and the 4-player run gives the same differences as before (one level of
+  blend rounding in the lobby and file select).
+- Four players still run at 30 fps: the game and the memory switches take 3.9 M of the 4.9 M frame, so drawing has to
+  shrink further (the swizzle) and the game side too.
+- The 4-player run shows the known TLB misses in `gs_sub_08003870` (Step 26: a null animation pointer in the file
+  select, save-dependent); players 3 and 4 sit on the file select with no inputs. Still open.

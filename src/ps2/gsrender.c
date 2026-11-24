@@ -126,6 +126,8 @@ static void put_clut(u64 **p, u32 addr, const u16 *pal)
     *p += 8;
 }
 
+static u8 sBlank[3072];  // tiles of colour 0 only, from this frame's upload
+
 static void upload(void)
 {
     u64 *p = sUpload;
@@ -141,9 +143,12 @@ static void upload(void)
     *p++ = 0;
     d = (u32 *)p;
     // tile t (32 bytes, 8 rows of 4) to (t % 32 * 8, t / 32 * 8): a texture row is 128 bytes (32 words)
-    for (t = 0; t < 3072; t++)
+    for (t = 0; t < 3072; t++) {
+        u32 *o = d + (t / 32) * 256 + t % 32, any = 0;
         for (r = 0; r < 8; r++)
-            d[((t / 32) * 8 + r) * 32 + t % 32] = src[t * 8 + r];
+            any |= o[r * 32] = src[t * 8 + r];
+        sBlank[t] = !any;  // all colour 0: nothing to draw
+    }
     p += 6144 * 2;
     for (t = 0; t < 32; t++)
         put_clut(&p, sClutAddr + t * 256, PAL + t * 16);
@@ -232,6 +237,8 @@ static void prim(int abe)
     ad(GS_PRIM, sPrim);
 }
 
+static void draw_bg_fn(int b);
+
 static void draw_layer(int bit, DrawFn fn, int arg, int effects)
 {
     int first = sBldcnt >> bit & 1, second = sBldcnt >> (8 + bit) & 1;
@@ -244,15 +251,20 @@ static void draw_layer(int bit, DrawFn fn, int arg, int effects)
     test(1, 1);
     prim(1);
     ad(GS_ALPHA_1, GS_SETREG_ALPHA(2, 1, 2, 1, (16 - sEvb) * 8));  // Cd - Cd * (16 - evb) / 16
+    u64 *start = sP;
     fn(arg);
+    // a BG's packet sets no registers but TEX0: the next passes repeat it (sprites may switch PRIM: listed again)
+    u32 len = fn == draw_bg_fn ? sP - start : 0;
+#define AGAIN() (len && sP + len < sDraw + (DRAW_QW - 64) * 2 ? (memcpy(sP, start, len * 8), sP += len) : (fn(arg), sP))
     ad(GS_ALPHA_1, GS_SETREG_ALPHA(0, 2, 2, 1, sEva * 8));  // + Cs * eva / 16 (COLCLAMP clamps)
-    fn(arg);
+    AGAIN();
     prim(0);
     test(1, 0);  // where the layer under isn't a second target: drawn as it is
-    fn(arg);
+    AGAIN();
     frame_mask(0x00FFFFFF);  // and its own flag everywhere it's drawn
     test(0, 0);
-    fn(arg);
+    AGAIN();
+#undef AGAIN
     frame_mask(0);
 }
 
@@ -298,7 +310,7 @@ static void draw_bg(int b)
             u32 t = cbase + (e & 0x3FF);
             int x = tx * 8 - (hofs & 7), y = ty * 8 - (vofs & 7), u = (t % 32) * 8, v = (t / 32) * 8;
             int pal = e >> 12;
-            if (t >= 2048)  // past BG VRAM: nothing on the GBA in mode 0
+            if (t >= 2048 || sBlank[t])  // past BG VRAM: nothing on the GBA in mode 0
                 continue;
             tex_rect(tex0(0, pal, 0), x, y, x + 8, y + 8, (e & 0x400) ? u + 8 : u,
                      (e & 0x800) ? v + 8 : v, (e & 0x400) ? u : u + 8, (e & 0x800) ? v : v + 8);

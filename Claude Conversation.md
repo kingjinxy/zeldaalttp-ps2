@@ -18963,3 +18963,329 @@ Blending works. The 3,261 lobby pixels that still differ are each off by exactly
 
 - tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep cost $S/gs1
 
+- tool `PushNotification`: 
+
+## Claude
+
+The GS renderer now draws Four Swords' screens the same as the software renderer, at about a quarter of the cost. It's switched on with `make -f Makefile.ps2 GS_RENDER=1`; the software renderer is still the default.
+
+**Comparison:** I ran the 2-player intro replay and compared the GS output with the software renderer pixel by pixel. I read the GS picture back from the same game state at 34 frames per screen: the lobby, the window wipe that opens Choose a Stage, the stage map, and the stage itself.
+- **33 of 34 identical:** 0 pixels differ.
+- **The lobby:** 3,261 pixels are one colour level off in its blended background, and none by more. The GS has to round the two blended colours separately, while mGBA rounds their sum once.
+- **Speed:** both screens take about 1.5M EE cycles a frame, against about 6M for the software renderer, out of 4.9M per 60 Hz frame. Drawing is no longer what limits the frame rate. With the GS renderer, PCSX2 ran this 2-player build at full speed.
+- **No TLB misses.**
+
+**What it draws:** everything the survey found: tile backgrounds, sprites (including rotated/scaled ones), window 0 with per-line edges, fades, and alpha blending.
+
+**Per-line effects (before the GS work):** the HBlank DMA effects weren't showing in either renderer, because the port never ran the game's VCount interrupt, which starts the DMA. It now does, so both renderers show the window wipe. The wipe matches mGBA exactly for its first frames. Later in it, edges and line 0 differ slightly, probably from a GBA lag frame the port doesn't reproduce; I haven't confirmed that. The interrupt also runs the sound mixer every frame. The port has no sound yet, so that call is skipped for now; it's marked as a shortcut.
+
+**Bugs fixed along the way:**
+- **Palettes:** a 4-bit texture loads only 16 palette entries at a time, so each 16-colour palette now has its own CLUT.
+- **Colour conversion:** mGBA converts 5-bit colour to 8-bit with the low bits filled in; I had used a plain shift.
+- **Flipped tiles:** they read one column of the next tile, because the GS samples at a pixel's corner.
+- **Rectangles:** a GIF packet format mix-up meant the fade, window mask and backdrop rectangles were garbage.
+- **DMA source 0:** the game briefly starts a DMA from address 0, which caused TLB misses. Both renderers now skip it.
+
+**Not covered yet:**
+- **Untested screens:** the GS renderer hasn't been tried with 4 players, the wide view (it refuses to build with it), or screens outside these recordings, such as other stages, bosses and the results screen.
+- **Unimplemented features:** mosaic, window 1 and the sprite window. Brighten/darken currently assumes every layer is affected, which is true of all the fades recorded.
+- **Unreached transition:** the per-line BG3 scroll in the game-choice transition isn't reached in this build, because it boots straight into Four Swords.
+
+Committed in three steps (`5e89c05`, `8eb3d0f`, `bad78b8`), with walkthrough Steps 32–34.
+
+Next could be making the GS renderer the default and checking 4 players at full speed. The open bad-instruction bug from the walking replay is still worth fixing first.
+
+## User
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+<system-reminder>
+<tools-used-before-summary>Bash, Edit, PushNotification, Read, SendUserFile, TaskStop, ToolSearch, Write</tools-used-before-summary>
+</system-reminder>
+Summary:
+1. Primary Request and Intent:
+   - **Earlier session:** two to four game instances, linked; replay running in PCSX2 (commit 2d15058).
+   - **Video modes (this session):**
+     - Single player defaults to 240p, with options for 480i, 480p and 720p.
+     - 240p: the 240x160 picture is centred in 320x240.
+     - 480p: scaled to 480x320.
+     - 480p 16:9: scaled to 720x480 inside an 854x480 anamorphic frame.
+     - Two players use 4:3 480p, P1 on top and P2 below, each centred. A dividing line is low priority.
+   - **Two-player layout changes:**
+     - The user asked for two 240x160 screens at 1:1, centred.
+     - Then: "Check this against mGBA and tell me what you find before proceeding" (aspect). The cause was PCSX2.ini set to 16:9. The user approved overriding it per run to 4:3.
+     - Then: "Move the two screens so that they are vertically and horizontally centered in the 640x480 frame." Committed.
+   - **Wide view:**
+     - The user asked what a larger GBA view would take: one player at 320x240, two players at 640x240 each, drawing more of the world rather than stretching.
+     - Step 1 (renderer only) was done and committed. The user said "it clearly needs some work, but we can come back to this."
+   - **GS rendering:**
+     - The user asked what GS rendering needs, asked for more detail on blending and scanline effects, then said "Let's do the survey."
+     - Then "Proceed": the per-line DMA fix first, then the GS renderer.
+   - **Standing constraints** (from CLAUDE.md and the user), verbatim where possible:
+     - "Web access: GitHub only without asking."
+     - "Never access tcrf.net (The Cutting Room Floor) in any way."
+     - "No `pkill -f <pattern>` in a command whose own command line contains the pattern."
+     - "No ROM, BIOS or extracted asset is ever committed"; reference/ is never committed.
+     - The user's email address is never shared with external services.
+     - FourSwordsRecomp code (PolyForm NC) is not copied.
+     - Say "gstate", never "GS", for global state (GS = Graphics Synthesizer).
+     - PCSX2 uses the software renderer.
+     - Log over SIO, never printf, from code the game can reach.
+     - "Never dismiss TLB Miss lines."
+     - Commit only when `make compare` reports `zeldaalttp.gba: OK`.
+     - Update `docs/Running Walkthrough.md` and `Claude Conversation.md` at milestones (archive script over all jsonl in `ls -tr` order; check no removed lines).
+     - Send a push notification at milestones.
+     - Run builds under `systemd-run --user --scope -q -p MemoryMax=6G`.
+     - `rm` with a variable path must use `"${S:?}"` or a literal path (a safety check blocked `rm -f $S/*`).
+
+2. Key Technical Concepts:
+   - **Instance memory:** copy-swap. One live block; saved copies at 0x01900000 + i MB.
+   - **gsKit video modes:**
+     - `Mode`, `Interlace`, `Field`, `Width`, `Height` are set before `gsKit_init_screen`.
+     - DISPLAY1/2: MAGH = DW / fbw - 1, centred (taken from the HAL's display_ps2.c).
+     - 720p: a 640x720 buffer doubled horizontally, CT16.
+     - 16:9: widths in square pixels × 640/854.
+   - **PCSX2 aspect:** the user's ini says 16:9. pshot.sh passes `--set "AspectRatio=${ASPECT:-4:3}"`.
+   - **mGBA renderer changes:**
+     - The screen size is the runtime variables `ps2_view_w/h`.
+     - The Makefile now rebuilds mGBA objects when its headers change.
+   - **Interrupt dispatch:**
+     - The game's VCount handler table entry is `INTR_TABLE+8`; VBlank is `+4`.
+     - `process_dma_request` (line 0) starts the HBlank DMA. `sub_0800B7FC` (line 32) runs the sound mixer, `sub_081339D4`, which is native ARM and not translated.
+     - The table holds PS2 addresses of native C functions.
+   - **HBlank DMA:** line y uses table entry y-1. A source below 0x02000000 is skipped.
+   - **GS renderer basics:**
+     - Textures: a T4 texture of 256x768 (BG tiles in rows 0-511, OBJ tiles in rows 512-767).
+     - Palettes: 32 CLUTs of 8x2 CT32, 256 bytes apart, loaded with CLD=4.
+     - Colour expansion matches mGBA: `(c<<3)|(c>>2)`.
+     - TFX MODULATE; the vertex alpha carries the second-target flag.
+     - Alpha test GEQUAL 0x40.
+   - **GS sampling:** the GS samples at a pixel's top-left corner. A flipped tile's UV start is (u+8)*16-1 and its end is u*16.
+   - **Window 0:**
+     - Default: an alpha mask with FBMSK 0x00FFFFFF, then DATE.
+     - While blending: scissor rectangles. A per-line or wrapping window with blending isn't supported.
+   - **Fades:**
+     - Darken: ALPHA(2,1,2,1,evy*8).
+     - Brighten: ALPHA(0,1,2,1,evy*8) with a white Cs.
+   - **Alpha blending:** four passes for a first-target layer:
+     1. FBMSK on alpha, DATE pass: ALPHA(2,1,2,1,(16-evb)*8).
+     2. ALPHA(0,2,2,1,eva*8), with COLCLAMP.
+     3. Opaque with DATM=0.
+     4. The layer's own flag, written to alpha only.
+   - **PACKED GIF tags:** register formats differ by register. Untextured rectangles must use A+D.
+   - **Readback:** taken from tp-ps2's download_rows (originally from the HAL). The DMA goes straight to dst, followed by InvalidDCache.
+   - **EE heap:** about 1.6 MB left. gsKit pools are shrunk with `gsKit_init_global_custom(64K,16K)`.
+
+3. Files and Code Sections:
+   - **src/ps2/video.c**
+     - Mode table `sModes`:
+       - 240p: NTSC, 320x240, scale 1
+       - 480i: 640x480, scale 2
+       - 480p: 640x480, scale 2
+       - 480p 16:9: aw 854, scale 3
+       - 720p: 640x720, CT16, scale 4
+     - `ps2_video_mode = VIDEO_MODE` (auto: 240p for one player, 480p otherwise).
+     - `place()`: one player at the mode's scale, fitted to the view. Two players at 1:1, stacked with no gap, centred: `*y = (ah - 2 * *h)/2 + i * *h`. Three or four players in a 2x2 grid.
+     - Pixel buffers: `ps2_view_w/h`, `sTexW`, and `sPixelPool[2*640*240]` with `PIXELS(i) = sPixelPool + i*sTexW*PS2_VIEW_MAX_H`.
+     - Wide-view check pass: `_gba` dumps.
+     - `render()` returns the number of active HBlank DMA channels. `hblank_dma(r,y)` applies table entries; at y=160 it writes entry 159 into the I/O register.
+     - HBlank-DMA frame dumps (24 at most, every 4th frame).
+     - GS mode:
+       - `ps2_gsr_init`; `tex.Vram = ps2_gsr_target(i)` and `TBW = sTexW/64`.
+       - No texture upload.
+       - Before `gsKit_clear`: `gsKit_setactive`, `gsKit_set_scissor(GS_SCISSOR_RESET)`, `gsKit_set_test(GS_ATEST_OFF)`.
+       - At dump frames: the software render, the readback, a pixel comparison logged as "N pixels differ…, M by more than one level", and both images written as `_gs.ppm` and plain.
+   - **src/ps2/gsrender.c** (new)
+     - Covers: upload, put_clut, tex0, tex_rect (REGLIST of 6 registers), flat (A+D), draw_mask, in_regions/draw_layer (blending), draw_bg, draw_objs (affine sprites as triangles via the inverse matrix), fade_fn, win0h_lines, ps2_gsr_init/target/draw/read.
+     - `FULL()` guards the packet (DRAW_QW 16000).
+   - **src/ps2/frame.c**
+     - `ps2_vblank_wait` now raises the VCount interrupts after VBlank: each line at most once per frame, in line order.
+     - When the VCount entry is `(u32)sub_0800B7FC`, the port only switches DISPSTAT back to 0x28 and sets the table entry to `process_dma_request` (no sound yet).
+     - DISPSTAT's VBlank flag is set again afterwards.
+   - **src/ps2/mgba/...** (renderer)
+     - interface.h: the screen-size macros point to `ps2_view_w/h`; `PS2_VIEW_MAX_W` 640 and `PS2_VIEW_MAX_H` 240.
+     - Window regions are 16-bit.
+     - `endX` is 16-bit.
+     - `scanlineDirty[(MAX_H+31)/32]`.
+     - Sprite x wrap: x -= 512 only when x + width > 512.
+     - OAM y skip uses 256 for taller views.
+     - Bitmap modes use literal 240/160.
+     - A window edge at 240/160 maps to the view's edge.
+   - **Makefile.ps2:** options `VIDEO_MODE`, `WIDE_VIEW`, `GS_RENDER`. `MGBA_H` header dependencies cover the mGBA objects, video.o and mgba_stubs.o.
+   - **tools/mgba_run.c:** `--survey FILE` wraps writeVideoRegister to catch mid-frame writes, and logs per frame: modes, BG types, windows, blending, sprite attributes, HBlank DMA, and VCount/HBlank interrupts.
+   - **docs/Running Walkthrough.md:** Steps 29–34 added.
+   - **Scratchpad:**
+     - `pshot.sh NAME SECONDS` (Xvfb :77; screenshot at SECONDS-10).
+     - Replay backups in `replay_orig/`.
+
+4. Errors and fixes:
+   - **Stale ELF:** `make … elf` must be the target. A pipe into a grep that failed also stopped one build.
+   - **Out of memory with the wide buffers:** a shared pool plus small gsKit pools.
+   - **Stage with no backgrounds:** stale `software-mode0.o` built against the old struct layout. Fixed with header dependencies in the Makefile.
+   - **Wide-view check pass offsets:** used `PS2_VIEW_MAX_H` so the check pass doesn't shift other screens' buffers.
+   - **VCount handlers:**
+     - Clearing the VBlank flag hung the file select, which polls it.
+     - The first attempt called the wrong table entry.
+     - The sound mixer is native: handled by doing only the hand-back in C (the first try compared against GBA addresses and failed).
+   - **DMA source 0:** caused TLB misses. Now skipped.
+   - **GS fixes:**
+     - CLUT loading: per-palette CLUTs.
+     - Colour expansion.
+     - TBW not set on the target texture.
+     - Flipped UVs, including u1 = -1 wrapping.
+     - Packet overflow from per-line windows: replaced by the alpha mask.
+     - The win0h bounds check.
+     - PACKED tag bug: now A+D.
+   - **Bad instruction after the A-only replay (around frame 1770):** "Unknown R5900 SPECIAL", then TLB misses at 0x24a00, in the normal build too. Still open.
+   - **One wipe frame (1500):** 19 pixels differ on line 0 against mGBA. Cause not found.
+
+5. Problem Solving:
+   - GS renderer result (intro replay, two players): 33 of 34 compared frames are identical to the software renderer, on both screens. These include the Choose a Stage opening wipe and brighten, Choose a Stage itself, and the stage.
+   - The lobby has 3,261 pixels one level off (blend rounding).
+   - Drawing both screens costs about 1.5M EE cycles per frame, against about 6M for the software renderer.
+   - Commits this session: 57ab202, 021be92, b1b175f, 49d8810, 5e89c05, 8eb3d0f, bad78b8. Push notification sent.
+
+6. All user messages:
+   - The housekeeping message about video modes (240p default with 480i/480p/720p options; single-player centring and scaling; 16:9 720x480 in 854x480; two players in 4:3 480p, P1 top and P2 bottom, centred; a dividing line later, low priority).
+   - "Change the two player mode in 480p to use 2 240x160 screens centered in the frame and show me the result"
+   - "The aspect ratio still doesn't look right. Check this against mGBA and tell me what you find before proceeding"
+   - "Yes." (override PCSX2's aspect ratio per run)
+   - "Move the two screens so that they are vertically and horizontally centered in the 640x480 frame"
+   - "Yes" (commit)
+   - "What kind of work would it take to add an option to increase the emulated GBA screen size? I would like to try single player increased to 320x240 and two player increased to two 640x240 screens. We are NOT stretching the frame, but actually rendering more beyond the usual 240x160 of the GBA."
+   - "Yes. Describe step 1 in more detail first"
+   - "Yes"
+   - "Alright, it clearly needs some work, but we can come back to this. I want to turn your attention to rendering using the Graphics Synthesizer. What do we need to do for this?"
+   - "First explain blending and scanline effects in more detail"
+   - "Let's do the survey"
+   - "Proceed"
+
+7. Pending Tasks:
+   - Report the GS renderer result to the user. It is committed (bad78b8) but the final summary message hasn't been written.
+   - Open items, not requested:
+     - the bad instruction at frame ~1770 with the A-only replay;
+     - line 0 of the wipe;
+     - the GS renderer is not the default;
+     - wide view, game side;
+     - sound;
+     - multitap;
+     - the split-screen dividing line.
+
+8. Current Work:
+   - GS renderer alpha blending was just finished and committed (bad78b8). `make compare` reports OK; walkthrough Step 34 and the conversation archive are updated. A push notification was sent: "GS renderer works: 33 of 34 compared frames identical to the software renderer (lobby off by 1 colour level); ~4x cheaper. Committed bad78b8."
+   - The local ELF is built with `INSTANCES=2 GS_RENDER=1`. build/ps2 holds the original padded replay scripts.
+
+9. Optional Next Step:
+   - Give the user the final report of the GS renderer work:
+     - result per frame type;
+     - cost;
+     - limits (blend rounding; per-line window combined with blending not supported; it's an opt-in `GS_RENDER=1` build).
+   - Offer next options: making GS the default, four players, the frame-1770 bug, the wide view on the GS. Don't start any of them without the user's go-ahead.
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /home/alex/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9.jsonl
+Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.
+
+The messages after this summary are the most recent messages from before compaction, kept verbatim. The summary was written without seeing them, so something it says has not happened yet may already have happened in them.
+
+## User
+
+<command-name>/compact</command-name>
+            <command-message>compact</command-message>
+            <command-args></command-args>
+
+## User
+
+<local-command-stdout>Compacted </local-command-stdout>
+
+## User
+
+Yes, let's make the GS renderer the default and try with 4 players. With 4 players, the 4 240x160 screens should be drawn in split screen, centered in the 640x480p frame
+
+- tool `Bash`: grep -n "GS_RENDER\|INSTANCES\|WIDE_VIEW" Makefile.ps2 | head -30; grep -n "place\|PS2_GS_RENDER\|GS_RENDER" src/ps2/video.c | head -40
+
+- tool `Bash`: sed -n 20,36p Makefile.ps2; sed -n 115,130p src/ps2/video.c; sed -n 265,310p src/ps2/video.c
+
+- tool `Bash`: python3 - <<'EOF' p='Makefile.ps2'; s=open(p).read() s=s.replace("""ifdef GS_RENDER  # the Graphics Synthesizer draws the GBA screens (src/ps2/gsrender.c); touc
+
+- tool `Bash`: touch src/ps2/main.c src/ps2/video.c && systemd-run --user --scope -q -p MemoryMax=6G make -f Makefile.ps2 INSTANCES=4 elf -j8 2>&1 | tail -3
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; bash $S/pshot.sh gs4p 100; grep -E "cost:|instances|gsr"
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; tail -15 $S/gs4p.log
+
+## Claude
+
+The 4-player GS build runs (no TLB misses). Checking the screenshot and the GS-vs-software comparisons.
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -E "differ" $S/gs4p.log | awk '{$1=$2="";print}' | 
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/gs4p.png
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep cost: $S/gs13.log; grep -n "sFrameRender\|count()" 
+
+## Claude
+
+Layout is right (2x2, 1:1, centred), but 4 players run at 30 fps: drawing costs ~1.1M EE cycles per screen. Profiling where that goes.
+
+- tool `Bash`: wc -l src/ps2/gsrender.c && grep -n "^static\|^void\|^u32\|^int" src/ps2/gsrender.c && sed -n "$(grep -n '^static void upload' src/ps2/gsrender.c | cut -d: -f1)
+
+- tool `Bash`: sed -n 40,58p src/ps2/gsrender.c && sed -n 449,533p src/ps2/gsrender.c && sed -n 205,265p src/ps2/video.c && grep -n "count(void)\|define count\|count()" src/ps
+
+- tool `Bash`: cp src/ps2/gsrender.c $S/gsrender.prof.bak 2>/dev/null; python3 - <<'EOF' p='src/ps2/gsrender.c'; s=open(p).read() s=s.replace("static void send(u64 *buf, u64 *
+
+## Claude
+
+Packet building is the cost: ~865K cycles per screen, and the tile swizzle in the upload is another ~265K. Looking at the per-tile code.
+
+- tool `Bash`: sed -n 64,104p src/ps2/gsrender.c; sed -n 235,312p src/ps2/gsrender.c
+
+- tool `Bash`: grep -n "O2\|O3\|Os\|-O" Makefile.ps2 | head; grep -n "FULL\|DRAW_QW\|UPLOAD_QW" src/ps2/gsrender.c | head -5; grep -n "VRAM\b\|define VRAM\|define PAL" src/ps2
+
+- tool `Bash`: python3 - <<'EOF' p='src/ps2/gsrender.c'; s=open(p).read() old="""    for (t = 0; t < 3072; t++)         for (r = 0; r < 8; r++)             d[((t / 32) * 8 + r
+
+- tool `Bash`: systemd-run --user --scope -q -p MemoryMax=6G make -f Makefile.ps2 INSTANCES=4 elf -j8 2>&1 | grep -E "error|warning: [^b]|fix_elf:"; S=/tmp/claude-1000/-home-a
+
+## Claude
+
+Build cost halved (render 4.6M → 2.6M), but this run shows 50 TLB/FATAL lines. Checking them.
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -E "TLB Miss|FATAL" $S/prof2.log | awk '{$1=$2="";p
+
+- tool `Bash`: ~/ps2dev/ee/bin/mips64r5900el-ps2-elf-addr2line -fe build/ps2/zeldaalttp.elf 0x3448c8 0x3449c4; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-
+
+- tool `Bash`: ~/ps2dev/ee/bin/mips64r5900el-ps2-elf-nm -n build/ps2/zeldaalttp.elf | awk '$1<="003448c8"' | tail -2
+
+## Claude
+
+The TLB misses are in game code (`sub_08003870`, reads from address 0–9) and were already in the first 4-player run, before my change. Checking whether 2 players have them too.
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for f in gs13 gs12 v2p w3; do echo "$f $(grep -c 'TLB Mi
+
+- tool `Bash`: sed -n 2235,2275p src/file_select.c; head -60 asm/non_matching/rom1/sub_08003870.inc; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-
+
+## Claude
+
+Different from the frame-1770 bug: on the file-select screen (where players 3 and 4 sit, having no inputs) an entity's animation lookup returns a null pointer. Looking at the table it reads.
+
+- tool `Bash`: python3 -c " import struct;r=open('baserom.gba','rb').read() for i in range(0,40):   p=struct.unpack_from('<I',r,0x3228+4*i)[0]; print(i,hex(p)) " | head -40; g
+
+- tool `Bash`: grep -n -i "open bus\|null pointer\|address 0\b\|BIOS area" "docs/Running Walkthrough.md" | head -20
+
+- tool `Bash`: sed -n 825,845p "docs/Running Walkthrough.md"; grep -n "08003870" "docs/Running Walkthrough.md" "docs/Planning Doc.md"
+
+- tool `Bash`: python3 - <<'EOF' import re p='src/ps2/gsrender.c'; s=open(p).read() s=s.replace('static u32 cnt(void) { u32 c; __asm__ volatile("mfc0 %0, $9" : "=r"(c)); retur
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep differ $S/gs2p.log | awk '{print $8}' | sort | uniq
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -o "[0-9]* pixels differ.*, [0-9]* by" $S/gs2p.log 
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -o "frame [0-9]* screen [0-9]" $S/gs2p.log | awk '{
+
+## Claude
+
+2 players: all 34 compared frames identical to the software renderer; drawing both screens is down from 1.5M to 1.2M cycles. Running the matching check, then docs and commit.
+
+- tool `Bash`: systemd-run --user --scope -q -p MemoryMax=6G make compare -j8 2>&1 | tail -1; grep -n "^## Step" "docs/Running Walkthrough.md" | tail -2; grep -n -i "GS_RENDER
+
+- tool `Bash`: cat >> "docs/Running Walkthrough.md" <<'EOF'  ## Step 35: GS renderer by default; four players 1:1 in a 2x2 block (2026-11-24)  - `GS_RENDER` defaults to 1 (`Ma
+

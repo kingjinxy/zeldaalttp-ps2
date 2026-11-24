@@ -26,7 +26,13 @@ endif
 ifdef INSTANCES  # players (default 4, src/ps2/main.c); touch src/ps2/main.c when changing it
 PS2_CFLAGS += -DINSTANCES=$(INSTANCES)
 endif
-ifdef GS_RENDER  # the Graphics Synthesizer draws the GBA screens (src/ps2/gsrender.c); touch src/ps2/video.c when changing it
+# GS_RENDER (default 1): the Graphics Synthesizer draws the GBA screens (src/ps2/gsrender.c); 0: mGBA's software
+# renderer (also the default with WIDE_VIEW, which the GS renderer doesn't do yet). Touch src/ps2/video.c when changing it
+ifdef WIDE_VIEW
+GS_RENDER ?= 0
+endif
+GS_RENDER ?= 1
+ifneq ($(GS_RENDER),0)
 PS2_CFLAGS += -DGS_RENDER
 endif
 ifdef WIDE_VIEW  # draw 320x240 (one player) or 640x240 (two) of the unchanged game's video memory (src/ps2/video.c); touch src/ps2/video.c when changing it
