@@ -61,6 +61,8 @@ static const struct Mode {
 // two players need the height (one above the other).
 int ps2_video_mode = VIDEO_MODE;
 static const struct Mode *sMode;
+static int sInstances;
+static void screen_rect(int i, int *x, int *y, int *w, int *h);
 
 void ps2_video_init(int instances)
 {
@@ -68,6 +70,7 @@ void ps2_video_init(int instances)
     if (ps2_video_mode < 0 || ps2_video_mode > VIDEO_720P)
         ps2_video_mode = instances > 1 ? VIDEO_480P : VIDEO_240P;
     sMode = &sModes[ps2_video_mode];
+    sInstances = instances;
 #ifdef WIDE_VIEW
     if (instances <= 2)
         ps2_view_w = instances == 1 ? 320 : 640, ps2_view_h = 240;
@@ -92,6 +95,9 @@ void ps2_video_init(int instances)
     sGs->Width = sMode->fbw;
     sGs->Height = sMode->fbh;
     sGs->PSM = sMode->psm;
+#ifdef GS_RENDER  // 16-bit frames everywhere: the GBA's colours are 15-bit, and it halves GS memory
+    sGs->PSM = GS_PSM_CT16;
+#endif
     sGs->ZBuffering = GS_SETTING_OFF;
     sGs->DoubleBuffering = GS_SETTING_ON;
     sGs->PrimAlphaEnable = GS_SETTING_OFF;
@@ -128,12 +134,12 @@ void ps2_video_init(int instances)
         r->cache = NULL;
         r->init(r);
     }
-#ifdef GS_RENDER  // the GS draws each screen into a render target, shown as the texture (no upload)
+#ifdef GS_RENDER  // the GS draws each screen straight into the frame buffer
     {
-        u32 ps2_gsr_init(GSGLOBAL *gs, int instances), ps2_gsr_target(int inst);
-        ps2_gsr_init(sGs, instances);
-        for (i = 0; i < instances; i++)
-            sView[i].tex.Vram = ps2_gsr_target(i), sView[i].tex.TBW = sTexW / 64;  // TBW: set by uploads normally
+        void ps2_gsr_init(GSGLOBAL *gs);
+        ps2_gsr_init(sGs);
+        gsKit_clear(sGs, GS_SETREG_RGBAQ(0, 0, 0, 0x80, 0));  // the first frame's buffer (present clears the next ones)
+        gsKit_queue_exec(sGs);
     }
 #endif
     ps2_log("video: %s, %dx%d buffer (DW %d DH %d MAGH %d), %d screens of %dx%d", sMode->name, sGs->Width,
@@ -233,9 +239,12 @@ void ps2_video_render(int inst)
 #endif
 #ifdef GS_RENDER
     {
-        void ps2_gsr_draw(int inst);
-        int ps2_gsr_read(int inst, u32 *dst);
-        ps2_gsr_draw(inst);
+        void ps2_gsr_draw(u32 fb, int fbw, int x, int y, int w, int h);
+        int ps2_gsr_read(u32 fb, int fbw, int x, int y, int w, int h, u32 *dst);
+        u32 fb = sGs->ScreenBuffer[sGs->ActiveBuffer & 1];  // the buffer being drawn (gsKit_setactive's)
+        int px, py, pw, ph;
+        screen_rect(inst, &px, &py, &pw, &ph);
+        ps2_gsr_draw(fb, sGs->Width / 64, px, py, pw, ph);
         sFrameRender += count() - t0;
         for (y = 0; y < 4; y++)  // frames with an HBlank DMA (the window wipes) are checked too, as in the software path
             if ((IO16(0xBA + 12 * y) & 0xB000) == 0xA000 && sHdmaDumps < 24 && n % 4 == 0) {
@@ -246,6 +255,8 @@ void ps2_video_render(int inst)
                      // middle 240x160, where the GBA screen is drawn)
             static u32 *gs;
             int x, diff = 0, far = 0, first = -1, w = VIEW_W, h = VIEW_H, ox = (w - GBA_W) / 2, oy = (h - GBA_H) / 2;
+            if (pw != w || ph != h)  // drawn scaled: no pixel-for-pixel check
+                return;
             if (!gs && !(gs = memalign(64, sTexW * VIEW_H * 4)))
                 ps2_log("gsrender: no memory for the check");
             if (!gs)
@@ -254,23 +265,25 @@ void ps2_video_render(int inst)
             render(r);
             dump_frame(inst, n, "");
             ps2_view_w = w, ps2_view_h = h;
-            if (!ps2_gsr_read(inst, gs))
+            if (!ps2_gsr_read(fb, sGs->Width / 64, px, py, w, h, gs))
                 ps2_log("gsrender: readback stuck");
             for (y = 0; y < GBA_H; y++)
                 for (x = 0; x < GBA_W; x++)
                 {
-                    u32 a = gs[(y + oy) * sTexW + x + ox], b = PIXELS(inst)[y * sTexW + x], c, d = 0;
-                    if (((a ^ b) & 0xFFFFFF) && !diff++)
+                    // compared at the GBA's 5 bits a channel (the frame buffer's; mGBA blends and fades in 8)
+                    u32 a = gs[(y + oy) * w + x + ox], b = PIXELS(inst)[y * sTexW + x], c, d = 0;
+                    if (((a ^ b) & 0xF8F8F8) && !diff++)
                         first = y * 256 + x;
-                    for (c = 0; c < 24; c += 8)  // more than one level off in a channel (blending may round once)
-                        d |= ((a >> c) & 0xFF) - ((b >> c) & 0xFF) + 1 > 2;
+                    for (c = 3; c < 24; c += 8)  // more than one level off in a channel (blending may round once)
+                        d |= ((a >> c) & 0x1F) - ((b >> c) & 0x1F) + 1 > 2;
                     far += d;
                 }
             ps2_log("gsrender: frame %u screen %d: %d pixels differ from the software renderer, %d by more than one level (first at %d,%d: gs %06x sw %06x)",
                     n, inst, diff, far, first % 256, first / 256,
-                    first < 0 ? 0 : gs[(first / 256 + oy) * sTexW + first % 256 + ox] & 0xFFFFFF,
+                    first < 0 ? 0 : gs[(first / 256 + oy) * w + first % 256 + ox] & 0xFFFFFF,
                     first < 0 ? 0 : PIXELS(inst)[(first / 256) * sTexW + first % 256] & 0xFFFFFF);
-            memcpy(PIXELS(inst), gs, sTexW * VIEW_H * 4);
+            for (y = 0; y < h; y++)  // as a view-sized picture (rows of sTexW)
+                memcpy(PIXELS(inst) + y * sTexW, gs + y * w, w * 4);
             dump_frame(inst, n, "_gs");
         }
         return;
@@ -309,6 +322,14 @@ static void place(int i, int instances, float *x, float *y, float *w, float *h)
         *x = (aw - 2 * *w) / 2 + (i % 2) * *w, *y = (ah - 2 * *h) / 2 + (i / 2) * *h;
 }
 
+// screen i's rectangle in frame-buffer pixels
+static void screen_rect(int i, int *x, int *y, int *w, int *h)
+{
+    float fx, fy, fw, fh, kx = (float)sMode->fbw / sMode->aw;
+    place(i, sInstances, &fx, &fy, &fw, &fh);
+    *x = (int)(fx * kx + 0.5f), *y = (int)(fy + 0.5f), *w = (int)(fw * kx + 0.5f), *h = (int)(fh + 0.5f);
+}
+
 // show every instance's screen; wait for vsync
 extern u32 ps2_switch_cycles;  // tlb.c
 
@@ -326,10 +347,15 @@ void ps2_video_present(int instances)
     if (n % 600 == 540)
         sRenderCycles = sOtherCycles = ps2_switch_cycles = 0;
     FlushCache(0);
-#ifdef GS_RENDER  // gsrender.c changed the drawing registers
-    gsKit_setactive(sGs);
+#ifdef GS_RENDER  // the screens are drawn: show them, then clear the next buffer (gsrender.c changed the registers)
+    gsKit_sync_flip(sGs);
     gsKit_set_scissor(sGs, GS_SCISSOR_RESET);
     gsKit_set_test(sGs, GS_ATEST_OFF);
+    gsKit_clear(sGs, GS_SETREG_RGBAQ(0, 0, 0, 0x80, 0));
+    gsKit_queue_exec(sGs);
+    sLastEnd = count();
+    (void)kx, (void)i;
+    return;
 #endif
     gsKit_clear(sGs, GS_SETREG_RGBAQ(0, 0, 0, 0x80, 0));
     for (i = 0; i < instances; i++) {

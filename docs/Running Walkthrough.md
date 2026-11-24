@@ -1209,3 +1209,29 @@ software renderer's line buffers stop at 240 lines. GS memory: two 320x480 targe
 about 3.8 MB of 4. Result on the 2-player replay: 34 of 34 check frames identical to the GBA in the middle 240x160, no
 TLB misses; the stage shows the room's full width between the cliffs and well above and below the players. Drawing
 costs 2.98 M cycles a frame for both. Same limits as Step 40 (sprites, HUD and camera still GBA-sized).
+
+## Step 42: GS renderer draws straight into a 16-bit frame (2026-11-24)
+
+GS memory was nearly full with the vertical split (3.75 MB of 4: a double-buffered 640x480 32-bit frame, 2.4 MB, plus
+a 320x480 32-bit render target per player, 1.2 MB). Two changes, so the memory no longer depends on the number of
+players or their view size (the user wants up to 9 screens on 1280x720 eventually):
+
+- **No render targets.** `ps2_gsr_draw(fb, fbw, x, y, w, h)` draws the screen into gsKit's frame buffer being drawn
+  (`ScreenBuffer[ActiveBuffer & 1]`, as `gsKit_setactive` sets it) at its rectangle from `place()`, scaled to it
+  (`sKx`, `sKy` in 1/256ths, applied in `xyz` and the scissor: one player's 2x, the 16:9 squeeze). `present` now only
+  flips, then clears the next buffer. The pixel check reads the screen's rectangle back from the frame (when drawn
+  1:1).
+- **16-bit frame** (`GS_PSM_CT16` with the GS renderer, every video mode). The GBA's colours are 15-bit, so nothing
+  is lost. The 1-bit alpha holds the window mask or the blending flag (the renderer never needs both: blending with a
+  window uses scissor rectangles); 0x80 writes 1, 0x40 writes 0, which is what DATE tests. The readback expands the
+  16-bit pixels as mGBA does, and the check compares at 5 bits a channel: mGBA computes fades and blends in 8 bits,
+  the GBA (and now the frame) in 5.
+- GS memory now: frame 2 x 0.6 MB at 640x480, tiles 128 KB, CLUTs 8 KB: about 1.4 MB, the same for any number of
+  players. A double-buffered 1280x720 16-bit frame (3.7 MB) would fit.
+- Results: 2 players 240x160: 22 of 34 check frames identical, the other 12 (fades, frames 944-980) within one 5-bit
+  level. Vertical split 320x480: 14 identical, none more than one level off. No TLB misses. One player at 2x (480p)
+  draws sharp and centred; non-integer scales (16:9) are no longer smoothed (nearest sampling).
+- Cost: two 240x160 screens 1.34 M cycles (1.2 M with targets). A 32-bit frame costs the same, so it's the direct
+  path: most likely the frame clear now still running on the GS when the next frame's first upload goes out (that
+  wait counts as drawing; the old copy sprites counted under present). A first version scaled positions with floats
+  and cost another 0.05 M; integer fixed-point now.

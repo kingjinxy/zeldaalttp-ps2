@@ -6,8 +6,8 @@
 //
 // Each frame the mapped instance's VRAM goes up as one 4-bit texture (256 wide, 32 tiles a row: BG tiles in rows
 // 0-511, sprite tiles in 512-767) and its palettes as two 256-entry CLUTs (BG, sprites; a 16-colour palette is
-// picked with CSA). Then the layers are drawn back to front into the instance's view-sized render target, which video.c
-// shows like the software renderer's texture. Colour 0 of each palette is transparent through the alpha test.
+// picked with CSA). Then the layers are drawn back to front straight into the frame buffer, at the screen's place.
+// Colour 0 of each palette is transparent through the alpha test.
 #include <kernel.h>
 #include <string.h>
 #include <gsKit.h>
@@ -21,14 +21,17 @@ void ps2_log(const char *fmt, ...);
 #define VRAM ((const u8 *)0x06000000)
 #define OAM ((const u16 *)0x07000000)
 
-static u32 sTexAddr, sClutAddr, sTarget[4];  // GS memory, in bytes; CLUTs: palette k (0-15 BG, 16-31 sprites) at + k * 256
-static int sOffX, sOffY;                        // gsKit's XYOFFSET (12.4)
-// The render target is the view (video.c's ps2_view_w x ps2_view_h: 240x160, or bigger with WIDE_VIEW), sTBW * 64
-// pixels a row. Drawing uses GBA screen coordinates: the GBA's 240x160 sits in the middle of the view at (sGx, sGy),
+static u32 sTexAddr, sClutAddr;  // GS memory, in bytes; CLUTs: palette k (0-15 BG, 16-31 sprites) at + k * 256
+static int sOffX, sOffY;          // gsKit's XYOFFSET (12.4)
+// Each screen is drawn straight into gsKit's frame buffer (16-bit: the GBA's colours are 15-bit, and the 1-bit alpha
+// holds the window mask or the blending flag, never both at once), at its rectangle (sPx, sPy) scaled by sSx, sSy
+// (one player's 2x, the 16:9 squeeze). The view is video.c's ps2_view_w x ps2_view_h (240x160, or bigger with
+// WIDE_VIEW). Drawing uses GBA screen coordinates: the GBA's 240x160 sits in the middle of the view at (sGx, sGy),
 // so the view spans -sGx .. sVW - sGx across. Outside the 240x160 only the backdrop, the room (BG1/BG2 from the
 // room data, see room_entry), BG3 (its map repeating) and full-screen effects are drawn.
 extern int ps2_view_w, ps2_view_h;
-static int sVW, sVH, sTBW, sGx, sGy;
+static int sVW, sVH, sTBW, sGx, sGy, sPx, sPy;
+static int sKx, sKy;  // the scale in 1/256ths (1x: 256, 2x: 512, 16:9: 192)
 #define VX0 (-sGx)
 #define VX1 (sVW - sGx)
 #define VY0 (-sGy)
@@ -66,7 +69,11 @@ static void ad(u64 reg, u64 v)
     *sP++ = reg;
 }
 
-static u64 xyz(int x16, int y16) { return GS_SETREG_XYZ2(sOffX + (sGx << 4) + x16, sOffY + (sGy << 4) + y16, 0); }
+static u64 xyz(int x16, int y16)
+{
+    return GS_SETREG_XYZ2(sOffX + (sPx << 4) + (((x16 + (sGx << 4)) * sKx + 128) >> 8),
+                          sOffY + (sPy << 4) + (((y16 + (sGy << 4)) * sKy + 128) >> 8), 0);
+}
 
 static void close_list(void);
 
@@ -186,7 +193,8 @@ static u64 tex0(int obj, int pal, int load)
 static void set_scissor(int x0, int x1, int y0, int y1)
 {
     sBand[0] = x0, sBand[1] = x1, sBand[2] = y0, sBand[3] = y1;
-    ad(GS_SCISSOR_1, GS_SETREG_SCISSOR(x0 + sGx, x1 - 1 + sGx, y0 + sGy, y1 - 1 + sGy));
+    ad(GS_SCISSOR_1, GS_SETREG_SCISSOR(sPx + (((x0 + sGx) * sKx + 128) >> 8), sPx + (((x1 + sGx) * sKx + 128) >> 8) - 1,
+                                       sPy + (((y0 + sGy) * sKy + 128) >> 8), sPy + (((y1 + sGy) * sKy + 128) >> 8) - 1));
 }
 
 static void flat_rect(int x0, int y0, int x1, int y1, u32 a) { flat(0, 0, 0, 0, a, x0, y0, x1, y1); }
@@ -202,7 +210,7 @@ static int win_inside_v(int y)
 static void draw_mask(u32 fbp)
 {
     int y, y0;
-    ad(GS_FRAME_1, GS_SETREG_FRAME(fbp, sTBW, GS_PSM_CT32, 0x00FFFFFF));  // alpha only
+    ad(GS_FRAME_1, GS_SETREG_FRAME(fbp, sTBW, GS_PSM_CT16, 0x00FFFFFF));  // alpha only
     ad(GS_TEST_1, GS_SETREG_TEST(0, 1, 0, 0, 0, 0, 1, 1));
     flat_rect(VX0, VY0, VX1, VY1, 0);  // outside the GBA screen counts as outside the window
     for (y0 = 0; y0 < 160; y0 = y) {
@@ -222,7 +230,7 @@ static void draw_mask(u32 fbp)
             flat_rect(0, y0, r, y, 0x80);
         }
     }
-    ad(GS_FRAME_1, GS_SETREG_FRAME(fbp, sTBW, GS_PSM_CT32, 0xFF000000));  // colour only from here on
+    ad(GS_FRAME_1, GS_SETREG_FRAME(fbp, sTBW, GS_PSM_CT16, 0xFF000000));  // colour only from here on
 }
 
 typedef void (*DrawFn)(int arg);
@@ -239,7 +247,7 @@ static int sAlphaTest = 1;  // layers: alpha test on (colour 0 isn't drawn); fad
 static int sBlend, sEva, sEvb;
 static u32 sFbp;
 
-static void frame_mask(u32 m) { ad(GS_FRAME_1, GS_SETREG_FRAME(sFbp, sTBW, GS_PSM_CT32, m)); }
+static void frame_mask(u32 m) { ad(GS_FRAME_1, GS_SETREG_FRAME(sFbp, sTBW, GS_PSM_CT16, m)); }
 static void test(int date, int datm) { ad(GS_TEST_1, GS_SETREG_TEST(sAlphaTest, 5, 0x40, 0, date, datm, 1, 1)); }
 static void prim(int abe)
 {
@@ -504,26 +512,20 @@ static u32 vram_alloc_aligned(GSGLOBAL *gs, u32 size, u32 align)
     return (a + align - 1) & ~(align - 1);
 }
 
-// GS memory for the tiles, CLUTs and each instance's render target (returned: video.c draws it as the screen)
-u32 ps2_gsr_init(GSGLOBAL *gs, int instances)
+// GS memory for the tiles and CLUTs
+void ps2_gsr_init(GSGLOBAL *gs)
 {
-    int i;
     sOffX = gs->OffsetX, sOffY = gs->OffsetY;
-    sVW = ps2_view_w, sVH = ps2_view_h, sTBW = (sVW + 63) / 64;
+    sVW = ps2_view_w, sVH = ps2_view_h;
     sGx = (sVW - 240) / 2, sGy = (sVH - 160) / 2;
     sTexAddr = vram_alloc_aligned(gs, 256 * 1024 / 2, 8192);
     sClutAddr = vram_alloc_aligned(gs, 32 * 256, 256);
-    for (i = 0; i < instances; i++)
-        sTarget[i] = vram_alloc_aligned(gs, sTBW * 64 * sVH * 4, 8192);
-    ps2_log("gsrender: tiles %x, CLUTs %x, targets %x %x", sTexAddr, sClutAddr, sTarget[0],
-            sTarget[1]);
-    return 0;
+    ps2_log("gsrender: tiles %x, CLUTs %x", sTexAddr, sClutAddr);
 }
 
-u32 ps2_gsr_target(int inst) { return sTarget[inst]; }
-
-// draw the mapped instance's screen into its render target
-void ps2_gsr_draw(int inst)
+// draw the mapped instance's screen into the 16-bit frame buffer at fb (fbw: its width / 64), in the rectangle x, y,
+// w, h (buffer pixels)
+void ps2_gsr_draw(u32 fb, int fbw, int x, int y, int w, int h)
 {
     int prio, b, eff;
     u16 bd = PAL[0];
@@ -532,7 +534,8 @@ void ps2_gsr_draw(int inst)
     win0h_lines();
     upload();
     sP = sDraw, sTag = NULL, sDropped = 0;
-    sFbp = sTarget[inst] / 8192;
+    sFbp = fb / 8192, sTBW = fbw;
+    sPx = x, sPy = y, sKx = (w * 256 + sVW / 2) / sVW, sKy = (h * 256 + sVH / 2) / sVH;
     room_check();
     sBlend = ((sBldcnt >> 6) & 3) == 1;
     sEva = IO16(0x52) & 0x1F, sEvb = (IO16(0x52) >> 8) & 0x1F;
@@ -619,14 +622,16 @@ static void gif_ad(u64 reg, u64 data)
     send(packet, packet + 4);
 }
 
-// the instance's render target into dst (sTBW * 64 x view height, 64-byte aligned); 0 if the transfer got stuck
-int ps2_gsr_read(int inst, u32 *dst)
+// the rectangle x, y, w x h (w * h a multiple of 8) of the 16-bit frame buffer fb into dst (w * h words, 64-byte
+// aligned), expanded to 32 bits as mGBA's renderer does; returns 0 if the transfer got stuck
+int ps2_gsr_read(u32 fb, int fbw, int x, int y, int w, int h, u32 *dst)
 {
-    int spins, ok;
+    int spins, ok, i;
+    u16 *p = (u16 *)dst;
     *RB_CSR = 2;
-    gif_ad(GS_BITBLTBUF, GS_SETREG_BITBLTBUF(sTarget[inst] / 256, sTBW, GS_PSM_CT32, 0, 0, 0));
-    gif_ad(GS_TRXPOS, 0);
-    gif_ad(GS_TRXREG, GS_SETREG_TRXREG(sTBW * 64, sVH));
+    gif_ad(GS_BITBLTBUF, GS_SETREG_BITBLTBUF(fb / 256, fbw, GS_PSM_CT16, 0, 0, 0));
+    gif_ad(GS_TRXPOS, GS_SETREG_TRXPOS(x, y, 0, 0, 0));
+    gif_ad(GS_TRXREG, GS_SETREG_TRXREG(w, h));
     gif_ad(GS_FINISH, 0);
     gif_ad(GS_TRXDIR, 1);
     for (spins = 0; !(*RB_CSR & 2) && spins < 20000000; spins++)
@@ -635,7 +640,7 @@ int ps2_gsr_read(int inst, u32 *dst)
     *VIF1_STAT = 0x00800000;  // VIF1 FIFO direction GS -> EE
     *RB_BUSDIR = 1;
     *D1_MADR = (u32)dst & 0x0FFFFFFF;
-    *D1_QWC = sTBW * 64 * sVH * 4 / 16;
+    *D1_QWC = w * h * 2 / 16;
     *D1_CHCR = 0x100;
     for (spins = 0; (*D1_CHCR & 0x100) && spins < 20000000; spins++)
         ;
@@ -648,6 +653,8 @@ int ps2_gsr_read(int inst, u32 *dst)
     *VIF1_STAT = 0;
     *RB_CSR = 2;
     gif_ad(GS_FINISH, 0);  // leave FINISH set, as gsKit's queues expect (tp-ps2 walkthrough step 26)
-    InvalidDCache(dst, (u8 *)dst + sTBW * 64 * sVH * 4 - 1);  // the DMA wrote memory behind the cache
+    InvalidDCache(dst, (u8 *)dst + w * h * 2 - 1);  // the DMA wrote memory behind the cache
+    for (i = w * h - 1; i >= 0; i--)  // 16 to 32 bits, from the end: each word lands at or after its halfword
+        dst[i] = rgb8(p[i] & 0x7FFF);
     return ok;
 }

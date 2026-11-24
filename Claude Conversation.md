@@ -20029,3 +20029,153 @@ Runs cleanly: 34 of 34 check frames identical in the middle, no TLB misses. The 
 
 - tool `SendUserFile`: 
 
+## Claude
+
+The vertical split works: two 320x480 views side by side fill the 640x480 frame (screenshot attached). The PCSX2 performance overlay covers the top right of the right-hand view. Build it with `make -f Makefile.ps2 INSTANCES=2 WIDE_VIEW=2 GS_RENDER=1`. Committed as `8a050a1`, with walkthrough Step 41; `make compare` reports OK.
+
+**What you see:** each player gets the full width of the room between the cliffs, and the room extends well above and below the players.
+
+**Same limits as the wide view:**
+- **HUD:** the hearts, the item icons and the rupee counter sit in the middle band, where the GBA screen is, instead of at the top and bottom.
+- **Sprites:** they only appear inside that middle 240x160. Enemies or Links above or below it are missing.
+- **Camera:** it's still centred for a 240x160 screen.
+
+**Checks and cost:**
+- All 34 check frames match the GBA exactly in the middle, with no TLB misses.
+- Drawing both views costs 2.98M cycles a frame, slightly less than the two 640x240 views.
+
+**What the option is:** `WIDE_VIEW=2` gives two players 320x480 views and places views taller than wide side by side. It requires the GS renderer, because the software renderer's line buffers stop at 240 lines. GS memory is tight: about 3.8 MB of the 4 MB is used.
+
+## User
+
+Why is GS memory tight? Is there anything we can do to free up RAM? My hope was eventually to have 9 screens drawing on a 1280x720 canvas
+
+## Claude
+
+# GS memory, and what 9 screens on 1280x720 would need
+
+## Why it's tight
+
+The GS has 4 MB of its own memory. For the vertical split:
+
+| Use | Size |
+|---|---|
+| Displayed frame, 640x480 at 32-bit colour, double-buffered (one shown while the next is drawn) | 2 × 1.2 MB = 2.4 MB |
+| One render target per player (each screen is drawn there, then copied into the frame), 320x480 at 32-bit | 2 × 0.6 MB = 1.2 MB |
+| Tile graphics texture and palettes | 0.14 MB |
+| **Total** | **≈ 3.75 MB of 4 MB** |
+
+## What frees it
+
+**1. Draw each screen straight into the frame.** The per-player render targets only exist because the first version copied a finished picture onto the screen. The renderer can instead draw each player's view directly at its spot in the frame, clipped to its rectangle. That saves the whole 1.2 MB, and the memory needed no longer grows with the number of players.
+
+The window mask and the blend flag would then live in the frame's alpha instead of the target's. The pixel check would read the screen's rectangle from the frame.
+
+**2. 16-bit colour instead of 32-bit.** The GBA only has 15-bit colour (5 bits per channel), so a 16-bit frame (5:5:5 plus 1 bit of alpha) loses no colour at all. That halves the frame buffers.
+
+The 1 alpha bit is enough: the window mask and the blending flag each need one bit, and the renderer never uses both at once. While blending, the window is done with clipping rectangles instead. Blending and fades would then round to 5 bits, which is how the GBA itself does it, so it may even match mGBA more closely.
+
+The texture and palettes are already shared: one copy, reused for each screen in turn.
+
+## 1280x720 with 9 screens
+
+With both changes:
+
+| Use | Size |
+|---|---|
+| 1280x720 at 16-bit, double-buffered | 2 × 1.84 MB = 3.69 MB |
+| Tiles and palettes | 0.14 MB |
+| Per-player targets | none |
+| **Total** | **≈ 3.8 MB** |
+
+It fits, though barely, and it fits the same way for 1 or 9 players. A 3x3 grid on 1280x720 gives each player 426x240, a little wider than the 320x240 view. Today's 720p mode draws 640x720 and doubles it horizontally because of this memory limit. With 16-bit colour and no targets, true 1280x720 becomes possible.
+
+## The bigger limits are on the EE side
+
+GS memory is the easiest part of 9 players. The rest:
+
+- **The game supports 4 players.** Its arrays are sized 4, player numbers are 2 bits wide, and the link protocol assumes 4. This is the Planning Doc's "more than 4 players" item.
+- **Main RAM layout:** each game copy gets its own 1 MB block, and only 7 such blocks fit in the PS2's 32 MB as it's laid out now. With the shared world, a player needs about 13 KB, not 1 MB.
+- **CPU:** copying memory between players costs about 0.9M cycles per player, so 9 players would spend 8M on copying alone, against a 4.9M frame budget. The shared world removes that.
+- **Drawing:** each wide view costs roughly 1–1.5M EE cycles to draw today. Nine would need the tile upload done once per frame (it's per screen today) and cheaper per-tile drawing commands, or running at 30 fps.
+
+So 9 players depends on the shared world (Phase 5) and the "more than 4 players" work. The two GS changes above are small and worth doing now. They free the memory for any layout, and drawing straight into the frame also removes a copy per screen. I'd estimate about a session for both, with the existing pixel checks proving nothing changed.
+
+Want me to do them now?
+
+## User
+
+Yes
+
+## Claude
+
+Starting with how gsKit handles the double buffer, since the renderer will now draw straight into it.
+
+- tool `Bash`: G=$(ls -d ~/ps2dev/gsKit 2>/dev/null || ls -d $PS2DEV/gsKit); ls $G; find / -name "gsInit.c" -path "*gsKit*" 2>/dev/null | head -2; grep -rn "ActiveBuffer" $G/i
+
+- tool `Bash`: cd /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad && mkdir -p gskit_src && cd gskit_src && for f in ee/gs/
+
+- tool `Bash`: cd /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/gskit_src && grep -n "PMODE\|Dithering\|DTHE\|ScreenBuff
+
+- tool `Bash`: sed -n 345,365p src/ps2/video.c
+
+- tool `Bash`: cd /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/gskit_src && sed -n 285,296p gsInit.c; grep -n "FirstFra
+
+## Claude
+
+Plan confirmed: gsKit draws into `ScreenBuffer[ActiveBuffer & 1]`, and only display circuit 2 is on with a fixed alpha, so the frame's alpha bits don't affect the picture. Making the changes:
+
+- tool `Bash`: python3 - <<'EOF' p='src/ps2/gsrender.c'; s=open(p).read() def rep(old,new):     global s     assert old in s, old     s=s.replace(old,new,1) rep("""static u32 
+
+- tool `Bash`: sed -n 6,11p src/ps2/gsrender.c
+
+- tool `Bash`: sed -i '10s/.*/\/\/ Colour 0 of each palette is transparent through the alpha test./' src/ps2/gsrender.c && python3 - <<'EOF' p='src/ps2/video.c'; s=open(p).rea
+
+- tool `Bash`: python3 - <<'EOF' p='src/ps2/video.c'; s=open(p).read() s=s.replace("static const struct Mode *sMode;\n","static const struct Mode *sMode;\nstatic int sInstance
+
+## Claude
+
+Builds. Running the normal 2-player replay (240x160 screens, 480p):
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; bash $S/pshot.sh d2 110; grep -a "pixels differ" $S/d2.l
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -a "pixels differ" $S/d2.log | sed 's/.*: \([0-9]*\
+
+- tool `Bash`: grep -n "if (((a ^ b) & 0xFFFFFF) && !diff++)" -B2 -A5 src/ps2/video.c
+
+- tool `Bash`: grep -n "diff++\|d |= \|far += d\|by more than one level" src/ps2/video.c
+
+- tool `Bash`: sed -n 268,282p src/ps2/video.c
+
+- tool `Bash`: python3 - <<'EOF' p='src/ps2/video.c'; s=open(p).read() old="""                    u32 a = gs[(y + oy) * w + x + ox], b = PIXELS(inst)[y * sTexW + x], c, d = 0;
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -a "pixels differ" $S/d2.log | sed 's/.*frame \([0-
+
+- tool `Bash`: touch src/ps2/video.c src/ps2/main.c && systemd-run --user --scope -q -p MemoryMax=6G make -f Makefile.ps2 INSTANCES=2 WIDE_VIEW=2 GS_RENDER=1 elf -j8 2>&1 | gr
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -ac "pixels differ" $S/vs2.log; grep -a "gsrender\|
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -a "pixels differ" $S/vs2.log | sed 's/.*: \([0-9]*
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/vs2_crop.png
+
+- tool `Bash`: python3 - <<'EOF' p='src/ps2/gsrender.c'; s=open(p).read() def rep(old,new):     global s     assert old in s, old     s=s.replace(old,new,1) rep("""static int 
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; ls -la $S/vs3.log; grep -a "pixels differ" $S/vs3.log | 
+
+- tool `Bash`: cp src/ps2/gsrender.c /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/gsr_ct16.c && cp src/ps2/video.c /tmp
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cp $S/gsr_ct16.c src/ps2/gsrender.c && cp $S/video_ct16.
+
+- tool `Bash`: touch src/ps2/main.c src/ps2/video.c && systemd-run --user --scope -q -p MemoryMax=6G make -f Makefile.ps2 INSTANCES=1 VIDEO_MODE=2 elf -j8 2>&1 | grep -E " err
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/p1x2_crop.png
+
+## Claude
+
+A single player at 2x draws sharp and centred. Updating the docs and committing:
+
+- tool `Bash`: cat >> "docs/Running Walkthrough.md" <<'EOF'  ## Step 42: GS renderer draws straight into a 16-bit frame (2026-11-24)  GS memory was nearly full with the vertic
+
+- tool `PushNotification`: 
+
