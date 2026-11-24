@@ -124,7 +124,21 @@ Phase 0: measure and map (no game changes)
       - VRAM ~4.4 KB: BG maps at 0x0600C000-0x0600FFFF, 64 bytes of tiles at 0x06004000/0x06005000; OAM 35 bytes
       - The same everywhere: palettes, all sprite tiles, the world (entities, room data)
       Naming each block is Phase 1 step 5's job.
-- [ ] 4. Find every read of the player's own number (SIOCNT ID, the link state) in game code
+- [x] 4. Find every read of the player's own number (2026-11-24). `sub_080369B4` reads SIOCNT's ID bits once
+      (when linking) into the byte at 0x03000414 (`gLCDRegisterBuffer`, misnamed: it's the player number), and
+      `sub_080381A8` points `gUnknown_03006730` at the player's record (`&gUnknown_03006A30[id]`). Reads in
+      mGBA over session 1 (44,522 frames: lobby, one whole stage, back to Choose a Stage), `mgba_run --reads`:
+      - the number, 18 functions: "is it mine?" checks on entities and sounds (`sub_0800D1C0`, `sub_08042DB0`,
+        `sub_0805BF9C`, `sub_0803719C`, `sub_08052C0C`), per-player array indexes (`gUnknown_03000940[id]` keys,
+        `gUnknown_03005E10[id]`, `gUnknown_0200B1D0[id]` link ring, `gUnknown_03006A30[id]`), the HUD/menus
+        (`sub_08030314`, `sub_08037574`, `sub_08052CE4`, file select `sub_080128EC`/`sub_08012BE4`/`sub_0802CD3C`/
+        `sub_0802CFBC`), and `sub_0800DBE0`, `sub_0800E1D4`, `sub_0800E324`, `sub_080381A8`, `sub_0803883C`,
+        `sub_08055A08`
+      - the record pointer, 5 functions: `sub_0802C89C`, `sub_0802CF70`, `sub_0802CFBC`, `sub_0802D190`,
+        `sub_0805792C`
+      Not covered: ARM-mode code (IWRAM copies), Thumb code run from RAM, copies of the number into other
+      variables (entities' `form` holds a player number but is compared, not copied, in the sites seen), and scenes
+      session 1 doesn't reach (other stages, bosses, results, shop).
 
 Phase 1: the world runs once (`FS_SHARED_WORLD`, breaks GBA matching on purpose)
 - [ ] 5. Split the frame: world update once, then per player with only that player's state block swapped in

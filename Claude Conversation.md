@@ -19509,3 +19509,89 @@ P1 has the game paused in the stage, and each screen's camera follows its own Li
 
 - tool `Bash`: git checkout src/ps2/main.c src/ps2/link.c && git status --short && python3 - <<'EOF' p='docs/Planning Doc.md'; s=open(p).read() old="- [ ] 2. Log and decode th
 
+- tool `PushNotification`: 
+
+## Claude
+
+Steps 2 and 3 are done and both support the shared-world plan. The link cable carries only inputs, and the two players' copies of the game differ in about 13 KB of their 480 KB of memory. Both results are in the plan ([Planning Doc.md](docs/Planning Doc.md), Phase 5) and walkthrough Step 37, committed as `e006786` (`make compare` reports OK).
+
+Both come from the 2-player replay, which covers the lobby, Choose a Stage, the stage, and P1 opening the pause menu. I used temporary logging and memory dumps, and removed them afterwards.
+
+**Step 2, the link packet:** I logged all 7,656 packets the two players sent. Each is 12 halfwords per player per frame:
+- a frame counter and status byte, then a checksum;
+- 20 bytes of game data: a byte naming the current screen, that player's buttons for the last 5 frames (resent as a safety margin), another frame counter, and 6 bytes that were always zero.
+
+No world state is ever sent. Each GBA works out the whole world on its own from everyone's inputs. The planning doc's old condition for a shared world ("only if the cable carries little more than inputs") is met. Screens the replay doesn't reach are untested: the shop, results, item choice, and any 4-player stage.
+
+**Step 3, what differs between players:** at a stage frame where each camera followed its own Link, about 13 KB differ, in 31 of the 120 4 KB pages:
+
+| Area | Size | What's there |
+|---|---|---|
+| Main RAM | ~10 KB | Largest block (~6 KB) is likely a background map around each player's camera. Also each player's own save data, text boxes, a few small per-player records, link state |
+| Fast RAM | ~0.7 KB | Scroll registers, two ~300-byte blocks that look like sprite lists, a few entity bytes |
+| Video memory | ~4.4 KB | Background maps, 128 bytes of tiles, 35 bytes of the sprite table |
+
+The world itself is identical in both: enemies, objects and room data, plus all palettes and every sprite tile. So in Phase 2 the graphics can be uploaded once for all players.
+
+**Cheaper switches can't skip memory yet.** Copying only the 31 differing pages would be far less work. But it isn't possible while every copy of the game still runs the world, because the shared pages would get each frame's world update once per player. It only works once the world runs once, which is Phase 1.
+
+**Next is step 4:** finding every place the game uses its own player number. The number arrives through the link status register, which only [io.c](src/ps2/io.c) and [link.c](src/ps2/link.c) answer. I'd log where the game reads it and where it stores it, then look for code that reads that stored copy. Those are the "this is me" branches that Phase 1 has to make per player.
+
+## User
+
+Proceed
+
+- tool `Bash`: sed -n 640,675p src/rom2.c; sed -n 745,780p src/rom2.c; grep -n "struct Struct02030790" -A25 include/types.h | head -40
+
+- tool `Bash`: grep -rln "4000128\|SIOCNT\|REG_SIOMLT\|4000120" src asm --include=*.c --include=*.s --include=*.inc 2>/dev/null | grep -v "src/ps2\|src/auto" | head -20
+
+- tool `Bash`: cat asm/non_matching/fs_game/sub_080369B4.inc | head -80; grep -n "sub_080369B4" -r src/*.c | head
+
+- tool `Bash`: grep -n "gLCDRegisterBuffer" sym_iwram.txt include/*.h | head; grep -rl "gLCDRegisterBuffer" src/*.c asm data 2>/dev/null | grep -v auto | while read f; do echo
+
+- tool `Bash`: grep -n "survey\|writeVideoRegister\|argv\[\|--players\|strcmp" tools/mgba_run.c | head -50; grep -n "^mgba_run\|mgba_run:" -A6 Makefile tools/Makefile* 2>/dev/
+
+- tool `Bash`: sed -n 1,40p tools/mgba_run.c; grep -n "loads\b\|--loads\|loadsPath\|watch" tools/mgba_run.c | head -30; cat tools/mgba_run.sh | head -30
+
+- tool `Bash`: sed -n 255,330p tools/mgba_run.c; sed -n 965,995p tools/mgba_run.c
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; ls $S/replay_orig $S/rp 2>/dev/null | head; grep -n "mgb
+
+- tool `Bash`: grep -n -i "recording\|replay" "docs/Running Walkthrough.md" | grep -i "dir\|recordings/\|play " | tail -10; ls recordings 2>/dev/null; ls reference | head -20
+
+- tool `Bash`: sed -n 1015,1030p "docs/Running Walkthrough.md"; ls recordings/session1 recordings/start_linked tests | head -30
+
+## Claude
+
+Adding a `--reads ADDR` watch to the mGBA runner, then replaying the recorded 2-player play session to see which code reads the player-number byte.
+
+- tool `Bash`: python3 - <<'EOF' p='tools/mgba_run.c'; s=open(p).read() s=s.replace("""// --survey FILE: which video""","""// --reads ADDR: every distinct Thumb instruction th
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; time (timeout 900 tools/mgba_run baserom.gba 44522 --pla
+
+## Claude
+
+48 distinct read sites. Mapping them to functions:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; ls *.elf 2>/dev/null; arm-none-eabi-nm -n zeldaalttp.elf
+
+- tool `Bash`: for f in sub_0800D1C0 sub_0800DBE0 sub_0800E1D4 sub_0800E324 sub_080128EC sub_08012BE4 sub_0802CD3C sub_0802CFBC sub_08030314 sub_0803719C sub_08037574 sub_0803
+
+- tool `Bash`: for f in sub_0800D1C0 sub_0800DBE0 sub_0800E324 sub_0802CD3C sub_08030314 sub_0803719C sub_080381A8 sub_0803883C sub_08042DB0 sub_08052C0C sub_08055A08 sub_0805
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; timeout 900 tools/mgba_run baserom.gba 44522 --players 2
+
+## Claude
+
+Waiting for the second watch run to finish (about two minutes).
+
+- tool `Bash`: cat /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/tasks/b3pbhnfyw.output
+
+- tool `Bash`: timeout 100 bash -c 'while [ ! -s /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/tasks/b3pbhnfyw.output ]; do sleep 5
+
+- tool `Bash`: grep -n "session1" "docs/Running Walkthrough.md" | head -5; grep -n -A3 "recordings/session1\b\|session 1:" "docs/Planning Doc.md" | head
+
+- tool `Bash`: grep -n -i "session 1\|first recording\|recorded session\|--play" "docs/Running Walkthrough.md" | head -8
+
+- tool `Bash`: python3 - <<'EOF' p='docs/Planning Doc.md'; s=open(p).read() old="- [ ] 4. Find every read of the player's own number (SIOCNT ID, the link state) in game code" 
+

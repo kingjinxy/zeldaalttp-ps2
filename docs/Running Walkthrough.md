@@ -1129,3 +1129,17 @@ Both measured on the 2-player replay with temporary code that isn't kept: a pack
 - A note for cheaper switches: swapping only the differing pages isn't possible while every instance runs the
   world, because shared pages would get the world update once per instance. That only works once the world runs
   once (Phase 1).
+
+## Step 38: phase 0 step 4, where the game uses its own player number (2026-11-24)
+
+- The number comes from SIOCNT once: `sub_080369B4` (fs_game asm) stores the ID bits in the byte at 0x03000414,
+  which the symbol file calls `gLCDRegisterBuffer` (the name is wrong; the step 3 diff showed this byte differs).
+  `sub_080381A8` also keeps a pointer to the player's own record, `gUnknown_03006730 = &gUnknown_03006A30[id]`.
+- `tools/mgba_run --reads ADDR` (new): every distinct Thumb load covering ADDR, with its caller, using the same
+  instruction decoder as `--loads`. Session 1 replay (44,522 frames, about 2 minutes each run).
+  - 0x03000414: 48 load sites in 18 functions. Kinds: "is this entity/sound mine?" (compares with an entity's
+    `form`), indexes into per-player arrays (keys, the link ring buffer, player records), HUD and menus, the file
+    select. List in the Planning Doc, Phase 5 step 4.
+  - 0x03006730: 5 functions, mostly the file select.
+- These are the branches Phase 1 makes per player. Ones the session doesn't reach, ARM code and copies of the
+  number held elsewhere still need a look then.

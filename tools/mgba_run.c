@@ -12,6 +12,8 @@
 // and "morph OLD NEW 0 0" when an object reaches DoObjectEntity with another subtype than before. Each distinct one once, as
 //   KIND SRC DST N CALLER    KIND = swiNN | dma | cpu32 | cpu16 | cpu8; N = units (swi: r2; dma: count
 // and width as in the register; cpu: register width); DST is 0 for cpu loads. Same run as without it.
+// --reads ADDR: every distinct Thumb instruction that loads the byte at ADDR (any width covering it), all GBAs, with
+// its caller (lr): "read PC LR WIDTH". ARM-mode code (the game's IWRAM copies) isn't decoded.
 // --survey FILE: which video features the game uses (for the PS2 GS renderer): per frame, display modes, windows,
 // blend settings, sprite attributes, HBlank DMA and HBlank/VCount interrupts, and video register writes during the
 // visible lines (a register changed mid-frame, from any source). Written to FILE at the end: one line per feature
@@ -232,6 +234,8 @@ static FILE *rec[MAX_GBAS];         // --play: recorded inputs
 static int frameReady;              // --play: GBA 0 finished a frame
 static uint8_t covered[0x800000 / 16];
 static FILE *loads;                 // --loads FILE
+static uint32_t readWatch;          // --reads ADDR
+static uint64_t readSeen[4096];     // --reads: PC/LR pairs logged
 static const char *loadsPath;
 static uint8_t ramWord[0x48000 / 4];  // --loads: EWRAM (0x40000) and IWRAM words read by a 32-bit CPU load
 static uint32_t dmaSeen[MAX_GBAS][4][3];  // last logged source, dest, control per DMA channel
@@ -260,6 +264,7 @@ static void loadsBefore(struct mCore *core, struct ARMCore *cpu) {
 	if (pc >> 24 != 8) return;
 	uint16_t op = core->busRead16(core, pc);
 	uint32_t *r = (uint32_t *) cpu->gprs;
+	if (!loads) goto decode;
 	if (pc == 0x08012728) {  // entity registration (type, entity): type and subtype are set by now
 		logLoad("ent", core->busRead8(core, r[1] + 8), core->busRead8(core, r[1] + 9), 0, r[14] - 1);
 		lastSubtype[(r[1] >> 2) & 0xFFFF] = core->busRead8(core, r[1] + 9) | 0x100;
@@ -281,6 +286,7 @@ static void loadsBefore(struct mCore *core, struct ARMCore *cpu) {
 		}
 		return;
 	}
+decode:;
 	uint32_t a = 0; const char *k = NULL;
 	if ((op & 0xF800) == 0x6800) a = r[op >> 3 & 7] + (op >> 6 & 31) * 4, k = "cpu32";       // ldr [rb, #imm]
 	else if ((op & 0xF800) == 0x7800) a = r[op >> 3 & 7] + (op >> 6 & 31), k = "cpu8";        // ldrb [rb, #imm]
@@ -292,6 +298,16 @@ static void loadsBefore(struct mCore *core, struct ARMCore *cpu) {
 	} else if ((op & 0xFE00) == 0x5600) a = r[op >> 3 & 7] + r[op >> 6 & 7], k = "cpu8";      // ldsb [rb, ro]
 	else if ((op & 0xFA00) == 0x5A00) a = r[op >> 3 & 7] + r[op >> 6 & 7], k = "cpu16";      // ldrh/ldsh [rb, ro]
 	else if ((op & 0xF800) == 0xC800 && (op & 0xFF)) a = r[op >> 8 & 7], k = "cpu32";         // ldmia (first word)
+	if (k && readWatch) {
+		uint32_t w = k[3] == '3' ? 4 * ((op & 0xF800) == 0xC800 ? __builtin_popcount(op & 0xFF) : 1) : k[3] == '1' ? 2 : 1;
+		if (readWatch - (a & ~(w < 4 ? w - 1 : 3)) < w) {
+			uint64_t key = (uint64_t) pc << 32 | (r[14] - 1);
+			int h = (key * 0x9E3779B97F4A7C15ull) >> 52;
+			while (readSeen[h] && readSeen[h] != key) h = (h + 1) & 4095;
+			if (!readSeen[h]) { readSeen[h] = key; printf("read %08X %08X %u\n", pc, r[14] - 1, w); }
+		}
+	}
+	if (!loads) return;
 	if (k && k[3] == '3' && (a >> 24 == 2 || a >> 24 == 3)) {  // 32-bit reads from RAM, for RAM copies of ROM data
 		uint32_t o = a >> 24 == 2 ? (a & 0x3FFFF) : 0x40000 + (a & 0x7FFF);
 		int words = (op & 0xF800) == 0xC800 ? __builtin_popcount(op & 0xFF) : 1;
@@ -842,6 +858,7 @@ int main(int argc, char **argv) {
 		else if (!strcmp(o, "--play")) play = v;
 		else if (!strcmp(o, "--view")) view = atoi(v);
 		else if (!strcmp(o, "--survey")) surveyPath = v;
+		else if (!strcmp(o, "--reads")) readWatch = strtoul(v, NULL, 0);
 		else if (!strcmp(o, "--start")) start = v;
 		else if (!strcmp(o, "--save-states")) saveStates = strtoul(v, NULL, 0);
 		else if (!strcmp(o, "--trace")) traceDir = v;
@@ -971,14 +988,14 @@ int main(int argc, char **argv) {
 					p->core->step(p->core);
 				}
 				cpu->irqh.processEvents(cpu);
-			} else if (coverage || loads) {
+			} else if (coverage || loads || readWatch) {
 				// ARMRunLoop with each instruction's address recorded before it runs (as mGBA's
 				// ARMDebuggerCheckBreakpoints computes it), so GBAs interleave exactly as with runLoop.
 				struct ARMCore *cpu = ((struct GBA *) p->core->board)->cpu;
 				while (cpu->cycles < cpu->nextEvent) {
 					uint32_t pc = cpu->gprs[ARM_PC] - (cpu->executionMode == MODE_THUMB ? 2 : 4) - 0x08000000;
 					if (pc < 0x800000) covered[pc >> 4] |= 1 << ((pc >> 1) & 7);
-					if (loads) loadsBefore(p->core, cpu);
+					if (loads || readWatch) loadsBefore(p->core, cpu);
 					p->core->step(p->core);
 					if (loads) loadsAfter(i, p->core->board);
 				}
