@@ -1306,3 +1306,46 @@ ROM:
   Group 17 loads a 12-palette run that puts it in Link 1's slot, and the group's next record loads green Link over it,
   so it's never shown. Session 1 never loads it at all.
 - So no fifth colour exists; the Planning Doc's "more than 4 players" section has what new ones would need.
+
+## Step 46: shared world 5c, first version (2026-11-24)
+
+`make -f Makefile.ps2 SHARED_WORLD=1` (off by default; `SHARED_CHECK=1` adds a check). `src/ps2/shared.c`:
+
+- **Overlay.** `tools/ps2/overlay_ranges.py` turns the per-player map (`docs/shared_world/per_player_map.bin`) into
+  `src/ps2/overlay_ranges.h`: 221 ranges, 49 KB. Fixed ranges are added for per-player state the map can't show
+  because it stays equal between GBAs running in step (each found by `SHARED_CHECK`, below): the link state and its
+  packet buffers (0x02030790-0x02030A9F), the key/packet struct (0x03000FC0-0x0300102F), the sprite-list double
+  buffer's parity and pointers, HUD/text structs, the camera struct, the pause UI; and the I/O page, the IWRAM stack
+  top, VRAM's per-player tiles and BG maps, OAM. The map now also has the PS2 2-player replay's stage in mGBA
+  (`recordings/fs_only.gba`, `build/ps2/replay_p1/p2.inputs`), which pauses: 1,813 bytes session 1 never showed.
+- **Frames.** Instances run separately until all are in the stage loop (`gMainState` 2, `gUnknown_03005050` 9); then
+  instance 0's thread runs each whole frame (the world and player 0's view), and for each other player the overlay is
+  swapped into the live block (`overlay_swap`: its bytes out to the holder's saved block, the player's in) and
+  `view_pass` runs on the main thread: keys and link packet (`rom2_read_keys`, `sub_0800C54C`, `sub_08036864`,
+  `sub_08037574`, `sub_080368A0`), the pause path or draw walk + camera + HUD + sprite list, text, `sub_0802C940`, the
+  flip and `ps2_vblank_run` (frame.c's VBlank/VCount work, split out of `ps2_vblank_wait`); gCpu is saved around it.
+  `ps2_inst_ptr` returns a player's saved byte for overlay offsets and the live one otherwise, so the link exchange
+  works unchanged. Leaving the stage rebuilds each saved block as the live world plus its overlay.
+- **SHARED_CHECK** copies EWRAM and IWRAM around each view pass and logs every changed range that isn't in the
+  overlay: the view pass should change no world byte. First runs: the link state (whose corruption sent the game to
+  a link-error state), sprite-buffer pointers, HUD/text structs, the camera; all added. Last run: none.
+- **Bugs on the way.**
+  - The range generator merged the IWRAM stack top (0x47B00-0x47FFF) with the I/O page (0x48000) because the offsets
+    touch: the copy ran past IWRAM's end instead of swapping I/O, so player 0 showed player 1's scroll registers. It
+    now never merges across a region boundary (and asserts it).
+  - `sub_080008A8` (thought to be the draw step in Step 44) builds the collision lists. The draw step is
+    `sub_08003688`: a visible, on-screen entity goes into one of four draw lists (pointers at 0x08003508), which
+    `sub_08000BAC` turns into sprites. Without a draw walk player 1 had no sprites.
+  - Debug dumps with one large `fwrite` from a TLB-mapped address (0x02000000) wrote zeros: host file I/O hands the
+    pointer to the IOP, which can't follow the mapping. Staged through kseg0 (unused RAM at 0x01F00000) they're right;
+    the comparisons made before that were invalid and were redone.
+- **Results** (2-player replay, against the separate-instance build): copy 0's memory (all regions; only DMA3's
+  count register byte differs) and player 0's screen identical at every check frame (34). Player 1's screen identical
+  until the pause; in the paused frames the bar and some sprites differ. Its memory differs in: the pause flag
+  (`gUnknown_03000E20` +0x11), the pause UI (0x0201EF18), text (0x0202A5E0, 0x0202D550...) and its glyph tiles (VRAM
+  0x06005400+), the camera's fields past +0x27, a few entity bytes, and the sprite list: 5 extra shadow-like sprites
+  (tile 768/769), because the draw walk calls `sub_08003688` for entities the real frame doesn't. The pause is decided
+  per GBA inside the stage frame (menu for the player who paused, the "Pn PAUSE!" bar for the others), which only
+  player 0 runs now.
+- **Cost:** the game's share for two players 0.51 M cycles a frame (1.84 M separate), no memory switches; drawing
+  1.3 M.

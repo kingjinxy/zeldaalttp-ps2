@@ -24,6 +24,13 @@ void ps2_save_vblank(int inst);
 void ps2_log(const char *fmt, ...);
 void ps2_fatal(const char *fmt, ...);
 void AgbMain(void);
+#ifdef SHARED_WORLD
+extern int ps2_shared;
+void ps2_shared_init(void);
+void ps2_shared_views(int instances, void (*render)(int inst));
+int ps2_shared_try_enter(int instances, void (*select)(int inst));
+int ps2_shared_try_leave(int instances);
+#endif
 
 extern void *_gp;
 int ps2_main_thread;
@@ -67,7 +74,31 @@ int main(void)
         if ((sThread[i] = CreateThread(&t)) < 0)
             ps2_fatal("CreateThread failed for instance %d", i);
     }
+#ifdef SHARED_WORLD
+    ps2_shared_init();
+#endif
     for (;;) {
+#ifdef SHARED_WORLD  // in a stage the world runs once, in instance 0; the others get a view pass each (shared.c)
+        if (ps2_shared) {
+            WakeupThread(sThread[0]);
+            SleepThread();
+            ps2_video_render(0);
+            ps2_input_frame(0);
+            ps2_save_vblank(0);
+            // shortcut: on the frame instance 0 leaves the stage the others aren't drawn (one blank frame); they
+            // run their own frames from the next one
+            if (!ps2_shared_try_leave(INSTANCES)) {
+                ps2_shared_views(INSTANCES, ps2_video_render);
+                for (i = 1; i < INSTANCES; i++)
+                    ps2_save_vblank(i);
+            }
+            ps2_link_exchange();
+            ps2_video_present(INSTANCES);
+            if (++ps2_frame % 600 == 0 || ps2_frame <= 5)
+                ps2_log("frame %u", ps2_frame);
+            continue;
+        }
+#endif
         for (i = 0; i < INSTANCES; i++) {  // one game frame each (the instance wakes us at its VBlankIntrWait), drawn
             ps2_tlb_select(i);             // while its memory is in place
             if (ps2_frame == 0)
@@ -80,6 +111,9 @@ int main(void)
             ps2_save_vblank(i);
         }
         ps2_link_exchange();  // the packet the parent started this frame reaches everyone
+#ifdef SHARED_WORLD
+        ps2_shared_try_enter(INSTANCES, ps2_tlb_select);
+#endif
         ps2_video_present(INSTANCES);  // waits for vsync: the game runs at the PS2's 60 Hz
         if (++ps2_frame % 600 == 0 || ps2_frame <= 5)
             ps2_log("frame %u", ps2_frame);

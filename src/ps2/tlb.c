@@ -95,6 +95,16 @@ void ps2_tlb_map(int instances)
 void *ps2_inst_ptr(int inst, u32 a)
 {
     u32 r;
+#ifdef SHARED_WORLD  // the world is in the live block, other players' own bytes in their saved blocks (shared.c)
+    extern int ps2_shared;
+    void *ps2_shared_ptr(int inst, u32 off);
+    if (ps2_shared) {
+        for (r = 0; r < NREGIONS; r++)
+            if (a - sRegions[r].va < sRegions[r].used)
+                return ps2_shared_ptr(inst, sRegions[r].even + (a - sRegions[r].va));
+        ps2_fatal("ps2_inst_ptr: %08x isn't instance memory", a);
+    }
+#endif
     if (inst == ps2_cur_instance)
         return (void *)a;
     for (r = 0; r < NREGIONS; r++)

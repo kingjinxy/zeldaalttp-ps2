@@ -222,7 +222,16 @@ Phase 1: the world runs once (`FS_SHARED_WORLD`, breaks GBA matching on purpose)
         HUD, text, own sound: moves to the per-player pass); world code with a "mine?" check (e.g. `sub_08042DB0`:
         the check moves to the view pass if it only affects drawing, else the flag becomes per player); arrays
         already indexed by player (keys, link ring, `gUnknown_03006A30[id]`: shared as they are). (~1 session)
-  - [ ] 5c. Port, under `FS_SHARED_WORLD`: one world block plus a ~13 KB overlay per player, swapped by
+  - [ ] 5c, first version (2026-11-24, walkthrough Step 46): `make -f Makefile.ps2 SHARED_WORLD=1` (off by default),
+        `src/ps2/shared.c`. Works in a stage: player 0's screen is pixel-identical to the separate-instance build at
+        every check frame; the game's share for two players is 0.51 M cycles a frame (1.84 M separate), with no memory
+        switches. Player 1's screen is right while nobody pauses; still wrong: the pause (each GBA decides menu or
+        "Pn PAUSE!" bar inside the stage frame, which only player 0 runs: `gUnknown_03000E20` +0x11, the pause UI at
+        0x0201EF18, text and its glyph tiles at VRAM 0x06005400+), the camera's fields past +0x27, a few entity bytes,
+        and the sprite list (5 extra shadow sprites: the draw walk queues entities the real frame doesn't). Next: make
+        the stage frame's per-player branches (pause, its text) run in the view pass, and replace the draw walk with
+        the entities that really reached `sub_08003688` this frame.
+  - [ ] 5c, as planned: Port, under `FS_SHARED_WORLD`: one world block plus a ~13 KB overlay per player, swapped by
         `ps2_tlb_select`. Frame: player 0 runs the whole frame as now; players 1-3 get their overlay, the player
         number byte (0x03000414) and only the view functions from 5b. Keys straight into the arrays the link
         fills (step 6). Player 0's frame stays identical to today's, so mistakes show as wrong screens for

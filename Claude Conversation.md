@@ -20594,3 +20594,189 @@ The ROM has exactly four Link colours: green, red, blue and purple. There's no h
 
 Note this in the docs, then proceed to step 5c
 
+- tool `Bash`: python3 - <<'EOF' p='docs/Planning Doc.md'; s=open(p).read() old="- [ ] Data that comes in four (Link colours, palettes, HUD slots, spawn points, item/rupee spl
+
+## Claude
+
+Docs committed (`8e08f8e`). Now step 5c. First, how the port runs a game copy's frame and how port code can call game functions directly, since the view pass has to run game code from the main loop:
+
+- tool `Bash`: ls src/ps2 src/ps2/glue; grep -n "gba_call" src/ps2/*.c src/ps2/glue/*.c src/ps2/glue/*.h 2>/dev/null | head -8; sed -n 1,60p src/ps2/frame.c
+
+- tool `Bash`: sed -n 60,140p src/ps2/frame.c; sed -n 30,60p src/ps2/glue/arm_ports.c
+
+- tool `Bash`: ls include/ | grep -i gstate; grep -n "sp\b\|r13\|stack" include/gstate.h | head -30
+
+- tool `Bash`: sed -n 1,40p include/gstate.h
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; mkdir -p tools/ps2 && cp $S/pp_stage.bin.nostack docs/sh
+
+## Claude
+
+The overlay comes to 215 ranges and 46 KB per player, against 387 KB copied per switch today. Next, the shared-mode code. I need a few addresses and the main loop's details:
+
+- tool `Bash`: grep -n "gMainState\|gUnknown_03005050\b" sym_iwram.txt sym_ewram.txt; sed -n 30,58p src/ps2/main.c; sed -n 1,30p src/ps2/tlb.c | tail -5; grep -n "sRegions\[\]
+
+## Claude
+
+While this is being built: drawing a 3-player Link in a 5th colour, or anything else per-player in the renderer, is unaffected. Checking the types of the two state variables:
+
+- tool `Bash`: grep -n "gMainState;\|gUnknown_03005050;\|gSubState;" include/variables.h; grep -n "DoObjectEntity\|void sub_0803781C\|u32 sub_0803781C\|sub_0803781C(" include/
+
+- tool `Bash`: sed -n 395,410p src/fs_game.c; grep -n "^u8 sub_08037554\|^u32 sub_08037554\|^[a-z0-9 ]*sub_08037554(" -A12 src/fs_game.c | head -16
+
+## Claude
+
+Both checks in the stage function only read state. Writing the shared-world code. First, `frame.c` gets its VBlank work split out, so the view pass can run it too:
+
+- tool `Bash`: python3 - <<'EOF' p='src/ps2/frame.c'; s=open(p).read() old="""void ps2_vblank_wait(void) {     u32 h = *(volatile u32 *)(INTR_TABLE + 4);""" new="""// the VBla
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/src/ps2/shared.c
+
+## Claude
+
+The leave function's gap copy would walk into unmapped addresses: parts of the live block, like palette beyond 0x05001FFF, aren't mapped. Fixing it to copy only the used spans:
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/src/ps2/shared.c
+
+## Claude
+
+Now `ps2_inst_ptr` in `tlb.c`, the main loop, and the build flag:
+
+- tool `Bash`: grep -n "src/ps2/.*\.c\|PS2_SRCS\|wildcard src/ps2" Makefile.ps2 | head; sed -n 58,95p src/ps2/main.c
+
+- tool `Bash`: python3 - <<'EOF' p='src/ps2/shared.c'; s=open(p).read() s=s.replace('#include <kernel.h>\n#include <string.h>\n#include "overlay_ranges.h"\n','#ifdef SHARED_WO
+
+## Claude
+
+The frame where play leaves the stage doesn't need a special render path. The other screens can simply skip one frame, a one-frame blank (shortcut). Simplifying that, then adding the build flag:
+
+- tool `Bash`: python3 - <<'EOF' p='src/ps2/main.c'; s=open(p).read() old="""            if (!ps2_shared_try_leave(INSTANCES)) {                 ps2_shared_views(INSTANCES, ps
+
+- tool `Bash`: python3 - <<'EOF' p='src/ps2/shared.c'; s=open(p).read() old="""    struct { u32 r[20]; } cpu = *(volatile struct { u32 r[20]; } *)0x0203C000;  // gCpu (include
+
+## Claude
+
+Builds. First run: 2 players, the shared world with the world-change check on.
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; bash $S/pshot.sh sh1 120; grep -a "shared:\|FATAL\|cost:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; ls -la $S/sh1.log; tail -5 $S/sh1.log | cut -c1-200; gre
+
+## Claude
+
+It never entered shared mode: no "shared:" lines. Logging the two state bytes for each instance:
+
+- tool `Bash`: python3 - <<'EOF' p='src/ps2/shared.c'; s=open(p).read() old="""    int i;     for (i = 0; i < instances; i++)         if (!in_stage(i))             return 0;""
+
+- tool `Bash`: python3 - <<'EOF' p='src/ps2/shared.c'; s=open(p).read() old=s[s.index("static void check_after(int inst)"):s.index("#else\n#define check_before()")] new="""sta
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; ls -la $S/sh3.log; grep -a "DBG\|shared\|frame 1200\|FAT
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -a "shared: view\|shared: sep\|the world" $S/sh3.lo
+
+- tool `Bash`: python3 - <<'EOF' p='tools/ps2/overlay_ranges.py'; s=open(p).read() old="""FIXED = [ """ new="""FIXED = [     # per player but equal between GBAs running in ste
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; ls -la $S/sh4.log; grep -a "shared" $S/sh4.log | sed 's/
+
+## Claude
+
+Same output: `shared.c` wasn't rebuilt, because the Makefile doesn't track the generated header. Rebuilding with it touched:
+
+- tool `Bash`: touch src/ps2/shared.c && systemd-run --user --scope -q -p MemoryMax=6G make -f Makefile.ps2 INSTANCES=2 SHARED_WORLD=1 SHARED_CHECK=1 elf -j8 2>&1 | grep -E " 
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -a "shared" $S/sh4.log | sed 's/^\[ *[0-9.]*\] //' 
+
+- tool `Bash`: python3 - <<'EOF' p='tools/ps2/overlay_ranges.py'; s=open(p).read() old="""    (0x45E00, 0x45E10, "IWRAM 0x03005E00-0x03005E0F: sprite-list buffer pointers"), "
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -a "shared" $S/sh5.log | sed 's/^\[ *[0-9.]*\] //' 
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; mkdir -p $S/cmp_shared $S/cmp_normal && cp build/ps2/fra
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 -c " from PIL import Image fr=['01300','01600','
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/cmp_grid.png
+
+- tool `Bash`: python3 -c " import struct m=open('build/ps2/mem_p0_f3000.bin','rb').read() L=0x30790 print('LINK +1C..+2C:',[hex(struct.unpack_from('<I',m,L+o)[0]) for o in (0
+
+- tool `Bash`: cp src/ps2/main.c /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/main_keep.c && python3 - <<'EOF' p='src/p
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; rm -rf $S/dsh $S/dsep; mkdir -p $S/dsh $S/dsep; mv build
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; sed -i 's/ps2_frame < 1215 || ps2_frame > 1260/ps2_frame
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; rm -rf $S/cmp_shared; mkdir $S/cmp_shared; touch src/ps2
+
+- tool `Bash`: python3 - <<'EOF' p='src/ps2/main.c'; s=open(p).read() old="""        fwrite((void *)0x02000000, 1, 0x40000, f), fwrite((void *)0x03000000, 1, 0x8000, f), fclos
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - $S <<'EOF' import sys,os,struct S=sys.argv[1] 
+
+- tool `Bash`: grep -n "0x48\|0x47B\|0x5C0\|0x700" src/ps2/overlay_ranges.h | head; tail -12 src/ps2/overlay_ranges.h
+
+- tool `Bash`: python3 - <<'EOF' p='tools/ps2/overlay_ranges.py'; s=open(p).read() old="""    merged = []     for a, b in runs:         if merged and a <= merged[-1][1] + GAP:
+
+## Claude
+
+Now 208 ranges, none crossing a boundary. Rerunning the dump comparison:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; rm -rf $S/dsh; mkdir -p $S/dsh; touch src/ps2/shared.c s
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; rm -rf $S/cmp_shared; mkdir $S/cmp_shared; rm -f build/p
+
+## Claude
+
+Player 0's screen is now identical to the normal build at every check frame. Player 2's five stage frames still differ. Looking at one:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 -c " from PIL import Image out=Image.new('RGB',(
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/cmp_p1.png
+
+- tool `Bash`: grep -n "port_sub_080008A8" src/ps2/glue/arm_ports.c | head -3; n=$(grep -n "^void port_sub_080008A8\|^static void port_sub_080008A8" src/ps2/glue/arm_ports.c |
+
+- tool `Bash`: grep -n "sub_08003688" src/*.c | head -5; n=$(grep -n "^void sub_08003688" src/*.c | head -1); echo $n; f=${n%%:*}; l=$(echo $n | cut -d: -f2); sed -n "${l},$((
+
+- tool `Bash`: sed -n 1,120p asm/non_matching/rom1/sub_08003688.inc | grep -v "^\s*\.byte" | head -90
+
+- tool `Bash`: python3 - <<'EOF' p='src/ps2/shared.c'; s=open(p).read() old="""// the off-screen arrows (object 16, sub_08052B88): positioned from this player's camera static 
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 -c " from PIL import Image out=Image.new('RGB',(
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/cmp_p1b.png
+
+- tool `Bash`: for f in sub_0802D988 sub_08037750; do file=$(grep -l "$f" src/*.c | head -1); echo "== $f ($file)"; awk -v f="void $f(" 'index($0,f)==1{p=1} p{print} p&&/^}/{e
+
+- tool `Bash`: grep -rn "sub_0802D988\b" src/*.c include/*.h | grep -v "    sub_0802D988();" | head; grep -rln "sub_0802D988" asm/non_matching/*/ | head -3; grep -n "^void sub
+
+- tool `Bash`: sed -n 6400,6440p src/file_select.c; sed -n 380,394p src/fs_game.c
+
+- tool `Bash`: grep -n "intro_linked" "docs/Running Walkthrough.md" | head -5; head -5 tests/intro_linked.inputs; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91f
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; timeout 900 tools/mgba_run recordings/fs_only.gba 6000 -
+
+- tool `Bash`: python3 - <<'EOF' p='tools/ps2/overlay_ranges.py'; s=open(p).read() old="""    (0x40440, 0x40450,""" new="""    (0x1EF00, 0x1EF20, "EWRAM 0x0201EF00-0x0201EF1F:
+
+- tool `Bash`: python3 - <<'EOF' p='src/ps2/main.c'; s=open(p).read() s=s.replace("ps2_frame < 1225 || ps2_frame > 1300","ps2_frame < 1280 || ps2_frame > 1300",1) s=s.replace(
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - $S <<'EOF' import sys,struct S=sys.argv[1] for
+
+## Claude
+
+The OAM buffers in IWRAM don't explain it: both builds' OAM matches neither buffer half, so OAM is copied from somewhere else at VBlank. Looking at the differing entries themselves:
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - $S <<'EOF' import sys,struct S=sys.argv[1] x=o
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - $S <<'EOF' import sys,struct S=sys.argv[1] m=o
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 - $S <<'EOF' import sys,struct S=sys.argv[1] m=o
+
+- tool `Bash`: python3 - <<'EOF' p='src/ps2/main.c'; s=open(p).read() old="""    if ((f = fopen(name, "wb")))         fwrite((void *)0x02000000, 1, 0x40000, f), fwrite((void *
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cp $S/main_keep.c src/ps2/main.c && grep -c "dbg_dump\|r
+
+- tool `Bash`: S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -a "shared:" $S/shfinal.log | head -3; grep -a "cos
+
+## Claude
+
+The cleaned build runs: shared mode from frame ~1225, no TLB misses. The game share is 0.51M cycles per frame for both players, against 1.84M with separate copies. Updating the docs and committing:
+
+- tool `Bash`: python3 - <<'EOF' p='docs/Planning Doc.md'; s=open(p).read() old="""  - [ ] 5c. Port, under `FS_SHARED_WORLD`:""" new="""  - [ ] 5c, first version (2026-11-24, 
+

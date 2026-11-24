@@ -56,7 +56,9 @@ void ps2_native_missing(const char *name) { ps2_fatal("native GBA function not t
 
 void sub_0800B7FC(void), process_dma_request(void);  // src/main.c, the VCount handlers
 
-void ps2_vblank_wait(void)
+// the VBlank and VCount handlers of the mapped instance, as at the end of each of its frames (also the shared world's
+// view pass, shared.c)
+void ps2_vblank_run(void)
 {
     u32 h = *(volatile u32 *)(INTR_TABLE + 4);
     // VBlank, as on the GBA: the handler copies the game's buffers to the registers and OAM before the frame is drawn
@@ -94,6 +96,11 @@ void ps2_vblank_wait(void)
         // it (file select's sub_0801484C polls DISPSTAT) would wait forever
         REG16(REG_DISPSTAT) |= 1;
     }
+}
+
+void ps2_vblank_wait(void)
+{
+    ps2_vblank_run();
     WakeupThread(ps2_main_thread);  // this instance's frame is done: main.c draws it
     SleepThread();                  // until its next frame (main.c has mapped this instance again)
 }

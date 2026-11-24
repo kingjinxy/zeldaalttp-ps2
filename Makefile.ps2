@@ -39,6 +39,12 @@ endif
 ifdef WIDE_VIEW  # draw 320x240 (one player) or 640x240 (two) of the unchanged game's video memory (src/ps2/video.c); touch src/ps2/video.c when changing it
 PS2_CFLAGS += -DWIDE_VIEW=$(WIDE_VIEW)  # 2: two players side by side at 320x480 each (GS renderer only)
 endif
+ifdef SHARED_WORLD  # in a stage the world runs once and the other players get a view pass (src/ps2/shared.c); touch src/ps2/main.c src/ps2/tlb.c src/ps2/shared.c when changing it
+PS2_CFLAGS += -DSHARED_WORLD
+endif
+ifdef SHARED_CHECK  # with SHARED_WORLD: log world bytes a view pass changes
+PS2_CFLAGS += -DSHARED_CHECK
+endif
 ifdef VIDEO_MODE  # 0 240p, 1 480i, 2 480p, 3 480p 16:9, 4 720p (default: 240p for 1 player, else 480p, src/ps2/video.c); touch src/ps2/video.c when changing it
 PS2_CFLAGS += -DVIDEO_MODE=$(VIDEO_MODE)
 endif
