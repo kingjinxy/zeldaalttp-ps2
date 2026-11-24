@@ -1,6 +1,7 @@
-// PS2: draws the GBA screen with mGBA's software renderer (src/ps2/mgba, MPL-2.0) and shows it through the Graphics
-// Synthesizer with gsKit. The renderer reads VRAM straight from the mapped GBA video memory; registers, palette and
-// OAM are handed to it each frame, then the 160 lines are drawn into a 256-wide buffer that goes up as a CT32 texture.
+// PS2: draws each game instance's GBA screen with mGBA's software renderer (src/ps2/mgba, MPL-2.0) and shows them side
+// by side through the Graphics Synthesizer with gsKit. The renderer reads VRAM straight from the mapped GBA video
+// memory (main.c maps the instance first); registers, palette and OAM are handed to it each frame, then the 160 lines
+// are drawn into a 256-wide buffer that goes up as a CT32 texture.
 #include <kernel.h>
 #include <malloc.h>
 #include <stdio.h>
@@ -12,19 +13,24 @@
 #define GBA_W 240
 #define GBA_H 160
 #define TEX_W 256  // texture width (power of two); the renderer writes rows of this stride
+#define MAX_INSTANCES 4
 
 void ps2_log(const char *fmt, ...);
+extern u32 ps2_frame;
 
 static GSGLOBAL *sGs;
-static GSTEXTURE sTex;
-static struct GBAVideoSoftwareRenderer sRenderer;
-static u32 *sPixels;
-static u32 sFrames;
+static struct {
+    GSTEXTURE tex;
+    struct GBAVideoSoftwareRenderer renderer;
+    u32 *pixels;
+} sView[MAX_INSTANCES];
 
-void ps2_video_init(void)
+static u32 count(void) { u32 c; __asm__ volatile("mfc0 %0, $9" : "=r"(c)); return c; }
+static u32 sRenderCycles, sOtherCycles, sLastEnd, sFrameRender;
+
+void ps2_video_init(int instances)
 {
-    struct GBAVideoRenderer *r = &sRenderer.d;
-
+    int i;
     dmaKit_init(D_CTRL_RELE_OFF, D_CTRL_MFD_OFF, D_CTRL_STS_UNSPEC, D_CTRL_STD_OFF, D_CTRL_RCYC_8,
                 1 << DMA_CHANNEL_GIF);
     dmaKit_chan_init(DMA_CHANNEL_GIF);
@@ -36,54 +42,53 @@ void ps2_video_init(void)
     gsKit_init_screen(sGs);
     gsKit_mode_switch(sGs, GS_ONESHOT);
 
-    sPixels = memalign(128, TEX_W * GBA_H * 4);
-    memset(sPixels, 0, TEX_W * GBA_H * 4);
-    sTex.Width = TEX_W;
-    sTex.Height = GBA_H;
-    sTex.PSM = GS_PSM_CT32;
-    sTex.Mem = sPixels;
-    sTex.Filter = GS_FILTER_NEAREST;
-    sTex.Vram = gsKit_vram_alloc(sGs, gsKit_texture_size(TEX_W, GBA_H, GS_PSM_CT32), GSKIT_ALLOC_USERBUFFER);
-
-    GBAVideoSoftwareRendererCreate(&sRenderer);
-    sRenderer.outputBuffer = (color_t *)sPixels;
-    sRenderer.outputBufferStride = TEX_W;
-    r->palette = (uint16_t *)0x05000000;
-    r->vram = (uint16_t *)0x06000000;
-    r->oam = (union GBAOAM *)0x07000000;
-    r->cache = NULL;
-    r->init(r);
-    ps2_log("video: %dx%d screen, GBA frame as a %dx%d texture", sGs->Width, sGs->Height, TEX_W, GBA_H);
+    for (i = 0; i < instances; i++) {
+        struct GBAVideoRenderer *r = &sView[i].renderer.d;
+        GSTEXTURE *t = &sView[i].tex;
+        sView[i].pixels = memalign(128, TEX_W * GBA_H * 4);
+        memset(sView[i].pixels, 0, TEX_W * GBA_H * 4);
+        t->Width = TEX_W;
+        t->Height = GBA_H;
+        t->PSM = GS_PSM_CT32;
+        t->Mem = sView[i].pixels;
+        t->Filter = GS_FILTER_NEAREST;
+        t->Vram = gsKit_vram_alloc(sGs, gsKit_texture_size(TEX_W, GBA_H, GS_PSM_CT32), GSKIT_ALLOC_USERBUFFER);
+        GBAVideoSoftwareRendererCreate(&sView[i].renderer);
+        sView[i].renderer.outputBuffer = (color_t *)sView[i].pixels;
+        sView[i].renderer.outputBufferStride = TEX_W;
+        r->palette = (uint16_t *)0x05000000;  // every instance's video memory is mapped here when it's drawn
+        r->vram = (uint16_t *)0x06000000;
+        r->oam = (union GBAOAM *)0x07000000;
+        r->cache = NULL;
+        r->init(r);
+    }
+    ps2_log("video: %dx%d screen, %d GBA screens side by side", sGs->Width, sGs->Height, instances);
 }
 
 // frames written to host: (the ELF's folder) as PPM, to check output without a window
-static void dump_frame(u32 n)
+static void dump_frame(int inst, u32 n)
 {
     char name[64];
     FILE *f;
     int x, y;
-    snprintf(name, sizeof(name), "host:frame_%05u.ppm", n);
+    snprintf(name, sizeof(name), "host:frame_p%d_%05u.ppm", inst, n);
     if (!(f = fopen(name, "wb")))
         return;
     fprintf(f, "P6\n%d %d\n255\n", GBA_W, GBA_H);
     for (y = 0; y < GBA_H; y++)
         for (x = 0; x < GBA_W; x++) {
-            u32 c = sPixels[y * TEX_W + x];
+            u32 c = sView[inst].pixels[y * TEX_W + x];
             fputc(c & 0xFF, f), fputc((c >> 8) & 0xFF, f), fputc((c >> 16) & 0xFF, f);
         }
     fclose(f);
 }
 
-// one GBA frame: feed the renderer the current state, draw, show, wait for vsync
-static u32 count(void) { u32 c; __asm__ volatile("mfc0 %0, $9" : "=r"(c)); return c; }
-static u32 sRenderCycles, sGameCycles, sLastEnd;
-
-void ps2_video_frame(void)
+// draw the mapped instance's frame: feed the renderer the current state, draw 160 lines
+void ps2_video_render(int inst)
 {
-    u32 t0 = count();
-    struct GBAVideoRenderer *r = &sRenderer.d;
+    struct GBAVideoRenderer *r = &sView[inst].renderer.d;
     const u16 *io = (const u16 *)0x04000000, *pal = (const u16 *)0x05000000;
-    u32 a;
+    u32 a, t0 = count(), n = ps2_frame + 1;
     int y;
 
     for (a = 0; a < 0x56; a += 2)
@@ -96,33 +101,32 @@ void ps2_video_frame(void)
     for (y = 0; y < GBA_H; y++)
         r->drawScanline(r, y);
     r->finishFrame(r);
-    {  // cost per frame in EE cycles (294.912 MHz; 4.9 M cycles per 60 Hz frame): renderer vs everything else
-        u32 t1 = count();
-        if ((sFrames + 1) % 600 == 540)  // start of the 60-frame window
-            sRenderCycles = sGameCycles = 0;
-        sRenderCycles += t1 - t0;
-        if (sLastEnd)
-            sGameCycles += t0 - sLastEnd;
-        if ((sFrames + 1) % 600 == 0) {  // every 10 s, averaged over the last 60 frames
-            ps2_log("cost: render %u cycles/frame, game %u cycles/frame (of 4915200)", sRenderCycles / 60, sGameCycles / 60);
-            sRenderCycles = sGameCycles = 0;
-        }
-    }
+    sFrameRender += count() - t0;
+    if (n == 60 || n == 600 || n == 900 || n == 1500)
+        dump_frame(inst, n);
+}
 
-    sFrames++;
-    if (sFrames == 60 || sFrames == 600 || sFrames == 900 || sFrames == 1500)
-    {
-        dump_frame(sFrames);
-        ps2_log("video %u: DISPCNT %04x BG0-3CNT %04x %04x %04x %04x BLDCNT %04x BLDY %04x vram %08x pal %04x %04x", sFrames,
-                io[0], io[4], io[5], io[6], io[7], io[0x28], io[0x2A], ((u32 *)0x06000000)[16], pal[0], pal[1]);
-        ps2_log("video: vblank handler %08x, game dispcnt buffer %04x, main state %02x sub %02x", *(u32 *)0x03000B74,
-                *(u16 *)0x030004A0, *(u8 *)0x03006D10, *(u8 *)0x03000BFC);
-    }
-
+// show every instance's screen side by side, wait for vsync
+void ps2_video_present(int instances)
+{
+    int i;
+    u32 n = ps2_frame + 1;
+    float w = sGs->Width / (float)instances, h = w * GBA_H / GBA_W, top = (sGs->Height - h) / 2;
+    if (sLastEnd)  // the game's share of this frame: everything since the last present but drawing (memory switches too)
+        sOtherCycles += count() - sLastEnd - sFrameRender;
+    sRenderCycles += sFrameRender, sFrameRender = 0;
+    if (n % 600 == 0)  // every 10 s, averaged over the last 60 frames (EE cycles; 4.9 M per 60 Hz frame)
+        ps2_log("cost: render %u cycles/frame (all screens), game %u cycles/frame (all instances) of 4915200",
+                sRenderCycles / 60, sOtherCycles / 60);
+    if (n % 600 == 540)
+        sRenderCycles = sOtherCycles = 0;
     FlushCache(0);
-    gsKit_texture_upload(sGs, &sTex);
-    gsKit_prim_sprite_texture(sGs, &sTex, 0, 0, 0, 0, sGs->Width, sGs->Height, GBA_W, GBA_H, 1,
-                              GS_SETREG_RGBAQ(0x80, 0x80, 0x80, 0x80, 0));
+    gsKit_clear(sGs, GS_SETREG_RGBAQ(0, 0, 0, 0x80, 0));
+    for (i = 0; i < instances; i++) {
+        gsKit_texture_upload(sGs, &sView[i].tex);
+        gsKit_prim_sprite_texture(sGs, &sView[i].tex, i * w, top, 0, 0, (i + 1) * w, top + h, GBA_W, GBA_H, 1,
+                                  GS_SETREG_RGBAQ(0x80, 0x80, 0x80, 0x80, 0));
+    }
     gsKit_queue_exec(sGs);
     gsKit_sync_flip(sGs);
     sLastEnd = count();

@@ -54,8 +54,9 @@ void ps2_io_write(u32 a, u32 v, u32 size);
 // include/gstate.h) as GBA address | 0x80000000
 #ifdef PLATFORM_PS2
 void ps2_trace_print(u32 a);
+extern volatile int ps2_trace_on;  // src/ps2/frame.c: print every traced entry over SIO
 #define AUTO_TRACE(a) do { volatile u32 *r_ = (volatile u32 *)0x0203C200; u32 i_ = r_[0] % 1024; \
-    r_[1 + 3 * i_] = (a) | 0x80000000u; r_[0] = i_ + 1; if (r_[-4]) ps2_trace_print((a) | 0x80000000u); } while (0)
+    r_[1 + 3 * i_] = (a) | 0x80000000u; r_[0] = i_ + 1; if (ps2_trace_on) ps2_trace_print((a) | 0x80000000u); } while (0)
 #else
 #define AUTO_TRACE(a) ((void)0)
 #endif

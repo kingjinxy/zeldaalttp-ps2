@@ -11,9 +11,10 @@
 // ---- EEPROM (64 Kbit), as mGBA: 8 KB, block n (8 bytes) at n * 8, bits most significant first -------------------
 // The game talks to it with DMA3 bit streams (one bit per halfword, bit 0): a read request "11" + address + "0", then
 // a 68-bit read (4 junk bits, 64 data); a write "10" + address + 64 data bits + "0". Address: 6 or 14 bits.
-u8 ps2_eeprom[8192];
-int ps2_eeprom_dirty;
-static u32 sEepromRead;  // byte offset of the block the last read request named
+extern int ps2_cur_instance;  // tlb.c: the game instance mapped now
+u8 ps2_eeprom[4][8192];     // per instance
+int ps2_eeprom_dirty[4];
+static u32 sEepromRead[4];  // byte offset of the block the last read request named
 
 static void eeprom_command(const volatile u16 *src, u32 n)
 {
@@ -27,21 +28,21 @@ static void eeprom_command(const volatile u16 *src, u32 n)
         addr = (addr << 1) | (src[2 + i] & 1);
     addr = (addr & 0x3FF) * 8;
     if (src[1] & 1) {
-        sEepromRead = addr;
+        sEepromRead[ps2_cur_instance] = addr;
         return;
     }
     for (i = 0; i < 64; i++) {
-        u8 *b = &ps2_eeprom[addr + i / 8], m = 0x80 >> (i % 8);
+        u8 *b = &ps2_eeprom[ps2_cur_instance][addr + i / 8], m = 0x80 >> (i % 8);
         *b = (src[2 + abits + i] & 1) ? (*b | m) : (*b & ~m);
     }
-    ps2_eeprom_dirty = 1;
+    ps2_eeprom_dirty[ps2_cur_instance] = 1;
 }
 
 static void eeprom_read(volatile u16 *dst, u32 n)
 {
     u32 i;
     for (i = 0; i < n; i++)
-        dst[i] = i < 4 ? 0 : (ps2_eeprom[sEepromRead + (i - 4) / 8] >> (7 - (i - 4) % 8)) & 1;
+        dst[i] = i < 4 ? 0 : (ps2_eeprom[ps2_cur_instance][sEepromRead[ps2_cur_instance] + (i - 4) / 8] >> (7 - (i - 4) % 8)) & 1;
 }
 
 // DMA channel n (0-3): registers at 0xB0 + 12n: SAD, DAD, CNT_L (count), CNT_H (control)
@@ -83,9 +84,14 @@ static void dma_check(u32 timing)
 void ps2_io_poll(void) { dma_check(0); }
 void ps2_io_vblank(void) { dma_check(1); }
 
+u32 ps2_io_reads, ps2_io_last;  // debugging: the watchdog shows whether game code still runs, and what it reads
+
 u32 ps2_io_read(u32 a, u32 size)
 {
     u32 o = a - 0x04000000u;
+    ps2_io_reads++, ps2_io_last = a;
+    if (o == 6)  // VCOUNT: a line further on each read (0-227), so waits for a line end (m4a's SampleFreqSet)
+        IO16(6) = (IO16(6) + 1) % 228;
     dma_check(0);
     return size == 1 ? IO8(o) : size == 2 ? IO16(o) : IO32(o);
 }

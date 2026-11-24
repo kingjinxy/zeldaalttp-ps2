@@ -91,6 +91,7 @@ player, linked in memory instead of by cable, each drawn into its own part of th
 - [ ] ps2sdk build (EE GCC), same GBA layer with GS output (one texture per instance, 2 or 4-way split),
       multitap pads, audsrv sound, memory card saves
 - [ ] Boots in PCSX2; same state comparison against mGBA
+- [x] Two instances in PCSX2 (threads, memory swapped per frame, side-by-side screens, own saves; 2026-11-23)
 - [ ] Frame-rate budget for 4 instances on the EE (software PPU ×4); move the PPU to the GS if needed
 - [ ] Real hardware through Neutrino
 

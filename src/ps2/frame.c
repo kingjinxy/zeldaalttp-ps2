@@ -1,5 +1,6 @@
-// PS2: one GBA frame per VBlankIntrWait: the game's VBlank handler runs (the display-status VBlank bit stays set; the
-// game polls it), then video.c draws the frame and waits for vsync. A heartbeat goes out over SIO.
+// PS2: one GBA frame per VBlankIntrWait, in the instance's thread: run the game's VBlank handler (the display-status
+// VBlank bit stays set; the game polls it), then hand control back to the frame loop (main.c), which draws and shows
+// every instance's screen, and return when woken for the next frame. A heartbeat goes out over SIO.
 // Logging is SIO only (CLAUDE.md: never block in printf from game-reachable code).
 #include <kernel.h>
 #include <sio.h>
@@ -15,11 +16,10 @@
 
 u32 (*ps2_icall(u32 target))();
 void ps2_io_vblank(void);
-void ps2_video_frame(void);
-void ps2_input_frame(void);
-void ps2_save_vblank(void);
-
-static u32 sFrame;
+extern int ps2_main_thread;
+extern u32 ps2_frame;
+extern u32 ps2_io_reads, ps2_io_last;
+#define sFrame ps2_frame
 
 void ps2_log(const char *fmt, ...)
 {
@@ -40,6 +40,14 @@ void ps2_fatal(const char *fmt, ...)
     va_end(ap);
     sio_putsn("FATAL: ");
     sio_puts(buf);
+    {  // the last functions entered (trace ring, 0x0203C200)
+        volatile u32 *ring = (volatile u32 *)0x0203C200;
+        u32 i = ring[0] % 1024, k;
+        int n = snprintf(buf, sizeof(buf), "FATAL: ring");
+        for (k = 1; k <= 12 && n < 240; k++)
+            n += snprintf(buf + n, sizeof(buf) - n, " %08x", ring[1 + 3 * ((i + 1024 - k) % 1024)]);
+        sio_puts(buf);
+    }
     for (;;)
         SleepThread();
 }
@@ -49,6 +57,7 @@ void ps2_native_missing(const char *name) { ps2_fatal("native GBA function not t
 void ps2_vblank_wait(void)
 {
     u32 h = *(volatile u32 *)(INTR_TABLE + 4);
+    // VBlank, as on the GBA: the handler copies the game's buffers to the registers and OAM before the frame is drawn
     REG16(REG_DISPSTAT) |= 1;
     REG16(REG_IF) |= 1;
     ps2_io_vblank();
@@ -56,11 +65,8 @@ void ps2_vblank_wait(void)
         ps2_icall(h)();
     REG16(BIOS_IF) |= 1;
     REG16(REG_IF) &= ~1;
-    ps2_video_frame();  // draws, shows and waits for vsync: the game runs at the PS2's 60 Hz
-    ps2_input_frame();  // KEYINPUT for the frame the game is about to run
-    ps2_save_vblank();  // the save file, after the game changed the EEPROM
-    if (++sFrame % 60 == 0 || sFrame <= 10)
-        ps2_log("frame %u", sFrame);
+    WakeupThread(ps2_main_thread);  // this instance's frame is done: main.c draws it
+    SleepThread();                  // until its next frame (main.c has mapped this instance again)
 }
 
 // Watchdog: once a second (EE VBlank interrupt) a heartbeat with the frame count; when the frame count stops, the
@@ -72,9 +78,6 @@ static int watch_handler(int cause)
     volatile u32 *ring = (volatile u32 *)0x0203C200;
     char buf[160];
     (void)cause;
-    // shortcut: VCOUNT alternates 159/160 each PS2 vblank, enough for waits on line 159 (m4a SampleFreqSet); a real
-    // scanline counter comes with the renderer, which steps lines
-    REG16(REG_VCOUNT) = REG16(REG_VCOUNT) == 159 ? 160 : 159;
     if (++ticks % 60 == 0) {
         u32 i = ring[0] % 1024, k;
         u32 epc;
@@ -87,7 +90,7 @@ static int watch_handler(int cause)
             ExitHandler();
             return 0;
         }
-        n = snprintf(buf, sizeof(buf), "watch: frame %u (stuck) pc %08x ring", sFrame, epc);
+        n = snprintf(buf, sizeof(buf), "watch: frame %u (stuck) pc %08x io reads %u last %08x = %04x ring", sFrame, epc, ps2_io_reads, ps2_io_last, REG16(ps2_io_last));
         for (k = 1; k <= 6 && n < 150; k++) {
             u32 j = (i + 1024 - k) % 1024;
             n += snprintf(buf + n, sizeof(buf) - n, " %08x", ring[1 + 3 * j]);
@@ -106,6 +109,7 @@ void ps2_watch_init(void)
 }
 
 void ps2_trace_print(u32 a);
+extern volatile int ps2_trace_on;
 
 // -finstrument-functions on hand-written game C (Makefile.ps2): each entry goes into the trace ring too, so the
 // watchdog names hand C as well
@@ -116,11 +120,12 @@ __attribute__((no_instrument_function)) void __cyg_profile_func_enter(void *fn, 
     (void)site;
     ring[1 + 3 * i] = (u32)fn;
     ring[0] = i + 1;
-    if (ring[-4])
+    if (ps2_trace_on)
         ps2_trace_print((u32)fn);
 }
 
-// verbose tracing (flag at 0x0203C1F0, set for a window of frames by ps2_vblank_wait): every traced entry over SIO
+// verbose tracing (ps2_trace_on, set where a problem is being looked at): every traced entry over SIO
+volatile int ps2_trace_on;
 __attribute__((no_instrument_function)) void ps2_trace_print(u32 a)
 {
     char b[16];

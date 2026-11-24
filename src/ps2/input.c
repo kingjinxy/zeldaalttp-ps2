@@ -1,4 +1,5 @@
-// PS2: controller 1 into the GBA's KEYINPUT register (0x04000130, active low), each frame before the game reads it.
+// PS2: controller port i into game instance i's KEYINPUT register (0x04000130, active low), each frame before the
+// game reads it (main.c maps the instance first).
 // libpad over the BIOS's XSIO2MAN/XPADMAN modules, as in tp-ps2's pad.c. Mapping (Nintendo layout):
 //   Circle A, Cross B, L1 L, R1 R, Start Start, Select Select, D-pad or left stick the D-pad.
 #include <kernel.h>
@@ -18,8 +19,8 @@ static const struct { u16 ps2, gba; } sMap[] = {
     { PAD_DOWN, GBA_DOWN },
 };
 
-static char sPadBuf[256] __attribute__((aligned(64)));
-static int sOpen;
+static char sPadBuf[2][256] __attribute__((aligned(64)));
+static int sOpen[2];
 
 void ps2_input_init(void)
 {
@@ -27,18 +28,21 @@ void ps2_input_init(void)
     SifInitRpc(0);
     a = SifLoadModule("rom0:XSIO2MAN", 0, NULL);
     b = SifLoadModule("rom0:XPADMAN", 0, NULL);
-    sOpen = a >= 0 && b >= 0 && padInit(0) == 1 && padPortOpen(0, 0, sPadBuf) != 0;
-    ps2_log("input: controller port 1 %s (XSIO2MAN %d, XPADMAN %d)", sOpen ? "open" : "unavailable", a, b);
+    if (a >= 0 && b >= 0 && padInit(0) == 1) {
+        sOpen[0] = padPortOpen(0, 0, sPadBuf[0]) != 0;
+        sOpen[1] = padPortOpen(1, 0, sPadBuf[1]) != 0;
+    }
+    ps2_log("input: controller ports %s %s (XSIO2MAN %d, XPADMAN %d)", sOpen[0] ? "1" : "-", sOpen[1] ? "2" : "-", a, b);
 }
 
-void ps2_input_frame(void)
+void ps2_input_frame(int inst)
 {
     struct padButtonStatus st;
     u16 held = 0, keys = 0;
     int state, i;
-    if (sOpen) {
-        state = padGetState(0, 0);
-        if ((state == PAD_STATE_STABLE || state == PAD_STATE_FINDCTP1) && padRead(0, 0, &st) != 0) {
+    if (inst < 2 && sOpen[inst]) {
+        state = padGetState(inst, 0);
+        if ((state == PAD_STATE_STABLE || state == PAD_STATE_FINDCTP1) && padRead(inst, 0, &st) != 0) {
             held = 0xFFFF ^ st.btns;
             // left stick as the D-pad, when the pad reports analog values (DualShock mode)
             if ((st.mode >> 4) == 7) {

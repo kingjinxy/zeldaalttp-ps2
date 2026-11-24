@@ -803,3 +803,38 @@ no crash; no rendering yet).
   1,325 / 24, commit f67c462 1,328 / 24. The cause was the memory safeguard that compiled generated global-state
   C at agbcc -O0; back at -O2 (still under `ulimit -v`): 1,328 ok / 24 fail, the same known failures as before
   (EEPROM, I/O, the four sound-path calls). Why -O0 behaves differently isn't known yet.
+
+## Step 26: two game instances on the PS2 (2026-11-23)
+
+Goal: two players, each with a game instance of their own, shown side by side; no link cable emulation yet (the
+instances will later share game data directly, like a split-screen game).
+
+- **Threads.** Each instance runs the game's AgbMain in an EE thread (256 KB stack, same priority as the main
+  thread). Scheduling is cooperative: `ps2_vblank_wait` (VBlankIntrWait) wakes the main thread and sleeps, so
+  each instance runs exactly one game frame per turn. The main loop (`src/ps2/main.c`): for each instance, swap
+  its memory in, run its frame, draw its screen, read its controller port, write its save. Then present both
+  screens side by side (`src/ps2/video.c`, one mGBA renderer and one texture per instance).
+- **Per-instance state outside GBA memory**: EEPROM image, read address and dirty flag (`io.c`), save file
+  (`host:zeldaalttp.sav`, `host:zeldaalttp_p2.sav`), pad port. The game itself keeps nothing in PS2 memory
+  (checked with `nm` on the game objects: only port glue has .data/.bss).
+- **Tried first: repointing the TLB entries per instance** (each instance's RAM in its own physical block,
+  `_SetTLBEntry` on every switch). Instance 0 ran; instance 1 died at once in m4a sound init with the
+  global-state CPU block reading zero (`gstate_run 00000000: sp 00000000`). The EWRAM mapping checked fine from
+  the main thread, and a probe written from the instance thread read back. But the traces showed instance 1
+  reading stale values for gCpu (0x0203C000). Cause, from PCSX2's source (`recVTLB.cpp`,
+  `vtlb_DynGenWrite_Const` / `ReadNonQuad_Const`): for a constant address the EE recompiler looks up the page
+  mapping at compile time and emits the host pointer. A TLB write (`COP0.cpp` `MapTLB`/`UnmapTLB`) only clears
+  the recompiled code *in* the remapped pages, so code compiled while instance 0 was mapped keeps accessing
+  instance 0's memory. Real hardware wouldn't have this problem, but PCSX2 is the test bench.
+- **Now: one fixed mapping onto a live block, memory copied per switch** (`src/ps2/tlb.c`). `ps2_tlb_select(i)`
+  copies the running instance's EWRAM, IWRAM, I/O, palette, VRAM and OAM (the used 387 KB) out to its backing
+  block (0x01900000 + i MB, through kseg0), then copies instance i's in. Two switches per frame with two players.
+- **Debugging aids kept**: `ps2_trace_on` (frame.c) prints every traced entry over SIO; gstate_run fails loudly
+  when sp is outside EWRAM.
+
+State: both instances boot and reach the file select in PCSX2, each with its own save. Cost: rendering two
+screens takes 8.4 M EE cycles per frame (budget 4.9 M), the game and the memory switches about 2 M, so the pair
+runs at 30 fps. Moving the PPU work to the GS is the next performance step.
+Open: a save-dependent TLB miss in the file select (`gs_sub_08003870` reading a null pointer's fields at 0x0–0x10,
+loads only). It happens with one instance too when given the second instance's save, so it isn't a multi-instance
+bug. Next to fix.

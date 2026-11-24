@@ -15988,3 +15988,854 @@ The controller port opens in PCSX2. Headless runs can't press buttons, so you'll
 
 - tool `PushNotification`: 
 
+## Claude
+
+The PS2 port now draws the game and reaches the file select screen in PCSX2, with controller input wired up. The Nintendo/Capcom logo and the title screen match mGBA's frames, and it ran over 22,000 frames (60+ seconds) without a crash. Headless test runs can't press buttons, so I haven't confirmed that the controller actually drives the game.
+
+**To try it:** load `build/ps2/zeldaalttp.elf` in PCSX2 (System → Boot ELF) with a controller on port 1. Circle = A, Cross = B, L1/R1 = L/R, Start and Select as themselves, D-pad or left stick to move.
+
+**Rendering:** mGBA's software renderer is now in the repo under `src/ps2/mgba` (MPL-2.0, with its license and source version noted). `src/ps2/video.c` hands it the screen state each frame, shows the result through the Graphics Synthesizer and waits for vsync, so the game runs at 60 Hz. A few frames are also saved as image files next to the ELF, so I can compare them with mGBA without a window.
+
+**Bugs fixed along the way:**
+- **Reset every frame.** The keypad register read as "every button held", which includes the soft-reset combination, so the game reset continuously.
+- **Endless loop on MIPS.** A `void` function was called through a table that expects an `int` result. On ARM the result happened to be 0; on MIPS it was leftover data, so the loop never ended. It now returns 0, and the matching build is unchanged.
+- **Hard hang leaving the title.** The PS2 compiler leaves gaps between objects' lookup tables, so lookups for the translated code failed. The failed lookup then jumped into data as if it were code and froze the processor. Table entries are now padded so there are no gaps.
+
+**Known issues:**
+- **Saves:** not implemented. Files 2 and 3 show "saved data is corrupted", because the save chip is stubbed and reads back as empty.
+- **Not done yet:** sound, mid-frame (per-scanline) display effects, and link cable / multiplayer.
+- **Sprite glitch:** a few stray red pixels on the right of the file select, probably a sprite problem. Not investigated yet.
+- **ARM check:** the replay check of the ARM build hasn't been rerun since the translator fixes.
+
+Everything is committed, with walkthrough Steps 24 and 25 and an updated conversation archive; the matching build still passes.
+
+Next I'd do saves (so files work and you can start a game), then the scanline effects. If you try it with a controller, tell me how far you get and anything that looks wrong.
+
+## User
+
+Theoretically, how many GBA renderers could we run in parallel on the PS2? Is it CPU driven at this point?
+
+## Claude
+
+Yes: at this point all of the rendering runs on the EE's CPU. The Graphics Synthesizer only displays the finished texture. Rather than guess the cost, I'll measure it with the EE's cycle counter (COP0 Count, 294.912 MHz), separately for the renderer and the game logic, averaged over 60 frames.
+
+- tool `Bash`: Measure renderer and game cost in EE cycles
+
+- tool `Bash`: Reduce cost logging frequency and commit
+
+- tool `Bash`: Fix averaging window and commit
+
+## Claude
+
+Right now only one renderer fits, and only just. Yes, it's CPU-driven: mGBA's renderer runs entirely on the EE and the Graphics Synthesizer only displays the finished texture.
+
+I measured it with the EE's cycle counter in PCSX2. At 294.9 MHz, a 60 Hz frame gives the EE 4.9 million cycles:
+
+| Per frame | Cycles | Share of a frame |
+|---|---|---|
+| Rendering the file select | about 4.0–4.1 million | about 82% |
+| Game logic (everything else) | about 94,000 | about 2% |
+
+The game logic is cheap; rendering is nearly the whole cost. That's about 100 cycles per pixel, so four views (36 million cycles a frame) are out of reach this way. PCSX2 counts EE cycles approximately and largely ignores cache misses, so on real hardware it's probably worse.
+
+There are two ways to get to four views:
+
+1. **Optimize the software renderer:** perhaps 2–3× faster.
+   - **Don't redraw unchanged scanlines.** At the moment I mark everything dirty every frame.
+   - **Use 16-bit output** (mGBA's `COLOR_16_BIT` build option).
+   - **Compiler flags:** `-O3` and EE-specific options.
+   - **Cheaper input each frame:** feed only the registers and palette entries that changed, instead of everything.
+
+   That might reach one view comfortably and two at a squeeze, still not four.
+2. **Draw with the Graphics Synthesizer:** the approach mGBA's OpenGL renderer takes.
+   - **What changes:** the EE converts VRAM into GS textures only when it changes. Each frame it then just sends draw lists: one textured strip per background layer and one quad per sprite, in priority order.
+   - **Cost:** the GS has fill rate to spare (four 240×160 screens is trivial for it), so the EE's cost drops to building small display lists, a few hundred thousand cycles per view.
+   - **What's harder:** priorities, windows and blending have to be mapped onto GS blending modes. Some GBA effects, such as colour effects across layers and mid-frame changes from scanline effects, need care, for example drawing per scanline band where the game changes registers mid-frame.
+
+For split-screen with four players, option 2 is the path that scales. I'd keep the software renderer as the reference: render the same frame both ways and compare, the same way we compare against mGBA now.
+
+There's also a design question that affects this. If the port runs one shared game for all four players rather than four separate GBAs, the backgrounds are the same map seen from four cameras. Once tiles are GS textures, they can be uploaded once and drawn four times, which makes option 2 cheaper still.
+
+The cost measurement is committed: it logs every 10 seconds, so later changes can be compared against it.
+
+## User
+
+Let's move on to save files for now
+
+## Claude
+
+Saves go through the GBA's EEPROM, which the game talks to with DMA bit-streams on 0x0D000000:
+- **Read:** a request of `11`, the address and `0`, then 68 bits come back: 4 junk bits and 64 data bits.
+- **Write:** `10`, the address, 64 data bits and `0`.
+
+I'll emulate that in the DMA path and keep the data in a file that uses mGBA's `.sav` layout, so existing saves, such as the ones in `recordings/`, load directly. First, the EEPROM size and how mGBA lays out the bits.
+
+- tool `Bash`: Check save size and mGBA EEPROM bit layout
+
+- tool `Bash`: Implement EEPROM and save file, boot with no save
+
+- tool `Bash`: Test empty save and a recorded save
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/saves.png
+
+- tool `Bash`: Document and commit saves
+
+- tool `PushNotification`: 
+
+## Claude
+
+Saves now work in the PS2 port: the game reads and writes its save through an emulated EEPROM, stored in a file next to the ELF.
+
+- **No save file:** the game formats a new save on first boot, and the file select is clean (the "File 2/3 corrupted" messages are gone).
+- **Existing save:** I loaded the mGBA save from `recordings/session1` and the file select shows file "A" with Link, the hearts and the Four Swords info. The PS2 port uses the same `.sav` layout as mGBA, so your mGBA saves load as they are, in either direction.
+- **Writing:** changes go to disk at the next vblank after the game writes.
+
+The save file is `build/ps2/zeldaalttp.sav`. That copy is currently your recorded session-1 save, left from the test; delete it to start fresh.
+
+**PCSX2 only for now.** The file is accessed through PCSX2's host filesystem, which only works with **Host filesystem access** turned on in PCSX2's settings. On a real PS2, or with that setting off, saves won't persist yet. A memory card file is the next piece for that.
+
+Committed, with a walkthrough note.
+
+## User
+
+Let's try running the replay now
+
+## Claude
+
+I'll run the ARM-side replay check, which hasn't been run since the translator changes. First, how the check script invokes `make`, so it stays within the memory safeguards.
+
+- tool `Bash`: Inspect check script make usage
+
+- tool `Bash`: Run AUTO_C replay check in capped scope
+
+## Claude
+
+The replay check is running in the background: it builds the ARM `AUTO_C` ROM, traces 2 linked GBAs through `fs_walk.inputs` for 3,921 frames, then replays each traced call. The last result, before the translator changes, was 1,325 calls OK and 24 failing. I'll compare against that when it finishes.
+
+- tool `Bash`: Read replay check results
+
+- tool `Bash`: Group failures by function and symptom
+
+- tool `Bash`: Show failure details for new failures
+
+- tool `Bash`: Check whether failing functions are gstate copies with labels
+
+- tool `Bash`: List incs with .type directives
+
+- tool `Bash`: Read the converted sub_0800BD14
+
+- tool `Bash`: Rerun replay check keeping sub_0800BD14 native
+
+## Claude
+
+The rerun is going in the background. While it runs I'm not changing anything in the tree, since the check rebuilds `src/auto`.
+
+- tool `Bash`: Read the skip-run results
+
+- tool `Bash`: Bisect: rerun check with old gstate ranges
+
+## Claude
+
+The check is running again with the old range rule switched back on, in the background. If the failures drop back to the earlier 24, the range change is the cause and I'll find which of the newly translated code is wrong.
+
+- tool `Bash`: Read bisect results
+
+- tool `Bash`: Run baseline check at the pre-session commit in a worktree
+
+## Claude
+
+The baseline check is running on the old commit, with today's `mgba_run` binary. If it also gives about 120 failures, the difference comes from the tools or the setup, not from today's code changes. I also reverted my temporary bisect switch in `gstate2c.py`.
+
+- tool `Bash`: Read baseline results
+
+- tool `Bash`: Bisect: disable inner-label entries and ranges, rerun check
+
+## Claude
+
+Running in the background: the check with both parts of the range fix switched off (inner-label entries and the new range rule). That decides whether the regression lies in `gstate2c` at all.
+
+- tool `Bash`: Read result with inner entries disabled
+
+- tool `Bash`: Bisect: run check at commit f67c462
+
+## Claude
+
+The check at commit `f67c462` is running in the background.
+
+- tool `Bash`: Read f67c462 result
+
+- tool `Bash`: Test HEAD with gstate C back at -O2
+
+## Claude
+
+Running in the background: HEAD with the global-state C back at `-O2`, still under the memory cap and `ulimit`.
+
+- tool `Bash`: Read -O2 result
+
+- tool `Bash`: Document and commit the -O2 fix
+
+## Claude
+
+The replay check is back to its baseline: 1,328 calls match and 24 fail, the same 24 known failures as before today's work.
+
+| Group | Failing calls |
+|---|---|
+| EEPROM | 3 |
+| I/O and timer functions the replay doesn't restore (`0800C54C`, `0800C75C`) | 11 |
+| The sound-path functions (`080045FC`, `08004FD0`, `08008D90`, `08013C8C`) | 10 |
+
+The total passing is up by 3 because the trace now covers a bit more code.
+
+**What broke it.** The first run gave 120 failures. I narrowed it down by switching changes off one at a time and by running the check on older commits:
+- It wasn't the newly translated allocator, nor either part of my `gstate2c` range fix; each switched off still gave 120.
+- The commit before today's work, and `f67c462` (PS2 step 1), both still gave 24.
+
+The cause was one of the memory safeguards from after the out-of-memory kill: compiling the generated global-state C at `-O0`. Now that the generated files are normal size again, it's back at `-O2`, still under the memory cap, and the check passes. That's committed with a walkthrough note. I don't yet know why agbcc's `-O0` output behaves differently. Either GCC 2.95 has a problem at `-O0`, or the generated C has undefined behaviour that `-O2` happens to hide. The second would matter for the PS2 build too, which compiles the same code with a different compiler, so it's worth finding at some point.
+
+The check script now takes a `JOBS` setting. Builds with the translations need `JOBS=1`, because two `asm2c` runs in parallel go over the memory cap.
+
+## User
+
+Let me test in PCSX2 briefly
+
+## Claude
+
+`build/ps2/zeldaalttp.elf` is up to date (saves, input and the cost logging are all in).
+
+To test:
+1. **Load the ELF.** In PCSX2, System → Boot ELF → `build/ps2/zeldaalttp.elf`. It builds from `/home/alex/Documents/zeldaalttp-ps2`.
+2. **Enable host filesystem access** in the emulation settings, if you want saves to work; the save file sits next to the ELF.
+3. **Use a controller on port 1:**
+   - Circle = A, Cross = B
+   - L1/R1 = L/R
+   - Start and Select as themselves
+   - D-pad or left stick to move
+
+Things to know:
+- **Starting save.** `build/ps2/zeldaalttp.sav` is currently your recorded session-1 save, so file 1 will show "A". Delete it first if you want a fresh start.
+- **No sound** yet.
+- **Single player only.** Four Swords multiplayer needs the link-cable replacement, so expect it to stop at any screen that waits for other GBAs.
+- **Graphics may be off.** Mid-frame scroll and window effects aren't implemented, and a few stray sprite pixels appear on the file select.
+- **Speed.** Rendering takes about 82% of the EE's frame time, so slowdown is possible on busier screens.
+- **Possible extra files.** With host filesystem access on, the port also writes a few `frame_*.ppm` snapshots and the SIO log (EE console) next to the ELF.
+
+Tell me what you see. Screenshots or the EE console lines from around a problem help most.
+
+## User
+
+Run the replay again but with the window visible so I can watch
+
+## Claude
+
+You'll want to watch the recorded session play back, so I'll check whether `mgba_run` can show a window while replaying inputs.
+
+- tool `Bash`: Check mgba_run window options
+
+- tool `Bash`: List play-mode code paths
+
+- tool `Bash`: Read play-mode window/key code
+
+## Claude
+
+I'll add `--view 1`: the same window and real-time pacing as `--play`, but the scripts supply the keys and nothing is recorded.
+
+- tool `Bash`: Add --view window to mgba_run and rebuild
+
+## Claude
+
+Built. Now I'll start session 1's replay, 44,522 frames (about 12½ minutes), with the window on your desktop.
+
+- tool `Bash`: Start the visible replay of session 1
+
+- tool `Bash`: Confirm replay running; commit mgba_run change
+
+## Claude
+
+The session 1 replay is playing on your desktop now: one window with both GBAs side by side, running in real time from the recorded inputs.
+
+- **What this is:** mGBA running the original (matching) ROM, not the PS2 build. That's the reference the replay check compares against.
+- **Length:** 44,522 frames, about 12½ minutes.
+- **Stopping:** press Escape or close the window. It ignores your keyboard and controller, since the recording drives both GBAs.
+- **Process:** PID 915523, in case you want to kill it from a terminal.
+
+To make this possible I added a `--view 1` option to `mgba_run`, so any recording can be watched this way (committed):
+```
+./tools/mgba_run zeldaalttp.gba $(cat recordings/session1/frames) --players 2 --start recordings/session1 \
+    --inputs0 recordings/session1/inputs0 --inputs1 recordings/session1/inputs1 --view 1
+```
+
+If you'd rather watch it on the NONMATCHING build that the replay check tests (C and translated code instead of the original assembly), I can start that one instead.
+
+## User
+
+What do we need to make the replay work on the PS2 build?
+
+## Claude
+
+The main gap is that session 1 is a two-GBA Four Swords session. The PS2 build runs one GBA, and Four Swords won't start a game without at least two linked players. So replaying it needs the link-cable replacement anyway, which the port needs for multiplayer regardless.
+
+1. **Two game instances in one PS2 program.** All of the game's state lives at fixed GBA addresses (RAM, I/O, VRAM), so two copies can't share them as they are. But we map those addresses with TLB entries already, so switching instance just means repointing the entries (7 of them) at the other GBA's memory blocks. The PS2-side state also has to be per instance: the renderer, DMA and EEPROM, the global-state CPU registers, and the trace ring. Each instance runs a frame in turn. That's moderate work, and it's also the structure the split-screen port needs.
+2. **Link cable.**
+   - **Serial registers:** emulate multiplayer serial transfers between the instances, with the serial interrupt the game waits on. In link mode the main loop paces itself with `IntrWait(SERIAL)` rather than vblank.
+   - **ARM handler:** the game's serial interrupt handler is ARM code it copies to RAM (`0x08000318`), so it needs a C port like the other ARM routines.
+   - **Timing:** this is the delicate part. mGBA runs the GBAs in lockstep with cycle-level timing. We'd exchange data at the same points in the frame, which should be enough because the game's protocol is frame-synchronous, but I'd expect some debugging.
+3. **A recording from power-on.** Session 1 starts from mGBA savestates (`state0.ss`) taken mid-game. Those hold CPU registers and stacks that mean nothing to the C port. `tools/fs_walk.inputs` (3,921 frames from power-on, two GBAs, `start_linked` saves) is replayable as it is, and new longer recordings can start from boot too.
+4. **Scripted input.** Read the per-frame inputs from a file instead of the controller (a small change in `input.c`). Inputs are keyed by vblank count, so frames need to stay aligned: one `VBlankIntrWait` is one vblank on our side, and any lag frames on the GBA would shift it. Comparing state catches that.
+5. **Comparing against mGBA.**
+   - **On the PS2 side:** dump RAM (and screenshots, which already work) at chosen frames.
+   - **On the mGBA side:** dump at the same frames with `mgba_run --dump`.
+   - **The check:** diff the two. This is the accuracy check CLAUDE.md calls for, and it shows the first frame where the port diverges.
+6. **Hardware the game logic may notice.** Timers, if the game reads them (random numbers or timing), and the remaining I/O registers. Sound and per-scanline effects only affect output, not game state, so they can wait.
+
+**Order I'd suggest:** 1, then 2 with `fs_walk` as the test (4 is small, so it comes along), then 5 to find divergences, then longer recordings. Step 1 is also the base for split-screen, and step 2 for any Four Swords gameplay at all, so none of this is throwaway work.
+
+## User
+
+Let's start with two game instances. However, we can cheat a bit and not emulate the link cable. All we really need is for game data to be shared between players, like a regular split screen game. How does this change the plan?
+
+## Claude
+
+It simplifies the link part a lot, but it doesn't remove the need for separate game instances. Here's why, and what changes.
+
+**How Four Swords shares a game.** Each GBA runs the whole game world itself, as the player whose ID it has: its camera, its HUD, its Link as "the local player". The link cable doesn't carry a shared world. Each frame, every GBA sends a small packet (its inputs and some sync data) and receives everyone else's. Because all four simulations are deterministic and get the same inputs, they stay identical.
+
+So the game code has no notion of "one world, several views". A genuinely single shared world with four cameras would mean restructuring how the decompiled code treats the local player: camera, HUD, rendering, menus. That's possible later, since we have the source, but it's a big project.
+
+**The shortcut that works now.** Keep one instance per player and cheat at the packet level instead of emulating the link cable:
+
+| Before (emulate the cable) | Now (cheat at the packet layer) |
+|---|---|
+| Serial registers, transfer timing, serial interrupts | At each frame boundary, take each instance's outgoing packet and drop it straight into the others' receive buffers |
+| Port the ARM serial interrupt handler | Not needed |
+| Match mGBA's lockstep timing | Exchanges are frame-synchronous and deterministic by construction |
+| Main loop waits on `IntrWait(SERIAL)` | Treat it as the frame wait |
+
+The registers the game reads at startup to detect a link and its own player number get fixed values per instance. Instances are cheap: game logic measured about 94,000 cycles a frame, so four is roughly 8% of the EE. Rendering is the real cost, which we discussed. Each instance renders its own player's view, which is exactly the split screen.
+
+**Revised plan:**
+1. **Instances:** two game instances, switched by repointing the TLB entries at each instance's memory blocks, plus per-instance PS2-side state (renderer, DMA, EEPROM, global-state registers). Unchanged from before.
+2. **Packet exchange:** find the game's link layer: where it builds the outgoing packet, where it reads received packets, and the flags marking a transfer as done. Then write `ps2_link_exchange()` to run between frames. This replaces cable emulation. Understanding the game's link code takes some reverse-engineering, but far less than timing-accurate serial emulation.
+3. **Replay:** inputs from a file per instance, so `fs_walk` can run on the PS2.
+4. **Comparing with mGBA:** RAM dumps at matching frames. Exact agreement with mGBA isn't guaranteed any more, since mGBA delivers packets with real cable timing. If the protocol is frame-locked as I expect, state should still match, and the comparison will show whether it does.
+
+There's one more option, for the shared data that isn't gameplay state (ROM, decompressed tiles, maps). It already exists only once, because every instance maps the same ROM, and later the GS textures can be shared too.
+
+I'll start on step 1, two instances with TLB switching, unless you want to change the plan first.
+
+## User
+
+Go ahead with two instances
+
+## Claude
+
+The game loop never returns (`AgbMain` loops forever), so each instance needs its own call stack. The plan:
+- **Threads:** one EE thread per instance running `AgbMain`. They hand off at `VBlankIntrWait`: instance 1 runs its frame, then instance 2, then the frame is shown.
+- **TLB switch:** at each handoff, repoint the TLB entries at that instance's memory blocks.
+- **Per-instance PS2 state:** renderer, textures, EEPROM data and save file, and the controller port.
+
+First, a check: game state must all live at GBA addresses. Any writable globals the C defines in ordinary PS2 data would be shared by both instances by mistake.
+
+- tool `Bash`: Find writable globals in game objects
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/src/ps2/tlb.c
+
+- tool `Read`: /home/alex/Documents/zeldaalttp-ps2/src/ps2/tlb.c
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/src/ps2/tlb.c
+
+## Claude
+
+Next, the per-frame flow. I'll reread the current `frame.c` and `video.c` before restructuring them.
+
+- tool `Bash`: Read current frame.c and main.c
+
+## Claude
+
+Now the scheduler (`main.c`) and the instance side of the frame wait (`frame.c`).
+
+- tool `Bash`: Write scheduler main.c and instance-side wait
+
+- tool `Bash`: Run vblank handler before handing back; look at video.c state
+
+## Claude
+
+I'll rewrite `video.c` with a renderer, buffer and texture per instance, drawing the views side by side.
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/src/ps2/video.c
+
+- tool `Read`: /home/alex/Documents/zeldaalttp-ps2/src/ps2/video.c
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/src/ps2/video.c
+
+## Claude
+
+Now input, saves and EEPROM per instance. Instance *i* reads controller port *i*, and instance 2 saves to `zeldaalttp_p2.sav`.
+
+- tool `Bash`: Per-instance input, EEPROM and saves; build
+
+## Claude
+
+It builds cleanly. Booting with two instances:
+
+- tool `Bash`: Boot two instances in PCSX2
+
+## Claude
+
+Instance 1 boots and stops before its first frame, so instance 2 never gets started. The ring repeats one address, so I'll name it.
+
+- tool `Bash`: Name the repeated ring address
+
+- tool `Bash`: Show VCOUNT in the stuck watchdog line
+
+- tool `Bash`: Count I/O reads to see if the instance runs
+
+## Claude
+
+The instance is running, polling I/O about 4 million times a second, so it's in a polling loop. I'll record which address it polls.
+
+- tool `Bash`: Show the polled I/O address
+
+- tool `Bash`: Count 159 reads and toggles
+
+- tool `Bash`: Compare VCOUNT through physical uncached views
+
+- tool `Bash`: Advance VCOUNT per read; boot two instances again
+
+## Claude
+
+A compile error, so that boot ran the old ELF: my insertion used `o` before it was declared. Let me look at the function.
+
+- tool `Bash`: Show ps2_io_read as edited
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/src/ps2/io.c
+
+- tool `Bash`: Rebuild and boot two instances
+
+## Claude
+
+Instance 1 got through its first frame and instance 2 started, then crashed straight away: a load from address 0 at pc 0xAD754C, then a jump to 0. I'll name that pc.
+
+- tool `Bash`: Name the crashing pc
+
+- tool `Bash`: Check gstate sp at C-call and boot
+
+- tool `Bash`: Print ring on fatal and name entries
+
+- tool `Bash`: Test per-instance EWRAM mapping
+
+- tool `Bash`: Trace instance 2 startup to the crash
+
+- tool `Bash`: Rebuild and trace instance 2 startup
+
+- tool `Bash`: Disassemble sub_08133E7E and its translation
+
+## Claude
+
+You've hit your 5-hour limit · resets 9:40pm (America/Chicago)
+
+## User
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+<system-reminder>
+<tools-used-before-summary>Bash, Edit, PushNotification, Read, TaskStop, ToolSearch, Write</tools-used-before-summary>
+</system-reminder>
+Summary:
+1. **Primary Request and Intent:**
+   - **Goal:** decompile Four Swords (zeldaalttp GBA disassembly, USA) to C, and port it to the PS2 with split-screen multiplayer.
+   - **Requests this session:**
+     - Analyze the FSAE DSi ROM (put it in reference/dsi).
+     - Characterize the difficulty of decompiling the GBA game versus the DSi game.
+     - The user's DSi feature priorities: 1. new levels, 2. resolution, 3. AI.
+     - Map the Four Swords level format, then decode the DSi map files and render the new stages; "Set up Ghidra and read the loader" (done with objdump instead).
+     - Answer whether 320x240 shows outside the map; save the notes to docs.
+     - Ratio of decomp vs new PS2 code; reuse of mGBA rendering.
+     - "Let's proceed with the PS2 port":
+       - mGBA renderer;
+       - render cost / how many renderers fit;
+       - "Let's move on to save files";
+       - "Let's try running the replay now";
+       - "Let me test in PCSX2 briefly";
+       - "Run the replay again but with the window visible so I can watch";
+       - what's needed for replay on PS2.
+     - Last: "Let's start with two game instances. However, we can cheat a bit and not emulate the link cable. All we really need is for game data to be shared between players, like a regular split screen game." Then "Go ahead with two instances".
+   - **Constraints (verbatim from CLAUDE.md and user):**
+     - "Web access: GitHub only without asking."
+     - "Never access tcrf.net (The Cutting Room Floor) in any way."
+     - "No `pkill -f <pattern>` in a command whose own command line contains the pattern."
+     - "No ROM, BIOS or extracted asset is ever committed." reference/ is never committed.
+     - Never share the user's email with external services.
+     - FourSwordsRecomp code (PolyForm NC) is not copied.
+     - Distinguish global state ("gstate") from the Graphics Synthesizer (GS).
+     - PCSX2 uses the software renderer.
+     - Log over SIO, not printf, from game-reachable code.
+     - "Never dismiss TLB Miss lines".
+     - Commit only when `make compare` reports `zeldaalttp.gba: OK`.
+     - Update docs/Running Walkthrough.md and Claude Conversation.md at milestones (archive script; check for no removed lines).
+     - Push notification at milestones.
+   - **Memory safety (after the VM OOM, confirmed by the user's dmesg):**
+     - Long builds run with `systemd-run --user --scope -q -p MemoryMax=6G`.
+     - AUTO_C builds use `-j1`; the check script uses `JOBS=1`.
+     - Compiles run under `ulimit -v 3000000`.
+
+2. **Key Technical Concepts:**
+   - **FS level format:**
+     - Stage descriptors live in pools gUnknown_0842B8A8[6] (146 stages): [0] map, [1] tileset, [2] slots, [4+2i] slot positions, [12..19] player starts, +20 object layers.
+     - Sub-room pools gUnknown_0842B8CC[4] (216 entries); room pool = stage pool.
+     - Map data: MapDataDefinition records loaded by sub_0801484C, relative to gUnknown_0854F7E8.
+     - Tilesets: gUnknown_08146078; stage maps: gUnknown_08146090; room maps: gUnknown_0814627C; room sizes: gUnknown_081465E0; palettes: gUnknown_08429750 (base 0x0844DD74).
+   - **DSi (FSAE):**
+     - zelmap.bin = NDS file 24 (index of offset/size pairs; record words A/B = the two halves of one pair, entry = A/2; LZ11).
+     - zeldat.bin = file 20 (palettes).
+     - ARM9 tables: tilesets 0x020D70F0, stage maps 0x020D7660, palette groups 0x021039B8, new-stage pool 0x02103DD4.
+     - 18 new stages, map indices 123–140, using tilesets 6–14.
+     - Camera centres on 128/96.
+   - **PS2 port architecture:**
+     - `NONMATCHING=1 AUTO_C=1` ARM build generates src/auto/*.c and *_gstate.c / *_gstate_ps2.c.
+     - The PS2 build is Makefile.ps2 (EE gcc -std=gnu99).
+     - tools/ps2/struct_align.py: every non-packed struct/union gets aligned(4) (agbcc rule); it also strips ARM asm and rewrites cast-as-lvalue.
+   - **TLB mapping:** PutTLBEntry is refused by the kernel, so free entries 39–47 are written with `_SetTLBEntry`.
+   - **ICALL resolver:** handles indirect calls.
+   - **I/O:** io.c handles I/O side effects through the R*/W* macros (PCSX2 doesn't raise TLB-modified, so the store-trap approach failed). It emulates DMA, the EEPROM, and VCOUNT advancing per read.
+   - **Rendering:** mGBA software renderer, vendored (MPL-2.0); costs about 4.0M of the 4.9M EE cycles per frame.
+   - **Instances:**
+     - Two game instances run in threads with cooperative scheduling at VBlankIntrWait.
+     - The TLB is remapped per instance; each instance gets 1 MB physical at 0x01800000 + i·1 MB.
+     - The ROM is shared.
+
+3. **Files and Code Sections:**
+   - **tools/fs_rooms.py** (new): lists and renders stages; draw(mem, grid, path) is reused.
+   - **tools/dsi_zelmap.py** (new): matches DSi entries against GBA data; class Dsi (records, load, palgroup from zeldat); renders the new stages from the descriptors.
+   - **docs/DSi Levels and Resolution.md** (new): notes.
+   - **Makefile:**
+     - AUTO_C rule: gstate C at agbcc `-O2` (at `-O0` the replay check failed 120 calls) under `ulimit -v 3000000`; comment explains.
+   - **Makefile.ps2** (new):
+     - CFLAGS: gnu99, -DNONMATCHING -DPLATFORM_PS2, `-iquote build/ps2/include`.
+     - Hand C filtered through struct_align.py, with `-finstrument-functions`.
+     - Headers filtered into build/ps2/include.
+     - auto objects built under ulimit.
+     - data .s with `@` comments stripped.
+     - PS2_CFLAGS include mgba with `-include mgba/flags.h`.
+     - MGBA_C and GLUE_C (src/ps2/glue, game flags).
+     - Link `-T src/ps2/ps2.ld`, then tools/ps2/fix_elf.py; `.SECONDARY:`.
+   - **tools/gstate2c.py:**
+     - Inner Thumb labels no longer end copies (`inner -= copy names`); inner labels added to taken.
+     - ps2_file(...) writes X_gstate_ps2.c:
+       - one contiguous `.pushsection .rodata` blob per object with relocated ABS32 words;
+       - C entry wrappers `u32 NAME(u32 a0..s3)` via `gstate_enter_c_tag(fn, e, f)`;
+       - inner labels of translated copies become C entries;
+       - `.set` aliases;
+       - `NAME__asm` aliases;
+       - non-const tables;
+       - failed copies trap through ps2_native_missing.
+   - **tools/asm2c.py:**
+     - accepts `.type`;
+     - indirect calls emitted as `ICALL(x)`;
+     - `AUTO_TRACE(0xADDR);` at function entry.
+   - **include/auto.h:**
+     - PS2 R/W macros route 0x04000000–0x3FF to ps2_io_read/ps2_io_write; stores below 0x00100000 are dropped.
+     - AUTO_TRACE writes the ring and prints when ps2_trace_on.
+     - `ICALL(p)` is ps2_icall on PS2, a plain cast on ARM.
+   - **include/gstate.h:**
+     - PS2: GstateEntry gains `u32 pad` (16 bytes; the 12-byte entries left gaps between objects' tables, which broke the binary search).
+     - Writable table externs; ARM range check skipped on PS2.
+     - ICALL in gstate_run.
+     - `gstate_enter_ce(fn, e, f)`; GSTATE_TRACE_PRINT.
+     - PS2 sp-outside-EWRAM fatal check in gstate_run.
+   - **include/gba/macro.h:** DmaSet calls PS2_IO_POLL().
+   - **include/variables.h:** removed the extern for sBGMapSizes.
+   - **src/rom_0800D4F0.c:** `int sub_0800D87C(void){...return 0;}` (called through an int table); PS2 prototypes added in several src files.
+   - **Naked asm functions** (rom2, rom3a, lttp/*) moved into asm/non_matching/.../*.inc with expanded `.ALIGN/.GLOBAL/.THUMB/.THUMB_FUNC/.TYPE` headers.
+   - **src/main.c:** under PLATFORM_PS2, `gUnknown_03006C70 = (void *)UpdateAllEntities;`.
+   - **src/ps2/ps2.ld:** GBA ROM sections at their VMAs with AT(0x01xxxxxx); gstatetable sections; stack at 0x00FF0000; `INCLUDE build/ps2/gba_syms.ld`.
+   - **src/ps2/gbarom.S:** incbin of the ROM code area plus 2 gaps.
+   - **tools/ps2/gba_syms.py, tools/ps2/fix_elf.py:** new.
+   - **src/ps2/tlb.c** (rewritten for instances):
+     - `ps2_tlb_map(int instances)` maps the shared ROM at 0x08000000 → 0x01000000 and the EEPROM pages (0x0DFFE000, 0x0D000000 → 0x017F0000, filled with 0xFF).
+     - It maps the 6 per-instance regions at sIndex[], then zeroes each instance and sets KEYINPUT=0x3FF.
+     - `ps2_tlb_select(int)` rewrites the entries; `int ps2_cur_instance`.
+     - Region table:
+       ```
+       {0x02000000,0x7E000,0x00000,0x00000},{0x03000000,0x6000,0x40000,0x44000},{0x04000000,0,0x48000,0x49000},
+       {0x05000000,0,0x4A000,0x4B000},{0x06000000,0x1E000,0x50000,0x60000},{0x07000000,0,0x70000,0x71000}
+       ```
+   - **src/ps2/main.c** (rewritten):
+     - INSTANCES 2; threads with 256 KB stacks at priority 64; `ps2_main_thread`; `u32 ps2_frame`.
+     - The loop selects each instance, StartThread / WakeupThread, then SleepThread.
+     - Then per instance: render, input, save; then present.
+     - The current code includes a temporary tlb check log and `ps2_trace_on = i == 1;` before StartThread (instance 2 crash debugging).
+   - **src/ps2/frame.c:**
+     - ps2_log/ps2_fatal over SIO; ps2_fatal prints the last 12 ring entries.
+     - `ps2_vblank_wait`: DISPSTAT/IF bits, ps2_io_vblank, then the VBlank handler via ps2_icall(INTR_TABLE+4), BIOS_IF; then WakeupThread(main) and SleepThread.
+     - The watchdog ISR prints `heartbeat: vblank N frame M` (pcsx2_run's format); when stuck it prints the EPC, io reads, last io address and the ring. The VCOUNT toggle was removed.
+     - `__cyg_profile_func_enter` writes the ring.
+     - `volatile int ps2_trace_on`, plus ps2_trace_print.
+   - **src/ps2/io.c:**
+     - DMA dma_run / dma_check (timing 0 immediate, 1 vblank); IF write-1-to-clear.
+     - EEPROM per instance: `u8 ps2_eeprom[4][8192]`, ps2_eeprom_dirty[4], sEepromRead[4], indexed by ps2_cur_instance. Read request 11+addr+0; write 10+addr+64 bits+0; mGBA layout.
+     - VCOUNT advances by 1 on each read (mod 228).
+     - Debug counters ps2_io_reads / ps2_io_last.
+   - **src/ps2/save.c:** per instance; `host:zeldaalttp.sav` for instance 0, `host:zeldaalttp_p2.sav` for instance 1; load / write on dirty.
+   - **src/ps2/input.c:** ports 0 and 1 → instance KEYINPUT. Mapping: Circle A, Cross B, L1 L, R1 R, Start, Select, D-pad / left stick.
+   - **src/ps2/video.c** (rewritten):
+     - per-instance renderer, texture and pixels; ps2_video_render(inst) and ps2_video_present(n) side by side;
+     - frame dumps `host:frame_p%d_%05u.ppm`;
+     - cost logging every 600 frames.
+   - **src/ps2/glue/arm_ports.c:**
+     - gba_call; C ports of the ARM routines (UpdateAllEntities, sub_080007C4, sub_080008A8, sub_08008FA4 tilemap copier); sub_08008F78; sub_08009106.
+     - Handlers for types 3/4 → sub_08009554 / sub_08009F1C.
+     - ps2_icall redirects IWRAM 0x03000530 / 0E40 / 5AE0 / 6740; trampoline for gstate addresses.
+     - sort_table plus a startup check log; MISSING() stubs for lttp sprite_bee; data symbols sub_080007C4 / sub_080008A8 / sub_08008FA4 / interrupt_main.
+   - **src/ps2/bios.c:** CpuSet, CpuFastSet, LZ77, RL, Div, Sqrt, ObjAffineSet / BgAffineSet, VBlankIntrWait / IntrWait → ps2_vblank_wait, libgcc div helpers, ps2_swi.
+   - **src/ps2/crash.c:** copied from tp-ps2.
+   - **src/ps2/mgba/:** vendored renderer, LICENSE, README; plus src/ps2/mgba_stubs.c.
+   - **tools/check_nonmatching.sh:** `make -j${JOBS:-8}`.
+   - **tools/mgba_run.c:** `--view 1` shows the window during scripted runs.
+
+4. **Errors and fixes:**
+   - **OOM (user confirmed via dmesg).** agbcc was killed at 5.4 GB on a 147 MB rom1_gstate.c. That file came from treating grouped copy names as inner labels; fixed. Safeguards were added (systemd scope, ulimit, -j1).
+   - **Copy blobs.** Separate per-copy blobs broke reads of neighbouring literal pools; now one contiguous blob per object.
+   - **No TLB-modified exception in PCSX2,** so stores to I/O weren't trapped; switched to the macro-based io.c.
+   - **Early hangs** (fixed in turn):
+     - m4a VCOUNT wait;
+     - DMA3 wait;
+     - EEPROM polling (the 0x0D000000 page);
+     - KEYINPUT=0 meant the reset combo was held every frame;
+     - the void/int table loop (sub_0800D87C).
+   - **Misaligned gstate tables:** 8-byte alignment with 12-byte entries left gaps; padded entries to 16 bytes.
+   - **False stall:** pcsx2_run needs the `heartbeat: vblank N frame M` line format.
+   - **Replay regression** (120 fails): bisected to gstate C at -O0; reverted to -O2, giving 1328 ok / 24 fail (baseline).
+   - **Two instances, VCOUNT:** VCOUNT toggling in the ISR wasn't seen by the instance thread (root cause unclear); replaced with VCOUNT advancing per read.
+   - **Compile errors fixed during editing:** 'o' undeclared ordering in io.c; ps2_trace_on undeclared in frame.c.
+
+5. **Problem Solving:**
+   - **Working so far:** the PS2 single instance reached the file select, ran for 60+ s, and saves worked (the mGBA save loads).
+   - **Two instances:**
+     - Instance 0 completes its first frame, and instance 1 starts.
+     - Then instance 1 hits FATAL "gstate_run 00000000: sp 00000000 outside EWRAM (lr 00000000, instance 1)".
+     - The instance-1 trace shows: AgbMain → initialize_gba → main_disable_interrupts → setup_interrupt_handler → auto sub_080679CC → auto sub_08135BCC → auto sub_08135C3C → auto sub_08134684 (m4aSoundInit) → gs sub_08134A84 → gs sub_08133E64 → gs sub_08133E7E → run 0.
+     - The translated gs_sub_08133E7E pushes r0 at sp, then returns via `lr` (if even → GSTATE_STORE; gCpu.r[15]=lr; return). lr/sp/gCpu are evidently 0 in instance 1, i.e. the gCpu state is zero or invalid; the cause is not yet determined.
+     - The per-instance EWRAM mapping was verified correct (tlb check log: c0de0000 / c0de0001 for instances 0 and 1).
+     - Hypotheses still open:
+       - gCpu was wiped or not set up: gstate_enter_c's sp default fires only when sp is outside 0x02038000–0x02040000;
+       - something about thread context and the initial gCpu;
+       - a difference between instance 0 and instance 1 initial state.
+
+6. **All user messages:**
+   - "I've added a Four Swords Anniversary Edition rom to the VirtualBox shared folder. Copy it to the project folder and analyze it against the GBA ROM"
+   - "The DSi game is an expanded version of the GBA game, with a few new levels, a status screen on the bottom, a single-player mode with an AI for the second Link character, and a slightly higher screen resolution. I'm planning on implementing at least some of these in this PS2 port. As far as I know, there isn't a decomp or disassembly for the DSi game, so a recomp may be in order to study the code."
+   - "One small change, put extracted DSi files into "reference/dsi" just to tidy things a bit. Characterize the difficulty of decompiling the GBA game vs the DSi game."
+   - "For now, my priority list for the DSi game is: 1, the new levels, 2, the resolution change, and 3, the AI."
+   - "What kind of work do you anticipate for this step?"
+   - "Alright, let's give it a shot"
+   - "Proceed"
+   - "Let's proceed with that"
+   - "Set up Ghidra and read the loader"
+   - "Based on the resolution changes between versions, and the idea for changing resolution for the PS2 port, answer the following: 1. Does the DSi game use the exact same maps as the GBA version? 2. Would increasing the resolution to 320x240 in our PS2 port show areas outside the map boundaries?"
+   - "For now, let's save these notes to the docs folder and commit"
+   - "How much of the PS2 port will rely on decomp code, and how much on decomp?"
+   - "At this point, can we get the port running on PS2? Recomp code we've made is fine"
+   - "As far as rendering, what code can we reuse from mGBA?"
+   - "Let's proceed with the PS2 port"
+   - "Is it still running?"
+   - "It sounds like the IDE crashed because the VM ran out of memory. Can you confirm that?"
+   - "This is the log: sudo dmesg | grep -i oom" (followed by pasted dmesg showing agbcc pid 853080 OOM-killed)
+   - "Yes, apply safeguards and continue"
+   - "Proceed"
+   - "Theoretically, how many GBA renderers could we run in parallel on the PS2? Is it CPU driven at this point?"
+   - "Let's move on to save files for now"
+   - "Let's try running the replay now"
+   - "Let me test in PCSX2 briefly"
+   - "Run the replay again but with the window visible so I can watch"
+   - "What do we need to make the replay work on the PS2 build?"
+   - "Let's start with two game instances. However, we can cheat a bit and not emulate the link cable. All we really need is for game data to be shared between players, like a regular split screen game. How does this change the plan?"
+   - "Go ahead with two instances"
+
+7. **Pending Tasks:**
+   - **Now:** get two game instances running on the PS2 (step 1 of the revised plan).
+   - **Later (agreed plan):**
+     - packet-level link exchange between instances (ps2_link_exchange, no cable emulation);
+     - scripted input from file (fs_walk) for replay;
+     - RAM-dump comparison with mGBA.
+   - **Also outstanding:** memory card saves for real hardware; GS-based renderer for 4 views; sound; HBlank effects; why agbcc -O0 differs.
+   - **Uncommitted:** the two-instance work (tlb.c, main.c, frame.c, video.c, input.c, io.c, save.c, gstate.h fatal check, auto.h trace flag). Temporary debug code to remove later:
+     - tlb check log in main.c;
+     - `ps2_trace_on = i == 1`;
+     - io read counters in the watchdog.
+
+8. **Current Work:**
+   - **Where it stands:** the two instances are implemented. Instance 1 (the second one, index 1) crashes during m4a sound init with gstate_run(0), sp=0, lr=0.
+   - **Last step:** I disassembled sub_08133E7E (0x08133E7C–0x08133E94): `push {r0}; lsrs r0,r2,#25; bne; ldr r0,=0x083C2654; cmp; ...; pop {r0}; bx lr`.
+   - **Its translation** (gs_sub_08133E7E) does sp -= 4; W32(sp, r0); ...; r0 = R32(sp); sp += 4, and returns via lr. If lr is even: GSTATE_STORE(); gCpu.r[15]=t; return.
+   - **Open question:** why gCpu (sp/lr) is zero in instance 1 at that point, when the same path works in instance 0.
+
+9. **Optional Next Step:**
+   - Continue the user's request "Go ahead with two instances" by finding why instance 1's global-state CPU state (gCpu at 0x0203C000) is zero during m4aSoundInit → sub_08133E64 → sub_08133E7E.
+   - Inspect how sub_08133E64 is entered from C-convention code (the gstate entry wrapper and gstate_enter_ce, setting sp=GSTATE_STACK_TOP and lr=GSTATE_MAGIC_RET). Check whether gCpu is set before the call and whether something (e.g. the EWRAM DMA clear in initialize_gba, or an instance-switch issue) zeroes it mid-call in instance 1. Logging gCpu at gstate_enter_ce entry and exit for instance 1 would show this.
+   - Then remove the temporary debug code, verify both instances reach the file select (frame_p0 / p1 dumps), and commit with a walkthrough step.
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /home/alex/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9.jsonl
+Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.
+
+The messages after this summary are the most recent messages from before compaction, kept verbatim. The summary was written without seeing them, so something it says has not happened yet may already have happened in them.
+
+## User
+
+<command-name>/compact</command-name>
+            <command-message>compact</command-message>
+            <command-args></command-args>
+
+## User
+
+<local-command-stdout>Compacted </local-command-stdout>
+
+## User
+
+Continue
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "gCpu\b\|GSTATE_STACK_TOP\|MAGIC_RET\|gstate_enter_c" include/gstate.h | head -40; grep -rn "gCpu" src/ps2/*.c s
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 80,175p include/gstate.h; cat src/ps2/main.c
+
+- tool `Bash`: cd /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; ls -t | head; 
+
+- tool `Bash`: cd /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; tail -40 tr.txt; echo ----; tail -20 ring.txt; grep -n 
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -o 'tools/ps2/[a-z_]*run[a-z_.]*[^"\\]*' ~/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -o 'pcsx2_run[^"]\{0,200\}' ~/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099ef
+
+## Claude
+
+Still on the second-instance crash: instance 1's emulated CPU registers read as zero during sound init. I'm finding the run command so I can add logging.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -o '\\"command\\":\\"[^"]\{0,60\}pcsx2[^"]\{0,200\}' ~/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/93b91fe
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 -c " import json,sys cmds=[] for l in open('/home/alex/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/93b9
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 -c " import json,sys cmds=[] for l in open('/home/alex/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/93b9
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "trace_print\|trace_on" -A6 src/ps2/frame.c | head -40; grep -n "TRACE_PRINT" include/*.h
+
+## Claude
+
+Print gCpu sp/lr/pc with each traced entry.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='src/ps2/frame.c';s=open(p).read() s=s.replace('''    char b[16];     snprintf(b, sizeof(b), "T %08x",
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "ps2_icall" -B3 -A40 src/ps2/glue/arm_ports.c | grep -n "tramp\|gstate\|gCpu\|0x0203" | head -30; $PS2DEV/ee/bin
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 195,240p src/ps2/glue/arm_ports.c
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; f=$(grep -l "08133E7E" src/auto/*_gstate_ps2.c src/auto/*_gstate.c | head -3); echo $f; grep -n "sub_08133E7E\b\|sub_081
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "^u32 sub_08134A84(" -A8 src/auto/rom5_gstate_ps2.c; sed -n 3244,3262p src/auto/rom5_gstate_ps2.c; grep -n "defi
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 1,36p include/gstate.h; grep -n "gstate_enter_c_rom5" -A3 src/auto/rom5_gstate_ps2.c | head -8
+
+## Claude
+
+Found that instance 1's register reads come back zero even right after the entry wrapper sets them. Checking how the generated code holds `sp`.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "GSTATE_LOCALS\|define sp\b" include/*.h | head
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "\bsp\b" include/auto.h include/gstate.h | head
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "define sp\|define gCpu\|0x0203C000" src/auto/rom5_gstate_ps2.c include/*.h src/ps2/*.c | head
+
+## Claude
+
+The generated code keeps `sp` in global memory, so the trace reads are trustworthy: stores to instance 1's 0x0203C000 aren't sticking. I'll test that directly from the instance thread.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='src/ps2/main.c';s=open(p).read() s=s.replace('''    ps2_log("instance %d: entering AgbMain", (int)arg
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 100,140p src/main.c
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; systemd-run --user --scope -q -p MemoryMax=6G make -f Makefile.ps2 -j2 elf 2>&1 | grep " error"; timeout 200 python3 ../
+
+## Claude
+
+Writes do stick, so something wipes gCpu between the entry wrapper and the first translated function. My guess is a DMA fill still pending at that point. Logging fills that cover it:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='src/ps2/io.c';s=open(p).read() s=s.replace('''    if (dst - 0x0D000000u < 0x01000000u) {''','''    { 
+
+## Claude
+
+Only the startup EWRAM clear touches it, so the DMA theory is out. Next I'll trace instance 0 on the same path to see whether it also gets sp=0 there.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -i 's/ps2_trace_on = i == 1;/ps2_trace_on = 1;/' src/ps2/main.c; systemd-run --user --scope -q -p MemoryMax=6G make 
+
+- tool `Bash`: sed -n 4,40p /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/tr2.txt; echo ...; sed -n 255,279p /tmp/claude
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rn "tlb_select\|SetTLB\|ps2_cur_instance =" src/ps2 | grep -v "^src/ps2/tlb.c:.*//"
+
+- tool `Bash`: cd /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; gh api -H "Accept: application/vnd.github.raw" repos/PC
+
+- tool `Bash`: cd /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; head -c 300 recVTLB.cpp; gh api repos/PCSX2/pcsx2/git/t
+
+- tool `Bash`: cd /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; curl -sfL https://raw.githubusercontent.com/PCSX2/pcsx2
+
+## Claude
+
+Confirmed: `vtlb_DynGenWrite_Const` and the read variants look up the page mapping at compile time. One more check: whether a TLB write clears recompiled blocks.
+
+- tool `Bash`: cd /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; curl -sfL https://raw.githubusercontent.com/PCSX2/pcsx2
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='src/ps2/tlb.c';s=open(p).read() old_hdr=s[:s.index('#include <kernel.h>')] new_hdr='''// Maps the GBA
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='src/ps2/tlb.c';s=open(p).read() s=s.rstrip('\n'); assert s.endswith('}\n}'); s=s[:-2]+'\n' open(p,'w'
+
+## Claude
+
+Now the cost log: rendering is interleaved with the game frames, so "game" time becomes frame time minus render time.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; python3 - <<'E' p='src/ps2/video.c';s=open(p).read() s=s.replace("static u32 sRenderCycles, sOtherCycles, sLastEnd;","st
+
+## Claude
+
+Both instances now run without crashing, at about 30 fps (one game frame every two vblanks). Checking the frame dumps and the cost line:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/build/ps2; python3 -c " from PIL import Image ims=[Image.open(f'frame_p{p}_0{n}.ppm') for n in ('0600','1500') for p in (
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; timeout 300 python3 ../tp-ps2/tools/ps2/pcsx2_run.py build/ps2/zeldaalttp.elf --seconds 25 --heartbeat 2>&1 | grep -E "c
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; $PS2DEV/ee/bin/mips64r5900el-ps2-elf-addr2line -f -e build/ps2/zeldaalttp.elf 0x3449a4 0x344aa0
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -rn "sub_08003870" asm src include --include=*.s --include=*.c --include=*.h --include=*.inc | head -5; grep -n "^v
+
+## Claude
+
+These are null+offset reads at `R32(r0 + 36)` in a file-select sprite routine. To see whether they're new with two instances, I'll run a one-instance build briefly:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -i 's/^#define INSTANCES 2/#define INSTANCES 1/' src/ps2/main.c; systemd-run --user --scope -q -p MemoryMax=6G make 
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; ls build/ps2/ | head; for o in $(find build/ps2 -name '*.o' -not -path '*mgba*' -not -path '*/ps2/src/ps2/*'); do $PS2DE
+
+## Claude
+
+No game state lives in PS2 memory; only port glue is listed there. So the likely difference is the save: instance 1 uses `zeldaalttp_p2.sav`. Checking whether that save is blank:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2/build/ps2; for f in zeldaalttp.sav zeldaalttp_p2.sav; do echo $f $(stat -c %s $f) $(tr -d '\377\000' < $f | wc -c) nonbla
+
+## Claude
+
+Instance 1's save is one the game wrote itself, so it differs from instance 0's. I'll give it a copy of instance 0's save and see whether the misses go away:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; cp build/ps2/zeldaalttp_p2.sav /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9
+
+## Claude
+
+With identical saves there are no misses. Next, a one-instance run using the other save, to tell a save-content issue from a two-instance one:
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cp build/ps2/zel
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; systemd-run --user --scope -q -p MemoryMax=6G make compare -j4 2>&1 | tail -2; git diff include/ | head -60
+
+## Claude
+
+Matching build is OK. Next: the walkthrough step, the conversation archive, then the commit.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; grep -n "^## Step" "docs/Running Walkthrough.md" | tail -2; tail -5 "docs/Running Walkthrough.md"; grep -n "instance\|sp
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; sed -n 80,100p "docs/Planning Doc.md"
+

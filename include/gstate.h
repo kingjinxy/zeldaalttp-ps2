@@ -19,8 +19,8 @@ struct GstateCpu {
 #define GSTATE_RING ((volatile u32 *)0x0203C200)
 #define GSTATE_TRACE(a) do { u32 i_ = GSTATE_RING[0] % 1024; GSTATE_RING[1 + 3 * i_] = (a); GSTATE_RING[2 + 3 * i_] = gCpu.r[13]; \
     GSTATE_RING[3 + 3 * i_] = lr; GSTATE_RING[0] = i_ + 1; GSTATE_TRACE_PRINT(a); } while (0)
-#ifdef PLATFORM_PS2  // src/ps2/frame.c: prints entries while the flag at 0x0203C1F0 is set
-#define GSTATE_TRACE_PRINT(a) do { if (GSTATE_RING[-4]) ps2_trace_print(a); } while (0)
+#ifdef PLATFORM_PS2  // src/ps2/frame.c: prints entries while ps2_trace_on is set
+#define GSTATE_TRACE_PRINT(a) do { if (ps2_trace_on) ps2_trace_print(a); } while (0)
 #else
 #define GSTATE_TRACE_PRINT(a) ((void)0)
 #endif
@@ -106,6 +106,13 @@ static void gstate_run(u32 a)
     // C (or native) code: the C calling convention, then return to lr
     {
         u32 s = gCpu.r[13];
+#ifdef PLATFORM_PS2
+        if (s - 0x02000000u >= 0x40000u) {
+            void ps2_fatal(const char *fmt, ...);
+            extern int ps2_cur_instance;
+            ps2_fatal("gstate_run %08x: sp %08x outside EWRAM (lr %08x, instance %d)", a, s, gCpu.r[14], ps2_cur_instance);
+        }
+#endif
         gCpu.r[0] = ICALL(a)(gCpu.r[0], gCpu.r[1], gCpu.r[2], gCpu.r[3], R32(s), R32(s + 4), R32(s + 8),
                                    R32(s + 12));
         gCpu.r[15] = gCpu.r[14];
