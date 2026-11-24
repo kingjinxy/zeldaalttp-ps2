@@ -141,7 +141,33 @@ Phase 0: measure and map (no game changes)
       session 1 doesn't reach (other stages, bosses, results, shop).
 
 Phase 1: the world runs once (`FS_SHARED_WORLD`, breaks GBA matching on purpose)
-- [ ] 5. Split the frame: world update once, then per player with only that player's state block swapped in
+- [ ] 5. Split the frame: world update once, then per player with only that player's state block swapped in.
+      **Tabled (user, 2026-11-24)**: the plan below is ready; pick it up from 5a.
+      Why it's safe: the cable carries only inputs and real GBAs stay in sync, so nothing that differs between
+      players can feed back into the world. The ~13 KB that differs (step 3) is the per-player state; code that
+      writes only those bytes is the view part and can run once per player after the world update.
+      Main loop now (`src/main.c`): `rom2_read_keys` (per player), `sub_0800C54C`/`sub_08036864`/`sub_080368A0`
+      (link: go away), `gUnknown_0842731C[gMainState]()` (the game: world mixed with camera, HUD, "mine?" checks),
+      then `sub_0800D788`, `sub_0800C118`, `sub_0802C940`, `sub_0800B524` (roles unknown, probably mostly per
+      player).
+  - [ ] 5a. Who writes the per-player bytes: a write watch (like `mgba_run --reads`) over step 3's ranges on the
+        session 1 replay gives the view functions and their callers. More memory diffs across session 1 (other
+        rooms, menus, the stage's end) to complete the 13 KB list. (~1 session)
+  - [ ] 5b. Sort each per-player function and the ~23 from step 4: view only (camera, BG map streaming, OAM,
+        HUD, text, own sound: moves to the per-player pass); world code with a "mine?" check (e.g. `sub_08042DB0`:
+        the check moves to the view pass if it only affects drawing, else the flag becomes per player); arrays
+        already indexed by player (keys, link ring, `gUnknown_03006A30[id]`: shared as they are). (~1 session)
+  - [ ] 5c. Port, under `FS_SHARED_WORLD`: one world block plus a ~13 KB overlay per player, swapped by
+        `ps2_tlb_select`. Frame: player 0 runs the whole frame as now; players 1-3 get their overlay, the player
+        number byte (0x03000414) and only the view functions from 5b. Keys straight into the arrays the link
+        fills (step 6). Player 0's frame stays identical to today's, so mistakes show as wrong screens for
+        players 1-3, not a broken world. (5c+5d: 2-3 sessions)
+  - [ ] 5d. = step 7: world memory against instance 0, each overlay against instance i, each screen pixel for
+        pixel (the GS readback check); the first mismatching byte points at the code.
+      Risks: view code deep inside an entity's update (5a shows how much); a view function that also writes world
+      bytes would update the world twice (the write watch flags functions writing both kinds); session 1 covers one
+      stage only. Expected first result: switches from ~0.9 M to ~0.05 M cycles per player, enough for 4 players at
+      60 fps on the step 1 numbers.
 - [ ] 6. Inputs straight from a shared array in place of the link exchange
 - [ ] 7. Check each screen and the world memory against the four-instance build, same scripted inputs
 

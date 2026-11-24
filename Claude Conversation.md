@@ -19595,3 +19595,120 @@ Waiting for the second watch run to finish (about two minutes).
 
 - tool `Bash`: python3 - <<'EOF' p='docs/Planning Doc.md'; s=open(p).read() old="- [ ] 4. Find every read of the player's own number (SIOCNT ID, the link state) in game code" 
 
+- tool `PushNotification`: 
+
+## Claude
+
+Phase 0 is finished: the game uses its own player number in 18 functions, plus 5 more that go through a pointer to the player's record. Steps 2–4 are recorded in the plan ([Planning Doc.md](docs/Planning Doc.md), Phase 5) and walkthrough Steps 37–38. Committed as `a6b2a24`; `make compare` reports OK.
+
+**Where the number lives:** the game reads its player number from the link hardware once, when linking, and stores it in one byte at 0x03000414. The symbol file calls that byte `gLCDRegisterBuffer`, which is a wrong name. A second function then keeps a pointer to that player's own record.
+
+**How I found the readers:** I added a `--reads ADDR` option to the mGBA runner. It logs every instruction that reads a given address, with its caller. I replayed the recorded 2-player session 1 with it, about 44,500 frames covering the lobby, one whole stage and the return to Choose a Stage.
+
+- **The player number byte:** 48 read sites in 18 functions. They fall into three kinds:
+  - "Is this mine?" checks on entities and sounds.
+  - Indexes into per-player arrays: buttons, the link buffer, player records.
+  - The HUD, menus and file select.
+- **The record pointer:** 5 functions, mostly in the file select.
+
+These are the "this is me" branches Phase 1 has to run once per player.
+
+**Not covered yet:**
+- **Scenes session 1 doesn't reach:** other stages, bosses, results, the shop.
+- **Code the watch can't see:** ARM-mode code, and Thumb code running from RAM.
+- **Copies of the number:** any copy kept in another variable. None turned up at the sites seen.
+
+**Phase 0 in short:**
+- The cable carries only inputs.
+- The players differ in about 13 KB of memory.
+- About 23 functions know which player they belong to.
+- Copying player memory in and out, not running the game four times, is what currently costs the time.
+
+**Phase 1 step 5 is next:** running the world once and each player's part separately. Before the code split itself, it needs a list of which of the main loop's per-frame calls are world and which are per player. I'll start that list from the 13 KB of per-player memory and the 23 functions above, unless you'd rather go a different way.
+
+## User
+
+Describe this part in more detail
+
+## Claude
+
+# Phase 1 step 5 in detail: running the world once
+
+## Goal
+
+Each frame, the world update runs once. Then, for each player, only the code that produces that player's view and status runs, with that player's ~13 KB of memory swapped in. Today, each player's whole 387 KB is copied in and out and the whole frame runs four times.
+
+## Why the split is safe
+
+The link cable carries only inputs (step 2), and four real GBAs stay in sync for a whole stage. So **nothing that differs between players can ever feed back into the world**. If one player's camera or HUD changed an enemy or the random number generator, the real GBAs would drift apart. The game is built so they don't, and that gives two rules:
+
+- The bytes that differ between players (the ~13 KB from step 3) are the per-player state. Everything else is the shared world.
+- Code that writes only per-player bytes is the "view" part, and it can run once per player after the world has updated.
+
+So the work is mostly *finding* which code is the view part, not redesigning the game.
+
+## What the frame looks like now
+
+The game's main loop ([main.c](src/main.c)), once per frame:
+
+| Call | What it is | World or player |
+|---|---|---|
+| `rom2_read_keys` | read the buttons | per player (each GBA's own pad) |
+| `sub_0800C54C` | link: take the packet with everyone's keys | goes away (inputs come from a shared array) |
+| `sub_08036864` | link state machine | goes away or becomes trivial |
+| `gUnknown_0842731C[gMainState]()` | the game itself: entities, rooms, menus | **mixed**: world update plus camera, HUD and "mine?" checks inside |
+| `sub_080368A0` | send this frame's packet | goes away |
+| `sub_0800D788`, `sub_0800C118`, `sub_0802C940`, `sub_0800B524` | after the game: likely sound, sprite list, video registers | roles not yet known; probably mostly per player |
+
+The hard part is the middle row, where world and view code are interleaved.
+
+## Sub-steps
+
+**5a. Find who writes the per-player bytes.**
+- Extend the new `mgba_run --reads` into a write watch over the 13 KB ranges from step 3.
+- Replay session 1 with it. The result is the list of functions that write per-player state, with their callers. That list is the view code.
+- Also run step 3's memory diff at more points in session 1 (other rooms, menus, the end of the stage), so the 13 KB list is complete.
+
+**5b. Sort every per-player function into one of three kinds.**
+- **View only:** camera, background map streaming, sprite list, HUD, text boxes, the player's own sound. These move into the per-player pass.
+- **World code with a "mine?" check inside:** for example `sub_08042DB0` sets an entity flag when the entity is the local player's Link. The check either moves to the per-player pass (if the flag only affects drawing) or the flag becomes per player.
+- **Per-player arrays already indexed by player number:** keys, the link buffer, player records (`gUnknown_03006A30[id]`). These are naturally shared: the world already holds all four, and only "which one is mine" is per player.
+
+Phase 0 found about 23 functions. Each needs reading to pick its kind. Most are decompiled C, and five are still asm.
+
+**5c. Build it under `FS_SHARED_WORLD` in the port.**
+- One world memory block instead of four. Each player has a small overlay of its ~13 KB, which `ps2_tlb_select` swaps (about 13 KB instead of 387 KB).
+- Frame:
+  1. Player 0 runs the full frame as now: world plus player 0's view.
+  2. For players 1–3: swap in their overlay, set the player number byte (0x03000414), and run only the view functions from 5b.
+- Inputs: each player's keys go straight into the arrays the link would have filled (step 6). The link code is skipped.
+- This keeps player 0's frame identical to today's, so a mistake shows up as a wrong screen for players 1–3, not a broken world.
+
+**5d. Check (step 7).**
+Run the 4-instance build and the shared build on the same inputs, and compare each frame:
+- the world memory against instance 0;
+- each player's 13 KB overlay against instance i;
+- each screen pixel for pixel. The GS readback check already does this.
+
+The first mismatch names the byte, and `--reads` or the write watch finds the code.
+
+## Risks
+
+- **View code hidden inside the entity update.** If a "mine?" branch sits deep in an entity's update and only changes drawing, 5c has to call just that part per player. This is the main unknown; 5a will show how much of it there is.
+- **The per-player pass doing world work twice.** If a function on the view list also writes world bytes, running it again for players 1–3 would update the world twice. The write watch from 5a flags any function that writes both kinds of bytes.
+- **Coverage.** Session 1 covers one stage. Other stages, bosses, the shop and results may have view code it doesn't reach.
+
+## Cost estimate
+
+- **5a and the extra memory diffs:** about a session.
+- **5b:** about a session, depending on how many functions turn up.
+- **5c and 5d:** two to three sessions, mostly checking mismatches.
+
+The first measurable result: switch cost falls from about 0.9M to roughly 0.05M cycles per player. That alone would bring 4 players under the 60 fps budget, going by the step 1 numbers.
+
+Shall I start with 5a?
+
+## User
+
+For now, write up a plan and table it
+
