@@ -904,3 +904,24 @@ loop busy-waits on a RAM flag its VBlank interrupt sets, which the port doesn't 
 State: two instances go from empty saves through the link lobby into the same Four Swords stage in PCSX2 (15,000+
 frames, no crash or TLB miss). Not yet: frame-exact comparison with mGBA (the PS2 runs a different number of frames
 through loading), the original replay scripts unmodified, A Link to the Past.
+
+## Step 29: video modes and the two-player layout (2026-11-24)
+
+The user's spec: one player 240p by default, with 480i, 480p and 720p options; 240x160 centred 1:1 in 320x240p,
+2x (480x320) in 480p, 3x (720x480) inside the 854x480 anamorphic frame in 480p 16:9. Two players: 4:3 480p, P1 on
+the top half and P2 on the bottom half, each centred.
+
+- `src/ps2/video.c` has a mode table (GS mode, interlace, buffer size, the width the screen spans in square pixels,
+  one-player scale). The GS setup follows `../psx-to-ps2-HAL/src/ps2/display_ps2.c`: gsKit sets the timing, then
+  DISPLAY1/2 get MAGH = DW / buffer width - 1, centred. 720p is a 640x720 buffer doubled horizontally, 16-bit so two
+  buffers fit in GS memory. 16:9 is a 640-wide buffer: square-pixel widths are scaled by 640/854.
+- Layout (`place`): one player at the mode's scale (720p: 4x, 960x640; 480i: 2x, both my choice, the spec didn't
+  say); two players at the largest size that fits a half, 1.5x (360x240) in 480p; three or four in a 2x2 grid.
+  Non-integer sizes (1.5x, the 16:9 squeeze) use bilinear filtering, whole multiples stay nearest.
+- Not in a menu yet: `ps2_video_mode` comes from `make -f Makefile.ps2 VIDEO_MODE=0..4` (240p, 480i, 480p, 480p 16:9,
+  720p); without it, 240p for one player and 480p for more.
+
+Checked in PCSX2 (software renderer): two players in 480p reach the stage one above the other; one player in 240p,
+480p 16:9 and 720p shows the centred title screen. No TLB misses. One player alone stops at "Linking with other
+systems" since Four Swords needs a link partner; single player is a later feature. 480i and plain 480p one-player
+weren't run (same code paths as 480p).

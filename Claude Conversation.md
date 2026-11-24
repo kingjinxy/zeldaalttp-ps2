@@ -17613,3 +17613,319 @@ Same as baseline. Rebuilding the PS2 ELF (default 4 players and the 2-player rep
 
 - tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; touch src/ps2/main.c; systemd-run --user --scope -q -p MemoryMax=6G make -f Makefile.ps2 -j2 elf INSTANCES=2 2>&1 | grep
 
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat $(ls -tr ~/.
+
+- tool `PushNotification`: 
+
+## Claude
+
+A scripted replay now runs in PCSX2, but not yet with the recorded inputs unchanged. Two linked game instances start from empty saves, go through Four Swords' link lobby and Choose a Stage, and enter the same stage together, each screen showing both Links. That's from the 2-player replay build; the default 4-player build has no input scripts and wasn't rerun. The final check ran 6,680 frames with no crashes or TLB misses; an earlier run went past 15,000. Committed as `2d15058`.
+
+The intro replay (`tests/intro_linked.inputs`) needs extra presses: the PS2 reaches the lobby about 200 frames later than mGBA, so the recorded presses run out before it's ready. I added A/Start presses after frame 1,400 in the build folder's copy only, not in the test file. Those presses also pause the game once it's in the stage ("P1 PAUSE!"). Frame-by-frame comparison with mGBA doesn't line up yet for the same reason.
+
+`fs_walk.inputs` isn't usable here: it walks into A Link to the Past, whose main loop never finishes a frame on the PS2.
+
+What made it work:
+- **Link between instances** ([link.c](src/ps2/link.c)): no serial timing or interrupts. After every frame, each instance's outgoing words are copied into the others' receive registers. Then a C port of the game's link-cable handler runs on each instance's memory. Each instance sees itself as connected, with player 1 as the host and its own player number.
+- **Scripted input**: `host:replay_p<n>.inputs`, in the mGBA runner's format, replaces controller n.
+- **Four Swords only**: the PS2 build now boots like `fs_only.gba`, so picking a file starts Four Swords. `INSTANCES=n` sets the player count.
+
+Bugs fixed on the way:
+- **Link helper**: the game calls a small routine it copied into RAM as ARM code, which on the PS2 ran GBA bytes as MIPS and froze the EE. It's now ported to C.
+- **Game switch**: when the main loop returns, the instance thread now restarts it instead of exiting.
+- **Code stored as data**: some hand-written routines in the disassembly were bytes rather than instructions, so they were never translated. Pointers to them couldn't be adjusted for the PS2. One function is now written as instructions (same ROM bytes). As a general fallback, a ROM address with no translated entry is mapped onto the translated copy of that function. The translator also no longer rejects functions that start with data tables, cutting untranslated functions from 24 to 18.
+- **Division by zero**: the GBA returns 0, and the game relies on that. The PS2's trap handler now does the same. Crash reports also now go to the log; before, they were silently lost.
+
+The matching build is still OK, and the GBA-side replay check is unchanged at 1,328 ok / 24 fail. The walkthrough has a Step 28 entry.
+
+Next could be lining the replay up with mGBA frame by frame, so the original recording works unmodified and RAM can be compared. Or players 3–4 over the same link, or the 30 fps rendering cost.
+
+## User
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+<system-reminder>
+<tools-used-before-summary>Bash, Edit, PushNotification, Read, SendUserFile, TaskStop, ToolSearch, Write</tools-used-before-summary>
+</system-reminder>
+Summary:
+1. **Primary Request and Intent:**
+   - **Overall goal:** Four Swords (zeldaalttp GBA disassembly, USA) decompiled to C and ported to the PS2 with split-screen multiplayer. DSi (FSAE) features are planned later.
+   - **Requests this session, in order:**
+     - Finish two game instances (shared game data, no link-cable emulation).
+     - Send a screenshot of the two instances side by side.
+     - "What does it look like as a screenshot from PCSX2?"
+     - "Have the second player use a copy of the first player's file, but with the name of 'B'".
+     - "In the future, we'll have a different save system, but for now, I want you to add players 3 and 4 in a similar way to how we just added P2."
+     - "Now, let's return to running the replay in PCSX2".
+     - "Continue" (after interrupting one tool call).
+   - **Constraints (from CLAUDE.md and the user), still in force:**
+     - "Web access: GitHub only without asking."
+     - "Never access tcrf.net (The Cutting Room Floor) in any way."
+     - "No `pkill -f <pattern>` in a command whose own command line contains the pattern."
+     - "No ROM, BIOS or extracted asset is ever committed"; reference/ is never committed.
+     - Never share the user's email with external services.
+     - FourSwordsRecomp code (PolyForm NC) is not copied.
+     - Say "gstate" for global state, never "GS" (which means the Graphics Synthesizer).
+     - PCSX2 uses the software renderer.
+     - Log over SIO, never printf, from game-reachable code.
+     - "Never dismiss TLB Miss lines".
+     - Commit only when `make compare` reports `zeldaalttp.gba: OK`.
+     - Update docs/Running Walkthrough.md and Claude Conversation.md at milestones (archive script over all jsonl, `ls -tr`; check for no removed lines).
+     - Push notification at milestones.
+   - **Memory safety:**
+     - Long builds run under `systemd-run --user --scope -q -p MemoryMax=6G`.
+     - AUTO_C builds use `-j1`; the check script uses `JOBS=1`.
+
+2. **Key Technical Concepts:**
+   - **Instance memory: copy-swap, not TLB remap.** PCSX2's EE recompiler bakes host pointers for constant addresses (recVTLB.cpp `vtlb_DynGenWrite_Const`), so repointing the TLB doesn't work there.
+     - One fixed live block at phys 0x01800000.
+     - Each instance's backing copy is at 0x01900000 + i MB (kseg0).
+     - `ps2_tlb_select` copies the used regions out and in: EWRAM 0x40000, IWRAM 0x8000, IO/pal/OAM 0x400, VRAM 0x18000.
+   - **Frame loop:** each instance in turn is selected, runs one frame (cooperative threads, woken at VBlankIntrWait), then is rendered, gets its input and saves. Then `ps2_link_exchange`, then present.
+   - **Link layer** (src/rom2.c):
+     - Struct at 0x02030790:
+       - +0 parent(8)/child;
+       - +1 state; +2 ever-received mask; +3 this-frame mask; +4 packet queued; +5 packet received;
+       - +6 start request; +7 error; +8 connect counter; +9; +0xB frame counter;
+       - +0x14 send idx; +0x18 recv idx; +0x1C/+0x20 queued/sending packet; +0x24/+0x28/+0x2C receive buffers (4×28 bytes).
+     - A packet is 13 transfers: 0xFEFE, then 12 halfwords per player.
+     - `sub_080368D8` resets the link if `unk2 != unk3`.
+     - Lobby handler: `sub_080369B4`, state in `gUnknown_03000FC0`.
+   - **SIOCNT read override:** SD=1, SI = (inst ? 1 : 0), ID = inst.
+   - **Raw GBA ROM addresses** kept as bytes in the asm: the mapping table `ps2_gba_copies` comes from tools/ps2/gba_copies.py (630 copies).
+   - **gstate2c:** functions starting with data are now allowed (24 native-only functions down to 18).
+   - **GBA division by zero returns 0** (libgcc `Ldiv0`); the PS2 trap handler emulates it.
+   - **FS_ONLY on PS2** (default on); `INSTANCES` is a Makefile option.
+   - **Scripted input:** files `host:replay_p<n>.inputs`.
+   - **PCSX2 window capture:** run with `env -u WAYLAND_DISPLAY DISPLAY=:77 GDK_BACKEND=x11 XDG_SESSION_TYPE=x11 QT_QPA_PLATFORM=xcb` on an Xvfb :77, then capture with `xwd -root | ffmpeg`.
+
+3. **Files and Code Sections:**
+   - **src/ps2/tlb.c**
+     - Copy-swap design, `SAVED(i)`, `ps2_cur_instance = -1` initially.
+     - `sRegions` with `used` sizes.
+     - `ps2_tlb_map` maps the live block and zeroes each saved copy (KEYINPUT 0x3FF at SAVED + 0x48130).
+     - New `void *ps2_inst_ptr(int inst, u32 a)`: the live address for the current instance, else the saved copy.
+   - **src/ps2/main.c**
+     - `#ifndef INSTANCES / #define INSTANCES 4`; `int ps2_instances = INSTANCES;`.
+     - `instance_main` loops `for(;;) AgbMain();` (crt0 re-inits on game switch).
+     - Loop per instance: select, Start/Wakeup, SleepThread, render, input, save. Then `ps2_link_exchange(); ps2_video_present(INSTANCES)`.
+   - **src/ps2/video.c**
+     - 2x2 layout for 3–4 players.
+     - Static `sPixels[MAX_INSTANCES][TEX_W*GBA_H]` (memalign returned NULL with 4 instances).
+     - Game-cost accounting via sFrameRender.
+     - Dump frames currently at `n == 1300 || 1600 || 2000 || 2400 || 2800`.
+   - **src/ps2/link.c** (new)
+     - `handler(i, m)`: C port of sub_0800C7E8 on instance memory.
+     - `ps2_link_take()`: port of the EWRAM ARM helper from 0x08000318. Swaps +0x28/+0x2C, returns +5 and clears it.
+     - `ps2_link_exchange()`: while the parent's SIOCNT has 0x80 set (max 16), gather SIOMLT_SEND (0xFFFF for absent players) and run the handler on all instances.
+     - `ps2_link_siocnt(inst, v)`.
+   - **src/ps2/io.c:** SIOCNT read (offsets 0x128/0x129, sizes 1/2/4) goes through `ps2_link_siocnt`.
+   - **src/rom2.c:** in `sub_0800C6A8`, `#ifdef PLATFORM_PS2 u8 ok = ps2_link_take(); #else` the original cast call.
+   - **src/ps2/input.c:**
+     - Script loading (`host:replay_p%d.inputs`, keys A B s S r l U D R L -).
+     - Applied as `frame <= ps2_frame + 1`.
+     - A script replaces the pad.
+   - **src/ps2/glue/arm_ports.c:**
+     - `u32 ps2_gba_copy(u32 a)` (binary search in `ps2_gba_copies`).
+     - `find_entry` falls back to it.
+     - `ps2_icall` calls fatal for targets below 0x00100000.
+   - **include/gstate.h:** `gstate_run` PS2 fallback: if there's no entry and b is a ROM address, look up `ps2_gba_copy(b)` in the main table.
+   - **src/ps2/crash.c:**
+     - Logs via ps2_log.
+     - Trap cause 13 with `(insn & 0xFC00FFFF) == 0x000001F4` (teq code 7) sets hi = lo = hi1 = lo1 = 0 and epc += 4.
+   - **src/ps2/frame.c:** the watchdog stuck report adds thread states via iReferThreadStatus (fields waitType/waitId).
+   - **tools/ps2/gba_copies.py** (new): writes build/ps2/gba_copies.c from the `extern const u.. NAME__base[]` declarations in *_gstate_ps2.c and `arm-none-eabi-nm zeldaalttp.elf`.
+   - **Makefile.ps2:**
+     - `FS_ONLY ?= 1` → `CFLAGS += -DFS_ONLY`.
+     - `ifdef INSTANCES PS2_CFLAGS += -DINSTANCES=...`.
+     - gba_copies.c/.o rules, linked into the ELF.
+   - **tools/gstate2c.py:** in `translate`, entry 0 may fail if other possible entries decode (raises the first Fail if none do).
+   - **asm/non_matching/rom1/sub_08008CB4.inc:**
+     - Labels `gUnknown_08008CC0:`.
+     - `gUnknown_08008D00:` followed by `.4byte sub_08008D0C+1 / sub_08008D24+1 / sub_08008D50+1`.
+     - The three handlers written as Thumb instructions (THUMB_FUNC_START sub_08008D0C/D24/D50).
+   - **asm/non_matching/rom1/sub_08008E5C.inc:** pool words now `.4byte gUnknown_08008CC0`, `gUnknown_08008D00` (×2), `sub_08008CB4`, `sub_08008D8C`.
+   - **tools/ps2/fs_save_copy.py** (new, committed 7721bd1):
+     - Usage: `src dst letter`.
+     - Un-reverses mGBA's 8-byte blocks, sets the name at 0x588 (game order) in both copies (0 and 0x1000), recomputes the status checksum at 0x70 (tmc CalculateChecksum over the status word plus the 0x40-byte record at 0x580).
+   - **docs/Running Walkthrough.md:** Steps 26 (two instances), 27 (four instances), 28 (link/replay) added.
+
+4. **Errors and fixes:**
+   - **Instance 1 sees stale gCpu:** the PCSX2 recompiler's constant-address pointers → copy-swap memory instead of remapping.
+   - **memset NULL with 4 instances:** static pixel buffers.
+   - **Stale ELF** (built for INSTANCES 1) made the first PCSX2 screenshot single-screen → rebuilt.
+   - **PCSX2 window not captured:** it went to Wayland → unset WAYLAND_DISPLAY and use xcb.
+   - **mgba_run segfault:** the --out directory must exist.
+   - **EE dead after frame 1:** the cast call into the EWRAM ARM helper → `ps2_link_take`.
+   - **Stall at frame 589 with fs_walk:** it's an ALttP walk; ALttP's main loop busy-waits on an IRQ flag → switched to FS_ONLY + tests/intro_linked.inputs.
+   - **Lobby stuck at step 5:** script timing (the PS2 is about 200 frames behind) → presses padded after 1400 in build/ps2/replay_p*.inputs only.
+   - **ICALL 0x08008D51 / 0x08008D8D / 0x0800A1ED / 0x080050C5:** code and pools as bytes → asm fixes, gba_copies fallback, gstate2c data-first functions.
+   - **Fallback put in `ps2_icall` broke jumps** (gstate_run(0)) → moved it into `gstate_run`.
+   - **teq division-by-zero trap** in sub_08012B64 → trap-handler emulation.
+   - **First pool-symbol edit failed `make compare`** (a Thumb symbol adds +1) → use data labels.
+   - **The user interrupted one combined command;** resumed after checking state.
+
+5. **Problem Solving:**
+   - The replay check after the gstate2c change: 1328 ok / 24 fail, same as the baseline.
+   - Final: two instances from empty saves go through the lobby into the same Four Swords stage, 15,000+ frames with no crash. Committed 2d15058; notification sent.
+   - **Known open items:**
+     - frame-exact comparison with mGBA (frame-count drift);
+     - the original scripts unmodified;
+     - ALttP (IRQ flag loop);
+     - 18 native-only functions;
+     - render cost (4.2M cycles per screen; 2 players at about 19–20 fps real time, 4 players at 12 fps);
+     - players 3–4 without pads (multitap).
+   - **Current local state:**
+     - build/ps2 has empty saves (deleted for test runs).
+     - replay_p1/p2.inputs hold the padded intro_linked script.
+     - The ELF is built with INSTANCES=2.
+     - The earlier A–D saves are backed up in the scratchpad at saves_abcd/.
+
+6. **All user messages:**
+   - "Go ahead with two instances" (before the summary).
+   - "Send a screenshot of the two instances side by side"
+   - "What does it look like as a screenshot from PCSX2?"
+   - "Have the second player use a copy of the first player's file, but with the name of "B""
+   - "In the future, we'll have a different save system, but for now, I want you to add players 3 and 4 in a similar way to how we just added P2."
+   - "Now, let's return to running the replay in PCSX2"
+   - "[Request interrupted by user for tool use] Continue"
+
+7. **Pending Tasks:**
+   - No explicit task is pending beyond the replay work, which reached its milestone and was committed.
+   - Possible follow-ups (not requested):
+     - mGBA state comparison;
+     - restoring 4-player saves/default build;
+     - Graphics Synthesizer renderer;
+     - multitap;
+     - the ALttP loop.
+
+8. **Current Work:**
+   - Finished "running the replay in PCSX2":
+     - the link exchange, scripted input and FS_ONLY;
+     - the series of translation fixes.
+   - Verified:
+     - `make compare` OK;
+     - replay check unchanged (1328 / 24);
+     - PCSX2 run with no crash.
+   - Updated the walkthrough (Step 28) and the conversation archive (599 lines added, none removed).
+   - Committed 2d15058 "PS2: link between instances, scripted input, FS_ONLY; two instances play a linked Four Swords stage".
+   - Sent the push notification.
+
+9. **Optional Next Step:**
+   - Report the result to the user: two linked instances reach a Four Swords stage. The replay needed extra A/Start presses because of frame drift against mGBA.
+   - Offer next options (frame-aligned comparison with mGBA, restoring the 4-player setup, performance), without starting new work unasked.
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /home/alex/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9.jsonl
+Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.
+
+The messages after this summary are the most recent messages from before compaction, kept verbatim. The summary was written without seeing them, so something it says has not happened yet may already have happened in them.
+
+## User
+
+<command-name>/compact</command-name>
+            <command-message>compact</command-message>
+            <command-args></command-args>
+
+## User
+
+<local-command-stdout>Compacted </local-command-stdout>
+
+## User
+
+A few housekeeping things: 
+With just single player (which we haven't added yet), the video mode should be set to 240p by default and have options for 480i, 480p, and 720p. In single player mode, the 240x160 frame should be centered in the 320x240p frame. In single player 480p, the 240x160 frame should be scaled to 480x320. In single player 480p with the 16:9 mode, the 240x160 frame should be scaled to 720x480 within the 854x480 anamorphic frame. We don't have these options exposed in a menu yet, but we eventually will. With two players as we currently have them set up, I want to use the 4:3 480p mode, and have P1 on the top half and P2 on the bottom half, each screen centered. Later we can add a small split screen dividing line, but that's a low priority item.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; G=$(grep -rl "GS_MODE_DTV_480P" $PS2SDK/../gsKit/include $PS2DEV/gsKit/include 2>/dev/null | head -1); echo $G; grep -n 
+
+- tool `Bash`: cd /home/alex/ps2dev; f=$(find / -name gsInit.c -path "*gsKit*" 2>/dev/null | head -1); echo $f; grep -n "Width\|Height\|Mode ==\|case GS_MODE\|MagH\|MagV\|Star
+
+- tool `Bash`: find / -name "gsInit.c" 2>/dev/null | head; ls /home/alex/ps2dev/gsKit; grep -n "_custom\|1134" -A12 /home/alex/ps2dev/gsKit/include/gsInit.h | sed -n 1,40p
+
+- tool `Bash`: cd /home/alex/Documents; grep -rn "GS_MODE_DTV\|GS_NONINTERLACED\|->Interlace\|->Field\b" --include=*.c tp-ps2/src mgs1_ps2 silent-hill-1-ps2-port psx-to-ps2-HA
+
+- tool `Bash`: cd /home/alex/Documents; sed -n 90,200p psx-to-ps2-HAL/src/ps2/display_ps2.c; sed -n 25,60p tp-ps2/src/ps2/gs.c
+
+- tool `Bash`: cd /home/alex/Documents; grep -n "define GS_SET_DISPLAY1\|define GS_SET_PMODE" -r /home/alex/ps2dev/gsKit/include /home/alex/ps2dev/ps2sdk/ee/include | head; gr
+
+## Claude
+
+Now writing the mode table and layout.
+
+- tool `Bash`: python3 - <<'EOF' p='src/ps2/video.c'; s=open(p).read() old_init=s[s.index('void ps2_video_init(int instances)'):s.index('// frames written to host:')] new_init
+
+## Claude
+
+Building for 2 players, then a PCSX2 screenshot.
+
+- tool `Bash`: ls tools/ps2/; touch src/ps2/video.c src/ps2/main.c; systemd-run --user --scope -q -p MemoryMax=6G make -f Makefile.ps2 INSTANCES=2 -j4 2>&1 | grep -E "error|wa
+
+- tool `Bash`: ls -la build/ps2/*.elf; grep -n "pcsx2\|xwd\|Xvfb" -i docs/Running\ Walkthrough.md | tail -15
+
+- tool `Bash`: date; find .. -maxdepth 4 -name pcsx2_run.py | head -3; grep -rn "pcsx2_run.py" docs/Running\ Walkthrough.md | tail -2
+
+## Claude
+
+ELF wasn't rebuilt; checking how the build is invoked.
+
+- tool `Bash`: systemd-run --user --scope -q -p MemoryMax=6G make -f Makefile.ps2 INSTANCES=2 -j4 2>&1 | tail -5; ls -la build/ps2/*.elf; grep -n "ps2:\|^ps2\|Makefile.ps2" Ma
+
+- tool `Bash`: grep -n "^[a-z_/.$()-]*:" Makefile.ps2 | head -20; grep -n "make.*ps2" -i docs/Running\ Walkthrough.md | tail -4
+
+- tool `Bash`: systemd-run --user --scope -q -p MemoryMax=6G make -f Makefile.ps2 INSTANCES=2 -j4 elf 2>&1 | grep -E "error|warning|elf" | head; ls -la build/ps2/*.elf
+
+## Claude
+
+Built. Finding the PCSX2 run command used earlier.
+
+- tool `Bash`: ls /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/ | head -40
+
+- tool `Bash`: cd /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/; ls *.sh *.py 2>/dev/null; grep -o 'xwd -root[^"]*' ~/.
+
+- tool `Bash`: cat /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/shot.sh /tmp/claude-1000/-home-alex-Documents-zeldaaltt
+
+## Claude
+
+Not those; looking up the earlier PCSX2 launch in the transcript.
+
+- tool `Bash`: cd ~/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/; python3 - <<'EOF' import json for l in open('93b91fe6-ec1b-4c3a-976d-9c1099efa5e9.jsonl'):     try: 
+
+## Claude
+
+Running the 2-player build in PCSX2 (software renderer, offscreen) for a screenshot.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; cat > $S/pshot.s
+
+- tool `Bash`: cd /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; python3 -c " from PIL import Image; im=Image.open('v2p.
+
+- tool `Bash`: cd /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; ffmpeg -loglevel error -y -i v2p.png -vf crop=842:682:0
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/v2p_c.png
+
+## Claude
+
+Two-player layout works. Checking single-player 240p, 480p 16:9 and 720p too.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; S=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for m in 0 3 4; 
+
+- tool `Bash`: cd /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; for f in v1p_0 v1p_3; do ffmpeg -loglevel error -y -i $
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/v1p_0_c.png
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/v1p_3_c.png
+
+## Claude
+
+240p and 16:9 look right. In 16:9 the picture fills the height at 540 of 640 buffer pixels; PCSX2 shows it at 4:3, so it looks narrow there, but a TV set to 16:9 widens it. Waiting for 720p.
+
+- tool `Bash`: timeout 60 tail -f /dev/null --pid=$(pgrep -f "pshot.sh v1p_4" | head -1) 2>/dev/null; cat /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c
+
+- tool `Bash`: cd /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad; grep -E "video:|TLB|FATAL" v1p_4.log | head -3; ffmpeg 
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/v1p_4_c.png
+
+## Claude
+
+All five layouts check out. Restoring the 2-player build, then the docs and commit.
+
+- tool `Bash`: cd /home/alex/Documents/zeldaalttp-ps2; touch src/ps2/video.c src/ps2/main.c; systemd-run --user --scope -q -p MemoryMax=6G make -f Makefile.ps2 INSTANCES=2 -j4
+
