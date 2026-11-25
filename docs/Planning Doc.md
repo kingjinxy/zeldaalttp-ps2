@@ -279,7 +279,9 @@ instances and the link exchange, not only in a stage.
       run "as the collector" (`AS_PLAYER`), not yet seen working: pressing A in a stage crashes the PS2 port in every
       mode (separate instances too, before today's changes): the open "bad instruction around frame 1770" item.
       Step 57: that crash fixed (a translator bug). Step 59: pickups confirmed by play (both Links); entity memory
-      is all world now (it teleported Links). Left: movement is jittery in play; the rest of the player-number uses.
+      is all world now (it teleported Links). Step 60: walking down/left threw Links north/east in every build (a
+      translator bug: narrow arguments into C not sign-extended), fixed. Left: the rest of the player-number uses;
+      indirect calls into C with narrow arguments.
 - [ ] 2. Player count menu at start-up: 1 to the number of connected controllers (two multitaps: 8; 4 until the
       limits below are lifted).
 - [ ] 3. File select for player 1 only, one save for everyone (user, 2026-11-24). Later: per-player saves.

@@ -687,8 +687,32 @@ def emit(d, o, rel, start, end, B, name, gsnames, decls, data):
             decls.add("void gs_%s(u32);" % base)
             return ["lr = %s; GSTATE_STORE(); gs_%s(0); GSTATE_LOAD(); GSTATE_RETURNED(%s);" % (ret, base, ret)]
         decls.add("u32 %s();" % sym)
-        return ["lr = %s; r0 = %s(r0, r1, r2, r3, R32(sp), R32(sp + 4), R32(sp + 8), R32(sp + 12));" % (ret, sym)]
+        return ["lr = %s; r0 = %s(%s);" % (ret, sym, c_args(sym))]
     raise Fail("emit " + k)
+
+
+_PROTOS = None
+NARROW = {"u8", "s8", "u16", "s16", "bool8", "char", "short", "unsigned char", "unsigned short", "signed char"}
+
+
+def c_args(sym):
+    """the arguments of a call from global-state code into C function sym: r0-r3 and 4 stack words, each cast to its
+    parameter's type when the prototype (include/functions.h) has a narrow one. On the ARM a callee narrows its own
+    arguments; MIPS GCC relies on the caller having done it, so a halfword loaded with ldrh (0x0000FFF0 for -16)
+    would arrive as 65520 (Links walking down or left were thrown north or east, walkthrough step 60)."""
+    global _PROTOS
+    if _PROTOS is None:
+        _PROTOS = {}
+        for l in open("include/functions.h"):
+            m = re.match(r"\s*[\w\s\*]+?\b(\w+)\s*\(([^()]*)\)\s*;", l)
+            if m:
+                _PROTOS[m.group(1)] = [a.strip() for a in m.group(2).split(",")]
+    args = ["r0", "r1", "r2", "r3", "R32(sp)", "R32(sp + 4)", "R32(sp + 8)", "R32(sp + 12)"]
+    for i, t in enumerate(_PROTOS.get(sym, [])[:8]):
+        t = re.sub(r"\s+\w+$", "", t) if " " in t and not t.startswith(("unsigned", "signed")) else t
+        if t in NARROW:
+            args[i] = "(%s)%s" % (t, args[i])
+    return ", ".join(args)
 
 
 _MAP = None

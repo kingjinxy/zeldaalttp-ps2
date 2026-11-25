@@ -1583,3 +1583,12 @@ What a GBA sets up for itself, now done per player when the copies are made (`ps
 - Looked at: `sub_08001F38` (rom1, the step from the sine table `gUnknown_0813E4CC`) loads with `ldrsh` (signed,
   right). Idea being followed: down/left use the table's negative values, so something reads them unsigned or
   scales them wrongly. `tools/tr_check` can't help where the code is decompiled C (it skips those calls).
+- **Found** (2026-11-25): a frame of the port's trace (`ps2_trace_on`) with Link 2's y printed at every function
+  entry: y changes right after `sub_0803D350`, a decompiled C helper `s16 sub_0803D350(s16 a, s16 b)` (fixed-point
+  divide) that the translated asm (`sub_0800303C`) calls. On the ARM a callee narrows its own arguments, so callers
+  leave junk in the upper bits; MIPS GCC relies on the caller having sign-extended them. The asm's halfwords
+  (0x0000FFF0 for -16) reached the C as 65520: only negative steps, down and left, went wrong.
+- **Fix:** `tools/gstate2c.py` casts each argument of a call into C to its parameter's type when the prototype in
+  include/functions.h is narrow (u8, s8, u16, s16, bool8; 86 arguments in the generated files). Left as is: indirect
+  calls into C through `gstate_run` (function tables), which have no prototype to go by.
+- **Result:** Link 2 walking down moves 1 pixel a frame south (788 to 827, then a wall); no TLB misses.

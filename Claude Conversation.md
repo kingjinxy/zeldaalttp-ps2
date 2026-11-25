@@ -23044,3 +23044,208 @@ Both Links picked up items with the right message on the right screen, so the pi
 
 - tool `Bash`: Commit the entity fix and play-test notes
 
+- tool `Bash`: Check frame cost during play
+
+## Claude
+
+Both pickups work: each collector got the message on their own screen. With the teleporting fix, that's committed as `b04f058` (walkthrough Step 59 and the plan updated, `make compare` OK).
+
+The jitter is still to solve. PCSX2 only writes this run's log when it closes, so I can't see the frame rate yet. These would tell the likely causes apart:
+
+1. **Is it each player's own Link, or the other Link as seen on your screen?**
+   - Your own Link jittering points at per-player state still bouncing between versions, like the teleporting was, only smaller.
+2. **Does the whole screen stutter (camera and background too), or only the Link sprite?**
+   - A whole-screen stutter points at frame pacing or the camera.
+3. **Does it also happen in the separate-copies build?** That's `make -f Makefile.ps2 INSTANCES=2` with no shared-world flags. I can launch that for comparison.
+   - If it does, it's the game's own 2-frame link input delay, felt with a controller for the first time. If not, it's the one-world code.
+
+When you close PCSX2 I'll also read the log for the frame cost.
+
+- tool `Bash`: Read frame cost from the play log
+
+## Claude
+
+PCSX2 has closed, and its log rules out two causes:
+- **Not slowness:** a frame costs about 1.26M cycles to draw plus 0.58M of game, roughly 1.8M of the 4.9M available. It holds 60 fps comfortably.
+- **No TLB misses** during your session.
+
+So the jitter comes from the game logic, not frame drops. Its two likely sources:
+- per-player state still bouncing between versions, as with the teleporting;
+- the game's own 2-frame delay on link input, which you'd be feeling with a controller for the first time.
+
+Your answers to the questions above would tell which. Comparing with the separate-copies build would also settle it: if that build jitters too, it's the input delay. Should I launch that build for you?
+
+## User
+
+It's not input delay. I noticed that both players were damaged and then teleported when walking left. Walking in other directions didn't seem to cause issues
+
+## Claude
+
+Damage followed by being moved, which is what the game does when a Link falls into a pit or a hazard, points at collision. The room's collision comes from the room data in EWRAM: the two layers at 0x0200B320 and 0x0201F020, with their metatile maps, and the tilemap at 0x02016D90. If parts of those are in the per-player list, a view swaps in its own stale copy, and the world frame could then see a pit or a hazard that isn't there. Checking which list ranges fall in that area:
+
+- tool `Bash`: List the EWRAM overlay ranges
+
+- tool `Bash`: Log both Links while player 1 walks left
+
+- tool `Bash`: Same walk with separate instances
+
+## Claude
+
+Separate instances do exactly the same, so one world isn't the cause. Next: regenerate the translated code with the translator from before my fix, and run the same walk:
+
+- tool `Bash`: Same walk with the old translator
+
+- tool `Bash`: Restore code and translator output
+
+## Claude
+
+This doesn't look like a one-world bug. I recreated your situation with a script that walks the Links left, and it behaves identically in three builds:
+- the one-world build;
+- separate game copies, no shared world at all;
+- the code from before today's translator fix.
+
+In all three, player 1 pressing left doesn't move, and player 2 jumps far across the room when walking down.
+
+Something one world changes would only show in the one-world build, so this may just be how the game behaves at those spots. Falling into a pit or off a ledge costs hearts and puts the Link back elsewhere, which would look like "damaged, then teleported".
+
+**The deciding test** is whether the same happens with separate game copies. I've built that version (`make -f Makefile.ps2 INSTANCES=2`) and moved the replay scripts aside, so both pads work.
+- Each player goes through file select and the lobby on their own screen; there's no shortcut there.
+- Then walk left at the same spot as before.
+
+If it happens there too, it's game behaviour, or an older port bug that isn't about one world, and I'll check the same spot in mGBA. If it doesn't, the cause is in the one-world code, and I'll go after it.
+
+Should I launch it?
+
+## User
+
+Yes
+
+- tool `Bash`: Launch the separate-instances build for play
+
+## Claude
+
+PCSX2 is open with the separate-copies build: 2 players, no shared world. Each pad controls its own game from the start, so both players go through file select and the lobby before the stage. Then walk left at the same spot as before and tell me whether the Links get damaged and moved again. The run has no time limit; close the window when you're done.
+
+- tool `Bash`: Check the separate-build play log
+
+## Claude
+
+The separate-copies session has ended: it ran about two minutes, to frame 5,400, with no crashes or TLB misses. The log doesn't show what happened in the game, so I need your observation: when you walked left at the same spot, were the Links damaged and moved again?
+
+- **Yes:** it isn't caused by one world. It's either the game itself (a pit or ledge there) or an older port bug, and I'll check that spot in mGBA.
+- **No:** the cause is in the one-world code, and I'll go after it there.
+
+## User
+
+To be more specific, walking down or left flashes Link as if he was damaged, but his health doesn't actually go down. Walking in those directions also causes him to teleport north and east. Walking north or east is fine. Despite the teleportation, the Link positions appear to stay in sync between players.
+
+## Claude
+
+So the teleport happens in the separate-copies build too: Link flashes as if hit and is pushed north or east when walking down or left. Both screens agree on the positions, so it's a fault in the game as the port runs it, not in one world. It matches the scripted run, where player 2 walking down jumped far north.
+
+Moving left or down means negative steps, and the jump goes the opposite way. That suggests an address or sign problem in the movement or collision code. My strongest suspect is today's array move (`f476fab`): if some code reaches the player records or key arrays at their old addresses, collision would read wrong data. Testing the same walk with the move turned off:
+
+- tool `Bash`: Same walk with the array move disabled
+
+- tool `Bash`: Catch the jump frame and its function ring
+
+- tool `Bash`: Name the functions in the jump frames
+
+- tool `Bash`: Search for the sine table and movement helper
+
+- tool `Bash`: Find users of the sine table
+
+## Claude
+
+The movement code isn't in this list, so I'll look at the rom1 functions that use the table; those are the low-level helpers the ring showed (`sub_08000358`, `sub_08000580`, `sub_08000A40`):
+
+- tool `Bash`: Find rom1 users of the sine table
+
+## Claude
+
+`sub_08001F38` and `sub_080020A0` load the table's address as a raw number, which suggests the movement helpers. Reading `sub_08001F38`:
+
+- tool `Bash`: Read the movement helper's asm
+
+- tool `Bash`: Look up the trace checker
+
+- tool `Bash`: Read how tr_check works
+
+- tool `Bash`: Find readers of entity +0x8C/+0x8E
+
+- tool `Bash`: Clean up test files
+
+- tool `Bash`: Record the findings and commit
+
+## Claude
+
+Your description pins it down, and it isn't a one-world problem: this is a movement bug in the PS2 port as a whole, and I haven't found the cause yet.
+
+**What I've established:**
+- **Every build:** it happens in the separate-copies build you just played too, and both screens agree on positions.
+- **Reproduced by script:** pressing down moves Link 50 pixels *north* every frame. So the step has roughly the right size but the wrong direction.
+- **Older than today:** it also happens with today's array move turned off, and with the translator from before today's crash fix.
+- **The PS2 port, not the game:** in mGBA your recorded session walks down and left normally.
+
+**Leading theory:** up and right use the positive values of the game's sine table, while down and left use the negative ones. Somewhere they're probably read as unsigned or scaled wrongly. The first helper I checked, `sub_08001F38`, reads them correctly, so the fault is further along in Link's movement. If it's in a decompiled C draft, the existing checker that compares translated asm with mGBA won't see it, since it skips calls into C.
+
+**Next step:** compare one frame of Link walking down between mGBA and the PS2, function by function, using memory dumps around each call. That's the most direct way to find the function that produces the wrong step, but it's a real debugging session. The findings so far are in walkthrough Step 60 (`08e2414`).
+
+This bug makes the game hard to play in any mode, so I'd fix it before the remaining player-number uses. Should I go ahead?
+
+## User
+
+Yes
+
+## Claude
+
+Going ahead. I'll find the function that writes the wrong position on the PS2:
+- for one frame, the port's trace prints every function entered (translated and C), each with Link 2's current y;
+- the first entry after which y jumps follows the writer.
+
+This uses the separate-copies build, enabled only while player 1's game copy runs frame 1701:
+
+- tool `Bash`: Trace one frame with Link 2's y at every entry
+
+## Claude
+
+Link 2's y stayed at 788 for the whole frame, so I traced one frame too early: the jump happens in the iteration where the frame counter is 1702. Rerunning for that frame:
+
+- tool `Bash`: Trace frame 1702 instead
+
+- tool `Bash`: Name the functions around the jump
+
+## Claude
+
+Link 2's y changes between entering `sub_0803D350` and the next traced function. `sub_0803D350` is decompiled C in fs_game.c, so it's the prime suspect. Reading it with its caller `sub_0803D310`:
+
+- tool `Bash`: Read sub_0803D310 and sub_0803D350
+
+- tool `Bash`: Check the prototypes in functions.h
+
+## Claude
+
+209 prototypes in `functions.h` take narrow arguments. Adding the casts to the translator's C-call emission:
+
+- tool `Bash`: Cast narrow arguments in translated C calls
+
+## Claude
+
+Regenerating the translated code and building:
+
+- tool `Bash`: Regenerate and build
+
+## Claude
+
+The call now passes `(s16)r0, (s16)r1`, and 86 narrow arguments are cast in all. The trace build is still in place, so rerunning frame 1702:
+
+- tool `Bash`: Rerun the traced frame
+
+## Claude
+
+Fixed: in that frame Link 2's y now goes from 788 to 789, one pixel down, as it should. Removing the trace code and checking the whole walk again, in the one-world build:
+
+- tool `Bash`: Check the walk in one world
+
+- tool `Bash`: Docs and commit the fix
+
