@@ -25131,3 +25131,82 @@ While that runs, the code that uses the three ROM tables:
 
 - tool `Bash`: Record the survey and commit
 
+## Claude
+
+The survey found 104 functions that read or write per-player data during the two-player session (57 in C, 47 still in asm), and 46 of them contain a pattern that looks like a four-player limit. It also found three four-entry tables in ROM that list the four player records. Players 5–8 need eight-entry versions of those, and the enemy targeting that uses one of them (the bug from Step 63) needs `% players` in place of `& 3`.
+
+How I found them:
+- **ROM tables:** I scanned the ROM for words that point into the per-player arrays. These three are the only runs that step one player record (0x90) at a time:
+  - **0x08000FF4:** the four player records. The disassembly mislabels this table as a function. Three functions read it (`sub_08005968`, `sub_08003FB0`, `sub_08003FE8`).
+  - **0x08003B54:** each record + 0x28. The enemy targeting in `sub_0800997C` picks an entry with `frame & 3`.
+  - **0x0805D308:** the four records again, used by `sub_0805D0C8`.
+- **Running code:** mGBA logged every read and write to the per-player arrays over the whole recording. The list includes asm-only functions that reading the source missed. The per-function table is in [docs/shared_world/per_player_users.tsv](docs/shared_world/per_player_users.tsv).
+
+Of the 46 matches:
+- **C (16 functions):** the matches are concrete. Most are loops like `i <= 3` over the four players: the packet and key handling (`sub_08037574`, `sub_08037750`, `sub_0803883C`), `sub_080383F0`, `sub_08052A88`/`sub_08052C0C` (the arrows) and `sub_0803A030`.
+- **Asm (30 functions):** these are only leads. The asm search also matches `#4` used as a field offset, so each needs a look to see whether the number is really a player count. Most are entity and player-record routines in rom1 (around 0x080013xx–0x08007xxx).
+
+Coverage is limited in two ways:
+- **Only code the recording ran:** two players, one stage route. Four-player-only paths, other stages and menus won't appear, so the Step 51 read-through list still matters alongside this one.
+- **No ARM routines:** the logging only sees Thumb code. The ARM routines the game copies into IWRAM have to be checked by reading them.
+
+The survey is recorded in the plan and in walkthrough Step 64, committed as a9691e4.
+
+Next I'd add the build check for raw moved addresses, then work through the 16 C functions and the three tables. Those are concrete changes, and the replay comparison will show straight away if one breaks the two-player game.
+
+## User
+
+Proceed
+
+## Claude
+
+First, the build check for raw moved addresses. The ELF rule in `Makefile.ps2`:
+
+- tool `Bash`: Read the ELF link rule
+
+- tool `Bash`: Add the build checks
+
+## Claude
+
+Both pass on the current tree. To confirm the check catches the problem, I'll put back one raw word temporarily:
+
+- tool `Bash`: Test the check catches a raw address
+
+- tool `Bash`: List the 4-player lines in the C functions
+
+- tool `Bash`: Read the loops in context
+
+- tool `Bash`: Find the declarations and a header for the constant
+
+- tool `Bash`: Add MAX_PLAYERS and convert the three loops
+
+## Claude
+
+`make compare` passes. I inserted the block before the first `#define`, which might be the include guard, so checking the top of `global.h`:
+
+- tool `Bash`: Check the header's top
+
+## Claude
+
+It's inside the guard, so it works, but it belongs after the guard's `#define`. Moving it there:
+
+- tool `Bash`: Move the block and build both
+
+- tool `Bash`: Build the replay check with the loop changes
+
+- tool `Bash`: Run the whole replay with the loop changes
+
+## Claude
+
+The replay is running (about 16 minutes).
+
+Meanwhile, `gUnknown_03006C80` is the harder part. Its per-player fields sit inside one struct, next to shared fields: `unkC[4]`, `unk28` by form, `unk54`–`unk68` and `unk70[4]`. Asm code reaches them as a base address plus an offset, so they can't be moved one by one the way the standalone arrays were. Each asm user of a field would have to be decompiled first, or handle players 5–8 separately. I'll lay out the options once the replay result is in.
+
+- tool `Bash`: Compare the replay with the loop changes
+
+## Claude
+
+The replay is unchanged: 90 of 91 and 91 of 91 samples match. The one odd sample is again a single frame in a high slot. Cleaning up and committing:
+
+- tool `Bash`: Write docs and commit
+

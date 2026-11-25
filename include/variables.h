@@ -517,7 +517,7 @@ extern u16 gUnknown_0200B198[];
 //extern gUnknown_0200B1A2;
 //extern gUnknown_0200B1C4;
 //extern gUnknown_0200B1CA;
-extern struct BitU16A gUnknown_0200B1D0[4][16];  // each player's keys from the link, ring buffer of 16 frames
+extern struct BitU16A gUnknown_0200B1D0[MAX_PLAYERS][16];  // each player's keys from the link, ring buffer of 16 frames
 //extern gUnknown_0200B1D2;
 //extern gUnknown_0200B1D8;
 //extern gUnknown_0200B1DE;

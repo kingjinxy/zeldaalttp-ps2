@@ -23,5 +23,6 @@ for f in glob.glob('asm/**/*.inc',recursive=True)+glob.glob('asm/*.s')+glob.glob
             j=bisect.bisect_right(A,t)-1
             if starts[j][1]!=sym and starts[j][0]!=addr[sym]:
                 bad.append((f,i+1,sym,off,t,starts[j][1],t-starts[j][0]))
+bad=[b for b in bad if b[0]!='asm/crt0.s']  # its two IWRAM-table entries: arm_ports.c handles them
 for b in bad: print('%s:%d %s+0x%x = %08X -> %s+0x%x'%b)
-print(len(bad),'references', file=sys.stderr)
+sys.exit(1 if bad else 0)

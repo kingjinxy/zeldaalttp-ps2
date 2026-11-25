@@ -1690,3 +1690,18 @@ What a GBA sets up for itself, now done per player when the copies are made (`ps
     `docs/shared_world/per_player_users.tsv`.
 - Next: go through the 46 (C first: loops to a player count; asm: confirm the pattern is a player index), the three
   tables as 8-entry copies on the PS2, and the ARM routines by reading (not in the log).
+
+## Step 65: build checks for the PS2's moved arrays; first loops to MAX_PLAYERS (2026-11-25)
+
+- **Checks:** `tools/ps2/raw_moved.py` fails the PS2 link when asm or data holds an address inside a moved range as a
+  number (`.4byte 0x03000940`) or `.byte` run (tested: restoring one of Step 63's words makes it fail);
+  `tools/ps2/sym_offsets.py` now fails too when a SYMBOL+offset past SYMBOL appears (crt0.s's two entries excepted).
+  Both run in Makefile.ps2's ELF rule.
+- **`MAX_PLAYERS`** (include/global.h): 4 for the GBA (the matching build is unchanged), 8 for the PS2, where the
+  moved arrays have room for 8. Used in the three loops that touch only moved arrays: `sub_08037574` (other players'
+  key-ring rows marked not received), `sub_08037750` (each player's held/new keys from the ring), `sub_0803883C`
+  (keys cleared); `gUnknown_0200B1D0` declared `[MAX_PLAYERS][16]`.
+- **Check:** the session replay still matches mGBA (entity area at 90 and 91 of 91 samples, game frames 18,000 to
+  45,000); `make compare` OK.
+- **Not done, needs a decision:** `gUnknown_03006C80`'s per-player fields can't grow in place, and its asm users
+  reach them by base + offset (see the plan).

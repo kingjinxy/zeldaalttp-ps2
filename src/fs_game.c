@@ -369,7 +369,7 @@ void sub_08037574(void)
     *(s32 *)(g + 0x30) = gUnknown_03000494++;
     g[0x25] = 1;
     CpuSet(gUnknown_03000FE4, gUnknown_03000FD0, 0x04000005);
-    for (i = 0; i <= 3; i++)
+    for (i = 0; i < MAX_PLAYERS; i++)
         if (i != gLCDRegisterBuffer)
             gUnknown_0200B1D0[i][(gUnknown_03000494 - 1) & 15].v = 0xC000;
 }
@@ -382,7 +382,7 @@ void sub_08037750(void)
     u16 v;
     u16 i;
 
-    for (i = 0; i <= 3; i++)
+    for (i = 0; i < MAX_PLAYERS; i++)
     {
         v = gUnknown_0200B1D0[i][(gUnknown_03000494 - 2) & 15].v & 0x7FF;
         gUnknown_03005E10_b[i].v = gUnknown_03000494 > 7 ? v & ~gUnknown_03000940_b[i].v : 0;
@@ -810,7 +810,7 @@ void sub_0803883C(void)
 
     if (sub_08037554() != 0)
     {
-        for (i = 0; i <= 3; i++)
+        for (i = 0; i < MAX_PLAYERS; i++)
             gUnknown_03000940_b[i].v = gUnknown_03005E10_b[i].v = 0;
         gHeldKeys = gNewKeys = 0;
         gUnknown_0200B1D0[gLCDRegisterBuffer][gUnknown_03000494 & 15].v = 0;

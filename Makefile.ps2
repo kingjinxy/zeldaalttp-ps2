@@ -88,6 +88,8 @@ $(B)/gba_copies.o: $(B)/gba_copies.c
 	$(CC) $(PS2_CFLAGS) -c $< -o $@
 
 $(ELF): $(OBJS) $(B)/ps2/gbarom.o $(B)/gba_copies.o src/ps2/ps2.ld $(B)/gba_syms.ld tools/ps2/fix_elf.py tools/ps2/moved.py
+	python3 tools/ps2/raw_moved.py  # moved arrays named only by symbol (walkthrough step 63)
+	python3 tools/ps2/sym_offsets.py  # no SYMBOL+offset past SYMBOL (step 62)
 	$(CC) -T src/ps2/ps2.ld -o $@ $(OBJS) $(B)/ps2/gbarom.o $(B)/gba_copies.o $(LIBS)
 	python3 tools/ps2/fix_elf.py $@
 

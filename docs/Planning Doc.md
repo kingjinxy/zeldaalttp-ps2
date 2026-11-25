@@ -360,6 +360,15 @@ Requested by the user (2026-11-16). After Phase 4 works with 4 players.
             `sub_08003FE8`; 0x08003B54 records+0x28, `sub_0800997C`'s enemy targeting by `frame & 3`; 0x0805D308 the
             records, `sub_0805D0C8`): players 5-8 need 8-entry copies, and `frame & 3` style choices need `% players`.
             ARM routines aren't in the log (Thumb only).
+      - [x] Build checks (2026-11-25, Step 65): `tools/ps2/raw_moved.py` (no moved-array address as a number or raw
+            bytes) and `tools/ps2/sym_offsets.py` (no SYMBOL+offset past SYMBOL) run before every PS2 link.
+      - [x] `MAX_PLAYERS` (include/global.h: 4 on the GBA, 8 on the PS2) in the loops that only use moved arrays:
+            `sub_08037574`, `sub_08037750`, `sub_0803883C` (key ring, keys held/new). 2-player replay unchanged.
+      - [ ] `gUnknown_03006C80`'s per-player fields (`unkC[4]`, `unk28` by form, `unk54`-`unk68`, `unk70[4]`) sit
+            inside the struct between shared fields; asm reaches them as base + offset, so they can't move by symbol.
+            Users: `sub_080383F0`, `sub_08039D64`, `sub_08052A88`/`sub_08052C0C`, `sub_0802C53C`, `sub_0803A030`
+            (C) and 28 functions in the access log. The three ROM tables (0x08000FF4, 0x08003B54, 0x0805D308) get
+            8-entry copies when their readers index past 3 (today `frame & 3` and the player number).
       - [ ] Loops and four-way checks to a player count; `gUnknown_03006C80`'s per-player arrays (asm-only users to
             decompile); the link exchange to 8; spawning players 5-8; the white palette.
 - [ ] Easier in the Phase 5 shared world (per-player arrays sized by a constant) than with linked instances
