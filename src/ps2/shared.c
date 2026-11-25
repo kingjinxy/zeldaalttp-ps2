@@ -23,6 +23,7 @@ void ps2_vblank_run(void);
 void ps2_input_frame(int inst);
 extern int ps2_cur_instance;
 extern u32 ps2_gstate_watch;
+extern u8 gUnknown_03006A30[];  // the player records, 0x90 each (moved to 0x04001000 in the PS2 build)
 
 int ps2_shared;           // 1 while the world runs once
 static int sHolder;       // whose per-player bytes are in the live block
@@ -215,9 +216,21 @@ static int in_stage(int inst)
 int ps2_shared_try_enter(int instances, void (*select)(int inst))
 {
     int i;
+#ifdef ONE_WORLD  // only instance 0 runs: the others' own bytes start as its own, with their player number and record
+    u32 r;
+    if (!in_stage(0))
+        return 0;
+    for (i = 1; i < instances; i++) {
+        for (r = 0; r < NOVERLAY; r++)
+            memcpy(SAVED(i) + sOverlay[r][0], live(sOverlay[r][0]), sOverlay[r][1] - sOverlay[r][0]);
+        SAVED(i)[0x40414] = i;  // the player number (gLCDRegisterBuffer; walkthrough step 38)
+        *(u32 *)(SAVED(i) + 0x46730) = (u32)gUnknown_03006A30 + i * 0x90;  // gUnknown_03006730: its own record
+    }
+#else
     for (i = 0; i < instances; i++)
         if (!in_stage(i))
             return 0;
+#endif
     select(0);
     sHolder = 0;
     sNDrawn = 0;
@@ -239,7 +252,12 @@ int ps2_shared_try_leave(int instances)
     u32 u, o, r, a, b;
     if (in_stage(0))
         return 0;
-    for (i = 1; i < instances; i++)
+#ifdef ONE_WORLD  // the others have no game of their own to go back to
+    i = instances;
+#else
+    i = 1;
+#endif
+    for (; i < instances; i++)
         for (u = 0; u < sizeof(used) / sizeof(used[0]); u++)
             for (o = used[u][0], r = 0; o < used[u][1]; r++) {  // the gaps between overlay ranges: the world
                 a = r < NOVERLAY ? sOverlay[r][0] : used[u][1];

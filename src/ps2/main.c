@@ -9,6 +9,14 @@
 #define INSTANCES 4
 #endif
 #define STACK_SIZE (256 * 1024)
+#ifdef ONE_WORLD  // one game for everyone: players 2-N are viewports (shared.c), on the link as copies of player 1
+#ifndef SHARED_WORLD
+#error "ONE_WORLD needs SHARED_WORLD=1"
+#endif
+#define GAMES 1
+#else
+#define GAMES INSTANCES  // a game instance per player until a stage
+#endif
 
 void ps2_tlb_map(int instances);
 void ps2_tlb_select(int inst);
@@ -34,10 +42,11 @@ int ps2_shared_try_leave(int instances);
 
 extern void *_gp;
 int ps2_main_thread;
-static int sThread[INSTANCES];
-static u8 sStack[INSTANCES][STACK_SIZE] __attribute__((aligned(16)));
+static int sThread[GAMES];
+static u8 sStack[GAMES][STACK_SIZE] __attribute__((aligned(16)));
 u32 ps2_frame;  // frames shown
 int ps2_instances = INSTANCES;
+int ps2_games = GAMES;  // instances that run the game themselves (link.c)
 void ps2_link_exchange(void);
 
 static void instance_main(void *arg)
@@ -57,14 +66,14 @@ int main(void)
     ps2_glue_init();
     ps2_video_init(INSTANCES);
     ps2_input_init();
-    for (i = 0; i < INSTANCES; i++) {
+    for (i = 0; i < GAMES; i++) {
         ps2_tlb_select(i);
         ps2_save_load(i);
     }
     ps2_watch_init();
     ps2_main_thread = GetThreadId();
     ChangeThreadPriority(ps2_main_thread, 64);
-    for (i = 0; i < INSTANCES; i++) {
+    for (i = 0; i < GAMES; i++) {
         memset(&t, 0, sizeof(t));
         t.func = (void *)instance_main;
         t.stack = sStack[i];
@@ -99,7 +108,7 @@ int main(void)
             continue;
         }
 #endif
-        for (i = 0; i < INSTANCES; i++) {  // one game frame each (the instance wakes us at its VBlankIntrWait), drawn
+        for (i = 0; i < GAMES; i++) {  // one game frame each (the instance wakes us at its VBlankIntrWait), drawn
             ps2_tlb_select(i);             // while its memory is in place
             if (ps2_frame == 0)
                 StartThread(sThread[i], (void *)i);

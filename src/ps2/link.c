@@ -23,7 +23,12 @@
 
 void *ps2_inst_ptr(int inst, u32 a);
 void ps2_log(const char *fmt, ...);
-extern int ps2_instances;
+extern int ps2_instances, ps2_games;
+#ifdef SHARED_WORLD
+extern int ps2_shared;
+#else
+#define ps2_shared 0
+#endif
 
 #define P8(i, a) (*(volatile u8 *)ps2_inst_ptr(i, a))
 #define P16(i, a) (*(volatile u16 *)ps2_inst_ptr(i, a))
@@ -95,11 +100,14 @@ void ps2_link_exchange(void)
     int i, n;
     if (ps2_instances < 2)
         return;
+    // players without a game of their own (one world, before a stage: shared.c isn't running their views) send what
+    // player 1 sends, word for word: valid packets with player 1's keys
+    int live = ps2_shared ? ps2_instances : ps2_games;
     for (n = 0; n < 16 && (P16(0, SIOCNT) & 0x80); n++) {  // the parent started a transfer
         P16(0, SIOCNT) &= ~0x80;
         for (i = 0; i < 4; i++)
-            m[i] = i < ps2_instances ? P16(i, SIOMLT_SEND) : 0xFFFF;  // no GBA there: the line stays high
-        for (i = 0; i < ps2_instances; i++)
+            m[i] = i >= ps2_instances ? 0xFFFF : i < live ? P16(i, SIOMLT_SEND) : m[0];  // no GBA: the line stays high
+        for (i = 0; i < live; i++)
             handler(i, m);
     }
     if (n == 16)

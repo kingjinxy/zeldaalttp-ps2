@@ -22091,3 +22091,237 @@ All 88 four-player frames are identical to the run before the move, with the sam
 
 - tool `Bash`: Default build, compare, docs and commit
 
+## Claude
+
+The 8-player arrays now exist in the PS2 build, with no visible change yet. The 2-player shared run still matches the separate build at all 34 check frames. The 4-player shared run matches the previous one at all 88 saved frames, at the same speed and with no TLB misses. `make compare` is OK and the default build compiles; committed as `f476fab`, with walkthrough Step 52 and the plan updated.
+
+- **Where the memory went:** a new TLB entry turned out to be impossible. The kernel leaves exactly 9 free and the port already uses all 9, so I was wrong earlier about spare entries. Instead I used the unused second half of the existing I/O mapping, at 0x04001000. That memory is already part of each player's block, and only the first 1 KB of the I/O range is treated as hardware registers.
+- **What moved** (PS2 build only): the player records, the held and newly pressed keys, the link key buffer and the link packet struct, each with room for 8 players. Each player's saved memory block is now 512 KB, so 8 fit in RAM.
+- **One catch:** the first run had the Links in different poses than the separate-copies build. The ROM's data tables, which the game reads directly, still pointed at the old addresses. The ELF post-processing step now rewrites every ROM word that points into a moved array, 798 of them.
+  - It assumes any such word is a pointer. A plain number that happened to fall in those ranges would be changed too, but none are known.
+
+**Next:**
+1. Raise the loops and the four-way player checks to a player count.
+2. List the asm-only functions that index `gUnknown_03006C80`'s per-player arrays, and decompile those.
+3. Extend the link exchange to 8, then spawn players 5–8 with the white palette.
+
+Should I continue with 1 and 2?
+
+## User
+
+Proceed
+
+## Claude
+
+Starting with the analysis: the layout of `gUnknown_03006C80`, so I know which offsets are per-player arrays.
+
+- tool `Bash`: Show Struct03006C80
+
+- tool `Bash`: Check mgba_run options
+
+## Claude
+
+`--writes` logs every store into bytes marked in a bitmap; `--reads` watches a single address. I need loads and stores over a bitmap. Looking at how the read hook is built, to extend it:
+
+- tool `Bash`: Read the reads/writes hook code
+
+- tool `Bash`: Read the load/store logging function
+
+## Claude
+
+I'll add a `--access` flag that makes `--writes` log loads into the marked bytes too. Then a run marking the struct's per-player arrays shows every function that uses them:
+
+- tool `Bash`: Add --access to mgba_run
+
+## Claude
+
+The option loop steps in pairs, so a lone flag needs `i--` and must not come last on the command line. Building and running the 2-player replay with the struct's per-player arrays marked:
+
+- tool `Bash`: Build mgba_run and make the C80 bitmap
+
+- tool `Bash`: Find an earlier replay command line
+
+## Claude
+
+Running it with 4 GBAs (players 3 and 4 replaying player 2's script, as on the PS2), so code that only runs with 3 or 4 players is covered too:
+
+- tool `Bash`: Log all accesses to C80's per-player arrays
+
+## Claude
+
+My flag handling already moves to the next argument, so the `1` was taken as an option. Running again without it:
+
+- tool `Bash`: Rerun the access log
+
+## Claude
+
+63 distinct access sites. Mapping each PC to its function, and marking whether that function has C or is asm-only:
+
+- tool `Bash`: Classify the functions touching C80 arrays
+
+## Claude
+
+Names like `_080129C2` are local labels inside functions, so their parent functions need checking too. Mapping to the enclosing `sub_` symbol instead:
+
+- tool `Bash`: Reclassify by enclosing function
+
+- tool `Bash`: Find sub_0802FEE8's asm
+
+- tool `Bash`: Read sub_0802FEE8's asm
+
+## Claude
+
+It's short: a lobby step that checks the players' choices in `unk28[i].unk4` against the player count. Decompiling it under `NONMATCHING` per project convention. First the declarations it needs:
+
+- tool `Bash`: Check declarations for the decompile
+
+- tool `Bash`: Decompile sub_0802FEE8 under NONMATCHING
+
+- tool `Bash`: Check the declaration conflict and pre-existing errors
+
+## Claude
+
+Already declared as a struct with `unk0`. Fixing:
+
+- tool `Bash`: Fix and recheck both builds
+
+## Claude
+
+Only the warnings that were already there. The function runs in the lobby, so the 2-player PS2 regression covers it:
+
+- tool `Bash`: 2-player regression with the new C function
+
+- tool `Bash`: Show the PS2 link error
+
+## Claude
+
+The auto-translated copy still defines it. The generated files in `src/auto` need regenerating. Checking how:
+
+- tool `Bash`: Find the auto-generation rule
+
+- tool `Bash`: Look for how src/auto is regenerated
+
+- tool `Bash`: Regenerate auto C, rebuild, rerun the check
+
+## Claude
+
+Identical again at all 34 frames. Committing this part:
+
+- tool `Bash`: Commit; list the 4-player loops
+
+## Claude
+
+Each of these loops has to be judged individually: some walk players, others walk 4 of something else, like backgrounds or directions. Context for each:
+
+- tool `Bash`: Show context for the first loops
+
+## Claude
+
+Before converting loops blindly, here's where this stands, because what's left is bigger than the loop list suggests.
+
+**Done in this step** (committed `0a416f9`):
+- **New `mgba_run --access` option:** it logs every load and store into marked bytes. I ran it on the replay with 4 GBAs to find every function that touches `gUnknown_03006C80`'s per-player arrays.
+- **What it found:** 18 functions, of which only `sub_0802FEE8`, the lobby's last step, was still asm. I decompiled it under `NONMATCHING`. `make compare` is OK and the 2-player shared run still matches the separate build at all 34 check frames.
+- **Coverage:** the replay covers file select, the lobby and the first stage. Stage endings and results screens could turn up more.
+
+**What I found going through the loops:** each one needs its own decision, and many need more than a new bound.
+- **Some walk players** (key updates in `sub_08037574`/`sub_08037750`, record setup in `sub_080383F0`). Others walk 4 of something else, like the HUD icon slots in `sub_08012BE4`, or the link checksum loop in `sub_0800C6A8`, which is tied to the 4-slot SIO hardware.
+- **Player sets are 4-bit masks.** Examples are the riders on a moving platform in `sub_080272D0`/`sub_08028200` and the `gUnknown_03000BF0` link bits. They'd need 8 bits.
+- **Raising a bound to 8 while the game runs 4 players can crash.** Slots 5–8 of the player records are empty, and code that follows a record's Link pointer would read through null.
+- **`gUnknown_03006C80`'s per-player arrays can't grow in place.** Asm-only code reads its other fields at fixed offsets. They need an 8-slot side table and an accessor macro in the 17 C functions, which expands to the original code in the GBA build so `make compare` still matches.
+
+**A design question only you can answer: how players 5–8 join.** The lobby and the link protocol are built around exactly 4 GBAs, so players 5–8 can't come in through the lobby without rewriting it. My suggestion: they join only in the shared world.
+- When the stage starts, the port spawns Links 5–8 next to the others, with the white palette.
+- Their keys go straight into the key arrays from pads 5–8, or from recordings. That skips the link protocol, which matches the earlier plan for the shared world.
+- The game then needs to cope with 5–8 players in a stage only: movement, collision, camera, HUD, item pickups. That's a much smaller set than the lobby, file select and results.
+
+This is still several sessions of work. Do you want to go that way, with players 5–8 joining only in the shared world? If so, I'll start with a 5th Link standing in the first room on a fifth screen, and widen from there.
+
+## User
+
+In the final game, I'm envisioning that there is no real "lobby" for virtual GBA communication. Under the shared world paradigm, we simply have one world and several viewports for it. I'm not sure how possible it is, but I'd like to have the ability for players to drop in and out on the fly. For starters, we can simply have an option at the start of the game to choose how many players there will be, with the option based on how many controllers are connected.
+
+## Claude
+
+That fits the shared world well, and it changes the plan: the lobby and the link protocol stop being things to extend and become things to bypass.
+
+**How it would work:**
+- **One game, from boot.** Only instance 0 runs. Players 2–N exist from the start as viewports, each with its own view memory, the way players 2–4 work in a stage today. The separate-instances phase and the virtual link go away.
+- **A start-up player count.** A port menu before the title offers 1 to the number of connected controllers. That's up to 8 with two multitaps; 4 until the 4-player limits are lifted.
+- **No link.** The game would be made to believe N players are connected, and each player's pad goes straight into the key arrays that link packets fill today. The stage code that waits for packets would just find them there. Wiring the link's state machine this way is the main piece of new work.
+- **Save files** are the open question: today each GBA brings its own.
+
+**Drop in and drop out** is plausible later, because players are just data in one world:
+- **Dropping in** would add a Link and a viewport, mid-room probably only at a room transition.
+- **Dropping out** could remove the Link, or keep it standing idle. The DSi Anniversary Edition's single-player partner Links show the game can run Links nobody controls.
+- Whether the original game copes with the player count changing mid-stage needs testing. I'd plan it as a later step.
+
+**Order I'd suggest:**
+1. **Boot straight into one world:** a fixed N (2–4), no link, keys from pads, reaching a stage.
+2. **The player-count menu at start-up,** using the connected pads.
+3. **5–8 players:** the limits work from the survey, the white palette, the 3×3 layout. The work in progress stays useful: the arrays already have room for 8.
+4. **Drop in and drop out.**
+
+One question first: should file select stay for player 1 only, with one save shared by everyone? Or should each player pick a file? The first is much simpler; per-player saves could come later.
+
+Should I write this into the plan and start on step 1?
+
+## User
+
+Let's do the file select for P1 only for now. Later I'd like to have per-player saves.
+Write this into the plan and start on step 1
+
+## Claude
+
+Writing the plan first:
+
+- tool `Bash`: List plan sections
+
+- tool `Bash`: Write the plan section and commit
+
+- tool `Bash`: Read link.c's description and exchange
+
+- tool `Bash`: Search walkthrough for link protocol notes
+
+- tool `Bash`: Read step 37's packet findings
+
+- tool `Bash`: Read the packet building code
+
+- tool `Bash`: Read sub_0800C658 and sub_0800C6A8
+
+- tool `Bash`: Read the input frame code and main loop setup
+
+- tool `Read`: /home/alex/Documents/zeldaalttp-ps2/src/ps2/main.c
+
+- tool `Bash`: Implement ONE_WORLD in main, shared and link
+
+## Claude
+
+link.c needs the declarations, and `ps2_shared` only exists in shared-world builds:
+
+- tool `Bash`: Build ONE_WORLD with 2 players and run
+
+- tool `Bash`: Read the ONE_WORLD run log
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/ow.png
+
+- tool `Bash`: Check shared entry and early costs
+
+- tool `Bash`: Read the marker object's functions
+
+- tool `Bash`: Find +0x50 and player-number uses
+
+- tool `Bash`: Read the step 5b kinds analysis
+
+- tool `Bash`: Read the 5b kinds list
+
+- tool `Bash`: Read the camera setup code
+
+## Claude
+
+The 14 is a layer value for the followed entity, not the marker. The YOU marker must come from code that compares the player number with an entity's `form` during its update. Looking at those spots:
+
+- tool `Bash`: Show player-number checks in entity code
+
+- tool `Bash`: Check builds, document and commit
+

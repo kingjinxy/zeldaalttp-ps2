@@ -46,6 +46,9 @@ ifdef SCREENS  # 5-9: a 3x3 grid of 426x240 screens at 720p, the centre black (G
 # than 4 players, screens 5-8 show players 1-4 again). Touch src/ps2/video.c when changing it
 PS2_CFLAGS += -DSCREENS=$(SCREENS)
 endif
+ifdef ONE_WORLD  # with SHARED_WORLD: only player 1's game runs; the others are viewports (docs/Planning Doc.md, one world)
+PS2_CFLAGS += -DONE_WORLD
+endif
 ifdef SHARED_CHECK  # with SHARED_WORLD: log world bytes a view pass changes
 PS2_CFLAGS += -DSHARED_CHECK
 endif

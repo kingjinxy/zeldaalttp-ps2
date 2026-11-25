@@ -269,6 +269,11 @@ instances and the link exchange, not only in a stage.
       (their view memory as the shared world's overlay). The game is made to believe N players are linked, and each
       player's pad goes straight into the key arrays the link packets fill today (no link protocol). Fixed N (2-4)
       at build time; goal: reach a stage.
+      First version (2026-11-24, walkthrough Step 53): `SHARED_WORLD=1 ONE_WORLD=1`. Reaches the stage with 2 players
+      from one game: before it, the others send player 1's link words (mirroring its keys); at the stage, their view
+      memory starts as player 1's with their player number and record pointer. Still wrong: everything the game
+      decides per GBA from the player number at stage start ("my" Link's marker flag, camera target, the other players'
+      arrows, pickups credited on the collector's GBA): about 40 uses, Phase 5 step 5b's kinds 1-3.
 - [ ] 2. Player count menu at start-up: 1 to the number of connected controllers (two multitaps: 8; 4 until the
       limits below are lifted).
 - [ ] 3. File select for player 1 only, one save for everyone (user, 2026-11-24). Later: per-player saves.

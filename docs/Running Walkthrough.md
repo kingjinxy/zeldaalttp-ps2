@@ -1452,3 +1452,19 @@ points, HUD slots) beyond the Link palettes (Step 45).
   per-player map and its fixed ranges to the new places.
 - **Result:** 2-player shared replay identical to the separate build at all 34 check frames; 4-player shared run
   identical to Step 48's at all 88 saved frames; no TLB misses, same cost. The game still loops over four players.
+
+## Step 53: one world, first version (2026-11-24)
+
+- `make -f Makefile.ps2 INSTANCES=2 SHARED_WORLD=1 ONE_WORLD=1`: only instance 0 runs the game (one thread; main.c
+  `GAMES`). Only keys cross the link (Step 37), so on the cable the other players send exactly player 1's words
+  (`ps2_link_exchange`: valid packets, player 1's keys; the lobby sees everyone press what player 1 presses). When
+  instance 0 is in the stage loop the shared world starts as before, and each other player's overlay is filled from
+  player 1's, with its player number (0x03000414) and record pointer (`gUnknown_03006730`) set. From then on the view
+  passes read each player's pad and send its packets, as in Step 46.
+- **Result:** file select (player 1), the lobby and the stage reached with 2 players at 60 fps, game share 0.30 M
+  cycles a frame, no TLB misses; the other players' screens are black until the stage. Wrong: player 2's view shows
+  player 1's YOU marker and follows Link 1. About 40 places decide something per GBA from the player number at stage
+  start or during play: the local Link's marker flag (`sub_08042DB0`, `sub_0804B788`, `sub_08051F94`), the camera
+  target (`gUnknown_03000450.unk0`, fs_game.c 4547), the other players' arrow objects (`sub_08052C0C`), pickups
+  credited on the collector's GBA (`sub_0805BF9C`, `sub_08055A08`). In the two-instance shared world each GBA did
+  its own before the stage; with one game only player 1's exist.
