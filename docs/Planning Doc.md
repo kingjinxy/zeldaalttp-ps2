@@ -353,6 +353,13 @@ Requested by the user (2026-11-16). After Phase 4 works with 4 players.
       - [x] Room for 8 (2026-11-24, walkthrough Step 52): saved blocks packed at 512 KB (8 fit); the player records,
             key arrays, link key ring and packet struct moved in the PS2 build to 0x04001000 (the I/O TLB entry's
             unused page) with room for 8 (`tools/ps2/moved.py`). No behaviour change: 2- and 4-player runs identical.
+      - [x] Second survey, from running code (2026-11-25, walkthrough Step 64): mGBA logged every load/store to the
+            per-player arrays over the whole 2-player session: 104 functions (57 C, 47 asm), 46 of them with a
+            4-player pattern (`docs/shared_world/per_player_users.tsv`). New since Step 51: three 4-entry pointer
+            tables in ROM, one record apart (0x08000FF4 the records, read by `sub_08005968`/`sub_08003FB0`/
+            `sub_08003FE8`; 0x08003B54 records+0x28, `sub_0800997C`'s enemy targeting by `frame & 3`; 0x0805D308 the
+            records, `sub_0805D0C8`): players 5-8 need 8-entry copies, and `frame & 3` style choices need `% players`.
+            ARM routines aren't in the log (Thumb only).
       - [ ] Loops and four-way checks to a player count; `gUnknown_03006C80`'s per-player arrays (asm-only users to
             decompile); the link exchange to 8; spawning players 5-8; the white palette.
 - [ ] Easier in the Phase 5 shared world (per-player arrays sized by a constant) than with linked instances

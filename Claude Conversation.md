@@ -25045,3 +25045,89 @@ PCSX2 is replaying the whole recording again with both fixes. When it finishes I
 
 - tool `Bash`: Clean up, write docs and archive
 
+- tool `Bash`: Commit the fixes
+
+## Claude
+
+I fixed the bug: the PS2 replay now stays in step with mGBA through the whole recording. I've sent you the new screenshot sheet. In every compared frame from 20,000 to 45,000, both players are in the same place with the same rupees, keys and hearts. That includes mGBA's "game will end!" at frame 20,000, which the PS2 now reaches too.
+
+The split at frame 18,734 had two causes:
+
+- **Enemy setup's result was ignored.** The function that sets up a new enemy, `sub_08043B94`, reports when there's no free sprite slot so its caller can delete the enemy. The decompiled C was declared as returning nothing (`void`), so on the PS2 the caller read a leftover value. Enemies were deleted in the frame they spawned, and the spawner made new ones every frame. It now returns 0 normally and 1 when no slot is free, as the original does. A scan found no other function with the same mistake.
+- **Some addresses missed the 8-player move.** Enemies pick a player to chase each frame using two of the per-player arrays I moved for 8-player support: keys held and the player records. Ten words in the asm wrote those addresses as plain numbers or raw bytes instead of names, so the move didn't update them and the PS2 read stale memory. They now use the names.
+
+Comparing the entity area between frames 18,000 and 45,000, 90 of 91 samples per player match exactly, one frame apart. The one odd sample per player is in the last slots and matches again at the next sample. The run reached frame 57,079 with no crash and no TLB misses.
+
+The remaining pixel differences in the screenshots come from drawing, not game state:
+- Links' shadows and some sprite details look different.
+- In two shots the whole frame differs, probably a scroll offset of a pixel or so.
+
+Those would be worth a look as a renderer task. `make compare` still reports `zeldaalttp.gba: OK`. The fixes, the walkthrough entry (Step 63) and the conversation archive are committed as 2f20752.
+
+## User
+
+Ok, is this a good foundation for spawning in eight players now?
+
+## Claude
+
+Mostly yes. The replay work has made the game logic itself trustworthy, but the 8-player work is still ahead, and this session turned up a specific kind of trap for it.
+
+**What's now solid:**
+- **The game runs like the original.** With two players, the PS2 matches mGBA byte for byte through a 45,000-frame session, including enemy AI, spawns, random numbers and room loads. A mismatch is now far more likely to come from 8-player changes than from an old port bug.
+- **There are tools to check it.** The replay comparison, the frame-paired dumps and the `sym_offsets.py` scan can quickly catch a regression or find its first frame.
+- **The memory layout already has room for 8.** The per-player arrays I moved live at 0x04001000 with space for 8 players, and the shared-world overlay, grid layout and white palette are in place.
+
+**What still stands between this and 8 players:**
+- **The game assumes 4 players in its code.** Today's bug showed it: enemies pick their target with `frame & 3` from a 4-entry table of player records. With 8 players, enemies would never target players 5–8. Code like that, with `& 3`, loops to 4, 4-entry tables, and 2-bit player fields in entity flags, needs a survey and extending before players 5–8 are real participants rather than viewports.
+- **Moved addresses can still be missed.** Today's raw-address words got past the move. I fixed the ones that exist, but there's no automatic check yet. Turning that scan into a script that runs with each build would make it hard to break again.
+- **The replay checks cover two players in separate instances.** The one-world build, where the 8-player version will run, hasn't been compared against anything. It can't be matched against mGBA directly, but it can be checked against itself: two players in one world should give the same world state as the linked pair.
+- **About 40 places in the game check "which player am I"** (from the earlier survey). Only some are done: the YOU marker, arrows and pickups. The rest matter as soon as players 5–8 act.
+- **Planned pieces not started yet:** the player-count menu, the link exchange for 8, and the per-player side table (`gUnknown_03006C80`).
+
+I'd do it in this order:
+1. Survey the 4-player assumptions, using mGBA's write logging to find what touches player-indexed data.
+2. Add the raw-address check to the build.
+3. Spawn players 5–8 in one world, with the replay comparison as a guard for players 1–2.
+
+Want me to start with the survey?
+
+## User
+
+Yes
+
+## Claude
+
+First, what the earlier 4-player limits survey already found, so I don't redo it:
+
+- tool `Bash`: Find the earlier survey in the plan
+
+- tool `Bash`: Read the earlier survey results
+
+- tool `Bash`: Scan the ROM for tables pointing into per-player arrays
+
+- tool `Bash`: Check the --writes map format
+
+- tool `Bash`: Build the access map for per-player data
+
+## Claude
+
+Running mGBA over the whole recording with access logging. This is slow, so it runs in the background:
+
+- tool `Bash`: Log all per-player data accesses in mGBA
+
+## Claude
+
+While that runs, the code that uses the three ROM tables:
+
+- tool `Bash`: Find users of the per-player tables
+
+## Claude
+
+`sub_08000FF4` isn't code at all. It's the table itself (four record pointers) that the disassembly labelled as a function. It's read by `sub_08005968`, `sub_08003FB0` and `sub_08003FE8` (through the absolute address I wrote last time). On the PS2, `fix_elf` patches the ROM image's copy to the moved records, so it works for 4 players. For 8 it would need an 8-entry table. I'll wait for the access log before drawing conclusions.
+
+- tool `Bash`: Summarise the access log by function and array
+
+- tool `Bash`: Classify the functions by 4-player patterns
+
+- tool `Bash`: Record the survey and commit
+

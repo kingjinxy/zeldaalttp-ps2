@@ -1675,3 +1675,18 @@ What a GBA sets up for itself, now done per player when the copies are made (`ps
   frame apart; the odd sample per player is in the last slots and matches again next sample). Screenshots show the
   same game state in every compared frame; pixel differences left are drawing (Links' shadows, sprite details, and two
   frames offset as a whole). No TLB misses to frame 57,079.
+
+## Step 64: where the game assumes four players, from running code (2026-11-25)
+
+- Why: Step 63's enemy targeting bug came from code the Step 51 read-through missed (`sub_0800997C`: `frame & 3`
+  into a 4-entry ROM table). Two passes:
+  - **ROM tables:** every aligned ROM word pointing into the per-player arrays (the moved ones and
+    `gUnknown_03006C80`); runs of consecutive entries one record (0x90) apart are per-player tables. Three:
+    0x08000FF4 (the four records; the disassembly labels it a function, `sub_08000FF4`), 0x08003B54 (records +
+    0x28) and 0x0805D308 (the records). The rest are literal pools.
+  - **Running code:** `mgba_run --writes MAP --access` with a map of the per-player bytes (1,008), whole session
+    replay: 104 functions load or store them (Thumb only), 57 in C, 47 asm; 46 contain a 4-player pattern (C:
+    `<= 3`, `< 4`, `& 3`, `[4]`; asm: `#3`, `#4`, `#30`, loose since `#4` is also an offset). Table:
+    `docs/shared_world/per_player_users.tsv`.
+- Next: go through the 46 (C first: loops to a player count; asm: confirm the pattern is a player index), the three
+  tables as 8-entry copies on the PS2, and the ARM routines by reading (not in the log).

@@ -1,0 +1,105 @@
+# function	C/asm	per-player data it touched (mGBA, session 1 replay, 2 players; l/w = load or store)	4-player patterns (C: <=3 <4 &3 [4]; asm: #3 #4 #30, loose)
+sub_08001290	asm	records:l/w	
+sub_080012FC	asm	records:l/w	
+sub_08001328	asm	records:l/w	#0x1e #3 #4
+sub_080013FC	asm	records:l/w	#4
+sub_08001468	asm	records:l/w	#4
+sub_080014C4	asm	records:l/w	#4
+sub_08001510	asm	records:l/w	
+sub_08001528	asm	records:l/w	#3 #4
+sub_080015A8	asm	records:l/w	#4
+sub_080015BC	asm	records:l/w	#0x1e #4
+sub_08001D68	asm	records:l/w	#0x1e #3 #4
+sub_08001DF4	asm	records:l/w	#3 #4
+sub_08001F38	asm	records:l/w	#4
+sub_080020A0	asm	records:l/w	#4
+sub_080020C8	asm	records:l/w	#0x1e #3 #4
+sub_08002470	asm	records:l/w	
+sub_0800247C	asm	records:l/w	#30 #4
+sub_08004306	asm	records:l/w	#3
+sub_08004408	asm	records:l/w	#3 #4
+sub_080047F4	asm	records:l/w	
+sub_08004814	asm	6C80+50:l/w records:l/w	
+sub_08004BB0	asm	records:l/w	
+sub_08004FD0	asm	records:l/w	#4
+sub_0800505C	asm	records:l/w	#3
+sub_080052B8	asm	records:l/w	
+sub_08005354	asm	records:l/w	
+sub_08005730	asm	records:l/w	
+sub_0800585C	asm	records:l/w	#30
+sub_08007364	asm	records:l/w	#3 #30 #4
+sub_08007594	asm	records:l/w	#4
+sub_080075AC	asm	records:l/w	#4
+sub_080075C8	asm	records:l/w	
+sub_080075DC	asm	records:l/w	
+sub_080075F4	asm	records:l/w	
+sub_08007608	asm	records:l/w	
+sub_080076C4	asm	records:l/w	#0x1e #3 #4
+sub_08007A38	asm	records:l/w	#4
+sub_08008422	asm	records:l/w	
+sub_0800FDD4	asm	records:l/w	#3 #30 #4
+sub_08012824	C	records:l/w	
+sub_08012BE4	C	6C80+07:l/w	< 4 <= 3 [4]
+sub_08012FA8	C	6C80+49:l/w 6C80+4B:l/w	
+sub_080133D0	C	6C80+02:l/w 6C80+4C:l/w	[4]
+sub_08013EC0	asm	records:l/w	#3 #4
+sub_080141E8	C	6C80+54:l/w	
+sub_0801424C	C	6C80+4D:l/w	
+sub_08014958	C	records:l/w	< 4
+sub_080152F4	asm	records:l/w	#3 #30 #4
+sub_08015888	asm	records:l/w	#3 #4
+sub_08026B80	C	6C80+26:l/w	
+sub_0802A4EC	C	records:l/w	
+sub_0802C3F0	C	6C80+24:l/w 6C80+61:l/w	
+sub_0802C53C	C	6C80+08:l/w 6C80+10:l/w	& 3
+sub_0802C710	C	6C80+68:l/w	[4]
+sub_0802CF20	C	6C80+51:l/w	
+sub_0802FD88	asm	keys held:l/w keys new:l/w packets:l/w	#3
+sub_0802FE04	asm	6C80+00:l/w keys new:l/w	#3
+sub_0802FEE8	C	packets:l/w	
+sub_08030100	C	6C80+03:l/w	
+sub_080305BC	C	6C80+01:l/w 6C80+02:l/w	
+sub_08036704	C	packets:l/w	
+sub_08036770	C	packets:l/w	
+sub_080367FC	C	packets:l/w	
+sub_080369B4	asm	packets:l/w	#3 #30 #4
+sub_08036DEC	C	6C80+28:l/w 6C80+2C:l/w 6C80+30:l/w 6C80+34:l/w	
+sub_08036E24	C	packets:l/w	
+sub_08036F28	C	packets:l/w	
+sub_08036FC8	C	keyring:l/w packets:l/w	
+sub_080370C0	C	packets:l/w	
+sub_0803719C	C	keyring:l/w	[4]
+sub_08037300	C	packets:l/w	
+sub_08037574	C	keyring:l/w packets:l/w	<= 3
+sub_08037750	C	keys held:l/w keys new:l/w	<= 3
+sub_08037D64	C	packets:l/w	
+sub_08038238	C	6C80+1C:l/w 6C80+26:l/w 6C80+5C:l/w 6C80+5D:l/w 6C80+5E:l/w 6C80+5F:l/w 6C80+6D:l/w 6C80+6E:l/w 6C80+80:l/w 6C80+82:l/w	
+sub_080383F0	C	records:l/w	<= 3
+sub_0803857C	C	keys held:l/w keys new:l/w	
+sub_0803883C	C	6C80+05:l/w keyring:l/w keys held:l/w keys new:l/w packets:l/w	<= 3
+sub_08038A30	C	6C80+1C:l/w 6C80+6E:l/w 6C80+6F:l/w keys new:l/w	
+sub_08038E44	C	6C80+20:l/w 6C80+6E:l/w	
+sub_08039288	asm	keys held:l/w keys new:l/w records:l/w	#3 #4
+sub_08039D64	C	6C80+04:l/w 6C80+05:l/w	<= 3
+sub_0803A030	C	6C80+00:l/w 6C80+06:l/w 6C80+07:l/w 6C80+26:l/w 6C80+58:l/w 6C80+59:l/w 6C80+5A:l/w 6C80+5B:l/w 6C80+60:l/w 6C80+61:l/w 6C80+62:l/w 6C80+63:l/w 6C80+64:l/w 6C80+65:l/w 6C80+66:l/w 6C80+67:l/w	& 3
+sub_0803A20C	C	6C80+26:l/w	
+sub_0803DE94	C	records:l/w	
+sub_0803E048	C	records:l/w	
+sub_0803E114	C	records:l/w	
+sub_0803E518	asm	records:l/w	#3 #30 #4
+sub_0803F74C	C	records:l/w	
+sub_08042DB0	C	records:l/w	
+sub_08042F5C	C	records:l/w	
+sub_0804DF3C	C	6C80+80:l/w 6C80+82:l/w	
+sub_0804E248	C	6C80+4F:l/w 6C80+6F:l/w	
+sub_08052A88	C	6C80+6C:l/w	& 3 <= 3
+sub_08052B88	C	6C80+70:l/w	
+sub_08052C0C	C	6C80+70:l/w	<= 3
+sub_0805C2D8	C	6C80+6E:l/w	
+sub_08063C5C	C	records:l/w	
+sub_08063DF0	C	records:l/w	
+sub_08063F64	C	records:l/w	
+sub_08064064	C	records:l/w	
+sub_080642B0	C	records:l/w	
+sub_08064304	C	records:l/w	
+zero_memory	C	packets:l/w	
