@@ -1182,6 +1182,15 @@ extern struct Struct03006A30 gUnknown_03006A30[];
 //extern gUnknown_03006BE0;
 extern void *gUnknown_03006C70;  // ARM function pointer
 extern struct Struct03006C80 gUnknown_03006C80;
+// gUnknown_03006C80's per-player fields for players 5-8 (PS2: a second struct in the spare page after the moved arrays,
+// src/ps2/tlb.c; its shared fields unused). The fields sit between shared ones and asm reaches them by base + offset,
+// so players 1-4 stay in place. C80_PLAYER(field, i) is player i's entry; the GBA build gets the original expression.
+#ifdef PLATFORM_PS2
+#define gUnknown_03006C80_hi (*(struct Struct03006C80 *)0x04001680)
+#define C80_PLAYER(field, i) (*((i) < 4 ? &gUnknown_03006C80.field[i] : &gUnknown_03006C80_hi.field[(i) - 4]))
+#else
+#define C80_PLAYER(field, i) (gUnknown_03006C80.field[i])
+#endif
 extern struct Struct03006CA8 gUnknown_03006CA8[];
 //extern gUnknown_03006CE8;
 //extern gUnknown_03006D04;

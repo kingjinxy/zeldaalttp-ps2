@@ -10,6 +10,8 @@ MOVED = [
     (0x03005E10, 0x8, 0x04001590),    # gUnknown_03005E10[4]: keys newly pressed (8: 0x10)
     (0x03000FC0, 0x90, 0x040015A0),   # gUnknown_03000FC0: keys and link packets, unk38[4] at the end (8: 0xE0)
 ]
+# after them, not a move: 0x04001680-0x0400170B gUnknown_03006C80_hi, players 5-8's per-player fields of
+# gUnknown_03006C80 (include/variables.h C80_PLAYER); src/ps2/tlb.c copies the page up to 0x04001710
 
 
 def moved(v):

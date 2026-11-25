@@ -1705,3 +1705,17 @@ What a GBA sets up for itself, now done per player when the copies are made (`ps
   45,000); `make compare` OK.
 - **Not done, needs a decision:** `gUnknown_03006C80`'s per-player fields can't grow in place, and its asm users
   reach them by base + offset (see the plan).
+
+## Step 66: gUnknown_03006C80's per-player fields for players 5-8 (2026-11-25)
+
+- The user chose a mirror over decompiling the struct's asm users first or widening the struct: `gUnknown_03006C80_hi`
+  (include/variables.h, PS2 only) is a second `struct Struct03006C80` at 0x04001680, after the moved arrays in the
+  spare page (src/ps2/tlb.c now copies 0x710 bytes of it per switch); its slots 0-3 hold players 5-8, its shared
+  fields are unused. `C80_PLAYER(field, i)` picks the struct by player; for the GBA it is the original
+  `gUnknown_03006C80.field[i]`.
+- Converted: `sub_080383F0` (records' `unk1C` from `unk58`), `sub_08039D64` (`unkC`, `unk58`, `unk60`, `unk68`
+  reset), the arrow manager (`sub_08052A88` rotation, `sub_08052B88`, `sub_08052C0C`). The rotation first used
+  `% MAX_PLAYERS`, which changed the matching ROM (agbcc compiles `% 4` on the promoted int differently from `& 3`);
+  `& (MAX_PLAYERS - 1)` keeps `& 3` there.
+- Check: the session replay matches mGBA at 91 of 91 samples per player (game frames 18,000-45,000); `make compare`
+  OK.

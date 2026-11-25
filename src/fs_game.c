@@ -699,8 +699,8 @@ void sub_080383F0(void)
     sub_0802C278();
     zero_memory((void *)0x03000040, 0x1C0);
     sub_0803E518();
-    for (i = 0; i <= 3; i++)
-        gUnknown_03006A30[i].unk1C = gUnknown_03006C80.unk58[i].v;
+    for (i = 0; i < MAX_PLAYERS; i++)
+        gUnknown_03006A30[i].unk1C = C80_PLAYER(unk58, i).v;
     load_palette_from_gfx_group(2);
     load_gfx_group(16);
     *(u16 *)0x05000000 = 0;
@@ -1259,12 +1259,12 @@ u32 sub_08039D64(void)
             BITU8_AT(&gUnknown_03006C80, 4) = 1;
         if ((u8)(gUnknown_03006C80.unk4F & 32))
         {
-            for (i = 0; i <= 3; i++)
+            for (i = 0; i < MAX_PLAYERS; i++)
             {
-                gUnknown_03006C80.unkC[i] = 0;
-                gUnknown_03006C80.unk68[i].v = 0;
-                gUnknown_03006C80.unk58[i].v = 9;
-                gUnknown_03006C80.unk60[i].v = 40;
+                C80_PLAYER(unkC, i) = 0;
+                C80_PLAYER(unk68, i).v = 0;
+                C80_PLAYER(unk58, i).v = 9;
+                C80_PLAYER(unk60, i).v = 40;
             }
             gUnknown_03006C80.unk8 = BITU8_AT(&gUnknown_03006C80, 4) = gUnknown_03006C80.unk24 = 0;
             zero = 0;
@@ -8752,14 +8752,14 @@ void sub_08052A88(void)
     if (gUnknown_03000420[0] == 0)
         return;
     if ((u16)(gUnknown_03000E20.unk0 & 31) == 0)
-        gUnknown_03006C80.unk6C = (gUnknown_03006C80.unk6C + 1) & 3;
-    for (i = 0; i <= 3; i++)
+        gUnknown_03006C80.unk6C = (gUnknown_03006C80.unk6C + 1) & (MAX_PLAYERS - 1);
+    for (i = 0; i < MAX_PLAYERS; i++)
     {
-        j = (gUnknown_03006C80.unk6C + i) & 3;
-        if (gUnknown_03006C80.unk70[j] != NULL && !((gUnknown_03006C80.unk6D >> j) & 1))
+        j = (gUnknown_03006C80.unk6C + i) & (MAX_PLAYERS - 1);
+        if (C80_PLAYER(unk70, j) != NULL && !((gUnknown_03006C80.unk6D >> j) & 1))
         {
-            gUnknown_03006C80.unk70[j]->unk1C_0 = 2;
-            sub_08003688(gUnknown_03006C80.unk70[j]);
+            C80_PLAYER(unk70, j)->unk1C_0 = 2;
+            sub_08003688(C80_PLAYER(unk70, j));
         }
     }
 }
@@ -8774,7 +8774,7 @@ void sub_08052B88(struct Entity *this)
     else
     {
         sub_08053028(this);
-        gUnknown_03006C80.unk70[this->unk18] = this->unk1C_0 ? this : NULL;
+        C80_PLAYER(unk70, this->unk18) = this->unk1C_0 ? this : NULL;
         this->unk1C_0 = 0;
     }
 }
@@ -8792,8 +8792,8 @@ void sub_08052C0C(struct Entity *this)
     s32 n;
     struct Entity *e;
 
-    for (i = 0; i <= 3; i++)
-        gUnknown_03006C80.unk70[i] = NULL;
+    for (i = 0; i < MAX_PLAYERS; i++)
+        C80_PLAYER(unk70, i) = NULL;
     n = 0;
     for (i = 0; i < gUnknown_03006C80.unk0; i++)
     {

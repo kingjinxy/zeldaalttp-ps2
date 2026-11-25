@@ -25210,3 +25210,61 @@ The replay is unchanged: 90 of 91 and 91 of 91 samples match. The one odd sample
 
 - tool `Bash`: Write docs and commit
 
+## Claude
+
+Both build checks are in, and the first three player loops now run to 8 on the PS2. The two-player replay still matches mGBA, and `make compare` is OK. Committed as 8853aa0.
+
+- **Build checks:** two scripts now run before every PS2 link. One fails the build if asm holds a moved array's address as a plain number or raw bytes, which is the mistake behind today's enemy-targeting bug. I confirmed it catches a reintroduced case. The other fails it if a new `SYMBOL+offset` literal points past its symbol.
+- **`MAX_PLAYERS`:** a new constant, 4 on the GBA (so the matching ROM is unchanged) and 8 on the PS2. The three key-handling loops that only use moved arrays now loop over it (`sub_08037574`, `sub_08037750`, `sub_0803883C`).
+- **The three ROM tables:** left for now. Their readers only use indices 0–3 today, so they matter only once that code changes for players 5–8.
+
+The rest of the C loops, plus about 28 functions in the access log, are blocked on one design decision about `gUnknown_03006C80`. Its per-player fields sit inside the struct between shared fields, and asm reaches them as base address + offset, so they can't be moved by symbol the way the other arrays were. Three options:
+
+1. **Mirror the struct (recommended).** Players 1–4 stay where they are, so every existing user keeps working unchanged. Players 5–8 get a second copy of just those fields in the PS2's spare page. Only code that handles players 5–8 needs to reach the copy, and in practice that's the code we'd change anyway: the loops, and the "which player am I" uses in C. Asm functions stay as they are unless one of them has to act for players 5–8.
+2. **Decompile every user, then move the fields.** This is the cleanest result, but it means turning about 28 asm functions into C before any of it works.
+3. **Move the whole struct with each field widened to 8.** That changes every offset, so every user would need rewriting, asm and C alike. This is the most work.
+
+Should I go ahead with option 1?
+
+## User
+
+Yes
+
+## Claude
+
+Starting with the exact layout of the per-player fields in `gUnknown_03006C80`:
+
+- tool `Bash`: Read the struct definition
+
+- tool `Bash`: Check the spare page's current use
+
+- tool `Bash`: Add the mirror and convert the player loops
+
+- tool `Bash`: Use a power-of-two mask and recheck
+
+## Claude
+
+`zeldaalttp.gba: OK` again. I'll note the mirror's address in `moved.py`, which owns that page's layout, then build and run the replay check:
+
+- tool `Bash`: Note the layout and build the check
+
+- tool `Bash`: Run the replay with the mirror
+
+## Claude
+
+The mirror is in and the matching build is unchanged (`zeldaalttp.gba: OK`). The two-player replay check is running now, about 16 minutes. I'll compare and commit once it finishes.
+
+So far:
+- **The mirror:** `gUnknown_03006C80_hi` is a second copy of the struct at 0x04001680, holding players 5–8's entries. To fit it, the per-switch copy of that page grew to 0x710 bytes.
+- **`C80_PLAYER(field, i)`:** picks the right copy by player number. On the GBA it expands to exactly the original expression.
+- **Converted to `MAX_PLAYERS`:** `sub_080383F0` and `sub_08039D64` (per-player stats), plus the arrow manager (`sub_08052A88`, `sub_08052B88`, `sub_08052C0C`).
+- **Wrap-around:** the arrow manager rotates through the players with `& (MAX_PLAYERS - 1)`. I first wrote `% MAX_PLAYERS`, but that changed the matching ROM (the GBA compiler builds `% 4` differently from `& 3`).
+
+- tool `Bash`: Compare the replay with the mirror
+
+## Claude
+
+All 91 of 91 samples match for both players, and there were no TLB misses. Committing:
+
+- tool `Bash`: Write docs and commit
+
