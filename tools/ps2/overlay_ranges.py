@@ -20,6 +20,7 @@ FIXED = [
     (0x40200, 0x40210, "IWRAM 0x03000200-0x0300020F: frame parity (the sprite-list double buffer)"),
     (0x40E34, 0x40E40, "IWRAM 0x03000E34-0x03000E3F: sprite-list buffer pointer (not E20: the pause and clear flags are world)"),
     (0x40FC0, 0x41030, "IWRAM 0x03000FC0-0x0300102F: keys and link packets (gUnknown_03000FC0)"),
+    (0x0B1D0, 0x0B250, "EWRAM 0x0200B1D0-0x0200B24F: the key ring, all rows (the map, from two GBAs, has rows 0-1)"),
     (0x45E04, 0x45E10, "IWRAM 0x03005E04-0x03005E0F: sprite-list buffer pointers (not 5E10: newly pressed keys, world)"),
     (0x02D40, 0x02EA0, "EWRAM 0x02002D40-0x02002E9F: written by the view pass (HUD?)"),
     (0x2A5E0, 0x2A700, "EWRAM 0x0202A5E0-0x0202A6FF: text/HUD state"),

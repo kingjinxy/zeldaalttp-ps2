@@ -274,6 +274,9 @@ instances and the link exchange, not only in a stage.
       memory starts as player 1's with their player number and record pointer. Still wrong: everything the game
       decides per GBA from the player number at stage start ("my" Link's marker flag, camera target, the other players'
       arrows, pickups credited on the collector's GBA): about 40 uses, Phase 5 step 5b's kinds 1-3.
+      Step 54: player 2's view runs (link child, own keys in the key ring), follows its own Link, streams its BG maps,
+      and draws its own YOU marker. Left: the other players' off-screen arrows (kind 1), pickups (kind 3), the rest
+      of the ~40 player-number uses.
 - [ ] 2. Player count menu at start-up: 1 to the number of connected controllers (two multitaps: 8; 4 until the
       limits below are lifted).
 - [ ] 3. File select for player 1 only, one save for everyone (user, 2026-11-24). Later: per-player saves.

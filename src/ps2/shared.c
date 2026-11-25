@@ -23,6 +23,7 @@ void ps2_vblank_run(void);
 void ps2_input_frame(int inst);
 extern int ps2_cur_instance;
 extern u32 ps2_gstate_watch;
+extern u8 gUnknown_0200B1D0[];  // the key ring [player][16] (moved to 0x04001480)
 extern u8 gUnknown_03006A30[];  // the player records, 0x90 each (moved to 0x04001000 in the PS2 build)
 
 int ps2_shared;           // 1 while the world runs once
@@ -82,7 +83,7 @@ static void overlay_swap(int inst)
 void rom2_read_keys(void);
 u32 sub_0800C54C(u8 *);
 void sub_08036864(void), sub_080368A0(void), sub_0800D788(void), sub_0802C940(void), sub_0800B524(void);
-void sub_08015D9C(void), sub_0802CD3C(void), sub_08000BAC(void), sub_08037574(void), sub_0802D988(void);
+void sub_08015D9C(void), sub_08008ED8(void), sub_0802CD3C(void), sub_08000BAC(void), sub_08037574(void), sub_0802D988(void);
 int sub_08037554(void);
 unsigned char sub_0803781C(unsigned short);
 void DoObjectEntity(void *);
@@ -111,13 +112,43 @@ void ps2_gstate_seen(u32 r0)
 // off-screen arrows (object 16, sub_08052B88) run their whole update instead, positioned from this player's camera; it
 // ends in the same draw step. The sound queue sub_08003688 plays from is empty after instance 0's frame.
 // shortcut: an arrow instance 0's frame didn't update isn't drawn; fine while every player has one (all Links in play).
+// The YOU marker (object 46 form 0, sub_0805792C) is created by the local GBA alone, over its own Link in that Link's
+// colours (palette form + 7). Each viewer gets it over its own Link: drawn with the viewer's Link's position (the same
+// bob offset) and palette, then put back (kind 2 of step 5b, worked out at draw time).
+static struct { u8 *e; u32 x, y, z; u8 pal; } sMarker;  // put back after the sprite list (sub_08000BAC reads them)
+
+static void draw_marker(u8 *e, u8 *own)
+{
+    u8 *link = *(u8 **)(e + 0x4C);
+    sMarker.e = e, sMarker.x = *(u32 *)(e + 0x30), sMarker.y = *(u32 *)(e + 0x34), sMarker.z = *(u32 *)(e + 0x38);
+    sMarker.pal = e[0x1E];
+    *(s16 *)(e + 0x32) = *(s16 *)(own + 0x32);
+    *(s16 *)(e + 0x36) = *(s16 *)(own + 0x36);
+    *(s16 *)(e + 0x3A) += *(s16 *)(own + 0x3A) - *(s16 *)(link + 0x3A);
+    e[0x1E] = (sMarker.pal & 0xF0) | ((own[0x0A] + 7) & 15);
+    sub_08003688(e);
+}
+
+static void marker_back(void)
+{
+    u8 *e = sMarker.e;
+    if (!e)
+        return;
+    *(u32 *)(e + 0x30) = sMarker.x, *(u32 *)(e + 0x34) = sMarker.y, *(u32 *)(e + 0x38) = sMarker.z;
+    e[0x1E] = sMarker.pal;
+    sMarker.e = 0;
+}
+
 static void draw_entities(void)
 {
+    u8 *own = *(u8 **)(*(u8 **)0x03006730 + 0x28);  // this player's Link (gUnknown_03006730->unk28)
     int k;
     for (k = 0; k < sNDrawn; k++) {
         u8 *e = (u8 *)sDrawn[k];
         if (e[8] == 6 && e[9] == 16)
             DoObjectEntity(e);
+        else if (e[8] == 6 && e[9] == 46 && e[0x0A] == 0)
+            draw_marker(e, own);
         else
             sub_08003688(e);
     }
@@ -141,8 +172,10 @@ static void view_pass(void)
         } else {
             draw_entities();  // before the camera moves, as in the stage frame (UpdateAllEntities comes first)
             sub_08015D9C();  // camera
+            sub_08008ED8();  // BG streaming: this camera's edges into this player's BG maps
             sub_0802CD3C();  // HUD
             sub_08000BAC();  // sprite list
+            marker_back();
         }
         sub_08037574();
     }
@@ -225,6 +258,15 @@ int ps2_shared_try_enter(int instances, void (*select)(int inst))
             memcpy(SAVED(i) + sOverlay[r][0], live(sOverlay[r][0]), sOverlay[r][1] - sOverlay[r][0]);
         SAVED(i)[0x40414] = i;  // the player number (gLCDRegisterBuffer; walkthrough step 38)
         *(u32 *)(SAVED(i) + 0x46730) = (u32)gUnknown_03006A30 + i * 0x90;  // gUnknown_03006730: its own record
+        *(u32 *)(SAVED(i) + 0x40450) = *(u32 *)(gUnknown_03006A30 + i * 0x90 + 0x28);  // its camera follows its Link
+        SAVED(i)[0x30790] = 0;  // a child on the link: only the parent starts packets (gUnknown_02030790.unk0, sub_0800C75C)
+        {  // its own keys in the key ring: player 1's copy has them as not yet received (0xC000), which only packets
+           // from others fill (sub_0803719C), so the session's sync check (sub_08037300) would wait forever
+            u16 *own = (u16 *)ps2_shared_ptr(i, (u32)gUnknown_0200B1D0 - 0x04000000 + 0x48000) + 16 * i;
+            for (r = 0; r < 16; r++)
+                if (own[r] == 0xC000)
+                    own[r] = 0;
+        }
     }
 #else
     for (i = 0; i < instances; i++)

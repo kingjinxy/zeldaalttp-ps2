@@ -22325,3 +22325,210 @@ The 14 is a layer value for the followed entity, not the marker. The YOU marker 
 
 - tool `Bash`: Check builds, document and commit
 
+- tool `SendUserFile`: 
+
+## Claude
+
+Step 1's goal is met: a 2-player game now reaches the stage with only player 1's game running. It goes through file select (player 1 only) and the lobby at 60 fps, and the game costs 0.30M cycles a frame. Player 2's view isn't right yet (the image shows it). Build with `make -f Makefile.ps2 INSTANCES=2 SHARED_WORLD=1 ONE_WORLD=1`; committed as `d7fb670` with walkthrough Step 53 and the plan updated, and the default and shared builds still compile.
+
+**How it works:**
+- **Before the stage:** the other players exist only on the link. Only keys cross it, so they simply send player 1's words: valid packets with player 1's keys. The lobby sees everyone pressing what player 1 presses, and their screens stay black until the stage.
+- **In the stage:** each other player's view memory starts as a copy of player 1's, with its own player number and record pointer. From there each view pass reads that player's pad and sends that player's packets, as in the shared world before.
+
+**What's wrong:** player 2's view still follows Link 1 and shows player 1's YOU marker. On real hardware, each GBA set up its own per-player state at the stage start, using its player number. With one game, only player 1's setup happens. That covers about 40 places, in the categories found during the earlier shared-world analysis:
+- **View-only state:** the camera target, and the off-screen arrows created for "every player but me".
+- **A mark on the local Link stored in the world:** the YOU marker flag.
+- **World events checked against "is it me":** pickups credited only on the collector's GBA.
+
+**Two ways forward:**
+- **A. Make each of these per player.** For each place, either run it per view, work it out at draw time for the viewer, or index it by the player who acts. Drop-in mid-game needs exactly this, because a joining player has no stage start of their own.
+- **B. A stopgap:** keep a hidden game copy per player until the stage starts, mirroring player 1's keys, so each sets up its own state as before. It's quicker to get right, but it's extra code that A would replace, and it does nothing for drop-in.
+
+I recommend A, working through the ~40 uses in order of what's visible: camera and YOU marker first, then the arrows, then pickups. Should I go ahead with A?
+
+## User
+
+Yes
+
+## Claude
+
+Starting with the camera and the YOU marker. For the camera, player i's camera struct (private to each player) just needs Link i as its target; its normal update should then move it there. For the marker, I need to know what reads the flag `sub_08042DB0` sets:
+
+- tool `Bash`: Find readers of unk1F_0
+
+- tool `Bash`: Find the marker object's handler table
+
+- tool `Bash`: Find the table holding sub_08042DB0
+
+- tool `Bash`: Find the handler that uses the table
+
+- tool `Bash`: Find the object id of sub_08042CB8
+
+- tool `Bash`: Locate the object table index
+
+- tool `Bash`: Show the table around sub_08042CB8
+
+- tool `Bash`: Find the type for the subtype table
+
+- tool `Bash`: Fix camera target and YOU marker; run
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/ow2.png
+
+## Claude
+
+Still player 1's YOU marker in player 2's view (right column), so my guess about the entity is off somewhere. Logging what the view pass replays, once, to see the real type/subtype/form bytes:
+
+- tool `Bash`: Log the replayed entities at frame 2000
+
+- tool `Bash`: Check whether frame 2000 was reached
+
+## Claude
+
+Frame 2000 is during a pause in this replay, when no entities are drawn. Retrying at frame 1600:
+
+- tool `Bash`: Log replayed entities at frame 1600
+
+- tool `Bash`: Confirm whether logging happened
+
+## Claude
+
+No log at all, so at frame 1600 player 2's view pass never reaches the entity drawing. Either `sub_08037554()` returns 0 or the pause path is taken. Logging the branch inputs:
+
+- tool `Bash`: Log view pass branch decisions
+
+## Claude
+
+The view pass for player 2 never gets past `sub_08037554()`: it returns 0 every frame, so player 2's view has been frozen since the copy. Reading it:
+
+- tool `Bash`: Read sub_08037554 and sub_08036864
+
+- tool `Bash`: Trace player 2's link state after entry
+
+## Claude
+
+Player 2's first view pass moves its link state from 2 to 3: the session state handler (`gUnknown_08427B84[5]`) rejects something. That handler:
+
+- tool `Bash`: Find the state-5 handler
+
+- tool `Bash`: Read sub_08036F9C
+
+- tool `Bash`: Read the substate table and sub_08037D64
+
+- tool `Bash`: Read sub_080370C0 (substate 1)
+
+- tool `Bash`: Compare link state of parent and child
+
+- tool `Bash`: Make copied players children; rerun
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/ow3.png
+
+## Claude
+
+No visible change. Re-running the link-state trace with the fix in place:
+
+- tool `Bash`: Trace player 2's packets after the child fix
+
+## Claude
+
+The received scene bytes are 80 (0x50) from both players, so the check itself passes. The state still stays at 3, so it must be the step after: `sub_0803719C` and `sub_08037300`.
+
+- tool `Bash`: Read the session sync functions
+
+- tool `Bash`: Compare frame counters of parent and child
+
+## Claude
+
+Parent and child counters are identical, so that's not it. Logging the two ring slots the check reads, and the received packets' frame numbers, in player 2's view pass:
+
+- tool `Bash`: Trace ring slots in player 2's view pass
+
+- tool `Bash`: Clear own pending keys; make the ring per-player
+
+- tool `Bash`: Rebuild and rerun one world
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/ow4.png
+
+- tool `Bash`: Add BG streaming to the view pass; rerun
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/ow5.png
+
+- tool `Bash`: Log replayed entities in player 2's view
+
+- tool `Bash`: Check whether frame 1600 was reached
+
+## Claude
+
+Nothing logged at frame 1600. Logging the replay's entity count every 300 calls instead:
+
+- tool `Bash`: Log the replay list periodically
+
+## Claude
+
+Still nothing, so `draw_entities` isn't being reached at all. Logging the view pass's branch inputs again, now with the ring fix:
+
+- tool `Bash`: Log the view pass branch again
+
+- tool `Bash`: Log the replay list once, longer run
+
+- tool `Bash`: Show the scripts' stage inputs
+
+- tool `Bash`: Walking scripts; rerun and capture
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/ow6.png
+
+## Claude
+
+Now the two views separate: player 2's camera follows the red Link into another part of the room, and its sprites update. Taking a closer look at player 2's frames for the markers and arrows:
+
+- tool `Bash`: Zoom on frames 1300 and 2400
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/ow6b.png
+
+- tool `Bash`: Log the replay list early in the stage
+
+## Claude
+
+No type-9 entity is drawn at all, so my guess was wrong. The candidates are object 16 form 0 (the arrows' manager, at 0x03001C50) and one type 6, subtype 46 object. Reading object 16's form-0 code:
+
+- tool `Bash`: Read object 16's update functions
+
+- tool `Bash`: Show object 16's state tables
+
+## Claude
+
+The YOU marker isn't in object 16. The other candidate is the type 6, subtype 46 object (form 0). Finding object 46's handler in the object table:
+
+- tool `Bash`: Find the object handler table
+
+- tool `Bash`: Look up object 46's handler
+
+- tool `Bash`: Read object 46's handler
+
+- tool `Bash`: Read object 46's states
+
+- tool `Bash`: Check entity offsets for x, y, z, palette
+
+## Claude
+
+Positions are at 0x30, 0x34 and 0x38 (pixel halves at +2), and the followed Link pointer is at 0x4C. Replacing my wrong manager-9 code with the object 46 version:
+
+- tool `Bash`: Redirect the YOU marker per view; rerun
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/ow7.png
+
+## Claude
+
+Frame 1300 looks the same, but player 2's view may not be drawing entities yet at that point, early in the stage. A log in `draw_marker` will tell whether it runs and for which Link:
+
+- tool `Bash`: Log marker drawing and early view-pass branches
+
+- tool `Bash`: Keep the marker override until the sprite list is built
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/ow8.png
+
+## Claude
+
+Player 2's view now shows a red YOU over the red Link. Committing this stage:
+
+- tool `Bash`: Docs and commit the per-player view work
+

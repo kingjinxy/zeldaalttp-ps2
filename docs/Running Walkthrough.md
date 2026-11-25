@@ -1468,3 +1468,24 @@ points, HUD slots) beyond the Link palettes (Step 45).
   target (`gUnknown_03000450.unk0`, fs_game.c 4547), the other players' arrow objects (`sub_08052C0C`), pickups
   credited on the collector's GBA (`sub_0805BF9C`, `sub_08055A08`). In the two-instance shared world each GBA did
   its own before the stage; with one game only player 1's exist.
+
+## Step 54: one world, each player's own view (2026-11-24)
+
+What a GBA sets up for itself, now done per player when the copies are made (`ps2_shared_try_enter`) or per view:
+- **The view pass never ran** for player 2: `sub_08037554` (`gUnknown_03000FC0.unk8 == 2`) stayed false. Traced with
+  temporary logs: the copy of player 1's link state made it a parent (`gUnknown_02030790.unk0` 8; a child has 0, and
+  only the parent starts packets at VBlank), and its own row of the key ring held player 1's "not yet received" marks
+  (0xC000), which only packets from others fill, so the session's sync step (`sub_08037300`) waited forever. Both
+  set right at the copy; the whole 4-row key ring is now per player (the map, from two GBAs, had rows 0-1).
+- **Camera:** each player's camera struct gets its own Link as the followed entity (`gUnknown_03000450.unk0`).
+- **BG streaming** (`sub_08008ED8`) added to the view pass after the camera: with its own camera, player 2's BG maps
+  (copied from player 1's) showed garbage.
+- **YOU marker:** object 46 form 0 (`sub_0805792C`), created by the local GBA alone over its own Link in that Link's
+  palette. Each view draws it over its own Link (position with the same bob offset, palette form + 7), restored after
+  the sprite list is built (`sub_08000BAC` reads the entity's position, not the draw step). A first guess (manager 9's
+  drawing bit) was wrong: a log of the replayed entities showed no manager drawn.
+- **Testing:** the replay scripts press A and Start every 30 frames through the stage, so the game is paused most of
+  the time and the views drew nothing. For these runs the scripts keep their menu inputs to frame 1225 and then walk
+  the two Links apart (scratch copies in `build/ps2`, not committed).
+- **Result:** both views follow their own Link, with their own YOU marker, BG and sprites; no TLB misses. Left:
+  player 2 has no off-screen arrow for player 1 (the arrows are created per GBA for "the others"), pickups.
