@@ -269,7 +269,7 @@ _08012DD4:
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	add r1, r4, #0
-	bl sub_0800935C+0x24
+	bl sub_08009380
 	lsl r0, r0, #16
 	lsr r6, r0, #16
 	cmp r6, #66

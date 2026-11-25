@@ -234,7 +234,7 @@ static int nplayers = 1;
 static struct GBASIOLockstep lockstep;
 
 static const char *shots, *outDir = ".";
-static const char *dumps[64];
+static const char *dumps[512];
 static int ndumps;
 static unsigned frames, watch;
 static const char *coverage;
@@ -672,7 +672,7 @@ static void onFrame(void *context) {
 		if (frame < from || frame > to) continue;
 		unsigned addr = strtoul(s + 1, &s, 0), len = strtoul(s + 1, NULL, 0);
 		printf("p%d frame %u: dump 0x%08X:", id, frame, addr);
-		for (unsigned i = 0; i < len; i++) printf("%s%02X", i % 16 ? " " : "\n  ", core->busRead8(core, addr + i));
+		for (unsigned i = 0; i < len; i++) printf("%s%02X", i % 16 ? " " : "\n  ", core->rawRead8(core, addr + i, -1));  // raw: busRead8 goes through the emulated bus (timing), and large dumps changed the run
 		printf("\n");
 	}
 	// Keys for the next frame
@@ -977,7 +977,7 @@ int main(int argc, char **argv) {
 		else if (!strncmp(o, "--save", 6) && o[6] >= '0' && o[6] <= '3' && !o[7]) saves[o[6] - '0'] = v;
 		else if (!strcmp(o, "--shot")) shots = v;
 		else if (!strcmp(o, "--out")) outDir = v;
-		else if (!strcmp(o, "--dump") && ndumps < 64) dumps[ndumps++] = v;
+		else if (!strcmp(o, "--dump") && ndumps < 512) dumps[ndumps++] = v;
 		else if (!strcmp(o, "--watch")) watch = strtoul(v, NULL, 0);
 		else if (!strcmp(o, "--coverage")) coverage = v;
 		else if (!strcmp(o, "--loads")) { loadsPath = v; if (!(loads = fopen(v, "w"))) { perror(v); return 1; } }

@@ -1626,3 +1626,34 @@ What a GBA sets up for itself, now done per player when the copies are made (`ps
 - **Left:** at 9,750 Link 1's +0x4C points to another slot (0x03002050 against mGBA's 0x03001BD0), and at ~10,290 a
   `gstate_run(0)` from `sub_08009780` (FATAL: ICALL to 00000000). Before 6,270 this build's pairing also wanders
   (only an animation byte differs; earlier builds matched there).
+
+## Step 62: the session replay in step with mGBA through game frame 18,000 (2026-11-25)
+
+- **Saves:** replay runs write saves into `build/ps2/`, and the next run's file select then opens that file instead
+  of starting a new game (the recording starts from empty slots). Several runs this session were spoiled that way;
+  replay runs now start by moving any `build/ps2/*.sav` aside (scratch `cleanrun.sh`).
+- **mgba_run dumps read raw** (`rawRead8`): `busRead8` goes through the emulated bus, and 400 large dumps changed the
+  run itself. `--dump` takes up to 512 entries.
+- **Measures:** `gRandom` (0x03000F40) per frame (a good sync check: it matched on 8,769 of the frames to the crash)
+  and the whole entity area (0x03001050-0x03005960) every 60 game frames, paired with mGBA's video frame by
+  `--gameframes`.
+- **Fixed (each found where the PS2 first parted from mGBA):**
+  - `SYMBOL+offset` literals pointing past SYMBOL (the disassembly wrote 0x08009788 as `sub_08008FA4+0x7e4`): on the
+    PS2 the offset lands inside that symbol's own object (an ARM port's data, or a C entry's MIPS code for
+    `sub_0800935C+0x24`). A jump table read zeros there: `ICALL to 0` from `sub_08009780` at game frame 8,771.
+    22 rewritten (the function by name at offset 0 or 1, else the absolute ROM address); `tools/ps2/sym_offsets.py`
+    lists any left (only crt0.s's two IWRAM-table entries, which arm_ports.c handles).
+  - Flags after calls into C: raw `sub_08007A38` does `bl sub_08039A70; pop {r0}; beq`, branching on the Z the
+    callee's last `and` left. C returns no flags, so the stale Z let it spawn a second entity at game frame 8,811.
+    gstate2c now sets N and Z from r0 after each call into C (931 sites in rom1 alone), and `gstate_run`'s C path too.
+  - `ldrsh` at an odd address: animation data at 0x0813D4A3 loops back through a halfword at 0x0813D4A7; the ARM7
+    loads a sign-extended byte there (1), the PS2 a halfword (0xFF01 = -255), so the frame pointer ended 0x100 off
+    (game frame 10,919). `RS16` now does what the ARM7 does; on a real PS2 the unaligned load would also have raised
+    an address error. Shortcut noted: misaligned `R16`/`R32` aren't handled.
+  - Debugging aid kept: `ICALL to 0` now prints the global-state registers.
+- **Result:** the whole entity area matches mGBA at 200 of 201 samples (player 1) and 199 of 201 (player 2) between
+  game frames 6,000 and 18,000, one video frame apart throughout; the odd samples are single frames (Link 1's slot at
+  10,920, one slot at 11,040 for player 2) that match again on the next. The replay runs to frame 18,884 with no TLB
+  misses. `make compare` OK.
+- **Left:** the one-frame offset from Choose a Stage on; three IWRAM bytes that differ steadily (0x03000012,
+  0x0300044C, 0x0300050C; the port's frame loop, not yet looked at); the session's second half (to 45,190) not checked.

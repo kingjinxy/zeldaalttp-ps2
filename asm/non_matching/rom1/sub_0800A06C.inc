@@ -104,10 +104,10 @@ _0800A11C:
 	.byte 0x00
 	.4byte 0x03006d14
 	.4byte gUnknown_0813F5FC+0x8
-	.4byte sub_08008FA4+0xfb5
+	.4byte sub_08009F58+1
 	.4byte 0x000003f1
 	.4byte 0x0000ffff
-	.4byte sub_08008FA4+0x2fc
+	.4byte 0x080092A0
 	.4byte 0x03000450
 	.4byte 0x00004400
 	.4byte 0x0800a074

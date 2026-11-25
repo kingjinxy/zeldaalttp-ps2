@@ -24157,3 +24157,558 @@ My `gstate.h` comment claims the stack overflowed, which turned out to be false.
 
 - tool `Bash`: Fix comment, write walkthrough step, recheck match
 
+## Claude
+
+Now the conversation archive, then the commit:
+
+- tool `Bash`: Archive conversation and restore saves
+
+- tool `Bash`: Commit the fix and tooling
+
+- tool `ToolSearch`: 
+
+- tool `PushNotification`: 
+
+## Claude
+
+I gave the stack 16 KB as you asked, but the stack wasn't the problem. The real bug was elsewhere, and it's now fixed: the PS2 replay matches mGBA through the first stage load and for about 3,500 game frames into the stage.
+
+**Stack:** the trace ring now lives in ordinary PS2 memory, which leaves the stack 16 KB instead of 3.5 KB. Every gstate function entry also checks a floor and stops with a fatal error below it. Over the whole replay the deepest the stack went was 140 bytes, so it was never close to the ring. I kept the change anyway; it's small and the floor check will catch a real overflow.
+
+**The real bug:** `ldscript.txt` defined `sub_08009380` as "`sub_0800935C` + 0x24", a second way into that function. That works on the GBA, where 0x24 bytes in is Thumb code. On the PS2, `sub_0800935C` is compiled MIPS code, so every C call to `sub_08009380` jumped 0x24 bytes into the middle of a compiled function. The room load makes those calls for its tile objects. The result was corrupted registers, the TLB misses and the black screen. The fix makes `sub_08009380` a real label in the asm, so the PS2 build gives it a proper entry point. That was the only alias of its kind. `make compare` still reports `zeldaalttp.gba: OK`.
+
+**Replay result:** no TLB misses. The stage loads, and the Links' entity bytes match mGBA exactly from game frame 6,270 to 9,720.
+
+Still open:
+- **Frame 9,750:** Link 1's field at +0x4C points to a different entity slot than in mGBA (0x03002050 against 0x03001BD0). About 540 frames later, `sub_08009780` jumps to address 0 and the game stops with a fatal error. The crash is probably a consequence of the slot difference, so that's what I'd look at next.
+- **One frame ahead:** the PS2 has run exactly one frame ahead of mGBA since Choose a Stage. Its state is identical, only shifted. I haven't found the cause yet.
+- **This build's pre-stage pairing:** before frame 6,270, this build's dumps no longer pair cleanly with mGBA, though only an animation byte differs. Earlier builds matched there.
+
+The lag-frame replay you suggested is committed. It runs the VBlank handler on each GBA lag frame but made no difference, since the replay stays exact through the 80-frame burst at game frame 3,303 either way. Also committed: frame-range dumps in `mgba_run`, walkthrough Step 61 and the conversation archive, in 7549a54. Your saves are back in place.
+
+## User
+
+Let's continue with replay sync
+
+## Claude
+
+Re-adding the dump code, this time to look at what changes in the entity slots around frame 9,750. It covers every frame from 9,690 to 9,760, a wider area (0x03001050–0x03002150), in short lines so the log doesn't cut them off:
+
+- tool `Bash`: Add windowed slot dump and stage replay files
+
+- tool `Bash`: Map the game-frame window to video frames
+
+## Claude
+
+Running PCSX2 (230 s) in the background and mGBA over the matching video frames:
+
+- tool `Bash`: Run PS2 replay for the slot window
+
+- tool `Bash`: Dump the same window in mGBA
+
+## Claude
+
+Meanwhile, the comparison script: it pairs each PS2 frame with mGBA one video frame earlier (the known offset) and lists differences by slot (0x80 bytes each):
+
+- tool `Bash`: Write the slot-window comparison script
+
+## Claude
+
+I'll compare once PCSX2 finishes.
+
+- tool `Bash`: Compare entity slots frame by frame
+
+- tool `Bash`: Check run progress and ELF contents
+
+- tool `Bash`: Check timer emulation in io.c
+
+- tool `Bash`: Read the game C compile flags
+
+- tool `Bash`: See how game C is staged for the PS2
+
+- tool `Bash`: List uninitialized-variable warnings in game C
+
+## Claude
+
+`-w` overrides the warning flags, so I'll drop it:
+
+- tool `Bash`: Rerun uninitialized warnings without -w
+
+- tool `Bash`: Read the three flagged spots
+
+- tool `Bash`: Run the same build twice and compare crashes
+
+- tool `Bash`: Compare slot window for player 1
+
+- tool `Bash`: Widen dumps to the whole stage on both sides
+
+- tool `Bash`: Run PS2 and find the first differing stage frame
+
+- tool `Bash`: Identify the differing objects and RNG uses
+
+- tool `Bash`: Find the RNG step function
+
+- tool `Bash`: Find gRandom's address and its asm users
+
+- tool `Bash`: Read the RNG function and its other user
+
+## Claude
+
+`sub_0800099C` is the random step. I'll have mGBA count its calls during the first stage load (video frames 6,180–6,280), split by whether the CPU is in an interrupt:
+
+- tool `Bash`: Count Random calls during the load in mGBA
+
+- tool `Bash`: Watch writes to slot 23's counter in mGBA
+
+- tool `Bash`: Show slot 23 counter across the load
+
+- tool `Bash`: Dump every frame around the load on both sides
+
+- tool `Bash`: Compare object counters across the load
+
+- tool `Bash`: Log gRandom per frame on both sides
+
+- tool `Bash`: Find the first gRandom difference
+
+- tool `Bash`: Find mGBA's per-frame Random caller
+
+- tool `Bash`: Name the function calling Random
+
+- tool `Bash`: Read sub_080304FC and its callers
+
+## Claude
+
+The caller is `sub_080304FC`, the Choose a Stage input handler. It steps the random generator every frame, but only when `sub_08037554()` returns true. That's probably a link check. Reading it:
+
+- tool `Bash`: Read sub_08037554
+
+- tool `Bash`: Compare the link state byte on both sides
+
+- tool `Bash`: Check sub_0800099C on the PS2
+
+- tool `Bash`: Log whether the stage-select handler runs
+
+## Claude
+
+It runs from frame 1,048 with the link check false. I'll log only when the result changes, to see whether it ever turns true on the PS2:
+
+- tool `Bash`: Log link check changes
+
+- tool `Bash`: Disassemble the PS2 random step
+
+- tool `Bash`: Read the translated random step
+
+- tool `Bash`: Check the copy layout around the random step
+
+- tool `Bash`: Read the gRandom resets
+
+## Claude
+
+Several paths reset `gRandom`. To see which one is undoing the step, I'll log `gRandom` right before and after the call in `sub_080304FC` for a few frames:
+
+- tool `Bash`: Log gRandom around the call
+
+## Claude
+
+No `SEL2` lines, so at frames 2,900–2,905 the PS2 isn't running that branch, while mGBA is. When does the PS2 run `sub_080304FC` at all? Logging the frames it's called on:
+
+- tool `Bash`: Log when the stage-select handler runs on PS2
+
+- tool `Bash`: Check SEL logs and current function text
+
+- tool `Bash`: Bucket mGBA's Random calls by game frame
+
+- tool `Bash`: Bucket mGBA's Random calls by game frame
+
+- tool `Bash`: Log PS2 gRandom changes from 1000 to 3300
+
+- tool `Bash`: Show PS2 RNG changes against mGBA
+
+- tool `Bash`: List PS2 RNG changes with frame numbers
+
+- tool `Bash`: Compare gRandom from boot on both sides
+
+- tool `Bash`: List mGBA Random callers in the intro
+
+- tool `Bash`: Find the state-machine variable addresses
+
+- tool `Bash`: Look up state addresses in the symbol file
+
+- tool `Bash`: Log state variables per frame on both sides
+
+- tool `Bash`: Find the first state difference from boot
+
+## Claude
+
+These are all one-frame pairing offsets (the PS2 equals mGBA's previous frame). I'll filter for real differences, where neither frame matches:
+
+- tool `Bash`: Find real state divergence
+
+- tool `Bash`: Shift inputs one frame later and recompare
+
+## Claude
+
+Still splits at the same point, so it isn't the offset: the PS2 ignores that A press. I'll find what moves the game from state 2 to state 5 and which key variable it reads:
+
+- tool `Bash`: Find the jump to state 5
+
+- tool `Bash`: Read the intro state machine
+
+- tool `Bash`: Read the +2 state jump
+
+## Claude
+
+Rather than read through the menu code, I'll let mGBA show which code writes the 5 into the state variable (0x03005050):
+
+- tool `Bash`: Find the writer of the state jump in mGBA
+
+- tool `Bash`: Fix the broken condition
+
+- tool `Bash`: Rebuild and list stores to the state variable
+
+- tool `Bash`: Name the code that sets state 5
+
+- tool `Bash`: Read sub_0800FEE0
+
+- tool `Bash`: Read the asm of sub_0800FEE0
+
+- tool `Bash`: Find key variable addresses
+
+- tool `Bash`: Compare keys and state around the A press
+
+- tool `Bash`: Read the A-press branch
+
+- tool `Bash`: List save files in the build folder
+
+- tool `Bash`: Add clean-save run script and RNG log to stage
+
+- tool `Bash`: Run clean replay and compare RNG from boot
+
+- tool `Bash`: Clean wide slot dump on both sides
+
+- tool `Bash`: Find first clean slot divergence
+
+## Claude
+
+No differences in any of the 93 sampled frames, for either player. Where did the run end?
+
+- tool `Bash`: Check how the clean run ended
+
+- tool `Bash`: Read sub_08009780
+
+- tool `Bash`: Compare the jump table in both builds
+
+- tool `Bash`: Find the ICALL fatal message
+
+- tool `Bash`: Read the ICALL fatal context
+
+- tool `Bash`: Print gstate registers at the bad call
+
+## Claude
+
+r5, the table base, is 0x00BAA824. The PS2 copy's own table is at 0x00B9EC80, so the literal that `ldr r5, [pc, #236]` loads must point somewhere else. Comparing that literal in both builds:
+
+- tool `Bash`: Compare the table-base literal in both builds
+
+- tool `Bash`: Inspect the wrong copy and its size
+
+## Claude
+
+Zeros there: the literal points into the ARM blob's PS2 stand-in, not this function's table. To see how the literal is written in the asm:
+
+- tool `Bash`: Find how the literal is written in asm
+
+- tool `Bash`: Scan asm for symbol+offset literals that leave the symbol
+
+## Claude
+
+On the PS2, a name like `sub_08008FA4` resolves to that function's own object, so `name+offset` breaks once the offset runs past it. There are 23 such literals:
+
+- tool `Bash`: List all 23 bad references
+
+- tool `Bash`: Rewrite the bad literals
+
+## Claude
+
+Two left, the `crt0.s` entries, as intended. Checking the matching build, regenerating and rerunning clean:
+
+- tool `Bash`: Matching check, rebuild and clean replay run
+
+## Claude
+
+The PS2 now runs the replay to frame 17,828 (the end of the run) with no crash and no TLB misses. But `make compare` failed, so I'll find out why first:
+
+- tool `Bash`: Show the compare failure
+
+- tool `Bash`: Show the real compare error
+
+- tool `Bash`: List differing ROM bytes
+
+- tool `Bash`: List differing ROM bytes
+
+## Claude
+
+Only the two `sub_08000FF4` literals differ (0xF4 became 0xF5). The original wants the even address, so I'll use the absolute constant there:
+
+- tool `Bash`: Fix the even literal and recheck the match
+
+## Claude
+
+`zeldaalttp.gba: OK` again. Now the long clean run with the slot comparison, every 60 game frames from 6,000 to 17,800:
+
+- tool `Bash`: Long clean run with stage-wide slot dumps
+
+## Claude
+
+The PS2 ran clean to frame 18,525 with no crash and no TLB misses. My frame map (`gf2.txt`) only covered 17,000 video frames, so I'll use the full one (`gf.txt`, which matched it) for the mGBA dumps:
+
+- tool `Bash`: Compare stage slots to frame 18000
+
+- tool `Bash`: Per-frame dumps around the new divergence
+
+- tool `Bash`: Show the first per-frame entity difference
+
+## Claude
+
+At game frame 8,811 the PS2 creates an extra object (type 6, subtype 0x0F, form 25) in slot 32, which mGBA doesn't, and slot 24 (the same kind, form 7) differs in some bytes. Which bytes:
+
+- tool `Bash`: Show slot 24 bytes before and at the split
+
+- tool `Bash`: Find code that creates subtype 0x0F objects
+
+## Claude
+
+Nothing creates form 25 directly, so the form must come from a variable. I'll log the caller on the PS2 when `sub_0804C8A8` (CreateObject) makes subtype 15, form 25:
+
+- tool `Bash`: Find CreateObject's definition
+
+- tool `Bash`: Log who creates the extra object
+
+- tool `Bash`: Name the caller
+
+- tool `Bash`: Read sub_0804CB38 and its subtype-15 callers
+
+## Claude
+
+`sub_0804CB38(this, form, param)` creates a subtype-15 child for an entity. Its callers with form 25:
+
+- tool `Bash`: List callers of sub_0804CB38
+
+- tool `Bash`: Read the form-25 call site
+
+- tool `Bash`: Log the projectile checks on the PS2
+
+- tool `Bash`: Find call sites in sub_08043A34
+
+- tool `Bash`: Get mGBA's check results for the projectile
+
+## Claude
+
+mGBA never calls `sub_08043A34` in that window, though the entity's bytes matched up to that frame. Widening the window to make sure it isn't a frame-numbering slip:
+
+- tool `Bash`: Widen the mGBA hook window
+
+## Claude
+
+Before trusting that, I'll check the hook fires at all, using `GetNextFrame` (0x08003828), which runs every frame:
+
+- tool `Bash`: Verify the mGBA hook fires
+
+## Claude
+
+The hook works (2,736 `GetNextFrame` hits), so mGBA really never runs `sub_08043A34` there. The PS2 runs it on the entity in slot 23 (0x03001BD0), whose bytes matched mGBA. What is that entity?
+
+- tool `Bash`: Show slot 23 on both sides
+
+- tool `Bash`: Log entity registrations on both sides
+
+- tool `Bash`: Name the code that spawns the extra entity
+
+## Claude
+
+The legitimate spawn comes from `sub_08007638`, which matches mGBA's caller (0x0800769E). The extra one comes from `gs_sub_08007530`, near its start. Reading that function:
+
+- tool `Bash`: Read sub_08007530
+
+- tool `Bash`: Read the entity search helpers
+
+- tool `Bash`: Find the helpers' implementation
+
+## Claude
+
+The search walks `gEntityLinks`, the per-type entity list heads. I moved one IWRAM array for 8 players (0x03006A30, 0x240 bytes). Is `gEntityLinks` in it?
+
+- tool `Bash`: Check gEntityLinks and the moved arrays
+
+## Claude
+
+`gEntityLinks` (0x03005960) wasn't moved, so that's not it. Next question: does mGBA even call `sub_08007530` at that frame, and with what results? Hooking its entry and each search result:
+
+- tool `Bash`: Trace sub_08007530 in mGBA
+
+## Claude
+
+mGBA never calls `sub_08007530` there, so the question is why the PS2 does. Its callers:
+
+- tool `Bash`: Find references to sub_08007530
+
+## Claude
+
+No named references, so it's reached through a pointer table or a fall-through. Searching the ROM for its address as a pointer:
+
+- tool `Bash`: Search the ROM for pointers to sub_08007530
+
+## Claude
+
+No pointers to it anywhere in the ROM. So it can only be entered by falling through from the function before it. `sub_0800750C`:
+
+- tool `Bash`: Read sub_0800750C
+
+- tool `Bash`: Print the trace ring at the extra spawn
+
+- tool `Bash`: Read sub_08007620 and the caller region
+
+- tool `Bash`: Check copy spacing and the generated jump
+
+- tool `Bash`: Disassemble the caller as Thumb
+
+## Claude
+
+The ELF marks this range as data, so I'll read the asm source around the end of `sub_08007A38`:
+
+- tool `Bash`: Read the end of sub_08007A38
+
+- tool `Bash`: Compare the table literal in both builds
+
+- tool `Bash`: Dump all IWRAM around the split on both sides
+
+- tool `Bash`: Diff IWRAM at the split frames
+
+- tool `Bash`: Print differing IWRAM words
+
+- tool `Bash`: Look up the three addresses
+
+## Claude
+
+I need to know whether these three always differ or start differing near the split. One run dumping IWRAM at 7,000, 8,000, 8,700 and 8,800:
+
+- tool `Bash`: Track the three variables over the stage
+
+- tool `Bash`: List remaining IWRAM differences
+
+## Claude
+
+The new difference near the split is 0x03005E08: 0xB0 on the PS2, 0xBB in mGBA (11 apart). It matched at 7,000. What is it?
+
+- tool `Bash`: Identify 0x03005E08
+
+- tool `Bash`: Compare all entity slots in the IWRAM dumps
+
+- tool `Bash`: Trace the guarded call in mGBA
+
+- tool `Bash`: Read sub_08039A70's original end and its C
+
+- tool `Bash`: Find the C-call emission in gstate2c
+
+- tool `Bash`: Read the call emission code
+
+## Claude
+
+I'll set N and Z after a direct call into C (gstate2c), and also after an indirect one (`gstate_run`'s C path in `gstate.h`), since that has the same gap:
+
+- tool `Bash`: Set flags after calls into C
+
+- tool `Bash`: Check that flags load and store with registers
+
+- tool `Bash`: Clean up, regenerate and rebuild
+
+- tool `Bash`: Long clean run and full entity comparison
+
+## Claude
+
+The duplicate spawn is gone. The entire entity area (all slots) now matches mGBA exactly at every sample from 6,000 to 10,860. At 10,920 a single byte differs: slot 42, +0x25. Does it stay one byte?
+
+- tool `Bash`: See how the difference grows
+
+## Claude
+
+Through frame 18,000 that one byte is the only difference in the whole entity area, for both players. What is it?
+
+- tool `Bash`: Show the differing entity byte
+
+- tool `Bash`: Find who writes the pointer in mGBA
+
+- tool `Bash`: Show all writes to the pointer field
+
+- tool `Bash`: Trace slot 42 frame by frame
+
+- tool `Bash`: Trace slot 42 past frame 10920
+
+## Claude
+
+The mGBA side disagrees between my two scripts at the same frame, which can't be right. One of my parsers must be off. Comparing the raw slot 42 bytes from both runs at frame 10,920:
+
+- tool `Bash`: Compare raw slot 42 bytes between runs
+
+## Claude
+
+The two runs show different entities in slot 42 at that frame. Before blaming the PS2, I'll check whether the two mGBA dumps agree with each other at the same video frame:
+
+- tool `Bash`: Check mGBA runs against each other
+
+- tool `Bash`: Test mGBA run determinism
+
+- tool `Bash`: Check rawRead8 and the dump read
+
+- tool `Bash`: Fix dump reads and recompare the stage
+
+- tool `Bash`: Check the frame map around 10920
+
+- tool `Bash`: Trace the new object's creation on both sides
+
+## Claude
+
+The two runs seem to disagree again, so before assuming anything I'll print the actual bytes: slot 42 in `fix4` at 10,980 next to the raw full-area mGBA dump:
+
+- tool `Bash`: Print slot 42 from fix4 and the raw mGBA dump
+
+- tool `Bash`: Find who writes the real slot 42 pointer in mGBA
+
+## Claude
+
+mGBA sets it at game frame 10,918, at 0x08003880 inside `sub_08003870` (the animation start), called from 0x0802A38C. Reading `sub_08003870`:
+
+- tool `Bash`: Read sub_08003870
+
+- tool `Bash`: Locate the pointer in the original ROM and the ELF segments
+
+- tool `Bash`: Read the frame-advance code
+
+- tool `Bash`: Read the translated frame advance
+
+- tool `Bash`: Read the ldrsh translation
+
+- tool `Bash`: Compare the animation table entry
+
+## Claude
+
+The table entry matches (start pointer 0x0813D4A3). So the difference comes from stepping through the animation. I'll trace slot 42's +0x20–0x2F every frame from 10,916 on both sides:
+
+- tool `Bash`: Trace the animation pointer frame by frame
+
+- tool `Bash`: Find the RS16 macro
+
+- tool `Bash`: Read the memory access macros
+
+- tool `Bash`: Fix odd-address ldrsh, rebuild and recompare
+
+- tool `Bash`: Remove the temporary dump code
+
+## Claude
+
+Saving the `name+offset` scan as a small permanent check (`tools/ps2/sym_offsets.py`), since new disassembly could bring the same problem back. Then the walkthrough step:
+
+- tool `Bash`: Save the symbol-offset check as a tool
+
+- tool `Bash`: Write walkthrough step 62 and archive
+

@@ -51,7 +51,7 @@ _08009EE4:
 	.4byte FrameNeedsUpdate+0x2d0
 	.4byte 0x08002b50
 	.4byte 0x08002cc4
-	.4byte sub_08008FA4+0xec4
+	.4byte 0x08009E68
 	.4byte 0x00001800
 	.byte 0x20
 	.byte 0x0e

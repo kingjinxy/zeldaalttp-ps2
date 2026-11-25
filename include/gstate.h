@@ -134,6 +134,7 @@ static void gstate_run(u32 a)
 #endif
         gCpu.r[0] = ICALL(a)(gCpu.r[0], gCpu.r[1], gCpu.r[2], gCpu.r[3], R32(s), R32(s + 4), R32(s + 8),
                                    R32(s + 12));
+        gCpu.n = gCpu.r[0] >> 31, gCpu.z = gCpu.r[0] == 0;  // as the callee's last instruction set them (gstate2c, calls into C)
         gCpu.r[15] = gCpu.r[14];
     }
 }

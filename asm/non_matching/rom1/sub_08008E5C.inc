@@ -92,7 +92,7 @@ sub_08008E5C: @ 0X08008E5C
 	.byte 0x00
 	.byte 0x00
 	.4byte 0x0000c000
-	.4byte sub_08008DD8+0x56
+	.4byte 0x08008E2E
 	.4byte 0x0200b324
 	.syntax unified
 	.thumb

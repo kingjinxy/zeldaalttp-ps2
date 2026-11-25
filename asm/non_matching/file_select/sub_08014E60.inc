@@ -24,7 +24,7 @@ sub_08014E60: @ 0x08014E60
 	ldr r0, [r0]
 	mov r8, r0
 	add r0, r7, #0
-	bl sub_0800935C+0x24
+	bl sub_08009380
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	cmp r0, #39

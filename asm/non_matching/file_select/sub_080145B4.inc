@@ -5,7 +5,7 @@ sub_080145B4: @ 0x080145B4
 	lsr r0, r0, #16
 	lsl r1, r1, #16
 	lsr r1, r1, #16
-	bl sub_0800935C+0x24
+	bl sub_08009380
 	lsl r0, r0, #16
 	lsr r0, r0, #16
 	mov r1, #66

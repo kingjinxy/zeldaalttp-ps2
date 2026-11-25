@@ -240,7 +240,11 @@ u32 (*ps2_icall(u32 a))()
 {
     u32 b = a & ~1u;
     if (b < 0x00100000u)  // the GBA BIOS or a null pointer: on the PS2 the kernel lives here
-        ps2_fatal("ICALL to %08x (from %p)", a, __builtin_return_address(0));
+    {
+        const volatile u32 *r = (const volatile u32 *)0x0203C000;  // gCpu (include/gstate.h): the global-state registers
+        ps2_fatal("ICALL to %08x (from %p) gstate r0 %08x r1 %08x r2 %08x r3 %08x r4 %08x r5 %08x r6 %08x r7 %08x lr %08x",
+                  a, __builtin_return_address(0), r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[14]);
+    }
     if (b < 0x02000000u || b >= 0x0A000000u)
         return (u32 (*)())a;  // PS2 code
     if (b == 0x03000E40u)

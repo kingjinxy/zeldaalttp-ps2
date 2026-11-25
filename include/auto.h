@@ -23,7 +23,11 @@ void ps2_io_write(u32 a, u32 v, u32 size);
 #define R16(a) (IO_(a) ? (u16)ps2_io_read((u32)(a), 2) : *(volatile u16 *)(a))
 #define R32(a) (IO_(a) ? ps2_io_read((u32)(a), 4) : *(volatile u32 *)(a))
 #define RS8(a) ((u32)(s32)(s8)R8(a))
-#define RS16(a) ((u32)(s32)(s16)R16(a))
+// ldrsh at an odd address: the GBA's ARM7 loads a sign-extended byte (animation data loops back through one, step 62);
+// a halfword load there would also raise an address error on a real PS2.
+// shortcut: R16/R32 at misaligned addresses (ARM7: a rotated read; a real PS2: an address error) aren't handled; add the
+// same check there when a TLB/address-error log or a replay difference points to one
+#define RS16(a) (((u32)(a) & 1) ? RS8(a) : (u32)(s32)(s16)R16(a))
 #define W8(a, x) (WIO_(a) ? ps2_io_write((u32)(a), (u8)(x), 1) : (void)(*(volatile u8 *)(a) = (u8)(x)))
 #define W16(a, x) (WIO_(a) ? ps2_io_write((u32)(a), (u16)(x), 2) : (void)(*(volatile u16 *)(a) = (u16)(x)))
 #define W32(a, x) (WIO_(a) ? ps2_io_write((u32)(a), (u32)(x), 4) : (void)(*(volatile u32 *)(a) = (u32)(x)))

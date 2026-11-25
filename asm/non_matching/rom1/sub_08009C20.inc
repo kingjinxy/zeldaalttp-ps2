@@ -152,22 +152,22 @@ _08009C9C:
 	.byte 0x20
 	.byte 0xf0
 	.byte 0xbd
-	.4byte sub_08008FA4+0x9b8
-	.4byte sub_08008FA4+0x9b8
-	.4byte sub_08008FA4+0xa74
+	.4byte 0x0800995C
+	.4byte 0x0800995C
+	.4byte 0x08009A18
 	.4byte 0x03000e20
 	.4byte 0x03000940
 	.4byte FrameNeedsUpdate+0x2d0
-	.4byte sub_08008FA4+0xa64
-	.4byte sub_08008FA4+0x2fc
+	.4byte 0x08009A08
+	.4byte 0x080092A0
 	.4byte 0x03000450
-	.4byte sub_08008FA4+0xae8
+	.4byte 0x08009A8C
 	.4byte 0x03000450
-	.4byte sub_08008FA4+0xb4c
+	.4byte 0x08009AF0
 	.4byte 0x03000450
-	.4byte sub_08008FA4+0xae8
+	.4byte 0x08009A8C
 	.4byte 0x03000450
-	.4byte sub_08008FA4+0xb4c
+	.4byte 0x08009AF0
 	.4byte 0x03000450
 	.4byte 0x03000450
 	.4byte 0x03000450

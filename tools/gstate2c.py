@@ -687,7 +687,10 @@ def emit(d, o, rel, start, end, B, name, gsnames, decls, data):
             decls.add("void gs_%s(u32);" % base)
             return ["lr = %s; GSTATE_STORE(); gs_%s(0); GSTATE_LOAD(); GSTATE_RETURNED(%s);" % (ret, base, ret)]
         decls.add("u32 %s();" % sym)
-        return ["lr = %s; r0 = %s(%s);" % (ret, sym, c_args(sym))]
+        # C can't return the ARM flags; Thumb callers may branch on the ones the callee's last instruction set (raw
+        # sub_08007A38: bl sub_08039A70 (return x & 1), pop {r0}, beq). Set N and Z from the result, as that
+        # instruction (an and/move/shift of r0) did: a stale Z spawned a second entity (walkthrough step 62)
+        return ["lr = %s; r0 = %s(%s); n = r0 >> 31; z = r0 == 0;" % (ret, sym, c_args(sym))]
     raise Fail("emit " + k)
 
 
