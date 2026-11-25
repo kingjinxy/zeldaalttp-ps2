@@ -22578,3 +22578,147 @@ Still nothing visible. Logging the arrow again, with the parameter at its real o
 
 - tool `Bash`: Check cost, document and commit
 
+- tool `SendUserFile`: 
+
+## Claude
+
+The camera, YOU marker and off-screen arrows are now right for every player in one world, and it works with 4 players: one game runs and each player has their own view (image above). Committed as `8186359` and `91e5d0a`; walkthrough Steps 54–55 and the plan are updated.
+
+**Each player's own view:**
+- **Player 2's view never actually ran.** What I took for a wrong YOU marker last time was player 1's sprites, copied once and frozen. Two problems in the copy kept its link session from syncing:
+  - player 2 behaved as a second link parent;
+  - its own row in the key history was marked "not yet received", which only packets from other players ever fill, so it waited forever.
+  - With both fixed, the whole 4-player key history is now private per player, not just the 2 rows the recorded map had.
+- **Camera:** each player's camera follows its own Link.
+- **Backgrounds:** the view pass now streams each player's own background maps. Without that, player 2's view showed garbage once its camera moved away.
+- **YOU marker:** each view draws it over its own Link in that Link's colour. The marker is one object the game creates for player 1 only; each view temporarily moves it while that view's sprite list is built.
+- **Off-screen arrows:** each view now shows arrows for everyone else. The port creates the arrow for player 1 that only other GBAs would make, keeps each viewer's own arrow off, and draws the arrows in every view.
+
+**Checks:** no TLB misses in the 2- or 4-player runs. With 4 players, drawing costs 2.77M cycles a frame and the game 1.65M, against a 4.9M budget. The game share is up from 0.58M before one world, because each view now also streams backgrounds and runs the arrow code. I haven't measured which part costs what.
+
+**For testing:** the recorded scripts press A and Start every 30 frames, so the game was paused most of the time and the views had nothing to draw. I used scratch scripts that keep the menu inputs and then walk the Links apart. They're in `build/ps2` and not committed.
+
+**Still open:**
+- In player 2's view at frame 2000, the arrows for players 3 and 4 show at the bottom edge but none for player 1, who is also below. It may be drawn underneath another arrow; I haven't checked yet.
+- Pickups: items picked up by player 2 or later are still credited only where player 1's GBA would credit them.
+- The remaining uses of the player number from the list of about 40.
+- The rising game cost per view.
+
+Next I'll do pickups, then work through the rest of the list.
+
+## User
+
+Proceed
+
+## Claude
+
+Starting on pickups. The two places from the survey are `sub_0805BF9C` (object 65) and `sub_08055A08`. Reading both:
+
+- tool `Bash`: Read the pickup functions
+
+- tool `Bash`: Find PS2 blocks in headers
+
+- tool `Bash`: Show gLCDRegisterBuffer's declaration
+
+## Claude
+
+Adding the `AS_PLAYER` macro beside the player-number declaration, the helper in shared.c, and the two uses:
+
+- tool `Bash`: Add AS_PLAYER and use it in the pickups
+
+- tool `Bash`: Script a pickup by player 2 and run
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/pk.png
+
+## Claude
+
+It crashed: 50 TLB-miss lines and no frames from 2000 on. Finding where and when:
+
+- tool `Bash`: Locate the crash
+
+- tool `Bash`: Keep the stack in mid-frame swaps; rerun
+
+## Claude
+
+Still crashing, so this may not be the helper at all. Bisect: a build where the helper only answers "is it the current player?" and never swaps:
+
+- tool `Bash`: Bisect: helper without swapping
+
+- tool `Bash`: Check pcsx2_run --set
+
+- tool `Bash`: See how PINE is enabled in PCSX2.ini
+
+- tool `Bash`: Read the function-entry ring after the crash
+
+- tool `Bash`: Find the PINE socket path
+
+- tool `Bash`: Log the function ring before the crash
+
+## Claude
+
+The last frame before the crash entered these functions, in order. Naming the last dozen:
+
+- tool `Bash`: Name the last functions entered
+
+## Claude
+
+These are the end of a view pass: link packet, text, the frame flip, then the VBlank work. The last entry, `sub_08134028`, is entered just before the crash. Checking what it is:
+
+- tool `Bash`: Identify sub_08134028
+
+- tool `Bash`: Read sub_08134028's caller and asm
+
+## Claude
+
+That's the m4a sound VBlank, which is short. The crash is probably further on in its caller, `sub_0800B700`. The rest of it:
+
+- tool `Bash`: Read the rest of sub_0800B700
+
+- tool `Bash`: Trace frame 1892 up to the crash
+
+## Claude
+
+The last entries before the crash: 0x00B981D4 and 0x00B981E0, then a jump to 0x40BCCC2C, which lies in data. The 0x48… entries look like GBA addresses (0x080086DC/0x080086E8). Naming them:
+
+- tool `Bash`: Name the functions before the crash
+
+- tool `Bash`: Find sub_08008422's source
+
+## Claude
+
+The address is past the labelled function: it's unnamed code that follows it in the same file, part of Link's action code (registers point at the Link entity). The asm around 0x080086DC:
+
+- tool `Bash`: Disassemble around the crash site
+
+- tool `Bash`: Read the dispatcher's table
+
+- tool `Bash`: Control test: player 1 presses A
+
+## Claude
+
+Player 1 pressing A crashes too, so it isn't specific to player 2. To see whether one world causes it, the same scripts in the two-instance shared world:
+
+- tool `Bash`: Same test in the two-instance shared world
+
+- tool `Bash`: Same test with separate instances
+
+- tool `Bash`: Find callers of the dispatcher
+
+## Claude
+
+No direct calls, so it's reached through a pointer. Searching the ROM for the address as a word:
+
+- tool `Bash`: Search for pointers to the dispatcher
+
+- tool `Bash`: Disassemble the code that uses the pointer
+
+- tool `Bash`: Test without the array move
+
+- tool `Bash`: Check the translated copy's relocations
+
+- tool `Bash`: Look at the copy blob around the table
+
+- tool `Bash`: Regression run without A presses
+
+- tool `Bash`: Default build, docs and commit
+

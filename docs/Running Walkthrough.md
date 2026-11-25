@@ -1505,3 +1505,18 @@ What a GBA sets up for itself, now done per player when the copies are made (`ps
 - **Four players** (scratch scripts for players 3-4: menu inputs, then walking): every view has its own Link, YOU
   marker in its colour, BG and arrows; no TLB misses. To check: player 2's view at frame 2000 shows the arrows for
   players 3 and 4 at the bottom edge but none for player 1, who is also below (maybe drawn under another).
+
+## Step 56: pickups as the collector; pressing A crashes (2026-11-24)
+
+- Both pickups (`sub_0805BF9C`, object 65; `sub_08055A08`) start the "you got..." message (`sub_0800D67C`, which
+  writes the player's own `gUnknown_02000010`) only when the collector is the local player. `AS_PLAYER(p)`
+  (include/variables.h) replaces that check: on the GBA it is the same `gLCDRegisterBuffer == (p)` (the build still
+  matches); on the PS2 with the world shared it swaps that player's own bytes in (`ps2_as_player`, shared.c) and
+  `AS_PLAYER_END` swaps them back. A swap in the middle of a frame leaves the IWRAM stack top alone (the code doing it
+  runs on it).
+- Not seen working yet. Testing it needs a Link to pick something up, and a scripted A press in the stage crashes
+  every build: separate instances, the two-instance shared world, and with the array move of Step 52 undone. The
+  crash: Link's action table (0x08007AB8) entry 9 is a dispatcher at 0x080086DC that jumps through a 6-entry table
+  at 0x080083F8 by byte 4 of the structure in r0, and lands in data. Found with the trace (`ps2_trace_on` for one
+  frame; the ring of entries printed from the main loop). This is the open "bad instruction around frame 1770 in the
+  A-only replay" item: the old scripts only pressed A in menus and pauses.

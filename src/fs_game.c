@@ -9889,10 +9889,14 @@ void sub_08055A08(struct Entity *this)
 {
     struct Struct03006A30 *p = &gUnknown_03006A30[this->form];
 
-    if (gLCDRegisterBuffer == this->form && (gUnknown_0202D0D0 & (1 << p->unk1C)) == 0)
+    if (AS_PLAYER(this->form))
     {
-        gUnknown_0202D0D0 |= 1 << p->unk1C;
-        sub_0800D67C(gUnknown_08428D94[p->unk1C]);
+        if ((gUnknown_0202D0D0 & (1 << p->unk1C)) == 0)
+        {
+            gUnknown_0202D0D0 |= 1 << p->unk1C;
+            sub_0800D67C(gUnknown_08428D94[p->unk1C]);
+        }
+        AS_PLAYER_END();
     }
 }
 
@@ -12195,10 +12199,11 @@ void sub_0805BF9C(struct Entity *this)
         else
             this->unk1C_2 = 0;
     }
-    if (gLCDRegisterBuffer == e->form)
+    if (AS_PLAYER(e->form))
     {
         sub_0800D67C(BITU16_AT(this, 0x64));
         this->unk18 = 1;
+        AS_PLAYER_END();
     }
     BITU8_AT(this, 0x47) = 0;
     e->unk3D = 248;

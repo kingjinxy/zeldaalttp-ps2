@@ -27,6 +27,7 @@ extern u8 gUnknown_0200B1D0[];  // the key ring [player][16] (moved to 0x0400148
 extern u8 gUnknown_03006A30[];  // the player records, 0x90 each (moved to 0x04001000 in the PS2 build)
 
 int ps2_shared;           // 1 while the world runs once
+static int sInstances;    // players
 static int sHolder;       // whose per-player bytes are in the live block
 static u8 sPerPlayer[LIVE_SIZE / 8];  // bit per live-block byte: in the overlay
 
@@ -64,18 +65,47 @@ void *ps2_shared_ptr(int inst, u32 off)
     return live(off);
 }
 
-// put player inst's per-player bytes in the live block (the holder's go back to its saved block)
-static void overlay_swap(int inst)
+// put player inst's per-player bytes in the live block (the holder's go back to its saved block). keep_stack: not the
+// IWRAM stack top (0x03007B00-0x03007FFF), for a switch in the middle of a frame (AS_PLAYER), whose code runs on it
+static void overlay_swap_k(int inst, int keep_stack)
 {
     u32 r;
     if (inst == sHolder)
         return;
     for (r = 0; r < NOVERLAY; r++) {
         u32 a = sOverlay[r][0], n = sOverlay[r][1] - a;
+        if (keep_stack && a >= 0x47B00 && a < 0x48000)
+            continue;
         memcpy(SAVED(sHolder) + a, live(a), n);
         memcpy(live(a), SAVED(inst) + a, n);
     }
     sHolder = ps2_cur_instance = inst;
+}
+
+static void overlay_swap(int inst) { overlay_swap_k(inst, 0); }
+
+// AS_PLAYER (include/variables.h): game code doing something for one player only ("is it me?") runs as that player:
+// with the world shared, that player's own bytes are put in place for it, and the holder's back after
+static int sAsPlayer = -1;  // whose bytes AS_PLAYER put in place (-1: none switched)
+
+int ps2_as_player(int p)
+{
+    if (!ps2_shared)
+        return *(volatile u8 *)0x03000414 == p;
+    if (p == sHolder)
+        return 1;
+    if (p < 0 || p >= sInstances)
+        return 0;
+    sAsPlayer = sHolder;
+    overlay_swap_k(p, 1);
+    return 1;
+}
+
+void ps2_as_player_end(void)
+{
+    if (sAsPlayer >= 0)
+        overlay_swap_k(sAsPlayer, 1);
+    sAsPlayer = -1;
 }
 
 // ---- the view pass ----------------------------------------------------------------------------------------------------
@@ -323,6 +353,7 @@ int ps2_shared_try_enter(int instances, void (*select)(int inst))
 #endif
     select(0);
     sHolder = 0;
+    sInstances = instances;
     sNDrawn = 0;
     ps2_gstate_watch = (u32)sub_08003688__base;
     ps2_shared = 1;
@@ -367,4 +398,6 @@ int ps2_shared_try_leave(int instances)
 #else
 typedef unsigned int u32;
 void ps2_gstate_seen(u32 r0) { (void)r0; }  // the gstate entry watch is never set without the shared world
+int ps2_as_player(int p) { return *(volatile unsigned char *)0x03000414 == p; }  // AS_PLAYER: only "is it me?"
+void ps2_as_player_end(void) {}
 #endif

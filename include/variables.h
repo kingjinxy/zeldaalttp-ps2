@@ -950,7 +950,18 @@ extern u16 gUnknown_03000208[];
 //extern gUnknown_030003D4;
 //extern gUnknown_030003D8;
 //extern gUnknown_030003DC;
-extern u8 gLCDRegisterBuffer;
+extern u8 gLCDRegisterBuffer;  // this GBA's player number (0-3)
+// "is player p this GBA?", for code that does something for the local player only. The PS2 shared world runs it for
+// any player: AS_PLAYER puts that player's own memory in place (src/ps2/shared.c), AS_PLAYER_END puts it back.
+#ifdef PLATFORM_PS2
+int ps2_as_player(int p);
+void ps2_as_player_end(void);
+#define AS_PLAYER(p) ps2_as_player(p)
+#define AS_PLAYER_END() ps2_as_player_end()
+#else
+#define AS_PLAYER(p) (gLCDRegisterBuffer == (p))
+#define AS_PLAYER_END() ((void)0)
+#endif
 extern u8 gUnknown_03000420[];
 //extern gUnknown_0300044C;
 extern struct Struct03000450 gUnknown_03000450;
