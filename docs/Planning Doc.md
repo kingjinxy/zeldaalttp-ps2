@@ -262,6 +262,21 @@ Phase 2: rendering from shared graphics
 Phase 3: audio
 - [ ] 10. One mixer fed by the shared world
 
+## One world, no lobby (user direction, 2026-11-24)
+The final game has no virtual GBA link and no lobby: one world, one viewport per player. Replaces the separate
+instances and the link exchange, not only in a stage.
+- [ ] 1. Boot straight into one world: only instance 0 runs the game; players 2-N are viewports from the start
+      (their view memory as the shared world's overlay). The game is made to believe N players are linked, and each
+      player's pad goes straight into the key arrays the link packets fill today (no link protocol). Fixed N (2-4)
+      at build time; goal: reach a stage.
+- [ ] 2. Player count menu at start-up: 1 to the number of connected controllers (two multitaps: 8; 4 until the
+      limits below are lifted).
+- [ ] 3. File select for player 1 only, one save for everyone (user, 2026-11-24). Later: per-player saves.
+- [ ] 4. 5-8 players ("more than 4 players" below; the moved arrays already have room for 8).
+- [ ] 5. Drop in / drop out on the fly: a player joins (a Link and a viewport, probably at a room transition) or
+      leaves (Link removed, or idle like the DSi edition's partner Links). Needs testing whether the game copes with
+      the player count changing mid-stage.
+
 ## Wider view (the DSi's resolution change, user priority 2 of the FSAE features)
 `WIDE_VIEW` (walkthrough Step 30) draws more of the unchanged game: it shows the 32-tile background ring repeating
 and stale tiles, because the game streams only a 256x192 window of the room. What's known (2026-11-24, Step 39):
