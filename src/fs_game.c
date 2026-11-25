@@ -3738,14 +3738,15 @@ extern const u16 gUnknown_08138C20[][8];
 extern const u16 *const gUnknown_081390E0[];
 
 // Initialises an enemy from its record (by subtype; 0xFFFF picks a per-form table): sprite tile or a
-// palette slot (sub_0802C070), palette, then size/hitbox, health, speed and other stats
-void sub_08043B94(struct Entity *this)
+// palette slot (sub_0802C070), palette, then size/hitbox, health, speed and other stats. Returns 1 when no sprite slot
+// was free (the caller, sub_08009554, then deletes the entity), else 0
+u32 sub_08043B94(struct Entity *this)
 {
     const u16 *rec;
     u8 k;
 
     if (this->unk19 & 1)
-        return;
+        return 0;
     rec = gUnknown_08138C20[this->subtype];
     if (rec[0] == 0xFFFF)
         rec = gUnknown_081390E0[rec[1]] + this->form * 8;
@@ -3754,7 +3755,7 @@ void sub_08043B94(struct Entity *this)
             this->unk20 = rec[0];
             this->unk1C_6 = (rec[0] & 0x300) >> 8;
         } else if (sub_0802C070(this, rec[0])) {
-            return;
+            return 1;
         }
     }
     rec++;
@@ -3787,6 +3788,7 @@ void sub_08043B94(struct Entity *this)
     this->unk5C = rec[0];
     this->unk23 = 0;
     sub_08008DD8(this);
+    return 0;
 }
 #else
 asm(".include \"asm/non_matching/fs_game/sub_08043B94.inc\"");

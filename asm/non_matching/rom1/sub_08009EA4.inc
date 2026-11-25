@@ -61,10 +61,7 @@ _08009EE4:
 	.byte 0x3b
 	.byte 0x00
 	.byte 0x08
-	.byte 0x40
-	.byte 0x09
-	.byte 0x00
-	.byte 0x03
-	.4byte 0x03000940
+	.4byte gUnknown_03000940
+	.4byte gUnknown_03000940
 	.syntax unified
 	.thumb

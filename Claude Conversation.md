@@ -24712,3 +24712,336 @@ Saving the `name+offset` scan as a small permanent check (`tools/ps2/sym_offsets
 
 - tool `Bash`: Write walkthrough step 62 and archive
 
+- tool `Bash`: Recheck match, restore saves and commit
+
+- tool `PushNotification`: 
+
+## Claude
+
+The PS2 replay now matches mGBA through the stage: the whole entity area is identical at 399 of 402 samples between game frames 6,000 and 18,000. The run reaches frame 18,884 with no crash and no TLB misses. The three samples that differ are single frames that match again at the next sample. Committed as 0fbeff3; `make compare` still reports `zeldaalttp.gba: OK`.
+
+Three port bugs were behind the remaining drift:
+
+- **Offsets from the wrong symbol (the crash at frame 8,771):** the disassembly wrote some addresses as an offset from a neighbouring symbol, for example a jump table in `sub_08009780` as `sub_08008FA4+0x7e4`. The GBA gets the same address either way. On the PS2 the offset landed inside an unrelated object and read zeros, so the game jumped to address 0. I rewrote all 22 to name their real target, and [tools/ps2/sym_offsets.py](tools/ps2/sym_offsets.py) lists any that come back.
+- **Flags after calls into C (an extra entity at frame 8,811):** one function kept as raw code branches on the flags its callee leaves behind, and C functions return no flags. The translated code now sets the N and Z flags from the return value after every call into C.
+- **A misaligned load (an animation pointer 0x100 off at frame 10,919):** animation data loops back through a halfword at an odd address. The GBA's CPU loads a single signed byte there, while the PS2 loaded two bytes. The PS2 now does what the GBA does. On a real PS2 that load would also have crashed. The same kind of 16- and 32-bit loads aren't handled yet; that's noted in the code.
+
+Two problems were in my own test setup:
+- **Save files:** each replay run left saves behind, so the next run's file select opened an existing file instead of starting a new game. Several runs this session were spoiled before I caught it, including the ones behind earlier numbers; anything I rechecked with clean saves is in this summary. The test runs now clear the saves first, and your own saves are back in place.
+- **mGBA dumps:** large memory dumps went through mGBA's emulated memory bus and changed its own run. Dumps now read memory directly.
+
+To your earlier question: the random-number check showed the lag frames don't affect the game at all. The random state matches on every frame through the room loads, which are the big lag bursts.
+
+Still open:
+- The PS2 runs one frame ahead of mGBA from Choose a Stage on; the state is identical, just shifted.
+- Three IWRAM bytes differ steadily, probably port bookkeeping rather than game state.
+- The second half of the recording (up to game frame 45,190) isn't checked yet. It's the natural next step.
+
+## User
+
+Test the second half of the recording and send me some screenshot comparisons
+
+## Claude
+
+First, how the PS2 build saves frames, so the screenshots come from the exact game frames being compared:
+
+- tool `Bash`: Find the PS2 frame dump option
+
+- tool `Bash`: Read the frame dump code
+
+- tool `Bash`: Set up dumps and screenshots for the full run
+
+## Claude
+
+Running PCSX2 through the whole recording in the background. Meanwhile mGBA makes matching screenshots and dumps:
+
+- tool `Bash`: Run the whole recording on PS2
+
+- tool `Bash`: mGBA screenshots and dumps for the second half
+
+## Claude
+
+Mgba is done (6 screenshot pairs, 91 dump points). I'll wait for the PCSX2 run to finish.
+
+- tool `Bash`: Check the run and compare the second half
+
+- tool `Bash`: Build the screenshot comparison sheet
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/replay_compare.png
+
+## Claude
+
+The sheet shows the second half isn't in sync. I'll send it, then clean up the temporary code and restore your saves:
+
+- tool `ToolSearch`: 
+
+- tool `SendUserFile`: 
+
+- tool `Bash`: Remove temporary code and restore saves
+
+## Claude
+
+I've sent you the comparison sheet. The second half doesn't stay in sync: the PS2 and mGBA runs part again between game frames 18,600 and 18,900, and after that they play different games. The PS2 did run the whole recording, to frame 57,105, with no crash and no TLB misses.
+
+The sheet has one row per game frame (20,000 to 45,000, every 5,000) and four columns: PS2 player 1, mGBA player 1, PS2 player 2, mGBA player 2.
+
+- **Game frame 20,000:** mGBA shows "game will end!" with 75 rupees, so the players are about to lose or retry there. The PS2 is still in the earlier room with 130 rupees.
+- **From game frame 25,000:** mGBA is back at the start of the stage area with 0 rupees and keys reset to 1. The PS2 keeps going in its own direction with 130 rupees and 2 keys.
+- **Afterwards:** the two never come back together. Both games are working normally, just with the recording's inputs landing in different situations.
+
+The comparison data shows when it happens, but not why yet:
+- The whole entity area matches exactly at game frames 18,000, 18,300 and 18,600.
+- From 18,900 on, both Links' positions and several objects differ.
+
+There's one known lag burst nearby in the recording (10 lag frames around game frame 20,974), but it comes after the split, so it isn't the cause. The divergence comes before the "game will end!" in mGBA. One possibility is that something on the PS2 lets the players avoid whatever ends the run in mGBA.
+
+Next I'd narrow it to the exact frame between 18,600 and 18,900 with per-frame dumps, then trace the first difference the same way as the last three bugs. Nothing new to commit; the temporary dump code is removed and your saves are back.
+
+## User
+
+Let's fix this bug
+
+## Claude
+
+Narrowing it down first. In one run I'll log `gRandom` every frame and the entity area every 10 frames from game frame 18,600 to 18,900:
+
+- tool `Bash`: Dump RNG and entities from 18600 to 18900
+
+- tool `Bash`: Find the first frame where they differ
+
+- tool `Bash`: List random calls near the split on both sides
+
+- tool `Bash`: Name the function with the extra random calls
+
+- tool `Bash`: Read sub_08016EA8 and its neighbours
+
+- tool `Bash`: Find the call sites in sub_08016EF0
+
+- tool `Bash`: Hook the enemy AI in mGBA
+
+## Claude
+
+The hook reads memory with `busRead8`, which perturbed mGBA's run before, so I'll switch it to `rawRead8`. Then the PS2 side gets the same log in C:
+
+- tool `Bash`: Log the AI state on both sides
+
+- tool `Bash`: Find the enemy spawner in mGBA
+
+- tool `Bash`: Name the spawner function
+
+- tool `Bash`: Read sub_08026EA0
+
+## Claude
+
+`sub_08026EA0` is a spawner object that creates an enemy. The PS2 never calls it there, so the difference is in the spawner's own logic. Its callers:
+
+- tool `Bash`: Find callers of the spawner
+
+- tool `Bash`: Read the spawner's update
+
+- tool `Bash`: Read GetNextFrame
+
+- tool `Bash`: Per-frame entity diff around the spawn
+
+- tool `Bash`: Read the entity allocator
+
+- tool `Bash`: Compare registrations in the spawn frame
+
+- tool `Bash`: Name the early spawner
+
+## Claude
+
+The extra registration comes from `gs_sub_0800A1A8`, in the rom1 area where I rewrote several literals last time. What it is and who calls it:
+
+- tool `Bash`: Read sub_0800A1A8 and its callers
+
+## Claude
+
+This is the tail of `sub_0800A148`, which creates an entity from a spawn record. `sub_08026CC0` (the spawner) calls it. On the PS2 the spawner runs one frame earlier than in mGBA. Its callers:
+
+- tool `Bash`: Find callers of sub_08026CC0
+
+- tool `Bash`: Read the spawner's caller
+
+## Claude
+
+I'm getting tangled in frame alignment, so I'll compare whole sequences: every registration from game frame 18,700 to 18,735, with callers, on both sides:
+
+- tool `Bash`: Compare registrations from 18690 to 18734
+
+- tool `Bash`: Print the trace ring at the extra registration
+
+- tool `Bash`: Read sub_08000A40
+
+## Claude
+
+`sub_08000A40` is a bit count, so the inputs are the place to look. I'll log the manager's call on both sides: the bit mask at +0x64, the count returned and `unk17`:
+
+- tool `Bash`: Find the call in the manager
+
+- tool `Bash`: Hook the manager's count in mGBA
+
+- tool `Bash`: Find DeleteThisEntity
+
+- tool `Bash`: Locate DeleteThisEntity's implementation
+
+## Claude
+
+`DeleteThisEntity` is translated asm, so I'll catch it with the gstate entry watch instead:
+
+- tool `Bash`: Trace who deletes the new enemy
+
+- tool `Bash`: Read sub_08009554 and sub_08008D90
+
+- tool `Bash`: Read sub_08043B94
+
+- tool `Bash`: Read the original return paths
+
+- tool `Bash`: Read the return values in the original
+
+## Claude
+
+Returns 0 when already initialised and 1 when `sub_0802C070` fails. The normal path's return value:
+
+- tool `Bash`: Read the end of the original
+
+## Claude
+
+So it returns 0 normally, 0 if already initialised, and 1 when no sprite slot is free. I'll fix the C, after checking the other C callers:
+
+- tool `Bash`: List C references to sub_08043B94
+
+- tool `Bash`: Make sub_08043B94 return its result
+
+- tool `Bash`: Scan for void functions whose results asm uses
+
+## Claude
+
+No hits. To make sure the scan works, a test with `sub_08043B94` (now `u32`) added to the list:
+
+- tool `Bash`: Test the scan on the known case
+
+## Claude
+
+The scan works and finds no other cases in the asm. Now the full run again: whole recording, entity area every 300 frames from 18,000, and screenshots:
+
+- tool `Bash`: Rebuild with the fix and full-run dumps
+
+## Claude
+
+`make compare` is still OK. The mGBA dumps and screenshots from the earlier full run are still valid, so only PCSX2 needs to run (about 16 minutes):
+
+- tool `Bash`: Run the whole recording with the fix
+
+## Claude
+
+I've found the cause and made a fix, and PCSX2 is now replaying the whole recording to confirm it.
+
+At game frame 18,733 an enemy spawner creates its third enemy. That enemy's setup function, `sub_08043B94`, had been decompiled as returning nothing (`void`). But the asm code that calls it checks the return value: 1 means "no sprite slot free, delete this enemy". On the PS2 the C version returned whatever value happened to be left over, so the enemy was deleted in the frame it appeared. The spawner then made a new one every frame, and from there the game played out differently from mGBA. The function now returns 0 normally and 1 when no sprite slot is free, as the original code does. `make compare` still reports `zeldaalttp.gba: OK`.
+
+I checked for the same mistake elsewhere: other C functions declared `void` whose asm callers still read the return value. There were no other cases in the asm. Calls from code kept as raw bytes aren't covered by that check.
+
+When the run finishes I'll compare the whole second half against mGBA and send you new screenshot comparisons.
+
+- tool `Bash`: Compare the second half after the fix
+
+- tool `Bash`: Read sub_0802C070
+
+- tool `Bash`: Log failed slot allocations on the PS2
+
+- tool `Bash`: Find the slot table struct size
+
+## Claude
+
+Entries are 4 bytes, not 8. Fixing the log to show each entry's use count (`unk0`), then building and running:
+
+- tool `Bash`: Run with the slot-table log
+
+## Claude
+
+`sub_08043B94` never fails now, so the enemy is no longer deleted that way, but the run still splits around 18,733. Comparing that frame's registrations again:
+
+- tool `Bash`: Compare registrations again after the fix
+
+- tool `Bash`: RNG and entity dumps from 18735 to 18900
+
+## Claude
+
+The mGBA reference for this window needs regenerating (the current file covers only 18,728–18,734):
+
+- tool `Bash`: Find the next divergence
+
+## Claude
+
+The three new enemies (slots 14, 17 and 46) now spawn identically, but by 18,740 their state bytes differ: +0x0C/0x0D (action), +0x14 (AI state), +0x17 and the animation. Comparing slot 14:
+
+- tool `Bash`: Show the differing enemy bytes
+
+- tool `Bash`: Read sub_0800997C
+
+- tool `Bash`: Compare sub_0800997C's literals
+
+## Claude
+
+The third literal (at 0x08009D04) is 0x08003B54 on the GBA, a table in rom1's code area, and 0x00BB264C on the PS2. Is that the right copy of 0x08003B54?
+
+- tool `Bash`: Identify the relocated table literal
+
+- tool `Bash`: Find the rest of sub_0800997C
+
+- tool `Bash`: Read the following functions
+
+- tool `Bash`: Read the translated sub_0800997C ending
+
+## Claude
+
+The fall-through is translated correctly. The second literal I checked above used the wrong PC; it's really at 0x08009D00. Checking that one, then the frame counter:
+
+- tool `Bash`: Compare the second literal and its table
+
+- tool `Bash`: Scan asm for raw moved-range constants
+
+- tool `Bash`: Fix the literals and scan raw byte code
+
+- tool `Bash`: View the raw byte runs
+
+## Claude
+
+The `0x08003B54` word in `sub_08009EA4` is a ROM table address; `fix_elf` already patches the original ROM copy of that table. The two `.byte` runs need rewriting as symbol words:
+
+- tool `Bash`: Rewrite the raw words and check the match
+
+## Claude
+
+Matching build OK. I'll also check the C and the port code for raw addresses in the moved ranges:
+
+- tool `Bash`: Check C for raw moved addresses
+
+- tool `Bash`: Read the raw addresses in rom3a.c
+
+## Claude
+
+That's A Link to the Past code (`rom3a`), whose RAM layout is its own, so it doesn't apply. Regenerating and running the whole recording again with dumps and screenshots:
+
+- tool `Bash`: Regenerate and build for the full run
+
+- tool `Bash`: Run the whole recording with both fixes
+
+## Claude
+
+My first fix wasn't enough on its own: the run still split at the same point. With it, the enemy spawns now match mGBA, but there was a second cause.
+
+The enemies decide whether to chase a Link by checking one player per frame. To do that, the game reads two of the per-player arrays I moved to new addresses for 8-player support: keys held and the player records. In a few places the asm wrote those addresses as plain numbers or raw bytes rather than symbol names. The move only updates symbol references, so on the PS2 those spots kept reading the old, stale locations, and the enemies chased differently from mGBA. I made those 10 words in the asm use the symbols. `make compare` still reports `zeldaalttp.gba: OK`.
+
+PCSX2 is replaying the whole recording again with both fixes. When it finishes I'll compare it against mGBA and send you new screenshots.
+
+- tool `Bash`: Compare the second half with both fixes
+
+- tool `Bash`: Build the new comparison sheet
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/replay_compare2.png
+
+- tool `SendUserFile`: 
+
+- tool `Bash`: Clean up, write docs and archive
+

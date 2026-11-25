@@ -81,21 +81,9 @@ _08003B4C:
 _08003B50:
 	movs r0, #0
 	pop {r4, r5, r6, pc}
-	.byte 0x58
-	.byte 0x6a
-	.byte 0x00
-	.byte 0x03
-	.byte 0xe8
-	.byte 0x6a
-	.byte 0x00
-	.byte 0x03
-	.byte 0x78
-	.byte 0x6b
-	.byte 0x00
-	.byte 0x03
-	.byte 0x08
-	.byte 0x6c
-	.byte 0x00
-	.byte 0x03
+	.4byte gUnknown_03006A30+0x28  @ each player's record +0x28 (symbols: the PS2 moves the records, tools/ps2/moved.py)
+	.4byte gUnknown_03006A30+0xB8
+	.4byte gUnknown_03006A30+0x148
+	.4byte gUnknown_03006A30+0x1D8
 	.syntax unified
 	.thumb

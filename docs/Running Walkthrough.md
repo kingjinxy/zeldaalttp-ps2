@@ -1657,3 +1657,21 @@ What a GBA sets up for itself, now done per player when the copies are made (`ps
   misses. `make compare` OK.
 - **Left:** the one-frame offset from Choose a Stage on; three IWRAM bytes that differ steadily (0x03000012,
   0x0300044C, 0x0300050C; the port's frame loop, not yet looked at); the session's second half (to 45,190) not checked.
+
+## Step 63: the whole session replay in step with mGBA (2026-11-25)
+
+- Run to game frame 57,000 with screenshots every 5,000 frames (user asked for comparisons): the PS2 and mGBA parted
+  between game frames 18,600 and 18,900 and then played different games (mGBA lost the run at 20,000, "game will
+  end!"). `gRandom` first differed at 18,734; the entity area at 18,740.
+- **`sub_08043B94` (enemy setup) decompiled as `void`:** its asm caller `sub_08009554` reads r0 (1: no sprite slot,
+  delete the enemy). The C returned whatever was in v0, so a spawner's new enemy was deleted in the frame it appeared
+  and respawned every frame. Now `u32`, 0 or 1 as the original. A scan (C functions defined `void`, asm callers that
+  read r0 straight after the `bl`) found no other.
+- **Raw addresses of moved arrays:** enemies pick a player per frame (`sub_0800997C`: keys held at 0x03000940, and
+  a table of pointers into the player records at 0x08003B54). Both were written as numbers or `.byte` runs, so the
+  PS2's move of those arrays (step 52, tools/ps2/moved.py) missed them and the PS2 read stale memory: enemies chased
+  differently. 10 words now name the symbols (`gUnknown_03000940`, `gUnknown_03006A30+0x28` ...). `make compare` OK.
+- **Result:** the entity area matches mGBA at 90 of 91 samples per player from game frame 18,000 to 45,000 (one
+  frame apart; the odd sample per player is in the last slots and matches again next sample). Screenshots show the
+  same game state in every compared frame; pixel differences left are drawing (Links' shadows, sprite details, and two
+  frames offset as a whole). No TLB misses to frame 57,079.
