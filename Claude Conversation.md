@@ -22722,3 +22722,92 @@ No direct calls, so it's reached through a pointer. Searching the ROM for the ad
 
 - tool `Bash`: Default build, docs and commit
 
+## Claude
+
+I've added the pickup fix, but I couldn't confirm it works yet. Testing it turned up an older bug: pressing A during normal play in a stage crashes the PS2 port in every build.
+
+**Pickups:** both pickup routines start the "you got…" message only on the collector's own GBA. In one world that's always player 1, so other players never got theirs. A new macro, `AS_PLAYER(p)`, replaces that check:
+- **PS2 build:** it runs the code as player p, by swapping p's private memory in and back. Committed as `20b691c`.
+- **GBA build:** it expands to exactly the original check, so `make compare` still reports OK.
+- **Crash fixed on the way:** my first version also swapped the top of IWRAM, which is the game's stack, while game code was running on it. Swaps in the middle of a frame now leave that range alone.
+- **Regression run:** the 2-player one-world run without A presses finishes with no TLB misses.
+
+**The A crash:** to test pickups I scripted Link to walk to an item and press A. That crashes, and it crashes the same way in every build I tried:
+- with separate instances, no shared world at all;
+- in the two-instance shared world;
+- with today's moved arrays undone.
+
+So none of today's work causes it. It's very likely the open item "bad instruction around frame 1770 in the A-only replay". The old test scripts only pressed A in menus and pauses, so normal play with A was never tested.
+
+**Where it breaks:** Link's action handling goes through a small dispatcher at 0x080086DC. It indexes a 6-entry jump table at 0x080083F8 by byte 4 of the structure in r0, and the jump lands in data. Either that byte is out of range, or the auto-translated copy reads the table wrongly. The table sits just before `sub_08008422`, in the preceding function's code, so the relocation may be wrong. I found the spot by tracing function entries for the one frame where it crashes.
+
+Fixing this crash is now the priority, since nobody can attack or pick things up until it's gone. Should I go after it next, before the remaining player-number uses?
+
+## User
+
+Yes. The test replay I made for mGBA should cover Link 1 and 2 picking up items.
+
+## Claude
+
+Looking at your recordings first:
+
+- tool `Bash`: List the recordings
+
+- tool `Bash`: Log the dispatcher's r0 on the PS2
+
+- tool `Bash`: Find the call's target and its translation
+
+- tool `Bash`: Find call emission in gstate2c
+
+- tool `Bash`: Read bl decoding and emission
+
+- tool `Bash`: Read gstate_run
+
+- tool `Bash`: Check the translator's inputs
+
+- tool `Bash`: Find where gsnames comes from
+
+- tool `Bash`: Read translator structure and map format
+
+- tool `Bash`: Resolve raw calls by name; regenerate
+
+- tool `Bash`: Check the fixed call site
+
+- tool `Bash`: Skip the offset for resolved raw calls; regenerate
+
+- tool `Bash`: Retest pressing A
+
+## Claude
+
+Pressing A no longer crashes: 0 TLB misses. Now your recording. `session1` starts from mGBA save states, so I'll check what's in its `replay` folder and whether it can run from boot:
+
+- tool `Bash`: Inspect the session1 recording
+
+- tool `Bash`: Read how the linked start and replays were made
+
+- tool `Bash`: Read the intro script
+
+- tool `Bash`: Build PS2 scripts for the session
+
+- tool `Bash`: Prepare a long session run
+
+- tool `Bash`: Run the whole session in the one-world build
+
+## Claude
+
+The session is running in the background (about 14 minutes). I'll hold off on `make compare` and the commit until it finishes, so the compile doesn't slow the emulator.
+
+- tool `Bash`: Check the session run's result
+
+## Claude
+
+It ran to frame 39,934 (the time limit) with no TLB misses. Making contact sheets of both players' screens, every 600 frames:
+
+- tool `Bash`: Make contact sheets of the session
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/sess_a.png
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/sess_b.png
+
+- tool `Bash`: Commit the translator fix with docs
+

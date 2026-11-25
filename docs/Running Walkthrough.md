@@ -1520,3 +1520,22 @@ What a GBA sets up for itself, now done per player when the copies are made (`ps
   at 0x080083F8 by byte 4 of the structure in r0, and lands in data. Found with the trace (`ps2_trace_on` for one
   frame; the ring of entries printed from the main loop). This is the open "bad instruction around frame 1770 in the
   A-only replay" item: the old scripts only pressed A in menus and pauses.
+
+## Step 57: the A-press crash was a translator bug (2026-11-24)
+
+- A temporary log on the dispatcher (the gstate entry watch, `sub_08008422__base` + 0x2BA) showed a valid index
+  (r0 0x03000040, byte 4 = 0); the trace showed entry 0 (0x080086E8) running and then the jump into data. Entry 0
+  calls `sub_0803D134` (fs_game, C) with a `bl` that has no relocation: the code after `sub_08008422` is kept as
+  raw bytes in its asm file. `tools/gstate2c.py` took such a call as one into the same object and emitted
+  `gstate_run(sub_08008422__base + 0x34D12)`: an address relative to its own copy, nothing there.
+- Fix: a raw call whose target is outside the current function is resolved by name from the matching build's map
+  (`zeldaalttp.map`): the target is the function's ROM address there plus the call's offset in it (the NONMATCHING
+  object's layout differs, so object offsets can't be used), then emitted as a normal call (`gs_NAME` or the C
+  function). Targets that aren't a function start in the map keep the old form (66 of them, printed as warnings:
+  calls into the middle of functions within the same object).
+- Result: a scripted A press in the stage no longer crashes (separate instances, 0 TLB misses).
+- Session 1 on the PS2 (`tests/intro_linked.inputs` to frame 1600, then `recordings/session1/inputs0/1` shifted by
+  1600; one world, 2 players, every 600th frame saved): 39,934 frames in 800 s, no TLB misses; both Links move, fight
+  and carry items. It doesn't follow the mGBA recording: before the stage player 2 copies player 1's link words, so
+  player 2's own lobby inputs are lost. From about frame 26,400 player 2's view shows only sand, without its Link,
+  while player 1's arrow points to player 2: to look at.

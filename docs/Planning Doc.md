@@ -278,7 +278,7 @@ instances and the link exchange, not only in a stage.
       and draws its own YOU marker. Step 55: the off-screen arrows for every view; 4 players work. Step 56: pickups
       run "as the collector" (`AS_PLAYER`), not yet seen working: pressing A in a stage crashes the PS2 port in every
       mode (separate instances too, before today's changes): the open "bad instruction around frame 1770" item.
-      Left: that crash, the rest of the ~40 player-number uses.
+      Step 57: that crash fixed (a translator bug). Left: the rest of the ~40 player-number uses.
 - [ ] 2. Player count menu at start-up: 1 to the number of connected controllers (two multitaps: 8; 4 until the
       limits below are lifted).
 - [ ] 3. File select for player 1 only, one save for everyone (user, 2026-11-24). Later: per-player saves.

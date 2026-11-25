@@ -663,12 +663,19 @@ def emit(d, o, rel, start, end, B, name, gsnames, decls, data):
         if sym is None and start <= t < end:
             return ["lr = %s; goto L_%X;" % (ret, t - start)]
         if sym is None:
+            sym = raw_call_name(name, start, t)
+            if sym is None:
+                print("gstate2c: %s+0x%X: raw call to +0x%X not in the map, kept relative" % (name, o - start, t - start),
+                      file=sys.stderr)
+        if sym is None:
             return ["lr = %s; GSTATE_STORE(); gstate_run(%s %s); GSTATE_LOAD(); GSTATE_RETURNED(%s);" % (ret, B, soff(t - start), ret)]
         m = re.fullmatch(r"_call_via_(\w+)", sym)
         if m:
             reg = {"ip": "r12", "sl": "r10", "sb": "r9", "fp": "r11"}.get(m.group(1), m.group(1))
             return ["lr = %s; GSTATE_STORE(); gstate_run(%s); GSTATE_LOAD(); GSTATE_RETURNED(%s);" % (ret, reg, ret)]
         off = sx(((h(data, o) & 0x7FF) << 12) | ((h(data, o + 2) & 0x7FF) << 1), 23) + 4  # REL addend + 4
+        if d["sym"] is None:  # a raw call resolved by name (raw_call_name): its bytes hold the whole offset
+            off = 0
         base = sym[:-5] if sym.endswith("__asm") else sym
         if off and base in gsnames:
             decls.add("extern u8 %s__base[];" % base)
@@ -682,6 +689,34 @@ def emit(d, o, rel, start, end, B, name, gsnames, decls, data):
         decls.add("u32 %s();" % sym)
         return ["lr = %s; r0 = %s(r0, r1, r2, r3, R32(sp), R32(sp + 4), R32(sp + 8), R32(sp + 12));" % (ret, sym)]
     raise Fail("emit " + k)
+
+
+_MAP = None
+
+
+def gba_map():
+    """the matching build's link map (zeldaalttp.map, from make compare): function name <-> ROM address"""
+    global _MAP
+    if _MAP is None:
+        by_name, by_addr = {}, {}
+        if os.path.exists("zeldaalttp.map"):
+            for l in open("zeldaalttp.map"):
+                m = re.fullmatch(r"\s+0x(08[0-9a-f]{6})\s+(\w+)\s*", l)
+                if m:
+                    a = int(m.group(1), 16)
+                    by_name.setdefault(m.group(2), a)
+                    by_addr.setdefault(a, m.group(2))
+        _MAP = (by_name, by_addr)
+    return _MAP
+
+
+def raw_call_name(name, start, t):
+    """the function a call with no relocation (code kept as bytes) reaches, by name: its target in the matching ROM is
+    this function's address there plus the call's offset in it (the NONMATCHING object's layout differs)"""
+    by_name, by_addr = gba_map()
+    if name not in by_name:
+        return None
+    return by_addr.get(by_name[name] + t - start)
 
 
 def soff(x):
