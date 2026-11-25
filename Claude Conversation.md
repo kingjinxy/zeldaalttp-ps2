@@ -22923,3 +22923,124 @@ Now frames 1800–3000 match mGBA exactly, through file select, the link and Cho
 
 - tool `Bash`: Restore saves; check the matching build
 
+- tool `Bash`: Document and commit the replay tools
+
+## Claude
+
+Your recording can't check the pickups on the PS2 frame for frame: it follows mGBA exactly up to the stage, then drifts within a few frames. Pickups therefore still aren't confirmed. The A-press crash fix (`e2ca2d7`) stands.
+
+**What the drift turned out to be:**
+- **Player 2's Link above the room** (y −10, in my last update) isn't a one-world bug. The same scripts in mGBA put that Link somewhere else entirely; the PS2 run had parted from mGBA long before that point.
+- **Save files:** every earlier PS2 run loaded the `.sav` files left in `build/ps2` by previous runs, while your recording starts from empty saves. So the PS2 took a different route through file select. I moved them aside for the test and put them back afterwards.
+- **Frame numbers:** mGBA counts video frames, while the port counts one frame per completed game frame. So any loading lag shifts every later input.
+  - A new `mgba_run --gameframes` option records how many game frames each video frame represents.
+  - `tools/ps2/to_gameframes.py` rewrites a replay script with it.
+- With converted scripts and empty saves, the PS2 matches mGBA exactly at frames 1800, 2400 and 3000 (file select, the link, Choose a Stage).
+
+**Why it still drifts in the stage:** on the GBA the VBlank interrupt keeps running during lag frames and drives animation and timers. The port runs one VBlank per game frame and never lags. By frame 3600 an input has landed a few frames off, and Link 1 is flashing on the PS2. An exact replay would mean modelling the GBA's lag, which would be a separate project.
+
+Committed as `d098bfa` with walkthrough Step 58; `make compare` is OK.
+
+**For testing the pickups, either:**
+1. I write a PS2-side script: walk each Link to an item and press A, judged by eye on the PS2 screens rather than against mGBA.
+2. You play it in PCSX2 with two controllers, now that A no longer crashes.
+
+Option 1 also gives a repeatable test. Which do you prefer?
+
+## User
+
+Try 1 for now, but don't give it too much effort
+
+## Claude
+
+Reusing the earlier pickup script: player 2 walks to the bomb on its pedestal, then presses A at frames 1890 and 1950. That's the one that crashed before the fix. One-world build, 2 players:
+
+- tool `Bash`: Run the pickup script in one world
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/pk2.png
+
+- tool `Bash`: Try a different path to the item
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/pk3.png
+
+## Claude
+
+Player 2 moved this time but stopped against the cliff between the two pedestal areas, without reaching the bomb. I'm stopping here as agreed.
+
+My PS2 script couldn't get player 2 to an item, so pickups are still unconfirmed. In the first try player 2 didn't move at all; in the second it walked, but stopped against the cliff between the two pedestal areas. The pedestal areas may only open some other way, perhaps through the rings around them, and finding out would take more trial runs than this is worth.
+
+Both runs pressed A in the stage and neither crashed (no TLB misses), so the A-press fix holds in one world too.
+
+The quickest way to confirm the pickups is a short play in PCSX2 with two controllers in the one-world build (`make -f Makefile.ps2 INSTANCES=2 SHARED_WORLD=1 ONE_WORLD=1`):
+- Player 2 should get their own "you got…" message.
+- Player 1's screen should show the item lifted but no message.
+
+Without that, I'll move on to the remaining uses of the player number from the list of about 40.
+
+## User
+
+Launch PCSX2 and I will confirm the pickups
+
+## Claude
+
+For a play test the replay scripts must go, since a script replaces that player's controller. I'm moving them into the scratchpad, rebuilding the one-world build, and launching PCSX2 on your desktop:
+
+- tool `Bash`: Remove scripts and build the one-world ELF
+
+- tool `Bash`: Launch PCSX2 on the desktop for play
+
+- tool `Bash`: Confirm PCSX2 started
+
+- tool `Bash`: Check the PCSX2 log
+
+## Claude
+
+PCSX2 is running on your desktop with the one-world, 2-player build (`INSTANCES=2 SHARED_WORLD=1 ONE_WORLD=1`). It has no time limit, so close the window when you're done.
+
+- **Controllers:** pads 1 and 2 control players 1 and 2, using PCSX2's controller settings. I moved the replay scripts into the scratchpad, since a script would override a pad.
+- **Saves:** the game loads the `.sav` files in `build/ps2` from earlier test runs, so file select will show existing files.
+- **Before the stage:** only player 1's pad matters. Player 2 copies player 1 through the menus, and player 2's screen stays black until the stage.
+
+**What to check, once each Link picks up an item:**
+- When player 2 picks something up, player 2's screen should show the "you got…" message, and player 1's screen should show the item lifted but no message.
+- The same the other way round for player 1.
+- Other things worth a glance: each view follows its own Link, the YOU marker over your own Link, the off-screen arrows, and that pressing A doesn't crash.
+
+Tell me what you see. If something goes wrong, the log is at `/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/play.log`.
+
+## User
+
+I'm finding it difficult to control the players. They seem to be teleported around when I try to walk, and I get stuck in walls.
+
+## Claude
+
+Teleporting and getting stuck in walls sounds like a Link's position switching between two versions. The private-memory list came from comparing two GBAs in your recording. If it covers bytes inside the entity slots, each view swaps in its own copy of those bytes. Then a Link's position or collision state flips back and forth between player 1's version and the viewer's. Checking which ranges in the list fall inside the entity slots:
+
+- tool `Bash`: List overlay ranges inside entity memory
+
+- tool `TaskStop`: 
+
+- tool `Bash`: Make entity memory world; rebuild
+
+- tool `Bash`: Relaunch PCSX2 for play
+
+## Claude
+
+PCSX2 is open again with a likely fix for the teleporting; give it another try.
+
+The cause was the list of memory each player keeps privately. It was built by comparing two linked GBAs, and it included bytes inside the game's entity slots. On real GBAs those slots held objects each GBA made for itself, such as arrows and the YOU marker. In one world they hold shared objects, including the Links' own collision layer and some objects' positions. Each player's view swapped in its own copy of those bytes, so positions and layers jumped between versions.
+
+Entity memory now counts entirely as shared world state. The only side effect I expect is cosmetic: a Link might be drawn on the wrong layer in another player's view.
+
+I haven't committed this yet and haven't run my own check on it, so tell me whether walking feels normal now, and whether the pickup messages show for the right player.
+
+## User
+
+Movement is still very jittery, but I was able to have both Links pick up items, and it seemed to work properly
+
+## Claude
+
+Both Links picked up items with the right message on the right screen, so the pickup change works. Committing that and the entity-memory fix, with a note on the remaining jitter:
+
+- tool `Bash`: Commit the entity fix and play-test notes
+

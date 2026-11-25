@@ -45,6 +45,9 @@ FIXED = [
 WORLD = [
     # in the map (the GBAs ran a frame apart there) but world state: the view pass reads them and doesn't recompute them
     (0x45E10, 0x45E18, "IWRAM 0x03005E10: the players' newly pressed keys (sub_08037750; the pause check reads them)"),
+    (0x41050, 0x45960, "IWRAM 0x03001050-0x0300595F: the entity slots, all world (the map marks bytes of objects each GBA "
+     "makes for itself, arrows and markers: in one world those slots hold shared objects, and swapping them per view "
+     "moved Links around)"),
 ]
 
 

@@ -1557,3 +1557,17 @@ What a GBA sets up for itself, now done per player when the copies are made (`ps
   running through lag frames (animation, timers); the PS2 runs one VBlank per game frame and never lags, so a
   recording drifts once lag frames have had effects. An exact replay would need the GBA's lag modelled.
 - So the recording can't check the pickups on the PS2 frame for frame; a PS2-made script (or play) is needed.
+
+## Step 59: first play test of one world (2026-11-24)
+
+- PCSX2 on the desktop with two pads, `INSTANCES=2 SHARED_WORLD=1 ONE_WORLD=1`, no replay scripts (a script replaces
+  that player's pad).
+- **Teleporting and walls:** the user's first report. The overlay held 36 ranges inside the entity slots
+  (0x03001050-0x0300595F) from the two-GBA map: on linked GBAs those slots hold objects each GBA makes for itself
+  (arrows, markers), so their bytes differed; in one world the same slots hold shared objects, among them the
+  Links' +0x50 (collision/draw layer) and other objects' positions, and each view swapped in its own copy. The whole
+  entity area is world now (`overlay_ranges.py` WORLD; 146 ranges, 42 KB). Side effect to expect: a Link may draw on
+  another layer in the other player's view (the layer 14 of the followed entity is per GBA).
+- **Pickups:** confirmed by the user: both Links picked up items and it worked properly (the message for the
+  collector).
+- **Left:** movement is still very jittery (user).
