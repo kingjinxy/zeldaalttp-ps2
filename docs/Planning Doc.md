@@ -370,8 +370,9 @@ Requested by the user (2026-11-16). After Phase 4 works with 4 players.
             (`sub_08052A88`/`sub_08052B88`/`sub_08052C0C`). Left: `sub_0802C53C` and `sub_0803A030`'s `& 3` (not
             clearly per player), and the 28 asm users, which act for players 1-4 only until decompiled or ported. The three ROM tables (0x08000FF4, 0x08003B54, 0x0805D308) get
             8-entry copies when their readers index past 3 (today `frame & 3` and the player number).
-      - [ ] Spawning 5-8 in one world (Step 67): the port sized for 8; Links 5-8 created at stage entry fault in the
-            Link code (records 5-8 not set up). Next: the stage setup's per-player record, sprite tiles and palette.
+      - [ ] Spawning 5-8 in one world (Steps 67-68): the port sized for 8; the per-player pointer tables have 8
+            entries on the PS2 (`src/ps2/players.c`); Links 5-8 exist in the world. Left: free start tiles, their
+            sprite tiles and white palette, and the "You don't have enough..." stage end they trigger.
       - [ ] Loops and four-way checks to a player count; `gUnknown_03006C80`'s per-player arrays (asm-only users to
             decompile); the link exchange to 8; spawning players 5-8; the white palette.
 - [ ] Easier in the Phase 5 shared world (per-player arrays sized by a constant) than with linked instances

@@ -157,7 +157,7 @@ _08009C9C:
 	.4byte 0x08009A18
 	.4byte 0x03000e20
 	.4byte gUnknown_03000940
-	.4byte FrameNeedsUpdate+0x2d0
+	.4byte gPlayerLinkPtrs
 	.4byte 0x08009A08
 	.4byte 0x080092A0
 	.4byte 0x03000450

@@ -1,31 +1,19 @@
 	thumb_func_start sub_08003E80
 sub_08003E80: @ 0x08003E80
-	ldrb r4, [r3, #4]
-	lsrs r4, r2, #0x20
-	subs r2, #0xa0
-	lsrs r0, r0, #0x20
-	subs r2, #0xb0
-	lsrs r0, r0, #0x20
-	subs r3, #0x88
-	lsrs r0, r0, #0x20
-	subs r3, #0x7e
-	lsrs r0, r0, #0x20
-	lsrs r4, r0, #0x1d
-	lsls r0, r0, #0xc
-	ldrb r0, [r2, #0xc]
-	lsrs r3, r2, #0x20
-	lsrs r4, r0, #0x1d
-	lsls r0, r0, #0xc
-	ldrb r0, [r2, #0xc]
-	lsrs r3, r2, #0x20
-	lsrs r4, r0, #0x1d
-	lsls r0, r0, #0xc
-	lsrs r0, r4, #0x18
-	lsls r0, r0, #0xc
-	subs r3, #0x54
-	lsrs r0, r0, #0x20
-	subs r3, #0x54
-	lsrs r0, r0, #0x20
+	@ a literal pool (data, not code): sub_08003E24/E44's and others'
+	.4byte 0x0814791C
+	.4byte 0x08003AA0
+	.4byte 0x08003AB0
+	.4byte 0x08003B88
+	.4byte 0x08003B7E
+	.4byte 0x03000F44
+	.4byte 0x08137B10
+	.4byte 0x03000F44
+	.4byte 0x08137B10
+	.4byte 0x03000F44
+	.4byte 0x03000E20
+	.4byte gPlayerLinkPtrs
+	.4byte gPlayerLinkPtrs
 	.align 2, 0
 _08003EB4: .4byte 0x03000468
 _08003EB8: .4byte 0x080092A0

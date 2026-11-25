@@ -309,7 +309,7 @@ _08005BBA:
 	.4byte 0x0000fffe
 	.4byte gUnknown_0813E4CC+0x300
 	.4byte 0x03000bd0
-	.4byte 0x08000FF4
-	.4byte 0x08000FF4
+	.4byte gPlayerRecordPtrs
+	.4byte gPlayerRecordPtrs
 	.syntax unified
 	.thumb

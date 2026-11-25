@@ -42,10 +42,10 @@ _080041FC:
 	.align 2, 0
 _08004200: .4byte 0xFFFF8000
 _08004204: .4byte 0x08003EDC
-_08004208: .4byte 0x08000FF4
+_08004208: .4byte gPlayerRecordPtrs
 _0800420C: .4byte 0x00001A51
 _08004210: .4byte gUnknown_03000940
-_08004214: .4byte 0x08000FF4
+_08004214: .4byte gPlayerRecordPtrs
 _08004218: .4byte gUnknown_03000940
 _0800421C: .4byte 0x00003FFF
 _08004220: .4byte 0x00008000
@@ -55,8 +55,8 @@ _0800422C: .4byte 0x0813E74C
 _08004230: .4byte 0x80000000
 _08004234: .4byte 0x00000106
 _08004238: .4byte 0x00000280
-_0800423C: .4byte 0x08003B54
-_08004240: .4byte 0x08000FF4
+_0800423C: .4byte gPlayerLinkPtrs
+_08004240: .4byte gPlayerRecordPtrs
 
 	.syntax unified
 

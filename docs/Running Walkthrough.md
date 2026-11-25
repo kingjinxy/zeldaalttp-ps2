@@ -1734,3 +1734,19 @@ What a GBA sets up for itself, now done per player when the copies are made (`ps
   four players. Next: what the setup puts in a record (and per player elsewhere: sprite tiles `n << 5`, palette
   `n + 7`), done for 5-8.
 - `sub_08012824` reads `unk60` through `C80_PLAYER` (player 5-8's entry instead of the next field).
+
+## Step 68: per-player pointer tables with 8 entries; Links 5-8 in the world (2026-11-25)
+
+- The Step 67 fault: `sub_08001D5C` gets a Link's record from a ROM table by `Entity.form`; for players 5-8 it read
+  past the four entries into code (0xE00000xx). Copying records 1-4 into 5-8 changed nothing.
+- `ldscript.txt` names the two per-player pointer tables `gPlayerRecordPtrs` (0x08000FF4) and `gPlayerLinkPtrs`
+  (0x08003B54); `tools/ps2/gba_syms.py` reassigns the names on the PS2 to 8-entry arrays in `src/ps2/players.c`.
+  The 15 ROM words that point at them now name them: `.4byte` numbers, `FrameNeedsUpdate+0x2d0`, two `.byte` runs,
+  and a literal pool the disassembly had decoded as Thumb code (`sub_08003E80`, now `.4byte` words). Checked word by
+  word in the PS2 ELF's copies; `raw_moved.py` also fails on the two addresses as raw words. `make compare` OK; the
+  2-player session replay still matches mGBA (90 and 91 of 91 samples).
+- `ps2_shared_try_enter` (ONE_WORLD, more than 4 instances) creates Links 5-8 at stage entry, a tile right of
+  player n-4's, after copying player n-4's record (shortcut noted there). 8-instance run: no faults; the world runs,
+  but the Links are invisible (sprite tiles `n << 5` and palettes `n + 7` belong to others) and about 100 frames in
+  the flame traps fire, "You don't have enough..." and the stage ends; the 4-instance run with the same inputs goes
+  on. Next: free start tiles, the Links' tiles and palette (GS CLUT), and what that message counts.

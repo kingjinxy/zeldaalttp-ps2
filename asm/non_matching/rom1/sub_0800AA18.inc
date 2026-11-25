@@ -10,7 +10,7 @@ sub_0800AA18: @ 0X0800AA18
 	.byte 0x00
 	.byte 0x00
 	.4byte DeleteThisEntity
-	.4byte FrameNeedsUpdate+0x2d0
+	.4byte gPlayerLinkPtrs
 	.4byte 0x0800a500
 	.byte 0x00
 	.byte 0x01
@@ -60,10 +60,7 @@ sub_0800AA18: @ 0X0800AA18
 	.byte 0xa4
 	.byte 0x00
 	.byte 0x08
-	.byte 0x54
-	.byte 0x3b
-	.byte 0x00
-	.byte 0x08
+	.4byte gPlayerLinkPtrs
 	.byte 0x00
 	.byte 0x00
 	.byte 0x02

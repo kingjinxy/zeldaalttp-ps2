@@ -48,7 +48,7 @@ _08009EE4:
 	.byte 0x00
 	.byte 0x03
 	.4byte 0x03000e20
-	.4byte FrameNeedsUpdate+0x2d0
+	.4byte gPlayerLinkPtrs
 	.4byte 0x08002b50
 	.4byte 0x08002cc4
 	.4byte 0x08009E68
@@ -57,10 +57,7 @@ _08009EE4:
 	.byte 0x0e
 	.byte 0x00
 	.byte 0x03
-	.byte 0x54
-	.byte 0x3b
-	.byte 0x00
-	.byte 0x08
+	.4byte gPlayerLinkPtrs
 	.4byte gUnknown_03000940
 	.4byte gUnknown_03000940
 	.syntax unified

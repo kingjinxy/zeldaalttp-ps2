@@ -120,6 +120,7 @@ void DoObjectEntity(void *);
 void sub_08052A88(void);
 extern u8 gUnknown_03006C80x __asm__("gUnknown_03006C80");
 void *CreateObject(u32, u32, u32);
+void sub_08012824(u8 n, u8 tx, u8 ty);  // creates player n's Link at tile (tx, ty) (file_select.c)
 extern u32 gUnknown_03000BF0;
 extern u8 gUnknown_03000FF8[];
 #define E20_UNK11 (*(volatile u8 *)0x03000E31)  // gUnknown_03000E20.unk11: the stage is paused (world)
@@ -318,6 +319,21 @@ int ps2_shared_try_enter(int instances, void (*select)(int inst))
     u32 r;
     if (!in_stage(0))
         return 0;
+    {  // players 5-8: the game's link has room for four, so it set up a 4-player stage; their Links are made here, a
+       // tile right of player (n - 4)'s (shortcut: the game's player count stays 4; the start tiles come in fours)
+        u32 cpu[20];
+        memcpy(cpu, (void *)0x0203C000, sizeof(cpu));
+        for (i = 4; i < instances; i++) {
+            u8 *rec = gUnknown_03006A30 + i * 0x90, *src = gUnknown_03006A30 + (i - 4) * 0x90;
+            u8 *l = *(u8 **)(src + 0x28);
+            if (!l)
+                continue;
+            memcpy(rec, src, 0x90);  // player (n - 4)'s record as set up by the stage start (Step 68)
+            *(u32 *)(rec + 0x2C) = 0;  // its second entity pointer
+            sub_08012824(i, (*(u16 *)(l + 0x2E) >> 4) + 1, *(u16 *)(l + 0x32) >> 4);  // sets rec + 0x28
+        }
+        memcpy((void *)0x0203C000, cpu, sizeof(cpu));
+    }
     for (i = 1; i < instances; i++) {
         for (r = 0; r < NOVERLAY; r++)
             memcpy(SAVED(i) + sOverlay[r][0], live(sOverlay[r][0]), sOverlay[r][1] - sOverlay[r][0]);

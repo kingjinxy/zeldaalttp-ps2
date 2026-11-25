@@ -25369,3 +25369,157 @@ Crash at frame 3,356 with stores and loads through garbage pointers (0xE00000xx)
 
 - tool `Bash`: Commit the safe parts and document
 
+## Claude
+
+Players 5–8 aren't in the game yet. The 8-player build starts and reaches a stage now, but when Links 5–8 are added it crashes on the first stage frame.
+
+What happened:
+
+- **The port was sized for four players.** Its screen and save arrays (`sView` in `video.c`, the EEPROM arrays in `io.c`/`save.c`) only held four entries. With 8 players they overflowed and corrupted the graphics setup, so the build crashed before the game started. They now hold eight.
+- **A false alarm on the way.** The one-world builds then stuck at "Linking with other systems…", which looked like a regression from today's changes. I tested with the player-loop limit back at 4 and it made no difference: the cause was the old scratch input scripts, which are timed in video frames. With the converted replay, the 2-player one-world build reaches the stage as before.
+- **The game still thinks there are four players.** The emulated link cable only has room for four, so the game sets up a 4-player stage.
+- **Adding Links 5–8 crashes.** As an experiment, I had the port create Links 5–8 at stage entry, one tile to the right of players 1–4. The 8-player build reached the stage, then crashed on the first stage frame inside the game's Link code (`sub_080015A8`, `sub_0800127C`, `sub_080020C8`). That code looks up each Link's player record by player number, and the stage setup only fills in records for four players.
+
+Committed as 98ed298: the port arrays now sized for 8 (`video.c`, `io.c`, `save.c`), and the Link spawn (`sub_08012824`) reading players 5–8's entry from the second copy of the shared table. `make compare` still reports `zeldaalttp.gba: OK`. The spawn experiment isn't committed; it's saved as a patch at `/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/spawn58.patch` and written up in walkthrough Step 67.
+
+Next is finding everything the stage setup does per player, so it can be done for players 5–8 too:
+- **Player record:** what the stage setup writes into each player's record.
+- **Sprite tiles:** each Link gets a tile block at `n << 5`, which would land on other sprites' tiles for players 5–8.
+- **Palette:** `n + 7`, which for players 5–8 lands on palettes other sprites use. This is where the white palette you asked for comes in.
+
+The first step is to trace what the setup writes into the four records, using mGBA's write logging around the stage load.
+
+## User
+
+Proceed
+
+## Claude
+
+Two views of the stage setup's work on the player records: a memory dump of all four records just before and just after the first stage load (to see which fields it sets), and mGBA's write log (to see which code writes them):
+
+- tool `Bash`: Compare the player records across the stage load
+
+- tool `Bash`: Read the player record struct
+
+- tool `Bash`: Copy records for players 5-8 and rerun
+
+## Claude
+
+Same faults at the same places, so the record isn't what they read. Looking at what `sub_080015A8` actually dereferences:
+
+- tool `Bash`: Read the faulting Link routines
+
+- tool `Bash`: Read sub_08001D5C, which returns the record
+
+- tool `Bash`: Find references to the three tables
+
+- tool `Bash`: Read gba_syms.py
+
+- tool `Bash`: List the 0x08003B54 references
+
+## Claude
+
+Only one of those references is written as a plain number. The others must be written some other way. Checking 0x08003EAC and 0x08009D04:
+
+- tool `Bash`: See how the other references are written
+
+## Claude
+
+They're written as `FrameNeedsUpdate+0x2d0`, which also comes out as 0x08003B54. Rewriting every form of both tables' addresses to the new names, and adding the names:
+
+- tool `Bash`: Name the tables and add 8-entry PS2 copies
+
+## Claude
+
+The matching ROM is unchanged. Two references found earlier (0x08003EAC and 0x08003EB0) didn't match any of these forms. Checking how they're written:
+
+- tool `Bash`: Find the two remaining references
+
+- tool `Bash`: Locate the remaining table words
+
+- tool `Bash`: Read sub_08003E80
+
+- tool `Bash`: Decode the literal pool as words
+
+## Claude
+
+All of it is data, and only the last two words are table pointers. Rewriting the block as `.4byte` words, with those two named:
+
+- tool `Bash`: Rewrite the literal pool and check the match
+
+- tool `Bash`: Verify every table reference in the PS2 copies
+
+## Claude
+
+13 of 15 now point at the PS2 tables. Two are still the raw ROM address: 0x08009F10 (the `.byte` run in `sub_08009EA4` noted earlier) and 0x0800AA5C. Finding the second:
+
+- tool `Bash`: Find the two raw-byte references
+
+- tool `Bash`: Name the two raw-byte references
+
+- tool `Bash`: Extend the check, rebuild and run 8 players
+
+- tool `Bash`: Check whether the run happened
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/eight5.png
+
+- tool `Bash`: Dump each view's frames after stage start
+
+## Claude
+
+The log shows the shared world ran for only about 3.5 seconds (roughly 200 frames) before "separate instances again", so the stage ends almost at once. The dumped frames:
+
+- tool `Bash`: List the stage frame dumps
+
+## Claude
+
+Only player 1's view gets dumped (the other views are drawn by the shared-world path). Player 1's frames at 3,380, 3,480 and 3,700:
+
+- tool `Bash`: Assemble player 1's frames
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/eight6_p0.png
+
+- tool `Bash`: Baseline: the same run with 4 instances
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/four6_p0.png
+
+## Claude
+
+With 4 instances the world starts and doesn't leave the stage. The run ended before frame 3,700, so here are the first two frames:
+
+- tool `Bash`: Assemble the 4-instance baseline frames
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/four6_p0.png
+
+- tool `Bash`: Build the 2-player replay check
+
+- tool `Bash`: Run the 2-player replay check
+
+## Claude
+
+Links 5–8 now exist in the game world without crashing it, though they're still invisible and their presence ends the stage within seconds.
+
+The first-frame crash came from a 4-entry table the Link code reads. It looks up a Link's player record through a ROM table indexed by player number. For players 5–8 it read past the end of the table, into code, and got garbage pointers.
+
+The fix gives both 4-entry per-player tables a name in `ldscript.txt` (`gPlayerRecordPtrs`, `gPlayerLinkPtrs`). On the GBA the names point at the original ROM addresses, so `make compare` still matches. On the PS2 they point at 8-entry arrays in the new [src/ps2/players.c](src/ps2/players.c). The 15 places that read them now use those names. Some were hidden as raw bytes, or as a literal pool the disassembler had decoded as instructions. I checked all 15 in the built PS2 code. The `raw_moved.py` build check now also fails on these two table addresses written as raw words.
+
+In the 8-player run with Links 5–8 spawned:
+
+- **No crash:** there are no TLB misses, the world runs, and the extra Links interact with the room.
+- **Invisible:** Links 5–8 aren't drawn. Their sprite tiles (`n << 5`) and palettes (`n + 7`) land on slots that other sprites use.
+- **Stage ends at once:** about 100 frames in, the flame traps fire, a skull message reads "You don't have enough…" and the run ends. The 4-player run with the same inputs reaches the same frame without any of this. They spawn one tile right of each of Links 1–4, so a likely cause is the extra Links standing on a trigger or another Link.
+
+The two-player replay check is running now, since the table change affects every PS2 build. If it still matches mGBA, I'll commit the tables and the spawn code. After that:
+
+- **Spawn:** put Links 5–8 on free tiles, not one tile right of Links 1–4.
+- **Drawing:** give Links 5–8 their own sprite tiles, and the white palette you asked for, drawn by the GS renderer.
+- **Stage ending:** find out what "You don't have enough…" is counting.
+
+- tool `Bash`: Compare the 2-player replay
+
+## Claude
+
+Still matching (90 and 91 of 91; the odd sample is the same single-frame high slot as before). Committing:
+
+- tool `Bash`: Document and commit
+

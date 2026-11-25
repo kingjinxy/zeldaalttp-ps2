@@ -64,7 +64,7 @@ _08002142:
 	strb r3, [r1]
 	pop {pc}
 	.align 2, 0
-_08002148: .4byte 0x08000FF4
+_08002148: .4byte gPlayerRecordPtrs
 _0800214C: .4byte 0x0000023C
 _08002150: .4byte 0x00000258
 _08002154: .4byte 0x0000019C
