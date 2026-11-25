@@ -22811,3 +22811,115 @@ It ran to frame 39,934 (the time limit) with no TLB misses. Making contact sheet
 
 - tool `Bash`: Commit the translator fix with docs
 
+## Claude
+
+Now player 2's sand-only view. A closer look at both players around the moment it changes, frames 25,800 and 26,400:
+
+- tool `Bash`: Zoom on the frames around the change
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/sand.png
+
+- tool `Bash`: Build with a position log for player 2
+
+- tool `Bash`: Run the session to frame ~27000 with logs
+
+## Claude
+
+The A-press crash is fixed (`e2ca2d7`). I'm now checking a remaining problem in player 2's view, with a run in the background that takes about 9 minutes.
+
+**The crash:** it was a bug in the auto-translator, not in the game or the shared world.
+- Some code is stored in the asm files as raw bytes, so a call inside it has no relocation. The translator assumed such calls stay within the same object and encoded the target as an offset from its own copy.
+- The call in Link's action code goes to `sub_0803D134` in fs_game.c, so it jumped into unrelated memory.
+- The translator now looks up raw calls by name in the matching build's map and emits an ordinary call. 66 raw calls with no exact function-start match keep the old encoding, as before.
+- A scripted A press in a stage no longer crashes, and `make compare` reports OK.
+
+**Your recording on the PS2:** I chained the intro script to frame 1600 with your session's inputs shifted by 1600 frames, and ran it in one world with 2 players.
+- It ran for 800 seconds, to frame 39,934, with no crash.
+- Both Links move, fight and carry items.
+- **It doesn't follow your recording.** Before the stage, player 2 copies player 1's link words, so your lobby inputs as player 2 are lost and the play goes differently from there.
+- So I couldn't yet confirm a pickup with its "you got…" message for player 2.
+
+**Open problem:** from about frame 26,400, player 2's view shows only sand beyond a cliff edge, and player 2's Link isn't drawn. Player 1's view has an arrow pointing to player 2, up and to the right. The background run logs player 2's Link position, state and camera every 60 frames from frame 25,000. That will tell whether the Link really went there, as in a desync off the cliff, or whether the camera or drawing is wrong.
+
+For a faithful test of your recording, player 2's own lobby inputs should reach the game. I'll look at that once this run is in.
+
+- tool `Bash`: Read the position log
+
+- tool `Bash`: Show the end of the position log
+
+## Claude
+
+The run stopped at frame 25,558, just short of the change, because the logging slowed it. Rerunning with more time:
+
+- tool `Bash`: Rerun the logged session longer
+
+## Claude
+
+The first logged run reached only frame 25,558, just short of where player 2's view changes, because the logging slowed the emulator. I've restarted it with an 11-minute limit and will read the log when it finishes.
+
+- tool `Bash`: Read the longer position log
+
+- tool `Bash`: Check mgba_run outputs and the stage entry
+
+- tool `Bash`: Run the same scripts in mGBA
+
+- tool `Bash`: Decode player 2's Link position in mGBA
+
+- tool `Bash`: Compare mGBA and PS2 screens every 600 frames
+
+- tool `Bash`: Check which frame files exist
+
+## Claude
+
+mGBA pads its frame numbers to five digits. Fixing the path:
+
+- tool `Bash`: Compare mGBA and PS2 screens again
+
+## Claude
+
+Almost every pixel differs from frame 1200 on, except frame 3600, which is close. Looking at frame 1800 side by side, mGBA left and PS2 right:
+
+- tool `Bash`: Side-by-side mGBA vs PS2 frames
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/mgcmp.png
+
+- tool `Bash`: Find BIOS call hooks in mgba_run
+
+- tool `Bash`: Read the instruction hook and its call site
+
+- tool `Bash`: Add --gameframes to mgba_run
+
+- tool `Bash`: Read the per-frame callback
+
+- tool `Bash`: Build and try --gameframes
+
+- tool `Bash`: Write the converter; convert the session
+
+## Claude
+
+Player 2's script runs slightly past the map's end. Past the end, the converter will extrapolate with the last known lag instead of failing:
+
+- tool `Bash`: Convert both scripts; build separate-instances test
+
+- tool `Bash`: Run the converted session; find matching mGBA frames
+
+- tool `Bash`: Compare converted PS2 run with mGBA
+
+- tool `Bash`: View the first compared frames
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/mgcmp2.png
+
+- tool `Bash`: Check the PS2 save loading
+
+- tool `Bash`: Rerun from empty saves and compare
+
+## Claude
+
+Now frames 1800–3000 match mGBA exactly, through file select, the link and Choose a Stage. Frame 1200 differs by about 7,800 pixels, and from 3600 on the runs differ again. Looking at 3600:
+
+- tool `Bash`: View frames 3600 and 1200
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/mgcmp3.png
+
+- tool `Bash`: Restore saves; check the matching build
+

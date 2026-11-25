@@ -1539,3 +1539,21 @@ What a GBA sets up for itself, now done per player when the copies are made (`ps
   and carry items. It doesn't follow the mGBA recording: before the stage player 2 copies player 1's link words, so
   player 2's own lobby inputs are lost. From about frame 26,400 player 2's view shows only sand, without its Link,
   while player 1's arrow points to player 2: to look at.
+
+## Step 58: replaying an mGBA recording on the PS2 (2026-11-24)
+
+- Session 1 on the PS2 (Step 57's run) didn't follow the recording; player 2's Link ended up above the room (y -10)
+  where in mGBA it was elsewhere entirely. A position log (every 60 frames) and an mGBA run with the same scripts
+  (`--dump` of Link 2 at 0x030010D0) showed the runs had parted long before. Two reasons:
+  - **Save files:** the PS2 loads `build/ps2/zeldaalttp*.sav`, written by earlier runs; the recording starts from
+    empty saves. Moved aside for the test (then put back), the file select takes the recording's route.
+  - **Frame numbers:** mGBA counts video frames, the PS2 game frames (one per `VBlankIntrWait`), so a replay drifts
+    wherever the game lags (loading). `mgba_run --gameframes FILE` writes GBA 0's game frames after every video
+    frame (its `swi 5` calls); `tools/ps2/to_gameframes.py` converts a replay with it (session 1: 45,190 game
+    frames in 45,501 video frames).
+- **Result** (separate instances, converted scripts, empty saves): identical to mGBA at frames 1800, 2400, 3000
+  (file select, link, Choose a Stage); frame 1200 differs in the title's background animation, and from the stage
+  (3600) the runs differ (Link 1 flashing on the PS2, a few frames off). On the GBA the VBlank interrupt keeps
+  running through lag frames (animation, timers); the PS2 runs one VBlank per game frame and never lags, so a
+  recording drifts once lag frames have had effects. An exact replay would need the GBA's lag modelled.
+- So the recording can't check the pickups on the PS2 frame for frame; a PS2-made script (or play) is needed.

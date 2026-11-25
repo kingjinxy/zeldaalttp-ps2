@@ -21,6 +21,9 @@
 // --writes FILE: FILE is a --perplayer bitmap; every distinct Thumb store into a marked byte is logged as
 // "write PC LR ADDR WIDTH" (first address seen for that PC/LR). ARM code, DMA and BIOS copies aren't seen.
 // --access (with --writes): loads from marked bytes are logged too, as "load PC LR ADDR WIDTH".
+// --gameframes FILE: after each video frame, "FRAME N": GBA 0's game frames so far (its VBlankIntrWait calls, swi 5
+// from Thumb ROM code). The PS2 port counts game frames, mGBA video frames: tools/ps2/to_gameframes.py converts
+// a replay with it.
 // --bracket ADDR,ADDR,... (with --writes MAP): GBA 0, every 10th frame in --perplayer-frames: for each listed
 // function (Thumb or ARM, ROM or RAM), memory is copied at its entry and compared at its return (callees included); the changed bytes are counted
 // as per-player (marked in MAP) or world (the IWRAM stack excluded). Printed per function at the end.
@@ -247,6 +250,8 @@ static FILE *loads;                 // --loads FILE
 static uint32_t readWatch;          // --reads ADDR
 static uint8_t *writeMap;           // --writes FILE: the per-player bitmap
 static int accessLoads;             // --access
+static FILE *gameFrames;            // --gameframes
+static uint32_t gameFrameCount;
 static uint64_t writeSeen[1 << 14];
 #define MAX_BRACKETS 32
 static uint32_t bracketAddr[MAX_BRACKETS], bracketRet[MAX_BRACKETS];
@@ -309,6 +314,8 @@ static void loadsBefore(struct mCore *core, struct ARMCore *cpu) {
 	if (pc >> 24 != 8) return;
 	uint16_t op = core->busRead16(core, pc);
 	uint32_t *r = (uint32_t *) cpu->gprs;
+	if (gameFrames && op == 0xDF05 && core == players[0].core)
+		gameFrameCount++;
 	if (!loads) goto decode;
 	if (pc == 0x08012728) {  // entity registration (type, entity): type and subtype are set by now
 		logLoad("ent", core->busRead8(core, r[1] + 8), core->busRead8(core, r[1] + 9), 0, r[14] - 1);
@@ -620,6 +627,7 @@ static void onFrame(void *context) {
 	struct mCore *core = p->core;
 	unsigned frame = p->frame++;
 	if (id == 0) bracketFrame = frame + 1;
+	if (id == 0 && gameFrames) fprintf(gameFrames, "%u %u\n", frame + 1, gameFrameCount);
 	if (frame >= frames) { p->done = 1; return; }
 	if (surveyPath) {
 		surveyFrame(id);
@@ -977,6 +985,7 @@ int main(int argc, char **argv) {
 		else if (!strcmp(o, "--survey")) surveyPath = v;
 		else if (!strcmp(o, "--reads")) readWatch = strtoul(v, NULL, 0);
 		else if (!strcmp(o, "--access")) { accessLoads = 1; i--; continue; }
+		else if (!strcmp(o, "--gameframes")) { if (!(gameFrames = fopen(v, "w"))) { perror(v); return 1; } }
 		else if (!strcmp(o, "--perplayer")) perPlayerPath = v;
 		else if (!strcmp(o, "--bracket")) {
 			for (char *t = (char *) v; *t && nbrackets < MAX_BRACKETS; t += *t == ',')
@@ -1118,14 +1127,14 @@ int main(int argc, char **argv) {
 					p->core->step(p->core);
 				}
 				cpu->irqh.processEvents(cpu);
-			} else if (coverage || loads || readWatch || writeMap) {
+			} else if (coverage || loads || readWatch || writeMap || gameFrames) {
 				// ARMRunLoop with each instruction's address recorded before it runs (as mGBA's
 				// ARMDebuggerCheckBreakpoints computes it), so GBAs interleave exactly as with runLoop.
 				struct ARMCore *cpu = ((struct GBA *) p->core->board)->cpu;
 				while (cpu->cycles < cpu->nextEvent) {
 					uint32_t pc = cpu->gprs[ARM_PC] - (cpu->executionMode == MODE_THUMB ? 2 : 4) - 0x08000000;
 					if (pc < 0x800000) covered[pc >> 4] |= 1 << ((pc >> 1) & 7);
-					if (loads || readWatch || writeMap) loadsBefore(p->core, cpu);
+					if (loads || readWatch || writeMap || gameFrames) loadsBefore(p->core, cpu);
 					p->core->step(p->core);
 					if (loads) loadsAfter(i, p->core->board);
 				}
