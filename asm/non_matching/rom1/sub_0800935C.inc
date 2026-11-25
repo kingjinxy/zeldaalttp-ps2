@@ -19,6 +19,9 @@ _08009364:
 	adds r0, r0, r1
 	adds r1, r2, #0
 	movs r0, r0
+	.global sub_08009380  @ second entry point: the tile at position r0, layer r1 (a real label, not a linker alias,
+	.thumb_func           @ so the PS2 build gives it a C entry: an alias pointed into sub_0800935C's MIPS code)
+sub_08009380:
 	push {lr}
 	bl sub_0800932C
 	ldr r1, _08009500 @ =0x00004000

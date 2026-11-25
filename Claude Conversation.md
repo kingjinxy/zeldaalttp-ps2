@@ -23249,3 +23249,911 @@ Fixed: in that frame Link 2's y now goes from 788 to 789, one pixel down, as it 
 
 - tool `Bash`: Docs and commit the fix
 
+## Claude
+
+Rebuilding the one-world ELF without the temporary logging and launching PCSX2 for you:
+
+- tool `Bash`: Build the clean one-world ELF
+
+- tool `Bash`: Launch PCSX2 for play
+
+## Claude
+
+I found and fixed the cause of the down/left teleporting. It was a translator bug, so it affected every PS2 build (committed as `3ac9303`).
+
+**What was wrong:** I traced one frame with player 2's Link y printed at every function entry. y jumps right after `sub_0803D350`, a small decompiled C helper that takes two `s16` values. Translated asm calls it with raw 32-bit registers.
+- On the ARM, a function narrows its own arguments, so the asm leaves junk in the upper bits.
+- On MIPS, GCC assumes the caller already sign-extended them.
+- So a step of −16 arrived as +65,520. Only negative steps broke, which is down and left.
+
+**Fix:** when translated code calls a C function, the translator now casts each argument to its parameter's type from the prototype in `include/functions.h`. That affects 86 call arguments.
+
+**Checked:**
+- Walking down now moves player 2's Link one pixel south per frame until it reaches a wall.
+- No TLB misses.
+- `make compare` OK.
+- In my scripted run, player 1 doesn't move when pressing left, but that spot may simply have a wall.
+
+**Not covered yet:** indirect calls into C through function tables don't go through this cast, because there's no prototype to read at that point. I don't know of any that break.
+
+PCSX2 is open again with the one-world, 2-player build and no scripts. Please check walking in all four directions with both Links, and that being hit still works normally.
+
+- tool `Bash`: Check the play log
+
+## Claude
+
+PCSX2 has closed after about three minutes of play, to frame 9,000, with no crashes or TLB misses. How did it go? In particular:
+- Can both Links walk in all four directions now?
+- Do the Links still flash or jump when they're not being hit?
+
+## User
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+<system-reminder>
+<tools-used-before-summary>Bash, Edit, PushNotification, Read, SendUserFile, TaskStop, ToolSearch, Write</tools-used-before-summary>
+</system-reminder>
+Summary:
+1. Primary Request and Intent
+
+The user's requests this session, in order:
+- Continue shared world 5c: the pause handling and the sprites.
+- "Let's try getting 4 players rendering. Leave the inputs for later".
+- Corrected terminology: the orange badge was the equipped shield shown in the wrong colour (every player starts with the shield).
+- "Let's try adding more players. For now, use a white palette for players beyond 4. Using the 1280x720p frame, arrange the players in a 3x3 grid, with the center left black", with 426x240 cells, agreed instead of 422.
+- Then: draw at 1:1 so a larger area of the world is visible ("Yes").
+- "Update docs, commit changes, and then continue" (the 4-player limits survey).
+- Questions about mapping the EWRAM mirror versus expanding memory, and about moving all GBA memory into EE/GS RAM (answered no).
+- "Yes" to option A: relocation, where literal pools follow symbols.
+- "Proceed".
+- The vision: no lobby, one world, a viewport per player, drop-in/drop-out later, a player-count option at start based on connected controllers. "Let's do the file select for P1 only for now. Later I'd like to have per-player saves. Write this into the plan and start on step 1".
+- "Yes" to A: make the ~40 player-number uses per-player.
+- "Proceed" (pickups).
+- "Yes. The test replay I made for mGBA should cover Link 1 and 2 picking up items."
+- "Try 1 for now, but don't give it too much effort" (a PS2-side pickup script).
+- "Launch PCSX2 and I will confirm the pickups".
+- Reported jitter and teleports; then "pickups worked"; then: walking down or left flashes Link as if damaged (no health lost) and teleports him north/east; north and east are fine; positions stay in sync.
+- "Yes" to fixing that bug. PCSX2 was relaunched for the user to test all four directions.
+
+Standing constraints, verbatim from CLAUDE.md and the user:
+- "Web access: GitHub only without asking."
+- "Never access tcrf.net (The Cutting Room Floor) in any way."
+- "No `pkill -f <pattern>` in a command whose own command line contains the pattern."
+- "No ROM, BIOS or extracted asset is ever committed"; reference/ is never committed.
+- Never share the user's email address with external services.
+- Don't copy FourSwordsRecomp code.
+- Say "gstate" for global state, never "GS".
+- PCSX2 uses the software renderer.
+- Log over SIO, never printf, from game-reachable code.
+- "Never dismiss TLB Miss lines."
+- Commit only when `make compare` reports `zeldaalttp.gba: OK`.
+- Update `docs/Running Walkthrough.md`, `docs/Planning Doc.md` and `Claude Conversation.md` at milestones. For the archive, concatenate all jsonl in `ls -tr` order, run `tools/ps2/archive_conversation.py`, and check that 0 lines were removed.
+- Builds run under `systemd-run --user --scope -q -p MemoryMax=6G`.
+- `rm` with a variable path uses `"${S:?}"`.
+- Push notifications at milestones.
+- Don't start major new directions without the user's go-ahead.
+
+2. Key Technical Concepts
+
+- **Shared world:**
+  - An overlay of per-player byte ranges (`src/ps2/overlay_ranges.h`, generated by `tools/ps2/overlay_ranges.py` from `docs/shared_world/per_player_map.bin`), with FIXED, WORLD and MOVED lists.
+  - Whole words: map runs widened to aligned 32-bit words.
+  - A view pass per player.
+  - Draw replay: a gstate entry watch, `ps2_gstate_watch`/`ps2_gstate_seen`, records entities that reach `sub_08003688` in instance 0's frame.
+- **One world (ONE_WORLD):**
+  - Only instance 0 runs. Before the stage, the other players send player 1's link words.
+  - At stage entry, each other player's overlay is copied from player 1 with: player number 0x03000414; record pointer 0x03006730; camera target 0x03000450; link child (0x02030790 byte 0 = 0); own key-ring 0xC000 entries cleared.
+- **Per-player handling of the player-number uses:**
+  - YOU marker: object 46 form 0, redrawn per view; restored after `sub_08000BAC`.
+  - Arrows: object 16. A missing arrow is created for player 1; the manager runs first; the viewer's slot is set to 0xFF; `sub_08052A88` is called in the view pass with unk6C preserved.
+  - Pickups: `AS_PLAYER` macro; a mid-frame overlay swap that skips the IWRAM stack 0x47B00–0x48000.
+- **Room for 8 players:**
+  - Arrays moved, PS2 only, to 0x04001000 (the I/O TLB entry's unused page, live offset 0x49000, NOMAP region).
+  - Saved blocks every 512 KB.
+  - `fix_elf.py` patches ROM words that point into moved ranges.
+- **SCREENS=8:** 3x3 grid of 426x240 cells at 1280x720 (GS renderer only). With WIDE_VIEW it is 1:1.
+- **gstate2c translator fixes:**
+  - Raw calls (code kept as bytes) are resolved by name from `zeldaalttp.map`.
+  - Arguments of calls into C are cast to the prototype's narrow types: MIPS needs the caller to sign-extend; ARM narrows in the callee.
+- **mgba_run additions:** `--access` (log loads too, with `--writes`); `--gameframes FILE`.
+- **`tools/ps2/to_gameframes.py`** converts mGBA video-frame replays to PS2 game frames. An exact replay is still impossible after the stage because the GBA's lag VBlanks have effects the port doesn't model.
+
+3. Files and Code Sections
+
+**src/ps2/shared.c**
+- `ps2_shared_try_enter` (ONE_WORLD): copies the overlay for i≥1, then sets:
+  - `SAVED(i)[0x40414]=i`;
+  - the record pointer at 0x46730;
+  - the camera at 0x40450 = Link i;
+  - `SAVED(i)[0x30790]=0`;
+  - own-row 0xC000→0.
+- It also creates player 1's arrow: `CreateObject(16, 1, 0)` with unk54=manager, unk58=Link 1, unk18=instances-1, with gCpu saved around the call.
+- View pass:
+  - takes the pause path while PAUSE_UI (0x0201EF18) is set;
+  - order: `draw_entities`, camera `sub_08015D9C`, BG streaming `sub_08008ED8`, HUD, `sub_08052A88` (unk6C saved), `sub_08000BAC`, `marker_back()`.
+- `ps2_as_player(p)` / `ps2_as_player_end()` use `overlay_swap_k(p, 1)` (keep stack). The `#else` stubs cover non-shared builds.
+- `arrow_manager()`; `draw_marker()` with `sMarker` saved state.
+
+**include/gstate.h**
+- GSTATE_TRACE_PRINT also does `if ((a) == ps2_gstate_watch) ps2_gstate_seen(gCpu.r[0]);`.
+
+**include/auto.h**
+- Declarations of `ps2_gstate_watch` and `ps2_gstate_seen`.
+
+**src/ps2/frame.c**
+- `u32 ps2_gstate_watch;`
+
+**include/variables.h**
+- `AS_PLAYER(p)` / `AS_PLAYER_END()`. On the GBA it expands to `(gLCDRegisterBuffer == (p))`.
+
+**src/fs_game.c**
+- `sub_0805BF9C` and `sub_08055A08` use `AS_PLAYER`.
+
+**src/rom2a.c**
+- `sub_0802FEE8` decompiled under NONMATCHING.
+
+**tools/ps2/moved.py** (new)
+- MOVED list:
+  - 0x03006A30 (0x240) → 0x04001000
+  - 0x0200B1D0 (0x80) → 0x04001480
+  - 0x03000940 (8) → 0x04001580
+  - 0x03005E10 (8) → 0x04001590
+  - 0x03000FC0 (0x90) → 0x040015A0
+- Used by `gba_syms.py`, `fix_elf.py` and `overlay_ranges.py`.
+
+**tools/ps2/overlay_ranges.py**
+- FIXED: 0x40E34, 0x45E04, the key ring 0x0B1D0–0x0B250, VRAM tiles 0x54000/0x54C00/0x55000 (64 bytes each).
+- WORLD: 0x45E10–0x45E18; the entity slots 0x41050–0x45960.
+- Word widening; MOVED translation.
+- Current output: 146 ranges, 42 KB.
+
+**src/ps2/tlb.c**
+- NOMAP region {0x04001000, 0x49000, 0x700}; `SAVED` every 512 KB.
+
+**src/ps2/main.c**
+- `GAMES` (1 under ONE_WORLD); `ps2_games`.
+
+**src/ps2/link.c**
+- `live = ps2_shared ? instances : games`; players without a game of their own mirror m[0].
+
+**src/ps2/video.c**
+- SCREENS block: 1280-wide 720p, CELL 426x240; view 426x240 with WIDE_VIEW; screens past the instances redraw players.
+- PIXELS uses one buffer under GS_RENDER (this fixed an overflow).
+
+**Makefile.ps2**
+- Flags SCREENS and ONE_WORLD; moved.py added as a dependency.
+
+**tools/gstate2c.py**
+- `raw_call_name()` uses `gba_map()`.
+- In the bl emission: `if d["sym"] is None: off = 0`.
+- `c_args(sym)` casts narrow parameters:
+  ```
+  r0 = sub_0803D350((s16)r0, (s16)r1, r2, r3, R32(sp), ...)
+  ```
+
+**tools/mgba_run.c**
+- `--access`, `--gameframes`.
+
+**tools/ps2/to_gameframes.py** (new).
+
+**Docs:**
+- Walkthrough Steps 47–60.
+- Planning Doc: the "One world, no lobby" section (steps 1–5); notes under more than 4 players; the survey.
+
+**Scratch** (`$S`=/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad):
+- Walking scripts: `p1walk.inputs`, `p2pick.inputs`.
+- `scripts_play/` holds the moved build replay scripts.
+- `sess/` holds the session scripts, including the converted `gf_p1`/`gf_p2.inputs`.
+- `pshot.sh` and `longrun.sh` run PCSX2 offscreen.
+- `savehold/` holds the original saves (restored).
+
+**Commits this session (in order):**
+003d66a, 6befcb1, fb7a212, a16da2b, 02fb1c4, 07a713b, 0a24e0a, d4cb47a, f476fab, 0a416f9, 18adf14, d7fb670, 8186359, 91e5d0a, 20b691c, e2ca2d7, d098bfa, b04f058, 08e2414, 3ac9303 (last: gstate2c narrow argument casts).
+
+4. Errors and fixes
+
+- **Overlay too wide:**
+  - The pause flags and keys were in the overlay (narrowed).
+  - Pause UI state stuck at 3 caused a crash (pause path also taken while PAUSE_UI is set).
+  - VRAM 8 KB made animated tiles lag behind (narrowed to 3 tiles).
+- **Players 3–4 used the wrong record:** the pointer was only partly per-player (fixed by widening map runs to whole words).
+- **No free TLB entry:** moved the new region into the I/O page with NOMAP.
+- **Moved arrays changed the Links' poses:** ROM data tables still pointed to the old addresses (fix_elf patches 798 words).
+- **ONE_WORLD view pass never ran:** player 2 was a link parent and its own key-ring row held 0xC000.
+- **BG garbage:** added BG streaming to the view pass.
+- **YOU marker:** first wrong guess (manager 9); then the position was restored too early.
+- **Arrow manager order and missing draw:** fixed as listed under the shared.c changes in section 3.
+- **AS_PLAYER crash:** stack swapped mid-frame (keep_stack).
+- **A-press crash:** raw bl resolved relative to its own copy (gstate2c resolves by name).
+- **mGBA vs PS2 divergence:** stale saves, and video versus game frames.
+- **Teleporting and walls in play:** entity bytes in the overlay (entity area made world).
+- **Down/left teleport (the user's report):** `sub_0803D350`'s s16 arguments weren't sign-extended (translator casts).
+- **User feedback on terminology:** the "orange badge" was the equipped shield, only in the wrong colour; docs corrected.
+
+5. Problem Solving
+
+Solved:
+- 2-player and 4-player one world, with own views, YOU marker and arrows.
+- Pickups confirmed by the user.
+- A press no longer crashes.
+- Walking down/left fixed in the scripted test.
+
+Unverified:
+- Player 1 walking left didn't move in the scripted test (possibly a wall).
+
+Open:
+- Indirect calls into C with narrow arguments (via `gstate_run`).
+- The rest of the ~40 player-number uses.
+- Game cost per view rising.
+- Arrow "1" missing in one 4-player frame.
+- An exact mGBA replay on the PS2 is impossible after the stage.
+
+6. All user messages
+
+- "Proceed" (after the shared-world report, continuation)
+- "Let's try getting 4 players rendering. Leave the inputs for later"
+- "For correction, the "orange badge" was actually the shield item currently equipped. The fix worked, but I wanted to correct that terminology"
+- "It was only the wrong color; all players do actually start with the shield equipped in this scenario"
+- "Now, let's try adding more players. For now, use a white palette for players beyond 4. Using the 1280x720p frame, arrange the players in a 3x3 grid, with the center left black. If my math is right, 422x240 gives the largest possible area for each player while keeping an even grid size."
+- "Yes and yes"
+- "Have the 4 and 8 player screenshots been using the expanded view where everything is still drawn pixel perfect, but the actual visible world is larger?"
+- "Yes"
+- "Update docs, commit changes, and then continue"
+- "Why do we need to map the EWRAM mirror? Can't we just expand the memory space available for the game?"
+- "How much work would it be to just consolidate all the GBA virtual memory addresses and have them all exist as PS2 EE and GS RAM?"
+- "Yes"
+- "Yes"
+- "Proceed"
+- "In the final game, I'm envisioning that there is no real "lobby" for virtual GBA communication. Under the shared world paradigm, we simply have one world and several viewports for it. I'm not sure how possible it is, but I'd like to have the ability for players to drop in and out on the fly. For starters, we can simply have an option at the start of the game to choose how many players there will be, with the option based on how many controllers are connected."
+- "Let's do the file select for P1 only for now. Later I'd like to have per-player saves. Write this into the plan and start on step 1"
+- "Yes"
+- "Proceed"
+- "Yes. The test replay I made for mGBA should cover Link 1 and 2 picking up items."
+- "Try 1 for now, but don't give it too much effort"
+- "Launch PCSX2 and I will confirm the pickups"
+- "I'm finding it difficult to control the players. They seem to be teleported around when I try to walk, and I get stuck in walls."
+- "Movement is still very jittery, but I was able to have both Links pick up items, and it seemed to work properly"
+- "It's not input delay. I noticed that both players were damaged and then teleported when walking left. Walking in other directions didn't seem to cause issues"
+- "Yes" (launch the separate build)
+- "To be more specific, walking down or left flashes Link as if he was damaged, but his health doesn't actually go down. Walking in those directions also causes him to teleport north and east. Walking north or east is fine. Despite the teleportation, the Link positions appear to stay in sync between players."
+- "Yes" (fix the bug)
+
+7. Pending Tasks
+
+- The user is to test the fixed movement in PCSX2 in all four directions. That run has ended (frame 9000, 0 TLB misses); waiting for the user's report.
+- Then: the rest of the ~40 player-number uses.
+- Plan steps still ahead:
+  - player-count menu;
+  - 5–8 players (lifting the limits, white palette, C80 side table, link exchange to 8);
+  - drop in/out;
+  - per-player saves later.
+- Possible: narrow arguments for indirect calls into C.
+
+8. Current Work
+
+- **Fix committed:** 3ac9303. tools/gstate2c.py casts arguments of calls into C to the prototype's narrow types (`c_args`). This fixed Links being thrown north/east when walking down/left.
+- **Verified by script:**
+  - Link 2 walks down 788→827 (stops at a wall);
+  - no TLB misses;
+  - `make compare` OK.
+- **Play build:** rebuilt the clean ONE_WORLD 2-player ELF (`INSTANCES=2 SHARED_WORLD=1 ONE_WORLD=1`) with the replay scripts moved to `$S/scripts_play`, and launched PCSX2 for the user.
+- **Message to the user:** "Please check walking in all four directions with both Links, and that being hit still works normally."
+- **After the session ended:** play2.log showed 0 TLB misses and reached frame 9000. The user hasn't reported results yet.
+
+9. Optional Next Step
+
+Report the play log result (ran to frame 9000, no TLB misses), and ask the user how walking in all four directions felt. That matches the last request: "Please check walking in all four directions with both Links, and that being hit still works normally." If they confirm, continue with the remaining player-number uses, as planned earlier ("Next I'll do pickups, then work through the rest of the list").
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /home/alex/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9.jsonl
+Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.
+
+The messages after this summary are the most recent messages from before compaction, kept verbatim. The summary was written without seeing them, so something it says has not happened yet may already have happened in them.
+
+## User
+
+<command-name>/compact</command-name>
+            <command-message>compact</command-message>
+            <command-args></command-args>
+
+## User
+
+<local-command-stdout>Compacted </local-command-stdout>
+
+## User
+
+They can walk in all four directions now. I didn't get a chance to look into hit detection, but they were not being hit by anything while I tested. I believe the mGBA replay working on PS2 would help discover more.
+
+## Claude
+
+Good to hear walking works in all four directions now.
+
+I agree a replay would catch more. The catch is that it can't follow mGBA exactly once the stage starts. On the GBA, some VBlanks happen while the game is still busy with the previous frame (lag frames), and those change the game's state. The port runs exactly one game frame per VBlank, so it doesn't reproduce them. The recordings stay in step through Choose a Stage and then drift apart. There are two ways to fix this:
+
+1. **Model the lag frames (exact replay).** Have mGBA log which VBlanks were lag frames and what they changed, then apply the same changes in the port at the same game frames. From there, mGBA and the PS2 can be compared memory dump by memory dump. It's the stronger check, but it would take a day or more of work, with no promise the lag frames' effects can all be reproduced.
+2. **Start both from the same state (close replay).** Dump mGBA's memory at the moment the stage starts, load it into the PS2 build, then feed both the same game-frame inputs for a few hundred frames. Lag frames can still make them drift later, but the short stretch after loading would show bugs like the down/left one, including hits and damage. It would take a few hours.
+
+I'd go with option 2. Should I start on it, or go back to the remaining player-number uses first?
+
+## User
+
+How many lag frames are in the replay?
+
+- tool `Bash`: List session replays and view converter header
+
+- tool `Bash`: Find game-frame logs and count lag frames
+
+- tool `Bash`: Summarize lag runs in game-frame log
+
+- tool `Bash`: Group lag frames into consecutive runs
+
+## Claude
+
+There are **311 lag frames** in the replay, out of 45,501 video frames. The replay finishes 45,190 game frames.
+
+They all fall in 13 bursts, and none come after video frame 22,639:
+
+| Video frames | Lag frames |
+|---|---|
+| 140–1304 (boot, title, file select) | 48, in nine short bursts |
+| 3366–3445 | 80 |
+| 6189–6266 | 78 |
+| 21195–21204 | 10 |
+| 22560–22639 | 80 |
+
+From what I counted, my earlier claim looks wrong. I'd said lag frames keep the replay from matching once the stage starts. All the lag sits in loading bursts, and the last one ends at frame 22,639. After that, every VBlank is a full game frame, and `to_gameframes.py` already shifts the inputs past each burst. The game is loading during those bursts, so they probably just wait out frames rather than change anything. The drift I saw more likely has a different cause, such as a port bug or a bad offset in the converted inputs at the last burst.
+
+I matched these frame numbers to the stage from memory, without checking. Before building the state-loading replay, the next step is to find the first frame where the PS2 and mGBA disagree after frame 22,639. If the cause is something fixable, a full exact replay could work after all.
+
+## User
+
+Proceed
+
+- tool `Bash`: Find earlier notes on replay divergence
+
+- tool `Bash`: Read the replay result notes
+
+## Claude
+
+The earlier divergence was "Link 1 flashing on the PS2", which is the down/left bug that's now fixed. I'll rerun that comparison.
+
+- tool `Bash`: Inspect run scripts and replay input hooks
+
+- tool `Bash`: List mgba_run options and PS2 position log hooks
+
+- tool `Bash`: Check dump option docs and old position log
+
+- tool `Bash`: Read determinism note and prior position log
+
+- tool `Bash`: Read mgba_run dump implementation
+
+- tool `Bash`: Read dump loop and build script
+
+## Claude
+
+I'm adding per-frame memory dumps to both mGBA and the PS2 build so I can find the first frame where the two runs differ.
+
+- tool `Bash`: Add frame-range dumps to mgba_run and rebuild
+
+- tool `Bash`: Add temporary PS2 Link entity dump log
+
+- tool `Bash`: Enable dump log and check host file location
+
+- tool `Bash`: Check replay scripts and saves in host folder
+
+- tool `Bash`: Set up empty saves, scripts, and build 2-instance ELF
+
+- tool `Bash`: Confirm ELF contains dump log
+
+- tool `Bash`: Rebuild PS2 ELF and show output
+
+- tool `Bash`: Find the PS2 make target
+
+- tool `Bash`: Rebuild PS2 ELF with dump log
+
+## Claude
+
+Built. Running the replay in PCSX2 with frame dumps every 30 game frames.
+
+- tool `Bash`: Read long-run script
+
+## Claude
+
+Meanwhile I'll run mGBA with the same dump on every video frame.
+
+- tool `Bash`: Run PS2 replay with dumps for 300 s
+
+- tool `Bash`: Find the mGBA replay command used before
+
+- tool `Bash`: Run mGBA replay dumping Link entities every frame
+
+## Claude
+
+Now a comparison script, while PCSX2 runs:
+
+- tool `Bash`: Write dump comparison script
+
+- tool `Bash`: Compare dumps so far
+
+## Claude
+
+The PS2 log is written at the end of the run, so I'll wait for it to finish.
+
+- tool `ToolSearch`: 
+
+## Claude
+
+The PS2 replay run is still going (300 seconds of emulation). Once it finishes, I'll compare its dumps of both Links with mGBA's to find the first frame where they differ.
+
+- tool `Bash`: Compare PS2 and mGBA Link dumps
+
+- tool `Bash`: List TLB misses and log line length
+
+## Claude
+
+TLB misses showed up in this run, so I'm checking those first.
+
+- tool `Bash`: Identify functions and timing of TLB misses
+
+- tool `Bash`: Compare dump prefixes
+
+## Claude
+
+The first difference is at game frame 810, on the title screen, in entities the game later throws away. Earlier screenshots matched through Choose a Stage, so I'll look from the stage on:
+
+- tool `Bash`: Summarize diffs from game frame 1500 on
+
+- tool `Bash`: Show differing bytes at chosen frames
+
+## Claude
+
+Byte-level diffs of the slot area are noisy (stale data in freed slots). I'll compare Link positions only. Finding the earlier position logger:
+
+- tool `Bash`: Find the old Link position logger
+
+- tool `Bash`: Search history for position logger and Link symbols
+
+- tool `Bash`: Print mGBA Link positions over time
+
+## Claude
+
+The mGBA numbers never change, which can't be right. Checking the raw dump:
+
+- tool `Bash`: Show raw mGBA dump for one frame
+
+- tool `Bash`: Take mGBA screenshots at frames 3000 and 6000
+
+- tool `Bash`: Retry screenshots with output folder created
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/mshot/p0_f06000.png
+
+- tool `Bash`: Screens and wider entity dump at later frames
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/mshot/p0_f15000.png
+
+## Claude
+
+mGBA is in the stage at that frame, but the Links aren't in the slots I dumped. I'm using the camera target pointer (0x03000450) to find them.
+
+- tool `Bash`: Read camera target pointer in mGBA
+
+## User
+
+[Request interrupted by user for tool use]
+
+## User
+
+I can see that mGBA is in A Link to the Past, where it shouldn't be
+
+## Claude
+
+You're right, that's A Link to the Past (Link's house), so the mGBA run went to the wrong game. My comparison was measuring nothing useful: mGBA never entered Four Swords, which is why its entity slots stayed frozen.
+
+The likely cause is a ROM mismatch. I ran mGBA on `baserom.gba`, the full ROM with the game-select screen, while the PS2 build is Four Swords only (`FS_ONLY`), with no game select. I probably gave the replay the wrong ROM. That would shift the menu inputs so they land on A Link to the Past. If so, Step 58's "identical through Choose a Stage" result needs rechecking too.
+
+Two things to look at:
+1. Which ROM the session recording was made on. There's an `fs_only.gba` in my scratch folder, and the walkthrough or your recording notes should say.
+2. Then rerun mGBA on that ROM with the same dumps, take screenshots at a few frames to confirm it's in Four Swords, and redo the comparison against Link positions. I'll find those through the camera target pointer, not fixed slots.
+
+Separately, the PS2 run logged TLB misses after game frame 6,040, in `sub_0803857C`, `AgbMain` and `gs_sub_0800935C`, mostly null-pointer reads. I'll track those down once the replays line up, since they may come from the PS2 having drifted onto a different path.
+
+I've stopped. Should I go ahead with step 1?
+
+## User
+
+Yes. Another thing to keep in mind; if mGBA has lag frames and PCSX2 doesn't, why don't we simply pause the PS2 to compensate?
+
+## Claude
+
+Pausing the PS2 is close to what the conversion already does. It holds the inputs back by the lag frames, so the PS2 effectively waits through them. What a pause leaves out is that the GBA's VBlank interrupt still runs on lag frames, even while the game's main loop is busy. It advances things like animation counters and timers, and maybe sound. Your idea works if the "pause" runs the VBlank interrupt handler alone, without a game frame. The port could do exactly that when the replay tells it a lag frame happened. If the replays still drift after the ROM fix, I'll add it.
+
+Now, which ROM was the recording made on:
+
+- tool `Bash`: Find which ROM replays are run on
+
+## Claude
+
+It's `recordings/fs_only.gba`. Rerunning mGBA on it with Link dumps, and checking it's in Four Swords:
+
+- tool `Bash`: Rerun mGBA replay on the FS-only ROM
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/mshot/p0_f12000.png
+
+## Claude
+
+Four Swords now. The game-frame log matches the earlier one, so the conversion was fine. Comparing:
+
+- tool `Bash`: Compare PS2 dumps against FS-only mGBA dumps
+
+- tool `Bash`: List differing frames for player 1
+
+## Claude
+
+The runs match from game frame 960 to 3,000, through the file select. Small differences start at 3,030 (Choose a Stage), and big ones at 6,060, where the stage loads. The first ones:
+
+- tool `Bash`: Show first differing bytes after file select
+
+## Claude
+
+The first differences look like animation counters that are one step apart. That could be a one-frame offset in how I'm pairing the frames, not real drift. Checking against the neighbouring frames:
+
+- tool `Bash`: Find mGBA frame offsets matching PS2 dumps
+
+- tool `Bash`: Check frame offset through the stage
+
+- tool `Bash`: Restore saves and remove replay scripts
+
+## Claude
+
+Your instinct about the lag frames looks right. With the correct ROM (`recordings/fs_only.gba`), the PS2 replay matches mGBA byte for byte through the title, file select and Choose a Stage. It only comes apart at the stage load, which is where mGBA has its 78-frame lag burst (video frames 6189–6266).
+
+The comparison checked the first 123 bytes of the Link entity area every 30 game frames:
+
+- **Up to game frame 3,000:** identical, once the title screen's animation is past.
+- **3,030 to 6,030:** still identical, but the PS2 is exactly one frame ahead of mGBA. Probably one of the 9-frame lag bursts during the file select shifts the converted inputs by a frame. It's harmless but worth fixing.
+- **From 6,060, the stage load:** no match against any mGBA frame within ±150, so the runs have truly split.
+
+The TLB misses in this run all start around game frame 6,040, so they're probably fallout from the split: the PS2 running code with state mGBA never had. I'll still collect them if they remain once the replay lines up.
+
+Next is to run the game's VBlank interrupt handler alone on each lag frame, without a game frame. I'd do it through a lag-frame list from `--gameframes`, so the PS2 knows which VBlanks to add. Then I'd check whether the stage load stays in sync and fix the one-frame offset. Should I go ahead?
+
+The per-frame dump code is still in [src/ps2/main.c](src/ps2/main.c), with `#define DUMPLOG 30` turned on. It isn't committed, and I'll remove it before any commit. The `--dump N-M` frame-range addition to `tools/mgba_run.c` is also uncommitted, and I'd keep that one. Your saves are back in `build/ps2/`.
+
+## User
+
+Proceed, but I still want to answer one more question. Are the "lag frames" actual rendering or processing lag, or are they simply waiting for communication between emulated GBAs?
+
+## Claude
+
+Good question. I'll check where GBA 0's code is during the lag frames before I build anything.
+
+- tool `Bash`: Locate game-frame counting in mgba_run
+
+- tool `Bash`: Read the game-frame output code
+
+- tool `Bash`: Sample GBA 0's PC during lag frames
+
+- tool `Bash`: Name the code running during each lag burst
+
+- tool `Bash`: Look up the lag-burst functions
+
+- tool `Bash`: Read the hot functions' C
+
+- tool `Bash`: Find VBlank handling in frame.c
+
+- tool `Bash`: Read VBlank run and script loading code
+
+- tool `Bash`: Read input.c script loading
+
+- tool `Bash`: Add lag-frame VBlank replay to input.c and frame.c
+
+## Claude
+
+Now `to_gameframes.py` writes the lag list:
+
+- tool `Bash`: Generate lag list and converted replays
+
+## Claude
+
+Building and running with the lag list (empty saves again, your saves moved aside):
+
+- tool `Bash`: Build with lag replay and stage replay files
+
+## Claude
+
+Built. Running the replay (300 s):
+
+- tool `Bash`: Run lag replay and check frame offsets
+
+- tool `Bash`: Find nearest mGBA frame for post-load dumps
+
+- tool `Bash`: Find when the PS2's frozen state changes
+
+- tool `Bash`: Find when the PS2's frozen state changes
+
+- tool `Bash`: Read camera target and player number in mGBA
+
+## Claude
+
+In mGBA the Links are in the first two slots (0x03001050 and 0x030010D0). On the PS2, slot 0 is empty after the load. A screenshot of the PS2 around game frame 7,000 should show what state it's in:
+
+- tool `Bash`: Screenshot PS2 replay at about 135 s
+
+- tool `Bash`: Check screenshot run log
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/lagshot.png
+
+- tool `Bash`: Read sub_0800935C asm and list TLB misses
+
+- tool `Bash`: Find first TLB miss and sub_0803857C prototype
+
+- tool `Bash`: List calls with narrowing casts in generated C
+
+- tool `Bash`: Find where gstate2c output goes
+
+- tool `Bash`: Locate generated gstate C files
+
+- tool `Bash`: List callees receiving narrowing casts
+
+- tool `Bash`: List every callee getting a narrowing cast
+
+## Claude
+
+Checking whether these TLB misses also showed up before the cast change. The Step 58 run log (`sess.log`) is from before it:
+
+- tool `Bash`: Count TLB misses in older run logs
+
+## Claude
+
+Earlier replay runs had no TLB misses, and they reached the stage. Now the replay stalls at the load with truncated pointers. Reading `sub_0803857C`, which stores through one:
+
+- tool `Bash`: Read sub_0803857C source
+
+- tool `Bash`: Read SpawnTileObject
+
+- tool `Bash`: Check sub_08012728 prototype and uses
+
+## Claude
+
+The prototypes I've checked look right. A quicker test: rebuild with the casts turned off and see whether the misses go away.
+
+- tool `Bash`: Read c_args in gstate2c
+
+- tool `Bash`: Find generation rules in Makefile
+
+- tool `Bash`: Disable casts temporarily and regenerate
+
+- tool `Bash`: Find PS2 generation rule
+
+- tool `Bash`: Read PS2 auto-C rules
+
+- tool `Bash`: Find who writes gstate_ps2 files
+
+## Claude
+
+I'm running an A/B test: the same replay rebuilt without the narrow-argument casts, to see whether they cause the stall at the stage load.
+
+- tool `Bash`: Check generated file timestamps
+
+- tool `Bash`: Regenerate auto C without casts
+
+- tool `Bash`: Build without casts and run replay past stage load
+
+- tool `Bash`: Check no-cast run progress and matches
+
+- tool `Bash`: Check no-cast matches before the stage
+
+- tool `Bash`: Compare prototypes with definitions
+
+## Claude
+
+The prototypes match their definitions. Two have no C definition, `sub_08012468` and `sub_08012494`, plus `sub_08008F78`. Checking their real arguments:
+
+- tool `Bash`: Look up the three callees without C
+
+- tool `Bash`: Read sub_08008F78
+
+- tool `Bash`: Restore casts, rebuild, disassemble bad store
+
+- tool `Bash`: Trace s0 and calls in sub_0803857C
+
+## Claude
+
+`-finstrument-functions` is on, so every function calls `__cyg_profile_func_enter`/`exit`. If those hooks are hand-written they might not keep `s0`. Checking them, and any assembly in the port:
+
+- tool `Bash`: Read profile hooks and list port assembly
+
+- tool `Bash`: Add register check around the calls and run
+
+- tool `Bash`: Show link error
+
+- tool `Bash`: Fix symbol visibility, rebuild and run
+
+- tool `Bash`: Check whether the run reached and matched the stage
+
+- tool `Bash`: Read set_palette_color
+
+- tool `Bash`: Find icall and inline assembly in port code
+
+- tool `Bash`: Show inline asm in shared.c and video.c
+
+- tool `Bash`: Read --writes option docs
+
+## Claude
+
+`--writes` only covers EWRAM and IWRAM, so I'll make a scratch copy of the runner that logs Thumb stores below 0x02000000:
+
+- tool `Bash`: Read the store-decoding code
+
+- tool `Bash`: Log low-address loads and stores in mGBA
+
+- tool `Bash`: Check mGBA low-address run output
+
+## Claude
+
+mGBA shows no Thumb ROM code touching addresses below 0x02000000 through the stage load, so the stray accesses come from the PS2 side. Next, the order the misses happened in:
+
+- tool `Bash`: Show TLB miss order around frame 6040
+
+- tool `Bash`: Read sub_0800934C asm and translation
+
+- tool `Bash`: Read the cross-function branch translation
+
+- tool `Bash`: Read gstate_run
+
+- tool `Bash`: Locate gstate_run definition
+
+- tool `Read`: /home/alex/Documents/zeldaalttp-ps2/include/gstate.h
+
+- tool `Bash`: Check copy addresses on the PS2
+
+- tool `Bash`: Read gstate watch hooks
+
+- tool `Bash`: Remove reg check, add bad-entry logger
+
+## Claude
+
+Before running, one thing stands out. The trace ring (`GSTATE_RING`, 0x0203C200, 1024 × 12 bytes, up to 0x0203F200) lives in GBA EWRAM, and I'll check whether it overlaps the gstate stack:
+
+- tool `Bash`: Check gstate stack and ring addresses
+
+- tool `Bash`: Read gstate memory layout notes
+
+- tool `Bash`: Check game use of top EWRAM in mGBA
+
+## Claude
+
+The game does use it: 7,619 nonzero bytes in 0x02038000–0x02040000 at frame 6300 in mGBA. The comment in `gstate.h` assumed that area stayed zero. Which ranges?
+
+- tool `Bash`: Map used ranges in top EWRAM over time
+
+- tool `Bash`: Find highest used EWRAM address in mGBA
+
+- tool `Bash`: Build with bad-entry logger and run
+
+- tool `Bash`: Fix declaration, rebuild and run
+
+## Claude
+
+No TLB misses this time either. The bug comes and goes with small code changes, which fits stack corruption that depends on layout. Does this run match mGBA after the load?
+
+- tool `Bash`: Check post-load match for this run
+
+- tool `Bash`: Find where this run diverged
+
+- tool `Bash`: Inspect early divergence and input loading
+
+## Claude
+
+I'll stop here and report, since the picture has changed. First I'm restoring your saves and taking the replay files out of the build folder:
+
+- tool `Bash`: Restore saves and list uncommitted changes
+
+## Claude
+
+To your question: the lag frames are real processing lag, not waiting on the link. I sampled where GBA 0 is on every lag frame in mGBA:
+- **The two big bursts (80 and 78 frames)** are room loads. The game is inside the LZ77 decompression (`sub_0801484C`) and the loop that places tile objects across the whole room (`sub_08015AC4` / `sub_0800932C`).
+- **The small bursts (1–11 frames)** during the title and menus are mostly text drawing (`sub_0800F0A0`) or the BIOS interrupt code. A few of those could be link waits, but they don't matter here.
+
+Running the VBlank handler on lag frames made no difference. I added it (`host:replay.lag`, written by `to_gameframes.py`), and the runs still split at the same point. They even stayed in step straight through the 80-frame burst at game frame 3,303, so the lag frames aren't what breaks the replay.
+
+What breaks it is a crash bug in the port at the first stage load. In the failing runs, saved registers come back wrong. `sub_0803857C` gets 0xC64 in a register that should still hold 0x03000000. That's where the TLB misses come from, and after it the PS2 stays on a black screen instead of entering the stage. The bug depends on code layout:
+- **With a temporary register check added** around the calls, the bug vanished and the replay matched mGBA through the load to frame 7,500 (still one frame ahead).
+- **After removing the narrow-argument casts**, there were no misses, but the down/left sign bug comes back and the runs part much earlier, so the casts aren't the cause.
+- **The latest build** had no misses either, and fell about 130 frames behind mGBA before the stage.
+
+So some builds run into it and some don't, which looks like memory corruption.
+
+My main suspect is the gstate stack. It grows down from 0x02040000 and has only about 3.5 KB before it reaches the debug trace ring at 0x0203C200–0x0203F200. A deep call chain during a room load would put stack frames under the ring, and every traced function entry would then overwrite saved registers. In mGBA the game itself never uses memory above 0x0203BF02, so there's room to move things. This is still unconfirmed.
+
+The fix to test is shrinking the ring to 256 entries, which leaves the stack about 12.5 KB, and logging the lowest stack address reached during the load. Then I'd run the replay on several builds to make sure the result holds.
+
+Nothing is committed. Your saves are back and the replay files are out of `build/ps2/`. Uncommitted changes:
+- **To keep:** the lag replay in `input.c` and `frame.c`, `--lag` in `to_gameframes.py`, and `--dump N-M` in `mgba_run`.
+- **To remove before any commit:** the `DUMPLOG` dump code in `main.c` and the `sub_0800935C` logger in `main.c` and `shared.c`.
+
+Should I go ahead with the stack test?
+
+## User
+
+Is there any way we can just give the stack more memory?
+
+## Claude
+
+Yes. The simplest fix is to move the trace ring out of the stack's way, which needs no new memory.
+
+- **What's in the top 16 KB of EWRAM now:** the game's data ends at 0x0203BF02, so 0x0203C000–0x02040000 is the port's. `gCpu` takes the first 0x100 bytes, the trace ring takes 12 KB, and the gstate stack gets only the ~3.5 KB left at the top.
+- **Move the ring:** it's a debugging aid that only port code reads (the hang watchdog in `frame.c`), so it doesn't need a GBA address. As an ordinary PS2 array, it frees about 16 KB for the stack (0x0203C100–0x02040000), more than four times what it has now. It's a small change: the `GSTATE_RING` define plus the three places in `frame.c` that use 0x0203C200.
+- **Add a floor check:** `gstate_run` already checks sp. I'd make it stop with a fatal error if sp drops below 0x0203C100, so an overflow becomes a clear message instead of silent corruption.
+
+If 16 KB ever isn't enough, there's a bigger option. The EWRAM TLB entry maps 0x02040000–0x0207FFFF as a mirror of the same memory. That half could point at its own physical RAM, giving the stack up to 256 KB at an address the game doesn't use, at the cost of copying the used part when switching instances. I'd only do that if the floor check ever trips.
+
+I'd do the ring move and the floor check, then rerun the replay on a couple of builds. That confirms the corruption is gone, and the floor check shows whether 16 KB is enough. Should I go ahead?
+
+## User
+
+Yes
+
+- tool `Bash`: Find every use of the trace ring
+
+- tool `Bash`: Read AUTO_TRACE and the profile hook
+
+## Claude
+
+Making the changes: the ring becomes a PS2 array (the GBA build keeps its address), and every gstate function entry checks the stack floor and records the lowest sp.
+
+- tool `Bash`: Move ring to PS2 memory and add floor check
+
+- tool `Bash`: Define ring and floor check, build
+
+- tool `Bash`: Confirm rebuilt objects use the new ring
+
+## Claude
+
+Built. Now the replay twice: this build, and a second build with an unrelated code change to shift the layout (the bug came and went with layout before).
+
+- tool `Bash`: Run replay with the moved ring and compare
+
+- tool `Bash`: List TLB misses in the new run
+
+- tool `Bash`: Read how gstate2c emits PS2 entry stubs
+
+- tool `Bash`: Read the PS2 stub generator
+
+- tool `Bash`: Make the bad entry fatal to print the ring
+
+- tool `Bash`: Build and run to the fatal ring print
+
+## Claude
+
+The ring shows the path: `sub_0800935C` was called straight from C (lr is the stub's return marker), right after a run of calls to the copy at 0x00b9e724. Naming them:
+
+- tool `Bash`: Name the ring addresses and C callers
+
+- tool `Bash`: Search every reference to 0x0800935C
+
+- tool `Bash`: Find how the PS2 resolves sub_08009380
+
+- tool `Bash`: Find the label and other code aliases in ldscript
+
+- tool `Bash`: Read ldscript aliases and the asm around +0x24
+
+## Claude
+
+The label goes right before `push {lr}` at 0x08009380:
+
+- tool `Bash`: Add real label, check matching build, regenerate
+
+- tool `Bash`: Run the replay with the entry-point fix
+
+- tool `Bash`: Inspect mismatches before the stage and before the crash
+
+- tool `Bash`: Name the crash site and ring entries
+
+- tool `Bash`: Remove dump code and review the diff
+
+## Claude
+
+My `gstate.h` comment claims the stack overflowed, which turned out to be false. Correcting it:
+
+- tool `Bash`: Fix comment, write walkthrough step, recheck match
+

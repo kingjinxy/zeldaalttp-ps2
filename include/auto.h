@@ -50,14 +50,16 @@ void ps2_io_write(u32 a, u32 v, u32 size);
 
 // indirect calls of translated code: on the PS2 the target may be a GBA address (an IWRAM routine, a global-state
 // copy), which src/ps2/icall.c resolves to something callable with the C convention
-// PS2 debugging: entries of translated C-convention functions go into the global-state trace ring (0x0203C200,
+// PS2 debugging: entries of translated C-convention functions go into the global-state trace ring (ps2_ring,
 // include/gstate.h) as GBA address | 0x80000000
 #ifdef PLATFORM_PS2
 void ps2_trace_print(u32 a);
 extern volatile int ps2_trace_on;  // src/ps2/frame.c: print every traced entry over SIO
 extern u32 ps2_gstate_watch;  // src/ps2/frame.c: a global-state entry address whose calls go to ps2_gstate_seen(r0 at entry)
 void ps2_gstate_seen(u32 r0);
-#define AUTO_TRACE(a) do { volatile u32 *r_ = (volatile u32 *)0x0203C200; u32 i_ = r_[0] % 1024; \
+extern volatile u32 ps2_ring[];  // src/ps2/frame.c: the trace ring, in PS2 memory (not the game's, nor the gstate stack's)
+extern u32 ps2_gstate_min_sp;    // src/ps2/frame.c: the lowest global-state sp seen (the heartbeat logs it)
+#define AUTO_TRACE(a) do { volatile u32 *r_ = ps2_ring; u32 i_ = r_[0] % 1024; \
     r_[1 + 3 * i_] = (a) | 0x80000000u; r_[0] = i_ + 1; if (ps2_trace_on) ps2_trace_print((a) | 0x80000000u); } while (0)
 #else
 #define AUTO_TRACE(a) ((void)0)

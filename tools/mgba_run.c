@@ -1,7 +1,7 @@
 // Headless mGBA runner: 1-4 GBAs on one link cable, a button script per GBA, screenshots and RAM dumps
 // at chosen frames. Build: tools/mgba_run.sh. Usage:
 //   mgba_run ROM FRAMES [--players N] [--inputs FILE] [--inputsP FILE] [--saveP FILE]
-//            [--shot N,N,...] [--out DIR] [--dump N:ADDR:LEN] [--watch ADDR] [--coverage FILE]
+//            [--shot N,N,...] [--out DIR] [--dump N[-M]:ADDR:LEN] [--watch ADDR] [--coverage FILE]
 // --coverage: write a bitmap of executed ROM halfwords (bit n = address 0x08000000 + 2n, all GBAs combined)
 // for tools/reach.py. Same run as without it (same RAM), a little slower.
 // --loads FILE: every load from ROM data (>= 0x08137B10), all GBAs: BIOS decompress/copy calls (swi 0x0B,
@@ -668,7 +668,8 @@ static void onFrame(void *context) {
 	}
 	for (int d = 0; d < ndumps; d++) {
 		char *s;
-		if (strtoul(dumps[d], &s, 0) != frame) continue;
+		unsigned from = strtoul(dumps[d], &s, 0), to = *s == '-' ? strtoul(s + 1, &s, 0) : from;
+		if (frame < from || frame > to) continue;
 		unsigned addr = strtoul(s + 1, &s, 0), len = strtoul(s + 1, NULL, 0);
 		printf("p%d frame %u: dump 0x%08X:", id, frame, addr);
 		for (unsigned i = 0; i < len; i++) printf("%s%02X", i % 16 ? " " : "\n  ", core->busRead8(core, addr + i));

@@ -1592,3 +1592,37 @@ What a GBA sets up for itself, now done per player when the copies are made (`ps
   include/functions.h is narrow (u8, s8, u16, s16, bool8; 86 arguments in the generated files). Left as is: indirect
   calls into C through `gstate_run` (function tables), which have no prototype to go by.
 - **Result:** Link 2 walking down moves 1 pixel a frame south (788 to 827, then a wall); no TLB misses.
+
+## Step 61: the mGBA replay through the first stage load (2026-11-25)
+
+- **Right ROM:** the session recording replays on `recordings/fs_only.gba` (mGBA on `baserom.gba` takes the game
+  select to A Link to the Past). `mgba_run --dump N-M:ADDR:LEN` dumps every frame of a range; the PS2 side logged
+  0x03001050-0x0300114F every 30 game frames (temporary code, removed), compared by the nearest mGBA frame.
+- **Lag frames (user's question: rendering/processing or link waits?):** sampling GBA 0's pc on each lag frame,
+  the two big bursts (80 and 78 frames) are room loads: LZ77 decompression (`sub_0801484C`) and the tile-object
+  scan of the whole room (`sub_08015AC4`, `sub_0800932C`); the small menu bursts are text drawing (`sub_0800F0A0`)
+  and BIOS interrupt code. The user's idea (pause the PS2 through them) is what the converted inputs do already; the
+  GBA's VBlank handler still runs on lag frames, so `to_gameframes.py ... LAG` writes `build/ps2/replay.lag` and
+  `frame.c` runs the VBlank handler that many extra times at the end of that game frame (`input.c` loads it). It made
+  no difference: the replay stays exact through the 80-frame burst at game frame 3,303 either way.
+- **The real break, the first stage load:** the PS2 matched mGBA through Choose a Stage (one frame ahead, see
+  below), then hung on a black screen with 50 TLB misses: `sub_0803857C` stored through s0 = 0xC64 where it held
+  0x03000000, `gs_sub_0800935C` got an entity of 0xC26, `AgbMain` loaded 0x6D52. Tried first, wrong:
+  - lag VBlanks (above); removing the narrow-argument casts of step 60 (no misses, but the down/left bug back and an
+    earlier split, so the run never got there);
+  - a stack overflow into the trace ring: the gstate stack (from 0x02040000 down) had 3.5 KB above the 12 KB ring at
+    0x0203C200. The ring moved to PS2 memory (`ps2_ring`, frame.c; the stack now has 16 KB) and every gstate entry
+    checks a floor (0x0203C100, fatal below). The deepest sp in the replay was 0x0203FF74, 140 bytes: not it.
+    Kept anyway (the game's own data ends at 0x0203BF02, mGBA).
+  - A wrapper around `sub_0803857C`'s calls hid the bug (LTO no longer inlined them): a hint it was in a call.
+- **Cause:** `ldscript.txt` made `sub_08009380` (a second entry point, tile at position/layer) the alias
+  `sub_0800935C + 0x24`. On the PS2, `sub_0800935C` is a compiled MIPS function, so C calls to `sub_08009380`
+  (file_select.c, the room's tile objects) jumped 0x24 bytes into its MIPS code. Found by making the bad entry fatal:
+  the ring (lr = the C-entry marker) showed a C call right after `sub_0800932C` calls.
+  **Fix:** a real `.global sub_08009380` label in `asm/non_matching/rom1/sub_0800935C.inc` (the alias removed), so
+  gstate2c gives it a C entry at offset 0x24. `make compare` OK. It was the only `+ offset` alias.
+- **Result:** no TLB misses; the stage loads and the PS2 matches mGBA exactly (Links' entity bytes) from game frame
+  6,270 to 9,720, one frame ahead throughout (from Choose a Stage on; not found yet).
+- **Left:** at 9,750 Link 1's +0x4C points to another slot (0x03002050 against mGBA's 0x03001BD0), and at ~10,290 a
+  `gstate_run(0)` from `sub_08009780` (FATAL: ICALL to 00000000). Before 6,270 this build's pairing also wanders
+  (only an animation byte differs; earlier builds matched there).

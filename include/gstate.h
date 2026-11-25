@@ -15,13 +15,23 @@ struct GstateCpu {
 #define GSTATE_BAD_ADDR (*(volatile u32 *)0x0203C0F0)  // set when gstate_run meets an address it can't run
 #define GSTATE_MAGIC_RET 0xFFFFFFF1u  // lr of a wrapper call: returning there ends the global-state code
 
-// debugging: every global-state function entry appends (address, sp, lr) to a 1024-entry ring at 0x0203C200
+// debugging: every global-state function entry appends (address, sp, lr) to a 1024-entry ring: on the PS2 in its own
+// memory (ps2_ring, src/ps2/frame.c), so the stack below has 0x0203C100-0x02040000 (16 KB; the game's EWRAM ends at
+// 0x0203BF02, mGBA through a stage; at 0x0203C200 the ring left it 3.5 KB). frame.c's gstate_low_sp stops the game
+// below the floor; the deepest seen in a stage replay was 0x0203FF74.
+#ifdef PLATFORM_PS2
+#define GSTATE_RING ps2_ring
+#define GSTATE_STACK_FLOOR 0x0203C100u
+#else
 #define GSTATE_RING ((volatile u32 *)0x0203C200)
+#endif
 #define GSTATE_TRACE(a) do { u32 i_ = GSTATE_RING[0] % 1024; GSTATE_RING[1 + 3 * i_] = (a); GSTATE_RING[2 + 3 * i_] = gCpu.r[13]; \
     GSTATE_RING[3 + 3 * i_] = lr; GSTATE_RING[0] = i_ + 1; GSTATE_TRACE_PRINT(a); } while (0)
 #ifdef PLATFORM_PS2  // src/ps2/frame.c: prints entries while ps2_trace_on is set; the shared world watches one entry
 #define GSTATE_TRACE_PRINT(a) do { if (ps2_trace_on) ps2_trace_print(a); \
-    if ((a) == ps2_gstate_watch) ps2_gstate_seen(gCpu.r[0]); } while (0)
+    if ((a) == ps2_gstate_watch) ps2_gstate_seen(gCpu.r[0]); \
+    if (gCpu.r[13] < ps2_gstate_min_sp) gstate_low_sp(); } while (0)
+void gstate_low_sp(void);  // src/ps2/frame.c: a new lowest sp; fatal below GSTATE_STACK_FLOOR
 #else
 #define GSTATE_TRACE_PRINT(a) ((void)0)
 #endif

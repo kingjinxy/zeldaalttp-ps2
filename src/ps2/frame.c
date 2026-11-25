@@ -7,6 +7,9 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+volatile u32 ps2_ring[1 + 3 * 1024];  // the trace ring (include/gstate.h GSTATE_TRACE): count, then (address, sp, lr)
+u32 ps2_gstate_min_sp = 0xFFFFFFFFu;  // the lowest global-state sp seen
+
 #define REG16(a) (*(volatile u16 *)(a))
 #define REG_DISPSTAT 0x04000004u
 #define REG_VCOUNT 0x04000006u
@@ -40,8 +43,8 @@ void ps2_fatal(const char *fmt, ...)
     va_end(ap);
     sio_putsn("FATAL: ");
     sio_puts(buf);
-    {  // the last functions entered (trace ring, 0x0203C200)
-        volatile u32 *ring = (volatile u32 *)0x0203C200;
+    {  // the last functions entered (trace ring)
+        volatile u32 *ring = ps2_ring;
         u32 i = ring[0] % 1024, k;
         int n = snprintf(buf, sizeof(buf), "FATAL: ring");
         for (k = 1; k <= 12 && n < 240; k++)
@@ -98,20 +101,25 @@ void ps2_vblank_run(void)
     }
 }
 
+int ps2_input_lag(void);
+
 void ps2_vblank_wait(void)
 {
+    int n = ps2_input_lag();
+    while (n--)  // the GBA's lag frames (replays only): VBlanks while the game was busy, before the one that ends it
+        ps2_vblank_run();
     ps2_vblank_run();
     WakeupThread(ps2_main_thread);  // this instance's frame is done: main.c draws it
     SleepThread();                  // until its next frame (main.c has mapped this instance again)
 }
 
 // Watchdog: once a second (EE VBlank interrupt) a heartbeat with the frame count; when the frame count stops, the
-// interrupted pc and the last functions entered (ring at 0x0203C200, include/gstate.h GSTATE_TRACE) instead, so a hang
+// interrupted pc and the last functions entered (ps2_ring, include/gstate.h GSTATE_TRACE) instead, so a hang
 // shows where the game is. SIO only, polled.
 static int watch_handler(int cause)
 {
     static u32 ticks, lastFrame;
-    volatile u32 *ring = (volatile u32 *)0x0203C200;
+    volatile u32 *ring = ps2_ring;
     char buf[160];
     (void)cause;
     if (++ticks % 60 == 0) {
@@ -120,7 +128,7 @@ static int watch_handler(int cause)
         int n;
         __asm__ volatile("mfc0 %0, $14" : "=r"(epc));  // the interrupted pc (EPC is still set in the handler)
         if (sFrame != lastFrame) {  // tp-ps2's pcsx2_run.py reads this line as the heartbeat
-            snprintf(buf, sizeof(buf), "heartbeat: vblank %u frame %u", ticks, sFrame);
+            snprintf(buf, sizeof(buf), "heartbeat: vblank %u frame %u gstate sp min %08x", ticks, sFrame, ps2_gstate_min_sp);
             sio_puts(buf);
             lastFrame = sFrame;
             ExitHandler();
@@ -158,11 +166,21 @@ void ps2_trace_print(u32 a);
 extern volatile int ps2_trace_on;
 u32 ps2_gstate_watch;  // 0: nothing watched (shared.c sets it)
 
+// a new lowest global-state sp (GSTATE_TRACE): below 0x0203C100 the stack would overwrite gCpu and the game's EWRAM
+void ps2_fatal(const char *fmt, ...);
+__attribute__((no_instrument_function)) void gstate_low_sp(void)
+{
+    u32 sp = *(volatile u32 *)(0x0203C000 + 13 * 4);  // gCpu.r[13]
+    ps2_gstate_min_sp = sp;
+    if (sp < 0x0203C100u)
+        ps2_fatal("gstate stack overflow: sp %08x below 0x0203C100", sp);
+}
+
 // -finstrument-functions on hand-written game C (Makefile.ps2): each entry goes into the trace ring too, so the
 // watchdog names hand C as well
 __attribute__((no_instrument_function)) void __cyg_profile_func_enter(void *fn, void *site)
 {
-    volatile u32 *ring = (volatile u32 *)0x0203C200;
+    volatile u32 *ring = ps2_ring;
     u32 i = ring[0] % 1024;
     (void)site;
     ring[1 + 3 * i] = (u32)fn;
@@ -180,3 +198,4 @@ __attribute__((no_instrument_function)) void ps2_trace_print(u32 a)
     sio_puts(b);
 }
 __attribute__((no_instrument_function)) void __cyg_profile_func_exit(void *fn, void *site) { (void)fn, (void)site; }
+
