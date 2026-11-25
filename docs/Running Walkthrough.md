@@ -1719,3 +1719,18 @@ What a GBA sets up for itself, now done per player when the copies are made (`ps
   `& (MAX_PLAYERS - 1)` keeps `& 3` there.
 - Check: the session replay matches mGBA at 91 of 91 samples per player (game frames 18,000-45,000); `make compare`
   OK.
+
+## Step 67: first try at players 5-8 in one world (2026-11-25)
+
+- `INSTANCES=8 SHARED_WORLD=1 ONE_WORLD=1 SCREENS=8 GS_RENDER=1 WIDE_VIEW=1` crashed at start: the port's
+  per-instance arrays were sized four (`video.c` `sView`/`MAX_INSTANCES`, `io.c`/`save.c` EEPROM). Now eight.
+- Inputs for one-world tests: the converted session replay (scratch `gf_p1`/`gf_p2`, game frames). The older
+  `scripts_play` copies are in video frames and leave the game at "Linking with other systems" (taken at first for a
+  regression; a bisect with `MAX_PLAYERS` back at 4 ruled today's changes out).
+- With 8 instances the link still reports 4 GBAs, so the game sets up a 4-player stage. Experiment (not committed):
+  at stage entry the port creates Links 5-8 (`sub_08012824(n, ...)`, a tile right of player n-4's). The first
+  stage frame then faults in `sub_080015A8`, `sub_0800127C` and `sub_080020C8` (pointers 0xE00000xx): Link code
+  indexes the player records by the Link's player number, and the stage setup fills records only for the game's
+  four players. Next: what the setup puts in a record (and per player elsewhere: sprite tiles `n << 5`, palette
+  `n + 7`), done for 5-8.
+- `sub_08012824` reads `unk60` through `C80_PLAYER` (player 5-8's entry instead of the next field).

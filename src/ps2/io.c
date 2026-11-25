@@ -12,9 +12,9 @@
 // The game talks to it with DMA3 bit streams (one bit per halfword, bit 0): a read request "11" + address + "0", then
 // a 68-bit read (4 junk bits, 64 data); a write "10" + address + 64 data bits + "0". Address: 6 or 14 bits.
 extern int ps2_cur_instance;  // tlb.c: the game instance mapped now
-u8 ps2_eeprom[4][8192];     // per instance
-int ps2_eeprom_dirty[4];
-static u32 sEepromRead[4];  // byte offset of the block the last read request named
+u8 ps2_eeprom[8][8192];     // per instance (up to 8)
+int ps2_eeprom_dirty[8];
+static u32 sEepromRead[8];  // byte offset of the block the last read request named
 
 static void eeprom_command(const volatile u16 *src, u32 n)
 {

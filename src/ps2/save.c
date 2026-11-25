@@ -6,8 +6,8 @@
 #include <string.h>
 
 // instance 0: host:zeldaalttp.sav, instance i: host:zeldaalttp_p<i+1>.sav
-extern u8 ps2_eeprom[4][8192];
-extern int ps2_eeprom_dirty[4];
+extern u8 ps2_eeprom[8][8192];
+extern int ps2_eeprom_dirty[8];
 
 static void path(int inst, char *buf, int n)
 {

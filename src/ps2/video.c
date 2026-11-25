@@ -12,7 +12,7 @@
 
 #define GBA_W 240
 #define GBA_H 160
-#define MAX_INSTANCES 4
+#define MAX_INSTANCES 8  // players the port can run (tlb.c saved blocks: 8)
 #define IO16(o) (*(volatile u16 *)(0x04000000u + (o)))
 #define IO32(o) (*(volatile u32 *)(0x04000000u + (o)))
 

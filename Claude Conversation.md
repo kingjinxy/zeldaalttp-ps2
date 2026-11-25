@@ -25268,3 +25268,104 @@ All 91 of 91 samples match for both players, and there were no TLB misses. Commi
 
 - tool `Bash`: Write docs and commit
 
+## Claude
+
+The mirror is in, and the two-player replay matches mGBA on all 91 samples for both players from game frame 18,000 to 45,000, with no TLB misses. `make compare` still reports `zeldaalttp.gba: OK`. Committed as 7a0ce7a, with walkthrough Step 66 and the plan updated.
+
+- **The mirror:** players 5–8's per-player fields of `gUnknown_03006C80` now live in a second copy of the struct, `gUnknown_03006C80_hi` at 0x04001680 in the PS2's spare page. `C80_PLAYER(field, i)` picks the right copy by player number. Players 1–4 stay where they were, so no asm code had to change.
+- **Loops now running to 8 on the PS2:** the per-player stats setup (`sub_080383F0`, `sub_08039D64`) and the arrow manager (`sub_08052A88`, `sub_08052B88`, `sub_08052C0C`). Together with the three key-handling loops from the last commit, that's every C loop that clearly runs over players.
+
+Still four-player only:
+- **28 asm functions** that use `gUnknown_03006C80` reach only players 1–4. Each will need decompiling or porting as players 5–8 start doing the things those functions handle.
+- **`sub_0803A030` and `sub_0802C53C`** have an `& 3` I left alone, because it isn't clearly a player index.
+- **The three ROM tables** stay at four entries until their readers go past index 3.
+- **The asm functions with four-way checks:** the unrolled checks noted in Step 51 and the 30 asm leads from the survey are still to go through.
+
+The next step in the plan is spawning players 5–8 in one world (`ONE_WORLD` with 8 instances). That's what will show which of these remaining four-player spots actually break with more than four players in a stage.
+
+## User
+
+Proceed
+
+## Claude
+
+First, a baseline: what an 8-player one-world build does right now. The flags come from the earlier grid work (`SCREENS=8` needs the GS renderer):
+
+- tool `Bash`: Check port limits on instance count
+
+- tool `Bash`: Read the link emulation
+
+- tool `Bash`: Find Link creation and player-count uses
+
+- tool `Bash`: Read Link creation and per-count code
+
+## Claude
+
+`sub_080128EC` creates one Link per player (`i < gUnknown_03006C80.unk0`, the player count) through `sub_08012824`, at spawn positions it computes first. The start of it:
+
+- tool `Bash`: Read the Link spawn function
+
+- tool `Bash`: Read the one-world stage entry
+
+- tool `Bash`: Find how 4-player one-world runs were made
+
+- tool `Bash`: Read the one-world test notes
+
+- tool `Bash`: Check scripts and shared.c declarations
+
+- tool `Bash`: Spawn Links 5-8 at stage entry
+
+- tool `Bash`: Build 8 players in one world and screenshot
+
+- tool `Bash`: See why the 8-player run stalled
+
+- tool `Bash`: Check the 8-instance ELF layout
+
+- tool `Bash`: Find the GS memory allocations
+
+- tool `Bash`: Read the per-instance texture setup
+
+- tool `Bash`: Find the GS-render target allocation
+
+- tool `Bash`: Check the 4-instance 8-screen build still starts
+
+## Claude
+
+The 4-instance build starts and runs. So something sized for four breaks with eight. Checking the port's arrays indexed by instance:
+
+- tool `Bash`: List fixed-size per-instance arrays
+
+- tool `Bash`: Check MAX_INSTANCES and EEPROM arrays
+
+- tool `Bash`: Size port arrays for 8 and rerun
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/eight2.png
+
+## Claude
+
+It now runs without TLB misses (to frame 4,378), but the screen is garbled. For comparison, here's the 4-instance screenshot with the same settings:
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/four8.png
+
+- tool `Bash`: Check the 2-player one-world build reaches a stage
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/two1.png
+
+- tool `Bash`: Bisect with MAX_PLAYERS back at 4
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/two2.png
+
+- tool `Bash`: Retry with the converted session replay
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/two3.png
+
+- tool `Bash`: Run the 8-player build into a stage
+
+## Claude
+
+Crash at frame 3,356 with stores and loads through garbage pointers (0xE00000xx). That's probably where players 5–8 come into play. Naming the code:
+
+- tool `Bash`: Identify the crashing code
+
+- tool `Bash`: Commit the safe parts and document
+

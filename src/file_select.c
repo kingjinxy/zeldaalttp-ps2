@@ -574,7 +574,7 @@ void sub_08012824(u8 n, u8 tx, u8 ty)
         e->x.HALF.HI = tx * 16 + 8;
         e->y.HALF.HI = ty * 16 + 8;
         e->unk2A = 4;
-        e->unk45 = gUnknown_03006C80.unk60[n].v;
+        e->unk45 = C80_PLAYER(unk60, n).v;
         sub_08012728(1, e);
         gUnknown_03006A30[n].unk28 = e;
     }
