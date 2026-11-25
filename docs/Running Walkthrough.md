@@ -1489,3 +1489,19 @@ What a GBA sets up for itself, now done per player when the copies are made (`ps
   the two Links apart (scratch copies in `build/ps2`, not committed).
 - **Result:** both views follow their own Link, with their own YOU marker, BG and sprites; no TLB misses. Left:
   player 2 has no off-screen arrow for player 1 (the arrows are created per GBA for "the others"), pickups.
+
+## Step 55: one world, the off-screen arrows; four players (2026-11-24)
+
+- Object 16: the manager (form 0, `sub_08052CE4`) works out each other player's direction from the viewer's camera
+  into its bytes 0x68 + player; each arrow (form 1, `sub_08053124`) reads its target's byte, and its update hands it
+  to `gUnknown_03006C80.unk70`, from which the stage frame's `sub_08052A88` draws it. A GBA creates arrows only for
+  the others (`sub_08052C0C`), so in one world there was none for player 1.
+- `ps2_shared_try_enter` creates the missing arrow (`CreateObject(16, 1, 0)`, manager and Link 1 as on another GBA,
+  `unk70` slot after the others). Per view: the viewer's own byte is set to "none" (0xFF; the manager skips it) and
+  the manager runs first (the new arrow can sit before it in the lists, and then read last view's direction); after
+  the views player 1's byte is reset. `sub_08052A88` added to the view pass, its rotation counter (`unk6C`, the
+  world's) kept. Three runs with temporary logs found these: the arrow existed with a direction but never had its
+  draw bit (only `sub_08052A88` sets it), and the manager's order.
+- **Four players** (scratch scripts for players 3-4: menu inputs, then walking): every view has its own Link, YOU
+  marker in its colour, BG and arrows; no TLB misses. To check: player 2's view at frame 2000 shows the arrows for
+  players 3 and 4 at the bottom edge but none for player 1, who is also below (maybe drawn under another).

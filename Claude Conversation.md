@@ -22532,3 +22532,49 @@ Player 2's view now shows a red YOU over the red Link. Committing this stage:
 
 - tool `Bash`: Docs and commit the per-player view work
 
+- tool `Bash`: Read the arrow update states
+
+- tool `Bash`: Check CreateObject's declaration and source
+
+## Claude
+
+`CreateObject(subtype, form, parameter)` is declared, so the port can call it. I'll save `gCpu` around the call the way the view pass does. Writing the arrow changes:
+
+- tool `Bash`: Add player 1's arrow and per-view slots; run
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/ow9.png
+
+## Claude
+
+Compile error: shared.c's own declaration says no arguments. Fixing it with an unprototyped declaration, as functions.h has:
+
+- tool `Bash`: Fix the declaration, rebuild, rerun
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/ow9.png
+
+## Claude
+
+Still no arrow for player 1 in player 2's view, even though player 1 is off-screen there. Logging whether the arrow gets created, and what the view pass sees for it:
+
+- tool `Bash`: Log arrow creation and per-view state
+
+- tool `Bash`: Run the arrow manager first per view; rerun
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/ow10.png
+
+## Claude
+
+Still nothing visible. Logging the arrow again, with the parameter at its real offset (0x0B):
+
+- tool `Bash`: Log the arrows with correct offsets
+
+- tool `Bash`: Draw queued arrows in the view pass; rerun
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/ow11.png
+
+- tool `Bash`: Run one world with 4 players
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/ow4p.png
+
+- tool `Bash`: Check cost, document and commit
+

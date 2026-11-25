@@ -87,6 +87,9 @@ void sub_08015D9C(void), sub_08008ED8(void), sub_0802CD3C(void), sub_08000BAC(vo
 int sub_08037554(void);
 unsigned char sub_0803781C(unsigned short);
 void DoObjectEntity(void *);
+void sub_08052A88(void);
+extern u8 gUnknown_03006C80x __asm__("gUnknown_03006C80");
+void *CreateObject(u32, u32, u32);
 extern u32 gUnknown_03000BF0;
 extern u8 gUnknown_03000FF8[];
 #define E20_UNK11 (*(volatile u8 *)0x03000E31)  // gUnknown_03000E20.unk11: the stage is paused (world)
@@ -115,6 +118,20 @@ void ps2_gstate_seen(u32 r0)
 // The YOU marker (object 46 form 0, sub_0805792C) is created by the local GBA alone, over its own Link in that Link's
 // colours (palette form + 7). Each viewer gets it over its own Link: drawn with the viewer's Link's position (the same
 // bob offset) and palette, then put back (kind 2 of step 5b, worked out at draw time).
+// the other players' off-screen arrows (object 16; kind 1 of step 5b): the manager (form 0, sub_08052CE4) works out
+// each other player's direction from the viewer's camera into its bytes 0x68 + player; an arrow (form 1) per player
+// (its parameter) draws from that. Its own slot isn't written for the viewer, so it's set to "none" (0xFF) for each
+// viewer before drawing.
+static u8 *arrow_manager(void)
+{
+    u8 *list, *e;
+    for (list = (u8 *)0x03005960; list < (u8 *)0x030059A0; list += 8)
+        for (e = *(u8 **)(list + 4); e != list; e = *(u8 **)(e + 4))
+            if (e[8] == 6 && e[9] == 16 && e[0x0A] == 0)
+                return e;
+    return 0;
+}
+
 static struct { u8 *e; u32 x, y, z; u8 pal; } sMarker;  // put back after the sprite list (sub_08000BAC reads them)
 
 static void draw_marker(u8 *e, u8 *own)
@@ -142,9 +159,16 @@ static void marker_back(void)
 static void draw_entities(void)
 {
     u8 *own = *(u8 **)(*(u8 **)0x03006730 + 0x28);  // this player's Link (gUnknown_03006730->unk28)
+    u8 *m = arrow_manager();
     int k;
+    if (m) {  // the manager first: an arrow made later (ps2_shared_try_enter) can sit before it in the lists
+        m[0x68 + *(volatile u8 *)0x03000414] = 0xFF;
+        DoObjectEntity(m);
+    }
     for (k = 0; k < sNDrawn; k++) {
         u8 *e = (u8 *)sDrawn[k];
+        if (e == m)
+            continue;
         if (e[8] == 6 && e[9] == 16)
             DoObjectEntity(e);
         else if (e[8] == 6 && e[9] == 46 && e[0x0A] == 0)
@@ -174,6 +198,12 @@ static void view_pass(void)
             sub_08015D9C();  // camera
             sub_08008ED8();  // BG streaming: this camera's edges into this player's BG maps
             sub_0802CD3C();  // HUD
+            {  // the arrows queued by their updates (gUnknown_03006C80.unk70); its rotation counter (unk6C) is the
+               // world's, stepped once a frame by instance 0
+                u8 *c80 = (u8 *)&gUnknown_03006C80x, rot = c80[0x6C];
+                sub_08052A88();
+                c80[0x6C] = rot;
+            }
             sub_08000BAC();  // sprite list
             marker_back();
         }
@@ -230,6 +260,11 @@ void ps2_shared_views(int instances, void (*render)(int inst))
     }
     overlay_swap(0);
     sNDrawn = 0;  // for instance 0's next frame
+    {
+        u8 *m = arrow_manager();
+        if (m)
+            m[0x68] = 0xFF;  // player 1's own slot, which the other views wrote
+    }
 }
 
 // ---- entering and leaving ----------------------------------------------------------------------------------------------
@@ -266,6 +301,19 @@ int ps2_shared_try_enter(int instances, void (*select)(int inst))
             for (r = 0; r < 16; r++)
                 if (own[r] == 0xC000)
                     own[r] = 0;
+        }
+    }
+    {  // the arrow for player 1's Link, which only the other GBAs create (sub_08052C0C)
+        u8 *m = arrow_manager(), *a;
+        u32 cpu[20];
+        if (m) {
+            memcpy(cpu, (void *)0x0203C000, sizeof(cpu));
+            if ((a = (u8 *)CreateObject(16, 1, 0))) {
+                *(u8 **)(a + 0x54) = m;
+                *(u32 *)(a + 0x58) = *(u32 *)(gUnknown_03006A30 + 0x28);
+                a[0x18] = instances - 1;  // after the others' (gUnknown_03006C80.unk70 slot)
+            }
+            memcpy((void *)0x0203C000, cpu, sizeof(cpu));
         }
     }
 #else
