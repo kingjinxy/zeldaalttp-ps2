@@ -1571,3 +1571,15 @@ What a GBA sets up for itself, now done per player when the copies are made (`ps
 - **Pickups:** confirmed by the user: both Links picked up items and it worked properly (the message for the
   collector).
 - **Left:** movement is still very jittery (user).
+
+## Step 60: walking down or left teleports Links (2026-11-25)
+
+- User, playing two pads: walking down or left makes Link flash as if hit (no health lost) and moves him north or
+  east; up and right are fine; both screens agree on positions. Same in the separate-instance build (no shared
+  world), so not one world.
+- Reproduced with a script and a per-frame log of Link 2's y (separate instances): pressing down, y goes 788, 738,
+  688... (50 pixels north a frame). Same with the array move of Step 52 off and with the translator before Step 57:
+  older than both. In mGBA the user's session walks down and left normally: a PS2 port bug.
+- Looked at: `sub_08001F38` (rom1, the step from the sine table `gUnknown_0813E4CC`) loads with `ldrsh` (signed,
+  right). Idea being followed: down/left use the table's negative values, so something reads them unsigned or
+  scales them wrongly. `tools/tr_check` can't help where the code is decompiled C (it skips those calls).
