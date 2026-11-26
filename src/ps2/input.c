@@ -34,7 +34,7 @@ static struct Script {
     u32 frame[MAX_LINES];
     u16 keys[MAX_LINES];
     u16 held;
-} *sScript[4];
+} *sScript[8];  // per player (up to 8)
 
 static void load_script(int inst)
 {

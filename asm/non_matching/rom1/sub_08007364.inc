@@ -94,11 +94,11 @@ _0800740C:
 	.byte 0x00
 	.byte 0x00
 	.4byte 0x080071d0
-	.4byte 0x080071a8
-	.4byte 0x080071a8
-	.4byte 0x080071a8
-	.4byte 0x080071a8
-	.4byte 0x080071a8
+	.4byte gPlayerBlockPtrs
+	.4byte gPlayerBlockPtrs
+	.4byte gPlayerBlockPtrs
+	.4byte gPlayerBlockPtrs
+	.4byte gPlayerBlockPtrs
 	.4byte 0x08007338
 	.4byte 0x0800735c
 	.4byte 0x00004000
@@ -108,7 +108,7 @@ _0800740C:
 	.4byte 0x03000510
 	.4byte 0x00000100
 	.4byte 0x03000bd0
-	.4byte 0x080071a8
+	.4byte gPlayerBlockPtrs
 	.byte 0x00
 	.byte 0x00
 	.byte 0x00

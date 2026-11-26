@@ -323,6 +323,13 @@ int ps2_shared_try_enter(int instances, void (*select)(int inst))
        // tile right of player (n - 4)'s (shortcut: the game's player count stays 4; the start tiles come in fours)
         u32 cpu[20];
         memcpy(cpu, (void *)0x0203C000, sizeof(cpu));
+        // players 5-8's entries of gUnknown_03006C80 (the mirror at 0x04001680, include/variables.h C80_PLAYER) as
+        // players 1-4's: the stage start fills only four (health unk60 0 killed the new Links at once, and with too
+        // few rupees to revive them the stage ended: "You don't have enough..."); its Entity pointers (unk70) start
+        // empty
+        memcpy((void *)0x04001680, &gUnknown_03006C80x, 0x8C);
+        memset((void *)(0x04001680 + 0x70), 0, 16);
+        memset((void *)0x04001710, 0, 4 * 0x70);  // their 0x70-byte blocks (src/ps2/players.c), as the stage start clears 1-4's
         for (i = 4; i < instances; i++) {
             u8 *rec = gUnknown_03006A30 + i * 0x90, *src = gUnknown_03006A30 + (i - 4) * 0x90;
             u8 *l = *(u8 **)(src + 0x28);

@@ -58,7 +58,7 @@ static const struct { u32 va, mask, even, odd, used; } sRegions[] = {
     { 0x05000000, 0x00000000, 0x4A000, 0x4B000, 0x400 },    // palette
     { 0x06000000, 0x0001E000, 0x50000, 0x60000, 0x18000 },  // VRAM, 2 x 64 KB
     { 0x07000000, 0x00000000, 0x70000, 0x71000, 0x400 },    // OAM
-    { 0x04001000, NOMAP, 0x49000, 0x49000, 0x710 },          // the moved arrays and gUnknown_03006C80_hi (I/O entry)
+    { 0x04001000, NOMAP, 0x49000, 0x49000, 0x8D0 },          // moved arrays, gUnknown_03006C80_hi, blocks 5-8 (I/O entry)
 };
 #define NREGIONS (sizeof(sRegions) / sizeof(sRegions[0]))
 

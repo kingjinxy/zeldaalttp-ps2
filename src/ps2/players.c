@@ -10,3 +10,8 @@
 const u32 ps2_player_record_ptrs[8] = { R(0), R(1), R(2), R(3), R(4), R(5), R(6), R(7) };
 const u32 ps2_player_link_ptrs[8] = { R(0) + 0x28, R(1) + 0x28, R(2) + 0x28, R(3) + 0x28,
                                       R(4) + 0x28, R(5) + 0x28, R(6) + 0x28, R(7) + 0x28 };
+// per-player blocks of 0x70 (gPlayerBlockPtrs, ROM 0x080071A8): players 1-4 in IWRAM where the game keeps them
+// (0x03000040-0x030001FF, cleared at stage start), 5-8 in the spare page after gUnknown_03006C80_hi (src/ps2/tlb.c)
+#define B(i) (0x03000040u + (i) * 0x70)
+#define BHI(i) (0x04001710u + (i) * 0x70)
+const u32 ps2_player_block_ptrs[8] = { B(0), B(1), B(2), B(3), BHI(0), BHI(1), BHI(2), BHI(3) };

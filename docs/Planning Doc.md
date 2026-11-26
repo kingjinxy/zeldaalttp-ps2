@@ -372,7 +372,8 @@ Requested by the user (2026-11-16). After Phase 4 works with 4 players.
             8-entry copies when their readers index past 3 (today `frame & 3` and the player number).
       - [ ] Spawning 5-8 in one world (Steps 67-68): the port sized for 8; the per-player pointer tables have 8
             entries on the PS2 (`src/ps2/players.c`); Links 5-8 exist in the world. Left: free start tiles, their
-            sprite tiles and white palette, and the "You don't have enough..." stage end they trigger.
+            sprite tiles and white palette. (Step 69: eight Links run a stage; their health and blocks were the
+            stage end.)
       - [ ] Loops and four-way checks to a player count; `gUnknown_03006C80`'s per-player arrays (asm-only users to
             decompile); the link exchange to 8; spawning players 5-8; the white palette.
 - [ ] Easier in the Phase 5 shared world (per-player arrays sized by a constant) than with linked instances

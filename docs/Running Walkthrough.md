@@ -1750,3 +1750,18 @@ What a GBA sets up for itself, now done per player when the copies are made (`ps
   but the Links are invisible (sprite tiles `n << 5` and palettes `n + 7` belong to others) and about 100 frames in
   the flame traps fire, "You don't have enough..." and the stage ends; the 4-instance run with the same inputs goes
   on. Next: free start tiles, the Links' tiles and palette (GS CLUT), and what that message counts.
+
+## Step 69: eight Links in a stage (2026-11-25)
+
+- The user read "You don't have enough..." right: a Link that falls is revived for rupees, and with too few the stage
+  ends. Links 5-8 started with 0 health: `sub_08012824` takes it from the player's `unk60`, and players 5-8's
+  entries (the mirror struct) were empty. At stage entry the port now copies players 1-4's `gUnknown_03006C80`
+  entries into the mirror (its Entity pointers `unk70` cleared).
+- A third per-player table, 0x080071A8 (`gPlayerBlockPtrs`): four pointers to 0x70-byte IWRAM blocks
+  (0x03000040 + 0x70 n), read by `sub_08001468`/`sub_08007364` by player number. PS2: 8 entries, players 5-8's
+  blocks at 0x04001710 in the spare page (src/ps2/tlb.c copies 0x8D0 bytes of it per switch), cleared at stage
+  entry. All 23 references to the three tables checked in the PS2 copies. `input.c`'s script table sized 8.
+- **Result:** 8-instance one world runs a stage with eight Links and eight views, no TLB misses (frame dumps of all
+  eight views at frame 3,600; writing them takes longer than the runner's 15-second stall limit, which then stops
+  the run). Links 5-8 still use players 1-4's palettes and their sprite tiles clash. The 2-player session replay
+  still matches mGBA (90 and 91 of 91). `make compare` OK.

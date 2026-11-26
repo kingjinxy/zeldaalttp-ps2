@@ -33,5 +33,6 @@ from moved import moved
 out[:-1] = [re.sub(r"(\w+) = (0x[0-9A-F]{8});", lambda m: "%s = 0x%08X;" % (m.group(1), moved(int(m.group(2), 16))), l)
             for l in out[:-1]]
 # PS2 only: the per-player pointer tables with room for 8 (src/ps2/players.c); a later assignment replaces ldscript's
-out.append("gPlayerRecordPtrs = ps2_player_record_ptrs;\ngPlayerLinkPtrs = ps2_player_link_ptrs;")
+out.append("gPlayerRecordPtrs = ps2_player_record_ptrs;\ngPlayerLinkPtrs = ps2_player_link_ptrs;\n"
+           "gPlayerBlockPtrs = ps2_player_block_ptrs;")
 open(sys.argv[1], "w").write("\n".join(out) + "\n")

@@ -18,7 +18,7 @@ _080079E6:
 	pop {pc}
 	.align 2, 0
 _080079E8: .4byte gPlayerRecordPtrs
-_080079EC: .4byte 0x080071A8
+_080079EC: .4byte gPlayerBlockPtrs
 _080079F0: .4byte 0x0000FF7F
 _080079F4: .4byte 0x080074AC
 _080079F8: .4byte 0x03000BD0

@@ -12,7 +12,7 @@ sys.path.insert(0, "tools/ps2")
 from moved import MOVED  # noqa: E402
 
 
-TABLES = (0x08000FF4, 0x08003B54)  # gPlayerRecordPtrs, gPlayerLinkPtrs: the PS2 gives them 8 entries (src/ps2/players.c)
+TABLES = (0x08000FF4, 0x08003B54, 0x080071A8)  # gPlayerRecordPtrs, gPlayerLinkPtrs, gPlayerBlockPtrs: the PS2 gives them 8 entries (src/ps2/players.c)
 
 
 def inside(v):

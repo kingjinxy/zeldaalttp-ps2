@@ -25523,3 +25523,98 @@ Still matching (90 and 91 of 91; the odd sample is the same single-frame high sl
 
 - tool `Bash`: Document and commit
 
+- tool `PushNotification`: 
+
+## Claude
+
+Links 5–8 are now in the shared world, and the 2-player replay still matches mGBA (90 and 91 of 91 samples). `make compare` reports `zeldaalttp.gba: OK`, and it's committed as f2863b9. The extra Links are invisible so far, and their presence ends the stage after about 100 frames.
+
+- **What changed:** the two 4-entry per-player tables the Link code reads have 8 entries on the PS2 ([src/ps2/players.c](src/ps2/players.c)), and the GBA build keeps the original ROM tables. All 15 references to them now use the new names, checked one by one in the PS2 build. The build check now also catches those two table addresses written as raw words.
+- **Stage entry:** with more than 4 players, the port creates Links 5–8, each one tile to the right of player n−4's Link.
+
+Still to do before players 5–8 work:
+- **Spawn tiles:** start Links 5–8 on free tiles; right now they may land on another Link or a trigger.
+- **Drawing:** give Links 5–8 their own sprite tiles and the white palette you asked for, drawn by the GS renderer.
+- **Stage ending:** find out what "You don't have enough…" is counting when the extra Links are present.
+
+## User
+
+I'm guessing that the "you don't have enough" message is talking about the situation when a player dies and doesn't have enough Rupees to be revived
+
+## Claude
+
+That fits well. Four Swords spends shared rupees to revive a fallen Link, and the scene at frame 3,700 was a Link lying in a spotlight. So the likely story is that a Link 5–8 died as soon as it appeared, there weren't enough rupees, and the game ended.
+
+There's a probable cause in my spawn code. `sub_08012824` sets a Link's health from its player's `unk60` entry. For players 5–8 that's read from the mirror struct, which nothing fills in, so they start with 0 health. The stage setup only fills the first four players' entries. I'll copy players 1–4's per-player entries into the mirror before creating Links 5–8, then check the dumped frames:
+
+- tool `Bash`: Read the spawn code
+
+- tool `Bash`: Fill players 5-8's entries and rerun
+
+## Claude
+
+The stage no longer ends: the shared world started and didn't leave. But there are 50 TLB misses now, so something else reads bad pointers. The frames, then the misses:
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/eight7_p0.png
+
+- tool `Bash`: Identify the new TLB misses
+
+- tool `Bash`: Size the script array and read sub_08001468
+
+## Claude
+
+`sub_08001468` uses another per-player table: 0x080071A8, indexed by the Link's player number (`+0xA`). It holds pointers to blocks of four 28-byte entries. Let me see what the table holds:
+
+- tool `Bash`: Read the table at 0x080071A8
+
+- tool `Bash`: Find references to 0x080071A8
+
+- tool `Bash`: Add the third table with 8 entries
+
+- tool `Bash`: Verify the references and run 8 players
+
+- tool `Bash`: Read the watchdog's stall report
+
+- tool `Bash`: Check the watchdog output and code
+
+## Claude
+
+The interrupted pc (0x00081FE0) is in the PS2 kernel, so a thread is waiting rather than looping. Naming the last functions in the ring and reading the thread states:
+
+- tool `Bash`: Name the ring entries and thread states
+
+- tool `Bash`: Run with a single dump frame
+
+## Claude
+
+Dumping 8 screens is too slow for the stall limit, but the game itself ran to frame 3,599 in the stage with no TLB misses. The dump files at 3,600 should still be there. Assembling all eight views:
+
+- tool `Bash`: Assemble the eight views at frame 3600
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/eight9_views.png
+
+- tool `SendUserFile`: 
+
+- tool `Bash`: Build the 2-player replay check
+
+- tool `Bash`: Run the 2-player replay check
+
+## Claude
+
+You were right about the message. Links 5–8 started with 0 health, died at once, and there weren't enough rupees to revive them. The stage now runs with eight Links, and I've sent you a sheet of all eight views at frame 3,600.
+
+What was missing:
+- **Health and other per-player values:** each Link gets its health from its player's entry in `gUnknown_03006C80`. Players 5–8's entries live in the mirror struct, which nothing filled in, so they started at 0 health. At stage entry the port now copies players 1–4's entries into 5–8.
+- **A third 4-entry table:** at 0x080071A8, pointers to a 0x70-byte block of IWRAM per player. Players 5–8 read past it into code. It's now an 8-entry table on the PS2, and players 5–8's blocks live in the spare page after the mirror struct. All 23 references to the three tables point at the 8-entry versions. I checked each one in the PS2 build.
+- **A port array:** the input scripts array (`input.c`) was sized 4. Players 5–8 indexed past it, causing TLB misses.
+
+The 8-player run gets through the stage to frame 3,600 with no TLB misses. It only stopped there because writing the frame dumps for eight screens took longer than the test runner's 15-second stall limit, not because the game stopped.
+
+In the sheet, Links 5–8 are drawn, but using players 1–4's colours, and their sprite tiles get mixed up with others'. That's the drawing work still to do, along with spawning them on free tiles: they currently stand bunched next to Links 1–4.
+
+The table change affects every PS2 build, so the two-player replay check against mGBA is running now. I'll commit once it passes.
+
+- tool `Bash`: Compare the 2-player replay
+
+- tool `Bash`: Document and commit
+
