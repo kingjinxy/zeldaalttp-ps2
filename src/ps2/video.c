@@ -394,9 +394,21 @@ void ps2_video_present(int instances)
         sRenderCycles = sOtherCycles = ps2_switch_cycles = 0;
     FlushCache(0);
 #ifdef GS_RENDER  // the screens are drawn: show them, then clear the next buffer (gsrender.c changed the registers)
-    gsKit_sync_flip(sGs);
     gsKit_set_scissor(sGs, GS_SCISSOR_RESET);
     gsKit_set_test(sGs, GS_ATEST_OFF);
+#ifdef SCREENS  // 4-pixel black borders between the cells, centred on each cell edge (2 pixels into either side)
+    {
+        int x0 = (sMode->fbw - 3 * CELL_W) / 2, y0 = (sMode->fbh - 3 * CELL_H) / 2, k;
+        u64 black = GS_SETREG_RGBAQ(0, 0, 0, 0x80, 0);
+        for (k = 1; k < 3; k++) {
+            int x = x0 + k * CELL_W, y = y0 + k * CELL_H;
+            gsKit_prim_sprite(sGs, x - 2, y0, x + 2, y0 + 3 * CELL_H, 0, black);
+            gsKit_prim_sprite(sGs, x0, y - 2, x0 + 3 * CELL_W, y + 2, 0, black);
+        }
+        gsKit_queue_exec(sGs);
+    }
+#endif
+    gsKit_sync_flip(sGs);
     gsKit_clear(sGs, GS_SETREG_RGBAQ(0, 0, 0, 0x80, 0));
     gsKit_queue_exec(sGs);
     sLastEnd = count();

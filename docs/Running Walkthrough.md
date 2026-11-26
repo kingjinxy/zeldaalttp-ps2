@@ -1765,3 +1765,22 @@ What a GBA sets up for itself, now done per player when the copies are made (`ps
   eight views at frame 3,600; writing them takes longer than the runner's 15-second stall limit, which then stops
   the run). Links 5-8 still use players 1-4's palettes and their sprite tiles clash. The 2-player session replay
   still matches mGBA (90 and 91 of 91). `make compare` OK.
+
+## Step 70: borders between the 3x3 cells; the side-column streaks are PCSX2's software renderer (2026-11-25)
+
+**Borders.** `ps2_video_present` (src/ps2/video.c, SCREENS builds) draws 4-pixel black lines centred on the cell edges
+(x 427 and 853, y 240 and 480; 2 pixels into either cell) with gsKit sprites after the screens and before the flip,
+so the black centre cell is outlined too. Checked in a PCSX2 F8 screenshot: x 425-428 black.
+
+**The streaks.** In the software renderer's output the left column's first 256 pixels showed the right column's
+x 1024-1279 (one row lower), and the right column streaked from x = 1024. A temporary readback of the whole 1280x720
+frame from GS memory before the flip (ps2_gsr_read in 8-line strips, to host:) was clean in every cell, and the two
+frame buffers (0x0 and 0x1E0000) don't overlap each other or the tiles at 0x3C0000. The same replay with PCSX2's
+OpenGL renderer (Mesa llvmpipe in the VM, still full speed) showed a clean frame. So it's the software renderer's
+display readout of a buffer wider than 1024, not the port. Test runs now use the OpenGL renderer through
+tools/ps2/pcsx2_run.py, a wrapper of tp-ps2's script (CLAUDE.md).
+
+**Checked on the side:** Open PS2 Loader's 720p/1080i (gsKit's hires mode) keep full-width buffers (FBW 20 and 30)
+and draw the frame in bands to save GS memory; nothing there limits the width. GSM's forced 1080p writes SMODE1,
+SYNCH and SYNCV directly and shows at most a 640x540 buffer (MAGH 2, MAGV 1). A refresh rate matched to the GBA's
+59.7275 Hz is written up as an option in the planning doc, not planned.

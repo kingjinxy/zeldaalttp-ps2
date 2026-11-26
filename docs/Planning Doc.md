@@ -378,6 +378,21 @@ Requested by the user (2026-11-16). After Phase 4 works with 4 players.
             decompile); the link exchange to 8; spawning players 5-8; the white palette.
 - [ ] Easier in the Phase 5 shared world (per-player arrays sized by a constant) than with linked instances
 
+## Option, not planned: refresh rate matched to the GBA (2026-11-25)
+The GBA runs at 16,777,216 / (1232 x 228) = 59.7275 Hz; the PS2's modes at 59.94 Hz, 0.36% fast (one frame gained
+every 4.6 s; sound 0.36% fast too). The GS's CRTC timing registers (SYNCH1/SYNCH2: line length, SYNCV: lines) can
+be written directly, as GSM does for its 1080p (github.com/dfmuniz74/gsm, gsm_engine.S). Lengthening each line by a
+few clocks gets within about 0.01 Hz (not exact: whole clocks and lines):
+- 480i/480p: 858 -> 861 clocks a line (13.5 / 27 MHz): 59.731 Hz, +0.006% (a frame every 4-5 minutes)
+- 720p: 1650 x 750 -> 1653 x 752 (74.25 MHz): 59.732 Hz
+- 240p: 262 lines, near 862-864 clocks a line or 263 lines (to be worked out from its timing)
+- Clock figures are the standard ones, not checked against the PS2's exact clocks.
+Catches: digital TVs and upscalers check timing more strictly than CRTs (480p the safest, 720p over component the
+riskiest); PCSX2 most likely ignores SYNCH/SYNCV changes (test on hardware only); values may differ by GS revision
+(CSR bits 16-23, as GSM checks); sound has to follow the same rate. A once-every-few-minutes dropped frame then
+makes it exact. Simpler alternative with no register changes: keep 59.94 Hz and skip showing one game frame every
+4.6 s (works in PCSX2 too; a visible hitch while scrolling). If taken: start with 480p as a build option.
+
 ## Open decisions
 - Decided (2026-11-16): automatic Thumb-to-C translation for the not-yet-decompiled functions, so Phase 3
   starts now; decomp replaces it function by function.

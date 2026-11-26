@@ -79,9 +79,10 @@ The NONMATCHING count is tracked in the planning doc.
 - **mGBA is the reference**, running the user's own ROM. Keep it muted. Multiplayer needs linked instances.
 - **Windows are invisible by default** (Xvfb, as `../tp-ps2/tools/ps2/offscreen`); a `--show` option puts them
   on the desktop for that run.
-- **PCSX2 uses the software GS renderer** (`PCSX2.ini` `[EmuCore/GS] Renderer = 13`), enforced by any run
-  script; state-only comparison runs may use the null renderer. Never the hardware renderer: the VM has no
-  real GPU. Measure frame rates in emulated time.
+- **PCSX2 uses the OpenGL GS renderer** (user, 2026-11-25): run through `tools/ps2/pcsx2_run.py`, which wraps
+  `../tp-ps2/tools/ps2/pcsx2_run.py` with `Renderer = 12`. The software renderer (13) shows a 1280-wide display
+  buffer wrapped at x = 1024 (walkthrough step 70). The VM has no GPU: OpenGL runs on Mesa's llvmpipe, still at full
+  speed. State-only comparison runs may use the null renderer. Measure frame rates in emulated time.
 - **Parallel PCSX2 runs only when they save time** (up to 3 at once). A single question gets a single run.
 - **A PCSX2 stall is a crash.** 15 emulated seconds without a new frame (at most 15 real seconds
   when emulation is slower): close PCSX2 and end the run, rather than waiting out a long timeout.

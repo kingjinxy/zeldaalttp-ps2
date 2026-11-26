@@ -25618,3 +25618,678 @@ The table change affects every PS2 build, so the two-player replay check against
 
 - tool `Bash`: Document and commit
 
+- tool `PushNotification`: 
+
+## Claude
+
+Eight Links now run a stage together in one world, each player with their own view, and nothing crashes. The two-player replay still matches mGBA (90 and 91 of 91 samples), and `make compare` reports `zeldaalttp.gba: OK`. Committed as bbb9151, with walkthrough Step 69.
+
+Links 5–8 still don't look right, and these are the next steps:
+
+- **Sprites:** Links 5–8 use players 1–4's palettes, and their sprite tiles clash with other sprites'. That's where the white palette you asked for comes in. I'd give players 5–8 their own tile space and palette in the GS renderer rather than in the GBA's crowded sprite memory.
+- **Start tiles:** they start bunched up one tile right of Links 1–4. They need free tiles.
+- **Player count:** the game itself still counts 4 players. Anything that loops to the player count, like pickups credited per player and the off-screen arrows, skips players 5–8 for now.
+
+## User
+
+Can you give me a PS2 frame dump showing the 1280x720 frame?
+
+## Claude
+
+PCSX2's window only showed a corner of the frame. Checking whether the run script can save PCSX2's own full-size screenshot:
+
+- tool `Bash`: Look for screenshot support in the run script
+
+- tool `Bash`: List the run script's options
+
+- tool `Bash`: Run 8 players fullscreen and capture the screen
+
+## Claude
+
+The fullscreen setting didn't take effect; the window stayed 840×656. I'll try resizing the window directly with `xdotool` instead:
+
+- tool `Bash`: Check for window tools
+
+## Claude
+
+Both tools are installed. I'll resize the PCSX2 window to 1920×1080 a few seconds after it starts, then capture:
+
+- tool `Bash`: Resize the window and capture
+
+## Claude
+
+The resize didn't take either. Before trying another way, I'll check what `xdotool` sees on the virtual screen:
+
+- tool `Bash`: List PCSX2's windows on the virtual screen
+
+## Claude
+
+The window is titled "zeldaalttp [?]", not "PCSX2", so the search found nothing. Searching by that title:
+
+- tool `Bash`: Resize by window title and capture
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/fs8.png
+
+## Claude
+
+That worked. The window now shows the whole 1280×720 frame, scaled up. I'll crop the frame out of the window and scale it back to 1280×720:
+
+- tool `Bash`: Crop the frame and scale it to 1280x720
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/frame_1280x720.png
+
+## Claude
+
+I've sent it below. It's PCSX2's window capture, cropped and scaled from about 1842×1034 back to 1280×720, so it isn't pixel-exact; the port has no way to dump its 720p frame directly yet.
+
+- tool `SendUserFile`: 
+
+- tool `Bash`: Remove the replay scripts and restore saves
+
+## Claude
+
+I've sent the frame: the 8-player build in the stage, showing the full 3×3 grid of 426×240 views with the centre left black. It's a capture of PCSX2's enlarged window, cropped and scaled back to 1280×720, so it isn't pixel-exact. The PS2's own frame-dump function only saves each view at the GBA's 240×160, not the composed 720p frame. PCSX2's performance overlay is also visible in the top right.
+
+The capture shows problems I hadn't seen in the single-view dumps:
+
+- **Left column cells:** these are broken. Each shows an image cut off about 255 pixels in, plus a slice of a second image, with horizontal streaks across both.
+- **Right column cells:** the right edge of each is streaked the same way.
+- **Middle column cells (top and bottom):** these look right.
+- **Speed:** PCSX2 reports 14 fps with eight views, so drawing eight views is too slow at the moment.
+
+Each view is drawn per player, so the streaks look like a scissor or offset problem in the GS renderer for cells away from the centre column. That's my guess; I haven't checked it yet.
+
+Your saves are back in `build/ps2/` and the replay scripts are removed. The ELF there is still the 8-player test build.
+
+## User
+
+Doesn't PCSX2 have a frame dump option that would give us a pristine screenshot?
+
+## Claude
+
+Yes. PCSX2's Save Screenshot (F8 by default) saves the frame directly, and its screenshot size can be set to the internal resolution, which for the software renderer is the PS2's own 1280×720 frame. Where does the run script keep PCSX2's data folder, so I can find the saved file?
+
+- tool `Bash`: Find the run's PCSX2 data folder
+
+- tool `Bash`: Check screenshot settings and folders
+
+- tool `Bash`: Take PCSX2 screenshots with F8 during the stage
+
+- tool `Bash`: Move the screenshots out of the user's folder
+
+## Claude
+
+Both screenshots are 1280×720, and your `snaps` folder is back to its original 8 files. Looking at the first one:
+
+- tool `Bash`: Copy the screenshots to plain names
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/pcsx2_8p_1280x720.png
+
+## Claude
+
+This is the actual frame, and it confirms that the streaks in the left and right columns are real rendering problems, not capture artifacts. Sending both screenshots (about 4 seconds apart):
+
+- tool `SendUserFile`: 
+
+- tool `Write`: /home/alex/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/memory/pcsx2-f8-screenshot.md
+
+- tool `Bash`: Add the memory index line
+
+## Claude
+
+Yes. PCSX2's Save Screenshot hotkey (F8) gives a pixel-exact frame, and your settings already save it at the internal resolution as PNG. I sent F8 to the window during the 8-player stage, and I've sent you the two results: 1280×720 straight from PCSX2, with no scaling or overlay.
+
+They confirm the streaks I saw in the window capture are real rendering faults:
+
+- **Left column:** each cell shows a view about 255 pixels wide, then a slice of a second image, with horizontal streaks across both.
+- **Right column:** the right part of each cell is streaked.
+- **Middle column (top and bottom):** these cells are drawn correctly.
+
+The screenshots landed in your own PCSX2 `snaps` folder, because the test runner links to your real folders. I moved them out to the scratchpad, so `snaps` has only your original 8 files. I also saved this F8 screenshot method to memory for future sessions.
+
+## User
+
+Edit one of the screenshots to have a 4 pixel wide black border between each screen, including the middle blank screen
+
+## Claude
+
+The cell edges, from the black centre: columns end at x = 427 and 853, rows at y = 240 and 480. I'll paint 4-pixel black bands centred on those lines:
+
+- tool `Bash`: Draw 4-pixel borders between the cells
+
+## Claude
+
+The column detection went wrong: row 360 has black pixels at the left edge too. Measuring the black run that contains x = 640 instead:
+
+- tool `Bash`: Find the centre cell edges and draw borders
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/pcsx2_8p_1280x720_borders.png
+
+- tool `SendUserFile`: 
+
+## Claude
+
+I've sent you the edited screenshot: the first one, with 4-pixel black borders between all nine cells, the black centre included.
+
+I measured the cell edges from the black centre cell: x = 427 and 853, y = 240 and 480. So the middle column is 426 wide and the outer columns 427. Each border is centred on an edge, two pixels into each neighbouring cell, so it covers 2 pixels of each cell's edge rather than adding space.
+
+The borders make the faults easier to place. In the left column, each cell's view stops about 255 pixels in, and a second image starts there. In the right column, the streaking starts around the same distance into the cell.
+
+## User
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+<system-reminder>
+<tools-used-before-summary>Bash, Edit, PushNotification, Read, SendUserFile, TaskStop, ToolSearch, Write</tools-used-before-summary>
+</system-reminder>
+Summary:
+1. Primary Request and Intent
+
+The user's requests this session, in order:
+- Confirmed that walking now works in all four directions.
+- Asked whether the mGBA replay could help.
+- Asked how many lag frames the replay has.
+- Said "Proceed" with replay sync.
+- Asked whether to pause the PS2 for lag.
+- Asked whether lag is rendering or link waiting.
+- Asked to give the stack more memory.
+- Said "Let's continue with replay sync".
+- "Test the second half of the recording and send me some screenshot comparisons".
+- "Let's fix this bug".
+- Guessed (correctly) that "You don't have enough" means not enough rupees to revive.
+- Asked whether this is a good foundation for 8 players; then "Yes" to the survey.
+- Said "Proceed" several times: build checks, then the C80 option 1 (mirror), chosen with "Yes", then spawning.
+- "Can you give me a PS2 frame dump showing the 1280x720 frame?"
+- "Doesn't PCSX2 have a frame dump option that would give us a pristine screenshot?"
+- Most recent: "Edit one of the screenshots to have a 4 pixel wide black border between each screen, including the middle blank screen".
+
+Standing constraints, verbatim:
+- CLAUDE.md: "Web access: GitHub only without asking."
+- "Never access tcrf.net (The Cutting Room Floor) in any way."
+- "No `pkill -f <pattern>` in a command whose own command line contains the pattern."
+- "No ROM, BIOS or extracted asset is ever committed."
+- reference/ is never committed.
+- Never share the user's email with external services.
+- Don't copy FourSwordsRecomp code.
+- Say "gstate", never "GS", for global state.
+- PCSX2 uses the software renderer.
+- "Never dismiss TLB Miss lines."
+- Commit only when `make compare` reports `zeldaalttp.gba: OK`.
+- Update `docs/Running Walkthrough.md`, `docs/Planning Doc.md` and `Claude Conversation.md` at milestones. Use the archive script with all jsonl in `ls -tr` order, and check that 0 lines were removed.
+- Builds run under `systemd-run --user --scope -q -p MemoryMax=6G`.
+- `rm` with a variable path uses `"${S:?}"`.
+- Push notifications at milestones.
+- Don't start major new directions without go-ahead.
+- Log over SIO, not printf.
+
+2. Key Technical Concepts
+
+Replay comparison:
+- PS2 vs mGBA replay, using `recordings/fs_only.gba`; gf.txt maps video frames to game frames.
+- The PS2 runs one frame "ahead" of mGBA (offset -1).
+- Replays must start with empty saves (`cleanrun.sh`).
+- mgba_run `--dump N-M:ADDR:LEN` now uses `rawRead8`: bus reads perturbed the run.
+- gRandom (0x03000F40) is a sync check.
+
+Bug classes found in the port:
+- ldscript alias into MIPS code (`sub_08009380`).
+- SYMBOL+offset literals pointing past SYMBOL.
+- Flags after calls into C: gstate2c now sets n/z from r0.
+- Odd-address ldrsh, handled in RS16.
+- Void-decompiled function whose result asm uses (`sub_08043B94`).
+- Raw addresses of moved arrays that missed relocation.
+- Per-player 4-entry ROM tables.
+
+8-player infrastructure:
+- `MAX_PLAYERS` (8 on PS2, 4 on GBA).
+- `gUnknown_03006C80_hi` mirror struct at 0x04001680, accessed via `C80_PLAYER(field,i)`.
+- Pointer tables `gPlayerRecordPtrs` (0x08000FF4), `gPlayerLinkPtrs` (0x08003B54) and `gPlayerBlockPtrs` (0x080071A8). On the PS2 they are 8-entry arrays in src/ps2/players.c.
+- Spare page 0x04001000; NOMAP copy size now 0x8D0. Blocks 5-8 at 0x04001710.
+
+Build checks:
+- `tools/ps2/raw_moved.py` and `sym_offsets.py` run before the PS2 link.
+
+Screenshots:
+- PCSX2 F8 screenshot via xdotool gives pixel-exact 1280x720. Window title "zeldaalttp [?]".
+- Files land in ~/.config/PCSX2/snaps and are moved out afterwards. Saved to memory.
+
+3. Files and Code Sections
+
+- `asm/non_matching/rom1/sub_0800935C.inc`: real `.global sub_08009380` label; the ldscript alias was removed.
+- 22+ asm literal rewrites (sym+off to the real target or absolute ROM).
+- `gUnknown_03000940` and `gUnknown_03006A30+0x28/B8/148/1D8` symbols replace raw words, in sub_08003AC0, sub_08009EA4 and others.
+- `sub_08003E80.inc` is now a `.4byte` literal pool.
+- References to `gPlayerRecordPtrs`, `gPlayerLinkPtrs` and `gPlayerBlockPtrs`.
+- include/gstate.h:
+  - GSTATE_RING is `ps2_ring` on PS2.
+  - Stack floor check via `gstate_low_sp`.
+  - gstate_run's C path sets `gCpu.n/z`.
+- include/auto.h: `RS16(a) (((u32)(a)&1)? RS8(a) : ...)`; ring extern; shortcut note on R16/R32.
+- tools/gstate2c.py: `r0 = f(...); n = r0 >> 31; z = r0 == 0;`.
+- src/fs_game.c:
+  - `u32 sub_08043B94` returns 0 or 1.
+  - MAX_PLAYERS loops in sub_08037574, sub_08037750 and sub_0803883C.
+  - C80_PLAYER in sub_080383F0, sub_08039D64 and sub_08052A88/B88/C0C, with `& (MAX_PLAYERS - 1)` (a `%` changed the GBA ROM).
+- src/file_select.c: `sub_08012824` uses `C80_PLAYER(unk60, n)`.
+- include/global.h: MAX_PLAYERS after the guard.
+- include/variables.h:
+  - `gUnknown_0200B1D0[MAX_PLAYERS][16]`.
+  - Mirror macros.
+- src/ps2/players.c: the 8-entry pointer tables.
+- src/ps2/shared.c, `ps2_shared_try_enter` (ONE_WORLD):
+  - Copies C80 lo to hi (0x8C bytes), clearing unk70.
+  - memset blocks at 0x04001710 (0x1C0 bytes).
+  - For i from 4 up to `instances`: copies the record from i-4, clears +0x2C, then calls `sub_08012824(i, tile right of Link i-4)`.
+- src/ps2/tlb.c: NOMAP 0x8D0.
+- src/ps2/video.c: MAX_INSTANCES 8.
+- src/ps2/io.c and save.c: EEPROM arrays [8].
+- src/ps2/input.c:
+  - Lag file `host:replay.lag`.
+  - `ps2_input_lag`.
+  - sScript[8].
+- src/ps2/frame.c:
+  - Lag VBlanks.
+  - ps2_ring.
+  - gstate_low_sp.
+  - Heartbeat min sp.
+- src/ps2/glue/arm_ports.c: ICALL to 0 prints the gstate regs.
+- tools/mgba_run.c: `--dump N-M`, 512 dumps, rawRead8.
+- tools/ps2/to_gameframes.py: LAG output.
+- tools/ps2/gba_syms.py: PS2 overrides of the table symbols.
+- tools/ps2/moved.py: notes on the page layout.
+- ldscript.txt: table symbols.
+- Makefile.ps2: the two checks.
+- docs/shared_world/per_player_users.tsv.
+- Walkthrough Steps 61-69.
+
+Commits:
+- 7549a54
+- 0fbeff3
+- 2f20752
+- a9691e4
+- 8853aa0
+- 7a0ce7a
+- 98ed298
+- f2863b9
+- bbb9151 (last)
+
+4. Errors and fixes
+
+- `make compare` broke twice:
+  - A thumb symbol gave an odd address (`sub_08000FF4`); used an absolute constant instead.
+  - `% MAX_PLAYERS` changed the ROM; replaced with `& (MAX_PLAYERS - 1)`.
+- A wrong ROM was used in mGBA (LttP); the user pointed it out.
+- Slot arithmetic was wrong (0x03002350 vs the correct 0x03002550).
+- Polluted saves caused false divergences; runs now clear saves.
+- The scripts_play inputs are video-timed and stuck at "Linking"; the gf scripts are used instead.
+- The stack-overflow hypothesis was wrong: the min sp was only 140 bytes.
+- 8-instance builds crashed on 4-sized port arrays; resized to 8.
+- Frame dumps of 8 screens exceed the 15 s stall limit.
+
+5. Problem Solving
+
+- The 2p replay matches mGBA through game frame 45,000 (90-91/91 samples).
+- An 8-player one-world stage runs with eight Links and eight views, with no TLB misses.
+
+Remaining:
+- Links 5-8 use the palettes of players 1-4, and their sprite tiles clash.
+- Start tiles.
+- The game's player count is still 4.
+- GS renderer streaks in the left and right column cells of the 3x3 720p grid.
+- 14 fps with 8 views.
+
+6. All user messages
+
+- "They can walk in all four directions now… mGBA replay working on PS2 would help discover more."
+- "How many lag frames are in the replay?"
+- "Proceed"
+- "I can see that mGBA is in A Link to the Past, where it shouldn't be"
+- "Yes. Another thing to keep in mind; if mGBA has lag frames and PCSX2 doesn't, why don't we simply pause the PS2 to compensate?"
+- "Proceed, but I still want to answer one more question. Are the "lag frames" actual rendering or processing lag, or are they simply waiting for communication between emulated GBAs?"
+- "Is there any way we can just give the stack more memory?"
+- "Yes"
+- "Let's continue with replay sync"
+- "Test the second half of the recording and send me some screenshot comparisons"
+- "Let's fix this bug"
+- "I'm guessing that the "you don't have enough" message is talking about the situation when a player dies and doesn't have enough Rupees to be revived"
+- "Ok, is this a good foundation for spawning in eight players now?"
+- "Yes"
+- "Proceed"
+- "Yes" (C80 mirror)
+- "Proceed"
+- "Proceed"
+- "Can you give me a PS2 frame dump showing the 1280x720 frame?"
+- "Doesn't PCSX2 have a frame dump option that would give us a pristine screenshot?"
+- "Edit one of the screenshots to have a 4 pixel wide black border between each screen, including the middle blank screen"
+
+7. Pending Tasks
+
+- None explicitly outstanding; the last request is completed.
+- Planned work, not yet requested:
+  - Links 5-8 sprites and white palette.
+  - Free start tiles.
+  - Player count.
+  - GS renderer streaks in the side columns.
+
+8. Current Work
+
+- Took PCSX2 F8 screenshots (1280x720) of the 8-player stage.
+- Drew 4-px black borders at the cell edges found from the black centre cell (x 427/853, y 240/480), as bands x-2..x+1.
+- Saved as scratchpad `pcsx2_8p_1280x720_borders.png` and sent it to the user.
+- build/ps2 holds the 8-player test ELF; the user's saves were restored and the replay scripts removed.
+
+9. Optional Next Step
+
+None required: the user's last request ("Edit one of the screenshots to have a 4 pixel wide black border…") is done. Wait for the user's direction, for example on the GS renderer streaks or the Links 5-8 drawing.
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /home/alex/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9.jsonl
+Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.
+
+The messages after this summary are the most recent messages from before compaction, kept verbatim. The summary was written without seeing them, so something it says has not happened yet may already have happened in them.
+
+## User
+
+<command-name>/compact</command-name>
+            <command-message>compact</command-message>
+            <command-args></command-args>
+
+## User
+
+<local-command-stdout>Compacted </local-command-stdout>
+
+## User
+
+I want these borders to be drawn in game. Then, move to diagnosing the rendering issues
+
+- tool `Bash`: Survey video.c structure
+
+- tool `Bash`: Read video init and present code
+
+- tool `Bash`: Add border drawing; find build/run scripts
+
+- tool `Bash`: Find earlier build and screenshot commands
+
+- tool `Bash`: Extract the last F8 screenshot command
+
+## Claude
+
+Adding the in-game borders now; I'm pulling up the earlier screenshot command so I can reuse it.
+
+- tool `Bash`: Extract earlier xdotool F8 run command
+
+- tool `Bash`: Inspect screenshot helper scripts
+
+- tool `Bash`: Find the earlier F8 screenshot run
+
+## Claude
+
+Found the earlier recipe. Next I'll build with the borders and repeat that screenshot run.
+
+- tool `Bash`: Build the 8-player ELF with borders
+
+- tool `Bash`: Check whether the ELF was rebuilt
+
+## Claude
+
+The ELF is rebuilt. Now I'm running the replay to the 8-player stage and taking an F8 screenshot.
+
+- tool `Bash`: Run replay to stage and take F8 screenshots
+
+- tool `Bash`: Verify border pixels in the screenshot
+
+- tool `Bash`: Measure all border bands
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/ingame_borders.png
+
+## Claude
+
+The borders are now drawn in game: 4 pixels, black, between all nine cells. Next I'm moving on to the rendering faults, starting with how gsrender.c places each view.
+
+- tool `Bash`: Survey the GS renderer's coordinate handling
+
+- tool `Bash`: Read GS renderer setup and per-view code
+
+- tool `Bash`: Zoom the top row cells for inspection
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/toprow_zoom.png
+
+- tool `Bash`: Read GS renderer drawing primitives
+
+- tool `Bash`: Read per-view render code and gsKit OffsetX
+
+- tool `Bash`: Check readback logs and dumped frames
+
+- tool `Bash`: Read dump_frame for host file writing
+
+- tool `Edit`: /home/alex/Documents/zeldaalttp-ps2/src/ps2/video.c
+
+- tool `Bash`: Rebuild, run, dump GS memory and F8 shot
+
+- tool `Bash`: Convert GS memory dump to PNG
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/gsmem_full.png
+
+## Claude
+
+GS memory is clean: all nine cells are correct, with no wrap at x = 1024 and no streaks. Checking that this run's F8 shot still shows the faults:
+
+- tool `Bash`: Crop the top row of the new F8 shot
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/f8_run3_top.png
+
+- tool `Bash`: Remove temporary dump code and rebuild
+
+- tool `ToolSearch`: 
+
+- tool `SendUserFile`: 
+
+## Claude
+
+The game now draws the borders itself. The rendering faults aren't in our drawing: GS memory holds a clean frame, and the streaks only appear in what PCSX2 displays.
+
+**Borders:** after all the screens are drawn and before the flip, `ps2_video_present` in [video.c](src/ps2/video.c) draws four black lines, 4 pixels wide. They sit on the cell edges at x = 427 and 853 and y = 240 and 480, so the black centre cell is outlined too. The new F8 screenshot shows the vertical border at exactly x = 425–428.
+
+**What the faults are:**
+- **Left column:** each cell's first 256 pixels are the right cell's content from x = 1024–1279, wrapped back by 1024. That's why a "second image" starts about 255 pixels in.
+- **Right column:** the streaks start right at x = 1024.
+- The wrapped copy sits one row lower than it should. The horizontal border shows it: rows 239–242 in the left column, 238–241 elsewhere.
+
+**Why it isn't our drawing:** I added a temporary readback of the whole 1280×720 frame from GS memory, taken just before the flip in the same run. All nine cells are correct, with no wrap and no streaks. The frame buffers are at 0x0 and 0x1E0000 and don't overlap each other or the tile memory at 0x3C0000. That leaves PCSX2's own display output as the likely cause, probably a 1024-pixel limit in how its software renderer reads a 1280-wide buffer for display.
+
+The only fix on our side for PCSX2 would be a 640-wide buffer stretched 2×, which halves the horizontal resolution. I wouldn't do that before a real-PS2 test: the console reads the buffer straight from GS memory, so the frame should be clean there.
+
+I've sent you both pictures: the GS-memory frame and PCSX2's F8 shot from the same run.
+
+The temporary dump code is removed and the ELF rebuilt. The border change is in [video.c](src/ps2/video.c) and not committed yet.
+
+## User
+
+Is there anything in the downloaded ps2tek docs we have that would suggest that a 1280x720 frame buffer is not possible?
+
+- tool `Bash`: Locate the ps2tek docs
+
+- tool `Bash`: Search the whole filesystem for ps2tek
+
+- tool `Bash`: See where ps2tek was referenced
+
+- tool `Bash`: Find any saved ps2tek files
+
+## Claude
+
+No. There aren't any downloaded ps2tek docs on this machine to check. I searched the whole filesystem: the only trace is an IPU excerpt (`ps2tek_ipu.txt`) that the Silent Hill port mentions, and the file itself is gone. Nothing covering the GS registers or the CRTC was ever saved.
+
+From what I know of the GS registers (not checked against ps2tek), nothing rules out a 1280×720 16-bit buffer:
+- **FRAME.FBW** is 6 bits in units of 64 pixels, so it allows up to 2048 wide; 1280 is 20.
+- **DISPLAY.DW** is 12 bits, up to 4096 clocks. At 720p with MAGH 0, 1280 buffer pixels fill exactly 1280 clocks.
+- **SCISSOR** and window coordinates go up to 2047.
+- **GS memory:** each buffer takes 0x1E0000, so two take 0x3C0000 of the 4 MB. That leaves the 0x40000 we use for tiles and palettes. gsKit allocated exactly that.
+
+The one documented 1024 limit is texture size: TEX0's TW and TH max out at 1024. It applies to buffers read as textures, not to the CRTC reading the display buffer. My guess is that PCSX2 hits that limit when it reads our display buffer through its texture path, which would fit the wrap at 1024. I haven't confirmed that in PCSX2's code, though.
+
+ps2tek is hosted on psi-rockin.github.io. That's a GitHub Pages site, not github.com, so it's outside the GitHub-only rule without your OK. If you approve, I can fetch its GS and CRTC chapters and save them locally to check properly.
+
+## User
+
+Take a look at Open PS2 Loader on GitHub. It has a 1280x720p and a 1920x1080i mode. Check how those video modes work.
+
+- tool `Bash`: Clone OPL and find its HD video modes
+
+- tool `Bash`: Read OPL renderman mode table and setup
+
+## Claude
+
+OPL uses gsKit's "hires" path for these modes. Looking at how gsKit implements it:
+
+- tool `Bash`: Find and survey gsKit's hires implementation
+
+- tool `Bash`: Read gsKit hires pass setup
+
+- tool `Bash`: Check gsKit 720p display setup and hires CRTC switching
+
+- tool `Bash`: Read hsync pass switching and buffer layout
+
+## Claude
+
+OPL doesn't do anything that would suggest a 1280-wide frame buffer is a problem. Its 720p and 1080i modes keep the full width; what they work around is GS memory, by drawing the screen in horizontal bands.
+
+**OPL's modes** (`src/renderman.c`): 720p is 1280×720 and 1080i is 1920×1080. Both are 16-bit (`GS_PSM_CT16S`) and both use 3 render passes, through gsKit's "hires" mode (`gsKit_hires_init_global` and `gsKit_hires_init_screen(gsGlobal, 3)`).
+
+**How gsKit's hires mode works** (`ee/gs/src/gsHires.c`):
+- GS memory never holds a whole frame. It's split into bands of about a third of the screen height, and each band is the full 1280 or 1920 wide.
+- The CRTC displays one band while the GS draws the next band below it. A third band holds the depth buffer and textures, and the three roles rotate every pass.
+- An hsync interrupt tracks the scanline the CRTC is on. Each time the CRTC enters a new band, it signals a thread that replays the whole frame's draw queue into the next band. That pass sets `FRAME` to the full width (`Width / 64`), clips with `SCISSOR` to the band's height, and moves `XYOFFSET` down by the band's starting line.
+- So the GS redraws the whole scene 3 times per frame, 180 passes a second. The source notes that GS draw speed has to keep up.
+
+**What this means for us:**
+- **The width is fine.** OPL uses FBW 20 at 720p and FBW 30 at 1080i, so a 1920 buffer, and that runs on real consoles. Nothing in this design avoids widths over 1024.
+- **The bands save memory, not width.** At 16-bit, 1920×1080 is about 4 MB, so it can't fit even once. Two full 1280×720 buffers take 3.75 MB, which leaves OPL no room for its GUI textures.
+- **We don't need it at 720p.** Our two full buffers fit (0x0 and 0x1E0000, ending at 0x3C0000) because we keep only 136 KB of tiles and palettes at 0x3C0000. Every 16-bit 720p buffer is 1280 wide, whether full or banded, and its display setup matches ours: gsKit sets DW 1280 at 720p.
+- **1080i would need it.** A 1920×1080 mode for us would have to use the same band approach, with our draw packet replayed per band.
+
+This makes the PCSX2 display-readout explanation more likely, since the GS memory dump was clean. If OPL's 720p mode shows the same wrap at x = 1024 in PCSX2's software renderer, that would confirm it. I haven't tested that. A run on the real console would settle it either way.
+
+The OPL and gsKit clones are in the scratchpad (`/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/opl` and `/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/gskit`), not in the repo.
+
+## User
+
+Also check out GSM on GitHub: https://github.com/dfmuniz74/gsm
+GSM can force a 1080p mode. Is there any reason we can't do that?
+
+- tool `Bash`: Clone GSM and find its 1080p mode
+
+- tool `Bash`: Read GSM's 1080p implementation
+
+- tool `Bash`: Check how GSM applies its DISPLAY values
+
+## Claude
+
+Nothing technical stops us from using GSM's 1080p mode, but it isn't a 1920×1080 picture. GSM switches the video signal to 1080p and stretches a much smaller frame buffer to fill it.
+
+**How GSM does it** (`gsm_engine.S`, `gsm_api.c`):
+- **Signal timing:** 1080p (mode 0x54) isn't in the BIOS. GSM sets the timing itself by writing `SMODE1`, `SYNCH1`/`SYNCH2`, `SYNCV`, `SMODE2` and `SRFSH` directly, with a short delay before clearing two `SMODE1` bits. It picks different `SYNCH` values depending on the GS revision in `CSR` (bits 16–23, at or above 0x19 or below).
+- **Buffer size:** GSM traps the game's writes to `DISPLAY1`/`DISPLAY2` and rescales them. Its 1080p template is DW 1919, DH 1079, MAGH 2 and MAGV 1, so each buffer pixel is 3 clocks wide and each line is shown twice. The screen therefore shows at most a 640×540 buffer, scaled 3× across and 2× down. Its 720p template works the same way (MAGH 1, MAGV 1), so it doesn't show a full 1280×720 buffer either.
+
+**Can we do it?** Yes, and we wouldn't need GSM. It's about a dozen register writes after `gsKit_init_screen`, taken from GSM's values, plus our own `DISPLAY` setting. The limits:
+- **A real 1920×1080 buffer won't fit.** At 16-bit it needs 30 × 17 pages of 8 KB, about 4.2 MB, which is more than the GS's 4 MB even with a single buffer. A full-resolution 1080p picture would need OPL's band rendering, like its 1080i mode.
+- **What does fit is a 960×540 buffer with MAGH 1 and MAGV 1**, which is an exact 2× scale. Two 16-bit buffers come to about 2 MB, leaving plenty of room for our tiles. The 3×3 grid would then have 320×180 cells, which is smaller than the current 426×240 view per player.
+- **640×540 at 3×/2×** is GSM's own setting. It's also possible, but the pixels aren't square.
+- **Compatibility:** it's an unofficial mode that GSM itself calls "unpublished". The register values depend on the GS revision, the console only outputs it over component, and not every TV accepts 1080p over component. I don't know whether PCSX2 emulates direct `SMODE1`/`SYNC` writes for this mode, so testing would need your real console.
+
+My recommendation: for the 3×3 grid, today's native 1280×720 shows more of each player's view than 1080p from a 960×540 buffer would. 1080p only gains us a signal the TV doesn't have to upscale. If you want it anyway, I can add it as a separate video mode for testing on your console.
+
+The GSM clone is in `/tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/gsm`.
+
+## User
+
+Is it possible to adjust the vsync rate to match the GBA's exactly while using 240p, 480i, 480p, or 720p?
+
+## Claude
+
+Not exactly, but very close, within about 0.01 Hz, and only on a real console. The GS's video timing registers (`SYNCH1`/`SYNCH2` for line length, `SYNCV` for line count) can be written directly, the same way GSM sets its 1080p timing. We would lengthen each frame slightly instead of changing the pixel clock.
+
+**The target:** the GBA runs at 16,777,216 / (1232 × 228) = **59.7275 Hz**, about 0.36% slower than the PS2's 59.94 Hz.
+
+**Why not exactly:** frame length can only change in whole clocks per line and whole lines per frame, so the rate moves in small steps. A few extra clocks per line come closest, and the line count can stay the same. These figures assume the standard pixel clocks; I haven't checked them against the PS2's exact clocks:
+
+| Mode | Standard frame (clocks × lines) | Adjusted | Rate | Off from GBA |
+|---|---|---|---|---|
+| 240p | 858 × 262 | 862 × 262 | ≈59.78 Hz¹ | |
+| 480i | 858 × 262.5 per field, 13.5 MHz | 861 × 262.5 | 59.731 Hz | +0.006% |
+| 480p | 858 × 525, 27 MHz | 861 × 525 | 59.731 Hz | +0.006% |
+| 720p | 1650 × 750, 74.25 MHz | 1653 × 752 | 59.732 Hz | +0.007% |
+
+¹ 240p has 262 lines (≈60.05 Hz standard), so it needs about 864 × 262 or 862 × 263 to land near 59.73. The exact values depend on its timing.
+
+At about 0.006% fast, the PS2 gains one frame on the GBA every 4–5 minutes. Dropping one frame then makes it exact over the long run. Today it gains one frame every 4.6 seconds.
+
+**The catches:**
+- **TVs:** a CRT accepts slightly long lines easily. A digital TV or upscaler checks timing more strictly. 480i and 480p should be fine (GBA-to-HDMI adapters output similar near-60 Hz rates), but 720p over component is the riskiest.
+- **PCSX2:** I believe it uses fixed refresh rates per video mode and ignores changes to `SYNCH`/`SYNCV`, so the effect would only show on your console. I'm not sure of this.
+- **The value of a GS revision:** like GSM, we'd probably have to pick timing values per GS revision, read from `CSR`.
+- **Audio:** sound would also have to run at the GBA rate. At 59.94 Hz it currently plays 0.36% fast.
+
+**The simpler option** needs no register changes. Keep standard 59.94 Hz and drop one game frame's display every 4.6 seconds, which works the same in every mode and in PCSX2. It costs one repeated frame every 4.6 seconds, which can be visible during scrolling.
+
+If you want the exact-timing route, I'd start with 480p: it's the easiest mode for a TV and adds only 3 clocks per line. I can add it as a build option for your console.
+
+## User
+
+Let's save this to docs as an option. I don't want to implement this right now. Let's go back to the rendering issues and see what the output is like with PCSX2's hardware OpenGL renderer
+
+- tool `Bash`: Find doc sections and renderer handling
+
+- tool `Bash`: Read open decisions and the run script config
+
+## Claude
+
+Saving the timing option to the planning doc first:
+
+- tool `Bash`: Add the refresh-rate option to the planning doc
+
+- tool `Bash`: Make an OpenGL variant of the run script
+
+- tool `Bash`: Run replay with the OpenGL renderer and take F8
+
+- tool `Bash`: Check the OpenGL screenshot and log
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/f8_opengl.png
+
+- tool `SendUserFile`: 
+
+- tool `Write`: /home/alex/.claude/projects/-home-alex-Documents-zeldaalttp-ps2/memory/pcsx2-sw-1280-wrap.md
+
+- tool `Bash`: Index the new memory
+
+## Claude
+
+With PCSX2's OpenGL renderer the 1280×720 frame is clean in all eight cells: no wrap at x = 1024, no streaks, and the in-game borders are correct. I've sent you the screenshot.
+
+That matches the GS memory readback, so the left- and right-column faults come from how PCSX2's software renderer displays a 1280-wide buffer. Our rendering is correct, and I expect real hardware to show it clean too.
+
+- **Run details:** with no GPU in the VM, OpenGL ran on Mesa's software rasterizer but still at full speed (frame 3600 at about 128 s, the same as the software-renderer runs).
+- **Run script:** I used a scratchpad copy of `pcsx2_run.py` with the renderer set to OpenGL. The tp-ps2 script and your `PCSX2.ini` are unchanged, and normal runs stay on the software renderer.
+- **Refresh-rate option:** saved as "Option, not planned: refresh rate matched to the GBA" in [Planning Doc.md](docs/Planning%20Doc.md). It covers the numbers, the TV and PCSX2 caveats, and the simpler frame-skip alternative.
+- **Memory:** I saved a note that these streaks are a PCSX2 display limit, so they don't get debugged again as a port bug.
+
+The border change in [video.c](src/ps2/video.c) and the planning-doc edit are uncommitted. If you want them committed, I'll also add a walkthrough step for this diagnosis first.
+
+## User
+
+I think we will have to use the OpenGL renderer going forward. Commit changes
+
+- tool `Bash`: Check run script structure and step numbering
+
+## Claude
+
+A small wrapper in this repo selects OpenGL without changing tp-ps2's shared script:
+
+- tool `Write`: /home/alex/Documents/zeldaalttp-ps2/tools/ps2/pcsx2_run.py
+
+- tool `Bash`: Test the wrapper and update CLAUDE.md
+
+## Claude
+
+Now the walkthrough step and the conversation archive:
+
+- tool `Bash`: Add walkthrough step, archive conversation, check build
+
