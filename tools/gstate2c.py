@@ -502,6 +502,11 @@ def finish(data, relocs, start, end, name, gsnames, decls, swis, tag, ins, targe
         lines += ["L_%X:" % x, "    GSTATE_STORE(); gstate_run(%s %s); return;" % (B, soff(x))]
     lines.append("}")
     text = "\n".join(lines)
+    if name == "sub_08003870":  # the animation step (GetNextFrame/FrameNeedsUpdate): file select's idle entities reach it with
+        # unk24 = 0, and the frame data is then read from the GBA's BIOS (open bus, harmless there). A real PS2 faults on
+        # that address (PCSX2 only logs "TLB Miss"), so a pointer outside memory reads 8 zero bytes instead
+        text = text.replace("    r1 = R32(r0 + 36);\n", "    r1 = R32(r0 + 36);\n#ifdef PLATFORM_PS2\n    { extern u8 ps2_openbus[];"
+                            " if (r1 - 0x02000000u >= 0x0C000000u) r1 = (u32)ps2_openbus; }\n#endif\n", 1)
     text = text.replace("GSTATE_JUMP(", "GSTATE_JUMP_IN(%s, 0x%X, " % (B, size))
     text = text.replace("GSTATE_RETURNED(", "GSTATE_RETURNED_IN(%s, 0x%X, " % (B, size))
     for m in re.findall(r"gstate_swi_TAG_([0-9A-F]+)\(\)", text):

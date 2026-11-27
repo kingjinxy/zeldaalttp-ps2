@@ -84,6 +84,7 @@ static void dma_check(u32 timing)
 void ps2_io_poll(void) { dma_check(0); }
 void ps2_io_vblank(void) { dma_check(1); }
 
+u8 ps2_openbus[8];  // what the GBA's BIOS area reads as to game code that follows a null pointer (gstate2c.py, sub_08003870)
 u32 ps2_io_reads, ps2_io_last;  // debugging: the watchdog shows whether game code still runs, and what it reads
 
 u32 ps2_io_read(u32 a, u32 size)

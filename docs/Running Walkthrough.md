@@ -1784,3 +1784,24 @@ tools/ps2/pcsx2_run.py, a wrapper of tp-ps2's script (CLAUDE.md).
 and draw the frame in bands to save GS memory; nothing there limits the width. GSM's forced 1080p writes SMODE1,
 SYNCH and SYNCV directly and shows at most a 640x540 buffer (MAGH 2, MAGV 1). A refresh rate matched to the GBA's
 59.7275 Hz is written up as an option in the planning doc, not planned.
+
+## Step 71: the ELF alone, as it will run from a USB drive; a null animation pointer (2026-11-27)
+
+**Check.** The ELF copied to an empty folder and run in PCSX2 with its host filesystem off (`HostFs = false`, the
+nearest thing to the console with no IOP host driver): it boots (ROM inside the ELF, segment at 0x01000000), the pads
+open (rom0:XSIO2MAN/XPADMAN: both ports), `host:` opens fail quickly and are logged ("save: not found, starting
+empty", "can't write"; the replay scripts and lag file are simply absent). Saves don't persist without the host
+files (a memory card file is still to do).
+
+**The bug.** Left idle on "Choose a file" (every replay pressed through it, so none sat there), PCSX2 logged "TLB Miss"
+loads of addresses 0-0x11 from `gs_sub_08003870`, the animation step (GetNextFrame / FrameNeedsUpdate). The three
+entities the screen creates (kind 06 3B, animation set 0x4F) reach FrameNeedsUpdate with `unk24` = 0, about 90 frames
+after they appear, and read their frame data from the GBA's BIOS area. mGBA does the same (their `unk24` ends as
+0xFFFFE004 after the garbage read): harmless on a GBA (open bus), but a real PS2 faults on it, so the ELF would have
+crashed within seconds of reaching the file select. (PCSX2 stops logging after 50 lines: the later bursts were hidden.)
+
+**Fix.** tools/gstate2c.py patches that one function's output: a frame-data pointer outside 0x02000000-0x0DFFFFFF reads
+`ps2_openbus` (8 zero bytes, src/ps2/io.c) instead. The generated sources are regenerated with
+`make NONMATCHING=1 AUTO_C=1 src/rom1.o` (the PS2 Makefile doesn't watch the generator). The same idle run for 90 s
+(5400 frames): 0 TLB Misses. `make compare`: OK. Zeros differ from the GBA's open bus values (frame 0 instead of
+garbage): those entities only run an animation counter.

@@ -26293,3 +26293,172 @@ Now the walkthrough step and the conversation archive:
 
 - tool `Bash`: Add walkthrough step, archive conversation, check build
 
+- tool `Bash`: Commit the changes
+
+- tool `Bash`: Update the renderer memory
+
+## Claude
+
+I committed the changes as `67afb3e`, after `make compare` reported `zeldaalttp.gba: OK`. Test runs now use PCSX2's OpenGL renderer.
+
+- **OpenGL by default:** the new [tools/ps2/pcsx2_run.py](tools/ps2/pcsx2_run.py) wraps tp-ps2's `pcsx2_run.py` with the OpenGL renderer and takes the same arguments; `--renderer null` still works. tp-ps2's script and your `PCSX2.ini` are unchanged.
+- **[CLAUDE.md](CLAUDE.md):** the emulator rule now says to use OpenGL through that wrapper, and why. The VM has no GPU, so OpenGL runs on Mesa's software rasterizer, which still reached full speed.
+- **[video.c](src/ps2/video.c):** the game draws the 4-pixel black borders between the 3×3 cells.
+- **Docs:** walkthrough Step 70 covers the borders, how the software renderer's wrap at x = 1024 was found, and the OPL and GSM findings. The refresh-rate option is in the planning doc as not planned. `Claude Conversation.md` is updated; the archive added 675 lines and removed none.
+
+My memory notes now say OpenGL is the standard renderer.
+
+## User
+
+<command-name>/model</command-name>
+            <command-message>model</command-message>
+            <command-args>sonnet</command-args>
+
+## User
+
+<local-command-stdout>Set model to `claude-sonnet-5-5`</local-command-stdout>
+
+## User
+
+I want to test on real hardware. Will the current .elf work without access to the VM filesystem? I just want to boot into the game and see if 8 players spawn. I only need to control two characters at this point, so we can leave multitap support for later.
+
+## Claude
+
+Let me check what the ELF touches outside itself (`host:` files, saves, pads, SIO logging).
+
+- tool `Bash`: Find external dependencies of the ELF
+
+- tool `Bash`: Read save, pad and linker details
+
+- tool `Bash`: Look for hardware deploy tooling, shared-world input and ELF layout
+
+- tool `Bash`: Find hardware deploy workflow in other ports and shared-world input handling
+
+## User
+
+[Request interrupted by user]
+
+## User
+
+For now I am just going run the ELF from a USB drive. We can dive into remote tooling later
+
+## Claude
+
+Understood, USB it is. I'll first check the code paths, then run the ELF from an empty folder with PCSX2's host filesystem turned off, which is the closest I can get to the console.
+
+- tool `Bash`: Run the ELF alone in an empty folder with PCSX2 host filesystem off
+
+## Claude
+
+The ELF boots with no host filesystem, but it logs TLB Misses (loads from addresses 0-7). A real PS2 would crash there, so I'm tracing them.
+
+- tool `Bash`: Summarise the TLB Miss PCs and find their functions
+
+- tool `Bash`: Locate source for the function at the TLB Miss
+
+- tool `Bash`: Find the definition of sub_08003870
+
+- tool `Bash`: Read the function's asm and a caller
+
+## Claude
+
+The reads are in `sub_08003870`, the sprite-animation step: it follows a frame-data pointer from a table, and the pointer here is 0. Next I'm checking what the game is showing when it happens.
+
+- tool `Bash`: Screenshot the idle game around the first TLB Misses
+
+- tool `Bash`: Pick the later screenshot
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/nohost_shot.png
+
+## Claude
+
+The game is idling at "Choose a File" with every file empty, which the scripted replays never sat on. I'll check what mGBA does on the same screen with no input.
+
+- tool `Bash`: Check how the mGBA runner is invoked
+
+- tool `Bash`: Locate the mGBA runner binary and the Four-Swords-only ROM
+
+- tool `Bash`: Run mGBA idle on the same ROM and list instructions that read address 0
+
+- tool `Read`: /tmp/claude-1000/-home-alex-Documents-zeldaalttp-ps2/93b91fe6-ec1b-4c3a-976d-9c1099efa5e9/scratchpad/mg_idle/p0_f00700.png
+
+- tool `Bash`: Find where the translated sub_08003870 lives
+
+- tool `Bash`: Read the generated function body
+
+- tool `Bash`: Read the generated gs_sub_08003870 body
+
+- tool `Bash`: Temporarily log the entity with a null frame pointer
+
+- tool `Bash`: Rebuild the 8-player ELF with the temporary log
+
+- tool `Bash`: See how the PS2 variant of the generated file differs
+
+## Claude
+
+Patching the log into the PS2 variant of the generated file (the one the PS2 build compiles), then rebuilding and rerunning.
+
+- tool `Bash`: Restore the other file and view the PS2 variant body
+
+- tool `Bash`: Patch the PS2 variant and rebuild
+
+- tool `Bash`: Run idle and capture the entity with the null frame pointer
+
+- tool `Bash`: Read the animation table entry for unk1B = 0x4f from the ROM
+
+- tool `Bash`: Find callers of the FrameNeedsUpdate entry
+
+- tool `Bash`: Read GetNextFrame, the entry into FrameNeedsUpdate
+
+- tool `Bash`: Read the Entity struct layout
+
+- tool `Bash`: Dump the same entity area from mGBA at idle frames
+
+- tool `Bash`: Capture the dump text output
+
+- tool `Bash`: Parse mGBA's entity-area dumps for the same entities
+
+- tool `Bash`: Fix the dump parser
+
+- tool `Bash`: Find the 0x4f entities in mGBA's dumps
+
+- tool `Bash`: Compare entity animation state over time in mGBA
+
+- tool `Bash`: Check whether PCSX2 caps TLB Miss logging
+
+## Claude
+
+PCSX2 stops printing after 50 lines, so I'll fix this site and then count the misses again. Looking at how the generator emits loads:
+
+- tool `Bash`: Look at load macros and how the generator emits them
+
+- tool `Bash`: Read R8/R16/R32 macro definitions and the IO_ test
+
+- tool `Bash`: Look for per-function special cases in the generator and the I/O read handler
+
+- tool `Bash`: Read how function bodies are assembled in the generator
+
+- tool `Bash`: Add the generator patch, regenerate, and rebuild the ELF
+
+- tool `Bash`: See the regeneration rule's prerequisites
+
+- tool `Bash`: See how Makefile.ps2 triggers regeneration
+
+- tool `Bash`: Find how the generated PS2 sources are regenerated
+
+- tool `Bash`: Dry-run the regeneration of rom1's generated sources
+
+- tool `Bash`: Regenerate rom1's translated sources with the patch
+
+## Claude
+
+Regenerated with the patch and no stray debug output. Rebuilding the PS2 ELF and rerunning idle in an empty folder, with the host filesystem off:
+
+- tool `Bash`: Rebuild and idle 90 s in an empty folder; count TLB Misses
+
+## Claude
+
+No TLB Misses and no errors in 90 s of idle. Next I'm checking the matching build, then reading the pad mapping and the one-world entry flow so I can tell you what to press.
+
+- tool `Bash`: Matching-build check, pad mapping and the one-world flow
+
